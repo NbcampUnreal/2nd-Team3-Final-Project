@@ -1,0 +1,25 @@
+name: Build ProjectEmber
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository with LFS
+        uses: actions/checkout@v3
+        with:
+          lfs: true  # Git LFS 파일 포함해서 클론
+
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@v1.3.1
+
+      - name: Build ProjectEmber.uproject
+        shell: cmd
+        run: |
+          "C:\Program Files\Epic Games\UE_5.5\Engine\Build\BatchFiles\Build.bat" ^
+          ProjectEmberEditor Win64 Development "%GITHUB_WORKSPACE%\ProjectEmber.uproject"
