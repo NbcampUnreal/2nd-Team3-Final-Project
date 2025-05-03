@@ -1,4 +1,4 @@
-name: Build ProjectEmber
+name: Build and Package ProjectEmber
 
 on:
   push:
@@ -10,16 +10,26 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout repository with LFS
-        uses: actions/checkout@v3
-        with:
-          lfs: true  # Git LFS 파일 포함해서 클론
+    - name: Checkout repository with LFS
+      uses: actions/checkout@v3
+      with:
+        lfs: true
 
-      - name: Set up MSBuild
-        uses: microsoft/setup-msbuild@v1.3.1
+    - name: Set up MSBuild
+      uses: microsoft/setup-msbuild@v1.3.1
 
-      - name: Build ProjectEmber.uproject
-        shell: cmd
-        run: |
-          "C:\Program Files\Epic Games\UE_5.5\Engine\Build\BatchFiles\Build.bat" ^
-          ProjectEmberEditor Win64 Development "%GITHUB_WORKSPACE%\ProjectEmber.uproject"
+    - name: Package ProjectEmber
+      shell: cmd
+      run: |
+        "C:\Program Files\Epic Games\UE_5.5\Engine\Build\BatchFiles\RunUAT.bat" ^
+        BuildCookRun ^
+        -project="%GITHUB_WORKSPACE%\ProjectEmber\ProjectEmber.uproject" ^
+        -noP4 -platform=Win64 -clientconfig=Development -cook -allmaps -build -stage -pak -archive ^
+        -archivedirectory="%GITHUB_WORKSPACE%\PackagedBuild"
+
+    - name: Upload Packaged Build (optional)
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ProjectEmber_Build
+        path: ${{ github.workspace }}/PackagedBuild
