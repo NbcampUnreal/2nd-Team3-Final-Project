@@ -1,4 +1,4 @@
-name: Build and Package ProjectEmber
+name: Build Unreal Project
 
 on:
   push:
@@ -7,29 +7,21 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: [self-hosted, windows]
+
+    env:
+      UE_PATH: "D:\\UE\\Epic Games\\UE_5.5"
+      PROJECT_PATH: "D:\\git\\2nd-Team3-Final-Project\\MyGame.uproject"
+      OUTPUT_DIR: "D:\\git\\2nd-Team3-Final-Project\\BuildOutput"
 
     steps:
-    - name: Checkout repository with LFS
-      uses: actions/checkout@v3
-      with:
-        lfs: true
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Set up MSBuild
-      uses: microsoft/setup-msbuild@v1.3.1
-
-    - name: Package ProjectEmber
-      shell: cmd
-      run: |
-        "C:\Program Files\Epic Games\UE_5.5\Engine\Build\BatchFiles\RunUAT.bat" ^
-        BuildCookRun ^
-        -project="%GITHUB_WORKSPACE%\ProjectEmber\ProjectEmber.uproject" ^
-        -noP4 -platform=Win64 -clientconfig=Development -cook -allmaps -build -stage -pak -archive ^
-        -archivedirectory="%GITHUB_WORKSPACE%\PackagedBuild"
-
-    - name: Upload Packaged Build (optional)
-      if: success()
-      uses: actions/upload-artifact@v4
-      with:
-        name: ProjectEmber_Build
-        path: ${{ github.workspace }}/PackagedBuild
+      - name: Build and Package Game
+        run: |
+          "${{ env.UE_PATH }}\\Engine\\Build\\BatchFiles\\RunUAT.bat" BuildCookRun ^
+            -project="${{ env.PROJECT_PATH }}" ^
+            -noP4 -platform=Win64 -clientconfig=Development -serverconfig=Development ^
+            -cook -build -stage -pak -archive ^
+            -archivedirectory="${{ env.OUTPUT_DIR }}"
