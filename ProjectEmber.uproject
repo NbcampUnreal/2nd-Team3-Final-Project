@@ -7,6 +7,15 @@
 		{
 			"Name": "ProjectEmber",
 			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"AIModule",
+				"Engine"
+			]
+		},
+		{
+			"Name": "EmberUI",
+			"Type": "Runtime",
 			"LoadingPhase": "Default"
 		}
 	],
@@ -17,6 +26,10 @@
 			"TargetAllowList": [
 				"Editor"
 			]
+		},
+		{
+			"Name": "GameplayAbilities",
+			"Enabled": true
 		}
 	]
 }
