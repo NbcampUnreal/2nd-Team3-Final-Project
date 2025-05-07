@@ -1,0 +1,31 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.4.2",
+	"FriendlyName": "Melee Trace",
+	"Description": "Generic plugin that enables you to setup melee traces directly in your animation assets.",
+	"Category": "Gameplay",
+	"CreatedBy": "Robert Lewicki",
+	"CreatedByURL": "https://robertlewicki.games/",
+	"DocsURL": "https://github.com/rlewicki/MeleeTrace/wiki",
+	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/42b0bb860bcd4995b70d40f152a6e9b9",
+	"SupportURL": "https://github.com/rlewicki/MeleeTrace",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": true,
+	"Modules": [
+		{
+			"Name": "MeleeTrace",
+			"Type": "Runtime",
+			"LoadingPhase": "PreDefault",
+			"PlatformAllowList": [
+				"Win64",
+				"Mac",
+				"Android",
+				"IOS",
+				"Linux"
+			]
+		}
+	]
+}
