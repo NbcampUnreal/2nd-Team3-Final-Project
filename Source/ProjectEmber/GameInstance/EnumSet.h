@@ -2,9 +2,24 @@
 
 #include "CoreMinimal.h"
 
-class PROJECTEMBER_API EnumSet
+UENUM(BlueprintType)
+enum class EAreaType : uint8 
 {
-public:
-	EnumSet();
-	~EnumSet();
+	LobbyArea = 0,
+	GrasslandArea,
+	DesertArea
+};
+
+UENUM(BlueprintType)
+enum class EAreaSoundType : uint8 
+{
+	LobbySound = 0,
+	GrasslandSound,
+	DesertSound
+};
+
+UENUM(BlueprintType)
+enum class ECharacterSoundType : uint8
+{
+	None = 0
 };
