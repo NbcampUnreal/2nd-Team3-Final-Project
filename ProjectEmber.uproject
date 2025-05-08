@@ -14,7 +14,15 @@
 			]
 		},
 		{
-			"Name": "EmberUI",
+			"Name": "EmberAbilitySystem",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"GameplayAbilities"
+			]
+		},
+		{
+			"Name": "EmberUtils",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
 		}

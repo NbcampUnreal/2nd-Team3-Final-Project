@@ -16,6 +16,6 @@ public class ProjectEmberEditorTarget : TargetRules
 
 	private void RegisterModulesCreatedByRider()
 	{
-		ExtraModuleNames.AddRange(new string[] { "EmberUI" });
+		ExtraModuleNames.AddRange(new string[] { "EmberAbilitySystem", "EmberUtils" });
 	}
 }
