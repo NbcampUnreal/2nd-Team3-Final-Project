@@ -2,6 +2,7 @@
 #include "../EmberCharacter.h"
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputComponent.h"
+#include "Character/EmberComponents/InteractionComponent.h"
 
 UEmberInputHandlerComponent::UEmberInputHandlerComponent()
 {
@@ -48,6 +49,12 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
         Bind(RotationModeAction,  ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnRotationMode);
         Bind(ViewModeAction,      ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnViewMode);
         Bind(SwitchShoulderAction,ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnSwitchShoulder);
+
+        if (UInteractionComponent* Comp = Character->InteractionComponent.Get())
+        {
+            InputComponent->BindAction(InteractAction, ETriggerEvent::Started, Comp, &UInteractionComponent::Interact);
+            InputComponent->BindAction(InteractAction, ETriggerEvent::Completed, Comp, &UInteractionComponent::StopGather);
+        }
     }
 
     // Ability input
