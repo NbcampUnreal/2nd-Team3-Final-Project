@@ -8,6 +8,7 @@
 #include "GameFramework/Character.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "DrawDebugHelpers.h"
+#include "Attribute/Animal/EmberAnimalAttributeSet.h"
 
 const FName AAIAnimalController::SleepTime = "SleepTime";
 const FName AAIAnimalController::IsShouldSleep = "IsShouldSleep";
@@ -69,6 +70,9 @@ void AAIAnimalController::OnPossess(APawn* InPawn)
         RunBehaviorTree(BehaviorTree);
         UE_LOG(LogTemp, Warning, TEXT("AnimalController::블랙보드 초기화 성공, 비헤이비어 트리 실행."));
     }
+
+    AbilitySystemComponent = CastChecked<ABaseAIAnimal>(InPawn)->GetAbilitySystemComponent();
+    //AbilitySystemComponent->Attribute
 }
 
 void AAIAnimalController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
@@ -110,13 +114,19 @@ void AAIAnimalController::FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus)
     {
         if (const ABaseAIAnimal* TargetAnimal = Cast<ABaseAIAnimal>(Actor))
         {
+            const UAbilitySystemComponent* TargetAsc = TargetAnimal->GetAbilitySystemComponent();
+            const UAbilitySystemComponent* SourceAsc = Cast<ABaseAIAnimal>(GetPawn())->GetAbilitySystemComponent();
+
+            const UEmberAnimalAttributeSet* TargetAttribute = TargetAsc->GetSet<UEmberAnimalAttributeSet>();
+            const UEmberAnimalAttributeSet* SourceAttribute = SourceAsc->GetSet<UEmberAnimalAttributeSet>();
+
             
             float Distance = FVector::Dist(GetPawn()->GetActorLocation(), Actor->GetActorLocation());
             BBComponent->SetValueAsObject("TargetActor", Actor);
             BBComponent->SetValueAsFloat("DistanceToTarget", Distance);
             //파워 우선순위 판단
-            const int32 PawnWildPower = Cast<ABaseAIAnimal>(GetPawn())->GetWildPower();
-            const int32 TargetWildPower = TargetAnimal->GetWildPower();
+            const int32 PawnWildPower = SourceAttribute->GetWildPower();
+            const int32 TargetWildPower = TargetAttribute->GetWildPower();
             
             if (PawnWildPower <= TargetWildPower) //우선순위가 높거나 같으면
             {
