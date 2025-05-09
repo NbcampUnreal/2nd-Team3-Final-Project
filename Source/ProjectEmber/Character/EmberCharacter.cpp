@@ -11,6 +11,7 @@
 #include "Animation/AnimInstance.h"
 #include "Engine/LocalPlayer.h"
 #include "UI/EmberWidgetComponent.h"
+#include "MeleeTrace/Public/MeleeTraceComponent.h"
 #include "Utility/AlsVector.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(EmberCharacter)
@@ -24,7 +25,10 @@ AEmberCharacter::AEmberCharacter()
     InputHandler = CreateDefaultSubobject<UEmberInputHandlerComponent>(TEXT("InputHandler"));
 
     AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+  
     InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
+
+    MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
     
     HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
     HpBarWidget->SetupAttachment(GetMesh());
@@ -112,6 +116,11 @@ void AEmberCharacter::PossessedBy(AController* NewController)
             PlayerController->ConsoleCommand(TEXT("ShowDebug AbilitySystem"));
         }
     }
+}
+
+UMeleeTraceComponent* AEmberCharacter::GetMeleeTraceComponent() const
+{
+    return MeleeTraceComponent;
 }
 
 void AEmberCharacter::NotifyControllerChanged()

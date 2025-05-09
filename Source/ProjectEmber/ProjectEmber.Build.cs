@@ -23,7 +23,7 @@ public class ProjectEmber : ModuleRules
 	        "GameplayAbilities",
 	        "EmberAbilitySystem",
 	        "EmberUtils",
-	        "UMG"
+	        "UMG", "MeleeTrace"
         });
     }
 }

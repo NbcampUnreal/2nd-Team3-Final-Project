@@ -7,6 +7,7 @@
 
 class UAlsCameraComponent;
 class UEmberInputHandlerComponent;
+class UMeleeTraceComponent;
 struct FInputActionValue;
 
 UCLASS()
@@ -25,6 +26,8 @@ public: /* Character */
 	UPROPERTY(EditAnywhere, Category = "InteractionSystem")
 	TObjectPtr<class UInteractionComponent> InteractionComponent;
 	
+public:
+	virtual UMeleeTraceComponent* GetMeleeTraceComponent() const;
 
 protected:
 	void SetupEmberInputComponent() const;
@@ -34,6 +37,9 @@ protected:
 	
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class UEmberWidgetComponent> HpBarWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UMeleeTraceComponent* MeleeTraceComponent;
 public: /* AbilitySystem */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
