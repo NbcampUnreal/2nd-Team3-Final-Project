@@ -51,6 +51,7 @@ EBTNodeResult::Type UBTTask_Interact::ExecuteTask(UBehaviorTreeComponent& Comp, 
 		}
 		
 		AICharacter->PlayInteractMontage(static_cast<uint8>(EAnimalAIState::FindFood));
+		AICharacter->SetFullness();
 		BlackboardComp->SetValueAsBool("IsHungry", false);
 		IInteractiveObject::Execute_Interact(TargetActor, AICharacter); //먹이 삭제
 		BlackboardComp->SetValueAsObject(GetSelectedBlackboardKey(), nullptr);

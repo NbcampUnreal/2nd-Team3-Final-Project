@@ -24,7 +24,11 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent , Category = "InteractiveObject")
 	FGameplayTag GetTag();
 
-	
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent , Category = "InteractiveObject")
+	bool GetIsSelected();
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent , Category = "InteractiveObject")
+	void SetIsSelected(const bool InSelect = true);
 };
 
 UCLASS()
@@ -52,6 +56,16 @@ public:
 	FGameplayTag GetTag();
 	virtual FGameplayTag GetTag_Implementation() override;
 
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent , Category = "InteractiveObject")
+	bool GetIsSelected();
+	virtual bool GetIsSelected_Implementation() override;
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent , Category = "InteractiveObject")
+	void SetIsSelected(const bool InSelect = true);
+	virtual void SetIsSelected_Implementation(const bool InSelect = true) override;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GameplayTag")
 	FGameplayTag GameplayTag;
+	
+	bool bIsSelected = false;
 };
