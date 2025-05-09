@@ -4,6 +4,7 @@
 #include "BTTask_ChangeState.h"
 
 #include "AIController.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "ProjectEmber/AIAnimal/BaseAIAnimal.h"
 
 UBTTask_ChangeState::UBTTask_ChangeState()
@@ -32,6 +33,8 @@ EBTNodeResult::Type UBTTask_ChangeState::ExecuteTask(UBehaviorTreeComponent& Com
 	}
 
 	Cast<ABaseAIAnimal>(AIPawn)->SetCurrentState(EAnimalAIState::Idle);
+	BlackboardComp->SetValueAsBool("IsHit", false);
+	BlackboardComp->SetValueAsBool("IsRest", true);
 	
 	return Super::ExecuteTask(Comp, NodeMemory);
 }

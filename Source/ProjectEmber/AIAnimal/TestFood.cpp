@@ -39,3 +39,14 @@ FGameplayTag ATestFood::GetTag_Implementation()
 	return GameplayTag;
 }
 
+bool ATestFood::GetIsSelected_Implementation()
+{
+	IInteractiveObject::GetIsSelected_Implementation();
+	return bIsSelected;
+}
+
+void ATestFood::SetIsSelected_Implementation(const bool InSelect)
+{
+	IInteractiveObject::SetIsSelected_Implementation(InSelect);
+	bIsSelected = InSelect;
+}
