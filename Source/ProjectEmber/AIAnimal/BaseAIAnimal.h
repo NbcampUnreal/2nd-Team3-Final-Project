@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "AbilitySystemInterface.h"
 #include "BaseAIAnimal.generated.h"
 
 class UAISenseConfig_Hearing;
@@ -28,7 +29,8 @@ enum class EAnimalAIState : uint8
 	Warning			UMETA(DisplayName = "Warning"),
 	Rest			UMETA(DisplayName = "Rest"),
 	Flee			UMETA(DisplayName = "Flee"),
-	Dead			UMETA(DisplayName = "Dead")
+	Dead			UMETA(DisplayName = "Dead"),
+	StateEnd		UMETA(DisplayName = "StateEnd")
 };
 
 UENUM(BlueprintType)
@@ -40,11 +42,12 @@ enum class EAnimalAIPersonality : uint8
 	Brave			UMETA(DisplayName = "Brave"),			// 위협받으면 반격
 	Outsider		UMETA(DisplayName = "Outsider"),		// 기본 어슬렁거리 증가
 	Agile			UMETA(DisplayName = "Agile"),			// 기본 이동속도 증가
-	Lazy			UMETA(DisplayName = "Lazy")				// 기본 이동속도 감소
+	Lazy			UMETA(DisplayName = "Lazy"),			// 기본 이동속도 감소
+	End				UMETA(DisplayName = "End")
 };
 
 UCLASS()
-class PROJECTEMBER_API ABaseAIAnimal : public ACharacter
+class PROJECTEMBER_API ABaseAIAnimal : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -55,18 +58,44 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
+	
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void PlayInteractMontage(uint8 InState);
 	
-	float GetWarningRange() const;
 	float GetWanderRange() const;
 	int32 GetWildPower() const;
+
 	EAnimalAIState GetCurrentState() const;
 
 	void SetCurrentState(EAnimalAIState NewState);
+	void SetFullness();
 
+	void GenerateRandom();
 
+public: /* AbilitySystem */
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	
+	UFUNCTION(BlueprintCallable, Category = Attribute)
+	class UEmberAnimalAttributeSet* GetAnimalAttributeSet() const;
+	
+	UFUNCTION(BlueprintCallable, Category = Attribute)
+	class UEmberCharacterAttributeSet* GetCharacterAttributeSet() const;
+	
+protected:
+	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
+	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
+	
+	UPROPERTY()
+	TObjectPtr<class UEmberCharacterAttributeSet> CharacterAttributeSet;
+	
+	UPROPERTY()
+	TObjectPtr<class UEmberAnimalAttributeSet> AnimalAttributeSet;
+	
+	UPROPERTY(EditAnywhere, Category = "HpBar")
+	TSubclassOf<class UUserWidget> HpBarWidgetClass;
+	
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<class UEmberWidgetComponent> HpBarWidget;
 	
 protected:
 	UFUNCTION(BlueprintCallable, Category = AI)
@@ -105,21 +134,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AnimalEnum)
 	EAnimalAIPersonality Personality;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite,Category = "AI")
-	float BumperRange = 100.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	float WarningRange = 50.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	float WalkSpeed = 300;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	float WanderRange = 500.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	int32 WildPower = 0;
-	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	bool bIsShouldSleep = false;
 
@@ -127,24 +141,12 @@ protected:
 	bool bIsHungry = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	float Fullness = 100.f; //포만감
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	bool bIsShouldSwim = false;
-	
-	//주변 동물이 맞는다면 도망
 
-	//5.7 To Do
-	/*
-	 *랜던 성격 부여
-	 *임시먹이 오브젝트 설치 o
-	 *임시먹이 탐색 o
-	 *먹이로 이동 o
-	 *상호작용 - eat 애니메이션, 몇초후idle 전환, 임시먹이 오브젝트 삭제
-	*/
-	
-	//5.8 To Do
-	/*
-	 *프로젝트 합치기
-	 *어빌리티시스템 적용
-	 *육식,초식, 단독,무리->인터페이스인지, 부모자식상속인지
-	*/
-	
+	FTimerHandle TimerHandle;
 };
+
+

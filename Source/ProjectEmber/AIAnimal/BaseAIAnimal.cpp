@@ -1,20 +1,39 @@
 #include "ProjectEmber/AIAnimal/BaseAIAnimal.h"
 
 #include "AIAnimalController.h"
+#include "NavigationInvokerComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Chaos/PBDSuspensionConstraintData.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "AbilitySystemComponent.h"
+#include "Attribute/Animal/EmberAnimalAttributeSet.h"
+#include "Attribute/Character/EmberCharacterAttributeSet.h"
+#include "UI/EmberWidgetComponent.h"
 
 ABaseAIAnimal::ABaseAIAnimal()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+	NavGenerationRadius = 4000.0f; //시각,청각 인지 버뮈보다 인보커 생성 범위가 커야함
+	NavRemovalRadius = 4300.0f;
+	NavInvokerComponent = CreateDefaultSubobject<UNavigationInvokerComponent>("NavInvokerComponent");
+	NavInvokerComponent->SetGenerationRadii(NavGenerationRadius, NavRemovalRadius);
+
 	
-	CurrentState = EAnimalAIState::Idle;
-	Personality = EAnimalAIPersonality::Normal;
 	bIsShouldSwim = false;
-	bIsHungry = false;
+  
+	CurrentState = EAnimalAIState::Idle;
+	GenerateRandom();
+
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+
+	CharacterAttributeSet = CreateDefaultSubobject<UEmberCharacterAttributeSet>(TEXT("CharacterAttributeSet"));
+	AnimalAttributeSet = CreateDefaultSubobject<UEmberAnimalAttributeSet>(TEXT("AnimalAttributeSet"));
+	
+	HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
+	HpBarWidget->SetupAttachment(GetMesh());
+	HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
 }
 
 void ABaseAIAnimal::BeginPlay()
@@ -34,6 +53,18 @@ void ABaseAIAnimal::BeginPlay()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ABaseAIAnimal::AIController 초기화 실패."));
 	}
+	//방법1 : 일정주기마다 무조건 배고픔 활성화 
+	//GetWorldTimerManager().SetTimer(TimerHandle, this,&ABaseAIAnimal::SetFullness,5.0f,true); 
+
+	if (HpBarWidgetClass)
+	{
+		HpBarWidget->SetWidgetClass(HpBarWidgetClass);
+		HpBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
+		HpBarWidget->SetDrawSize(FVector2D(200.0f,20.0f));
+		HpBarWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		HpBarWidget->UpdateAbilitySystemComponent();
+	}
 }
 
 void ABaseAIAnimal::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -44,21 +75,33 @@ void ABaseAIAnimal::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 void ABaseAIAnimal::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	Fullness -= 0.1f;
+	Fullness = FMath::Clamp(Fullness, 0.0f, 100.0f);
+	if (bIsHungry == false && Fullness <= 50.0f)
+	{
+		bIsHungry = true;
+		BlackboardComponent->SetValueAsBool("IsHungry", bIsHungry);
+	}
+	UE_LOG(LogTemp, Warning, TEXT("Tick :: Fullness , IsHungry %f, %d") ,Fullness, bIsHungry);
 }
 
-float ABaseAIAnimal::GetWarningRange() const
+void ABaseAIAnimal::SetFullness()
 {
-	return WarningRange;
+	bIsHungry = !bIsHungry;
+	if (!bIsHungry)
+	{
+		Fullness = 100.0f;
+		UE_LOG(LogTemp, Warning, TEXT("SetFullness :: Fullness , IsHungry %f, %d") ,Fullness, bIsHungry);
+	}
+	BlackboardComponent->SetValueAsBool("IsHungry", bIsHungry);
 }
 
-float ABaseAIAnimal::GetWanderRange() const
+void ABaseAIAnimal::GenerateRandom()
 {
-	return WanderRange;
-}
-
-int32 ABaseAIAnimal::GetWildPower() const
-{
-	return WildPower;
+	int32 RandomPersonality = FMath::RandRange(0, static_cast<int32>(EAnimalAIPersonality::End) - 1);
+	Personality = static_cast<EAnimalAIPersonality>(RandomPersonality);
+	Fullness = FMath::FRandRange(0.f, 100.f);
+	bIsHungry = Fullness <= 50.f;
 }
 
 EAnimalAIState ABaseAIAnimal::GetCurrentState() const
@@ -71,6 +114,21 @@ void ABaseAIAnimal::SetCurrentState(EAnimalAIState NewState)
 	CurrentState = NewState; //객체값 변경
 	BlackboardComponent->SetValueAsEnum("CurrentState", static_cast<uint8>(CurrentState)); //블랙보드 갱신
 	
+}
+
+UAbilitySystemComponent* ABaseAIAnimal::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
+class UEmberCharacterAttributeSet* ABaseAIAnimal::GetCharacterAttributeSet() const
+{
+	return CharacterAttributeSet;
+}
+
+class UEmberAnimalAttributeSet* ABaseAIAnimal::GetAnimalAttributeSet() const
+{
+	return AnimalAttributeSet;
 }
 
 EAnimalAIPersonality ABaseAIAnimal::GetPersonality() const
@@ -97,22 +155,22 @@ void ABaseAIAnimal::SetDetails()
 	{
 	case EAnimalAIPersonality::Agile:
 		{
-			WalkSpeed *= 1.2f;
+			//WalkSpeed *= 1.2f;
 			break;
 		}
 	case EAnimalAIPersonality::Cowardly:
 		{
-			WanderRange *= 1.2f;
+			//WanderRange *= 1.2f;
 			break;
 		}
 	case EAnimalAIPersonality::Lazy:
 		{
-			WalkSpeed *= 0.8f;
+			//WalkSpeed *= 0.8f;
 			break;
 		}
 	case EAnimalAIPersonality::Outsider:
 		{
-			WanderRange *= 1.2f;
+			//WanderRange *= 1.2f;
 			break;
 		}
 		default:

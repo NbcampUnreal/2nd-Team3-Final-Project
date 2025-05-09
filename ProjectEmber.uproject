@@ -11,7 +11,8 @@
 			"AdditionalDependencies": [
 				"AIModule",
 				"Engine",
-				"UMG"
+				"UMG",
+				"DeveloperSettings"
 			]
 		},
 		{
