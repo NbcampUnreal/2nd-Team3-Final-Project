@@ -37,7 +37,7 @@ public:
 	virtual void Interact_Implementation(AActor* Caller) override;
 
 private:
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "Interactable")
 	UBoxComponent* TriggerBox;
 
 };

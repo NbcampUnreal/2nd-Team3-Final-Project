@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "EnumSet.h"
 #include "Engine/GameInstance.h"
 #include "EmberGameInstance.generated.h"
 
@@ -16,7 +17,10 @@ public:
 	virtual void Init() override;
 
 	UFUNCTION(BlueprintCallable)
-	 void TestPlaySound();
+	void TestPlaySound();
+
+	// 현재 지역 확인용
+	EAreaType CurrentAreaType = EAreaType::GrasslandArea;
 
 private:
 	UPROPERTY()

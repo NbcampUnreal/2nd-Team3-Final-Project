@@ -1,6 +1,7 @@
 ﻿#include "EmberCharacter.h"
 #include "EmberAbilitySystem/Attribute/Character/EmberCharacterAttributeSet.h"
 #include "InputHandler/EmberInputHandlerComponent.h"
+#include "EmberComponents/InteractionComponent.h"
 #include "ALSCamera/Public/AlsCameraComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "AlsCharacterMovementComponent.h"
@@ -23,7 +24,8 @@ AEmberCharacter::AEmberCharacter()
     InputHandler = CreateDefaultSubobject<UEmberInputHandlerComponent>(TEXT("InputHandler"));
 
     AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-
+    InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
+    
     HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
     HpBarWidget->SetupAttachment(GetMesh());
     HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
