@@ -15,4 +15,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Config, Category = "Sounds")
 	TSoftObjectPtr<UDataTable> CharacterSounds;
+
+	UPROPERTY(EditAnywhere, Config, Category = "Sounds")
+	TSoftObjectPtr<UDataTable> UISfxSounds;
 };

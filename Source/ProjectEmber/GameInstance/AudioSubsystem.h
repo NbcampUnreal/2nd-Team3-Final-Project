@@ -4,6 +4,8 @@
 #include "EnumSet.h"
 #include "GameInstance/Structs/SoundDataArrayStruct.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "Kismet/GameplayStatics.h"
+#include "EmberLog/EmberLog.h"
 #include "AudioSubsystem.generated.h"
 
 class UAudioDataSettings;
@@ -19,6 +21,7 @@ public:
 	void LoadDataTables();
 
 	void PlayBGM(EAreaSoundType SoundType);
+	void PlaySFX(ESfxSoundType SoundType, uint8 DetailSoundType, FVector Location = FVector::ZeroVector);
 
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 	void SetAndApplyMasterVolume(float NewVolume);
@@ -35,8 +38,51 @@ public:
 	bool CheckValidOfBgmAudio();
 	//bool CheckValidOfUIAudio();
 	bool CheckValidOfCharacterAudio();
-	//bool CheckValidOfBossAudio();
 	//bool CheckValidOfMonsterAudio();
+
+	template<typename EnumType, typename StructType>
+	void PlaySFXByType(UObject* WorldContext, UDataTable* Table, uint8 DetailSoundType, FVector Location)
+	{
+		UEnum* EnumPtr = StaticEnum<EnumType>();
+
+		if (Table && EnumPtr)
+		{
+			FName RowName = FName(*EnumPtr->GetNameStringByValue(static_cast<int32>(DetailSoundType)));
+			const StructType* FoundRow = Table->FindRow<StructType>(RowName, TEXT("PlaySFXByType"));
+
+			if (FoundRow && !FoundRow->Sound.IsNull())
+			{
+				USoundBase* Sound = FoundRow->Sound.LoadSynchronous();
+
+				if (Sound && WorldContext)
+				{
+					if (Location.IsZero())
+					{
+						// UI
+						UGameplayStatics::PlaySound2D(WorldContext, Sound, MasterVolume);
+						EMBER_LOG(LogTemp, Warning, TEXT("Play 2D Sound"));
+					}
+					else
+					{
+						UGameplayStatics::PlaySoundAtLocation(WorldContext, Sound, Location, MasterVolume);
+						EMBER_LOG(LogTemp, Warning, TEXT("Play 3D Sound"));
+					}
+				}
+				else
+				{
+					EMBER_LOG(LogTemp, Warning, TEXT("Sound or WorldContext is NULL"));
+				}
+			}
+			else
+			{
+				EMBER_LOG(LogTemp, Warning, TEXT("Found Row is NULL"));
+			}
+		}
+		else
+		{
+			EMBER_LOG(LogTemp, Warning, TEXT("SFX Table or EnumPtr is NULL"));
+		}
+	}
 
 private:
 	UPROPERTY()
@@ -53,6 +99,9 @@ private:
 
 	UPROPERTY()
 	UDataTable* CharacterSoundTable;
+
+	UPROPERTY()
+	UDataTable* UISfxSoundTable;
 
 	UPROPERTY()
 	TObjectPtr<UAudioComponent> BgmComp;

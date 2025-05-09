@@ -1,12 +1,11 @@
 #include "GameInstance/AudioSubsystem.h"
 #include "AudioDataSettings.h"
 #include "AudioMixerDevice.h"
-#include "EmberLog/EmberLog.h"
 #include "Structs/AreaAudioDataStruct.h"
 #include "Structs/CharacterAudioDataStruct.h"
 
 #include "Components/AudioComponent.h"
-#include "Kismet/GameplayStatics.h"
+#include "Structs/UISFXAudioDataStruct.h"
 
 void UAudioSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -68,6 +67,19 @@ void UAudioSubsystem::PlayBGM(EAreaSoundType SoundType)
 				}
 			}
 		}
+	}
+}
+
+void UAudioSubsystem::PlaySFX(ESfxSoundType SoundType, uint8 DetailSoundType, FVector Location)
+{
+	switch (SoundType)
+	{
+	case ESfxSoundType::UI:
+		PlaySFXByType<EUISfxSoundType, FUISFXAudioDataStruct>(GetWorld(), UISfxSoundTable, DetailSoundType, FVector::ZeroVector);
+		break;
+	case ESfxSoundType::Character:
+		PlaySFXByType<ECharacterSoundType, FCharacterAudioDataStruct>(GetWorld(), CharacterSoundTable, DetailSoundType, Location);
+		break;
 	}
 }
 
