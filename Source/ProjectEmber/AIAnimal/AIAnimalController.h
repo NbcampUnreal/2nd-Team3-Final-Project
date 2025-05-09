@@ -48,7 +48,8 @@ public:
 
 	UBlackboardComponent* BBComponent = nullptr;
 	
-	
+	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
+	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 	
 protected:
 	virtual void BeginPlay() override;

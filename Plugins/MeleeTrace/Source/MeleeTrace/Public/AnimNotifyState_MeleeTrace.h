@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Animation/AnimNotifies/AnimNotifyState.h"
 #include "Misc/EngineVersionComparison.h"
 
@@ -46,5 +47,8 @@ public:
 
 	TArray<FVector> PreviousFrameSamples;
 	TWeakObjectPtr<UMeshComponent> DebugMeshComponent = nullptr;
+	
+	UPROPERTY(EditAnywhere, Category = Notify)
+	FGameplayTag TriggerGameplayTag;
 #endif
 };

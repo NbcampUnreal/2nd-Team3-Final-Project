@@ -43,6 +43,12 @@ class MELEETRACE_API UMeleeTraceComponent : public UActorComponent
 
 public:
 	UMeleeTraceComponent();
+	
+public:
+	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
+	TSubclassOf<class UGameplayEffect> AttackDamageEffectClass;
+	
+public:	
 	virtual void TickComponent(float DeltaTime,
 		ELevelTick TickType,
 		FActorComponentTickFunction* ThisTickFunction) override;
