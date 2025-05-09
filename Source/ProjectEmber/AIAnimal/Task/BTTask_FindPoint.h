@@ -19,13 +19,11 @@ public:
 
 	//태스크 실행 로직
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& Comp, uint8* NodeMemory) override;
+	FVector GenerateRandomLocation(FVector BaseLocation, float Range);
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Search", meta = (AllowPrivateAccess = "true"))
 	float SearchRadius = 3000.f;
-
-	UPROPERTY(EditAnywhere, Category = "AI") //가까워졌을 때 완료로 판단할 거리
-	float AcceptableDistance = 10.f;
 
 	// 상호작용 가능한 오브젝트의 태그
 	UPROPERTY(EditAnywhere, Category = "Search", meta = (AllowPrivateAccess = "true"))

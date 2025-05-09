@@ -61,7 +61,6 @@ protected:
 	void FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus);
 	void SenseInteractionWithUI(const FAIStimulus& Stimulus);
 
-	
 	//sleep 노드 관련
 	static const FName SleepTime;
 
