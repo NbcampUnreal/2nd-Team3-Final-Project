@@ -40,6 +40,10 @@
 		{
 			"Name": "GameplayAbilities",
 			"Enabled": true
+		},
+		{
+			"Name": "EasyMultiSave",
+			"Enabled": true
 		}
 	]
 }
