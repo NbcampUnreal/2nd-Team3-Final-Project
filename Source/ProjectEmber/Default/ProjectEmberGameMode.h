@@ -13,6 +13,14 @@ class AProjectEmberGameMode : public AGameModeBase
 
 public:
 	AProjectEmberGameMode();
+
+	virtual void BeginPlay() override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<UUserWidget> MainMenuWidgetClass;
+
+private:
+	UUserWidget* CurrentWidget;
 };
 
 
