@@ -9,6 +9,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "DrawDebugHelpers.h"
 #include "GameFramework/PawnMovementComponent.h"
+#include "Attribute/Animal/EmberAnimalAttributeSet.h"
 
 const FName AAIAnimalController::SleepTime = "SleepTime";
 const FName AAIAnimalController::IsShouldSleep = "IsShouldSleep";
@@ -70,6 +71,9 @@ void AAIAnimalController::OnPossess(APawn* InPawn)
         RunBehaviorTree(BehaviorTree);
         UE_LOG(LogTemp, Warning, TEXT("AnimalController::블랙보드 초기화 성공, 비헤이비어 트리 실행."));
     }
+
+    AbilitySystemComponent = CastChecked<ABaseAIAnimal>(InPawn)->GetAbilitySystemComponent();
+    //AbilitySystemComponent->Attribute
 }
 
 void AAIAnimalController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
@@ -130,7 +134,7 @@ void AAIAnimalController::FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus)
 
 void AAIAnimalController::FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus)
 {
-    
+
 }
 
 void AAIAnimalController::SenseInteractionWithUI(const FAIStimulus& Stimulus)
