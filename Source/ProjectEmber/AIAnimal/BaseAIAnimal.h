@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "AbilitySystemInterface.h"
 #include "BaseAIAnimal.generated.h"
 
 class UAISenseConfig_Hearing;
@@ -46,7 +47,7 @@ enum class EAnimalAIPersonality : uint8
 };
 
 UCLASS()
-class PROJECTEMBER_API ABaseAIAnimal : public ACharacter
+class PROJECTEMBER_API ABaseAIAnimal : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -57,12 +58,13 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
+	
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void PlayInteractMontage(uint8 InState);
 	
 	float GetWanderRange() const;
 	int32 GetWildPower() const;
+
 	EAnimalAIState GetCurrentState() const;
 
 	void SetCurrentState(EAnimalAIState NewState);
@@ -70,6 +72,30 @@ public:
 
 	void GenerateRandom();
 
+public: /* AbilitySystem */
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	
+	UFUNCTION(BlueprintCallable, Category = Attribute)
+	class UEmberAnimalAttributeSet* GetAnimalAttributeSet() const;
+	
+	UFUNCTION(BlueprintCallable, Category = Attribute)
+	class UEmberCharacterAttributeSet* GetCharacterAttributeSet() const;
+	
+protected:
+	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
+	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
+	
+	UPROPERTY()
+	TObjectPtr<class UEmberCharacterAttributeSet> CharacterAttributeSet;
+	
+	UPROPERTY()
+	TObjectPtr<class UEmberAnimalAttributeSet> AnimalAttributeSet;
+	
+	UPROPERTY(EditAnywhere, Category = "HpBar")
+	TSubclassOf<class UUserWidget> HpBarWidgetClass;
+	
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<class UEmberWidgetComponent> HpBarWidget;
 	
 protected:
 	UFUNCTION(BlueprintCallable, Category = AI)
@@ -107,16 +133,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AnimalEnum)
 	EAnimalAIPersonality Personality;
-	
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	float WalkSpeed = 300;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	float WanderRange = 500.f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	int32 WildPower = 0;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	bool bIsShouldSleep = false;

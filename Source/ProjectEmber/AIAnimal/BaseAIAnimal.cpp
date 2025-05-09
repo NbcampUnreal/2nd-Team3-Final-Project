@@ -6,6 +6,10 @@
 #include "Chaos/PBDSuspensionConstraintData.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "AbilitySystemComponent.h"
+#include "Attribute/Animal/EmberAnimalAttributeSet.h"
+#include "Attribute/Character/EmberCharacterAttributeSet.h"
+#include "UI/EmberWidgetComponent.h"
 
 ABaseAIAnimal::ABaseAIAnimal()
 {
@@ -18,8 +22,18 @@ ABaseAIAnimal::ABaseAIAnimal()
 
 	
 	bIsShouldSwim = false;
+  
 	CurrentState = EAnimalAIState::Idle;
 	GenerateRandom();
+
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+
+	CharacterAttributeSet = CreateDefaultSubobject<UEmberCharacterAttributeSet>(TEXT("CharacterAttributeSet"));
+	AnimalAttributeSet = CreateDefaultSubobject<UEmberAnimalAttributeSet>(TEXT("AnimalAttributeSet"));
+	
+	HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
+	HpBarWidget->SetupAttachment(GetMesh());
+	HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
 }
 
 void ABaseAIAnimal::BeginPlay()
@@ -41,6 +55,16 @@ void ABaseAIAnimal::BeginPlay()
 	}
 	//방법1 : 일정주기마다 무조건 배고픔 활성화 
 	//GetWorldTimerManager().SetTimer(TimerHandle, this,&ABaseAIAnimal::SetFullness,5.0f,true); 
+
+	if (HpBarWidgetClass)
+	{
+		HpBarWidget->SetWidgetClass(HpBarWidgetClass);
+		HpBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
+		HpBarWidget->SetDrawSize(FVector2D(200.0f,20.0f));
+		HpBarWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		HpBarWidget->UpdateAbilitySystemComponent();
+	}
 }
 
 void ABaseAIAnimal::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -80,16 +104,6 @@ void ABaseAIAnimal::GenerateRandom()
 	bIsHungry = Fullness <= 50.f;
 }
 
-float ABaseAIAnimal::GetWanderRange() const
-{
-	return WanderRange;
-}
-
-int32 ABaseAIAnimal::GetWildPower() const
-{
-	return WildPower;
-}
-
 EAnimalAIState ABaseAIAnimal::GetCurrentState() const
 {
 	return CurrentState;
@@ -100,6 +114,21 @@ void ABaseAIAnimal::SetCurrentState(EAnimalAIState NewState)
 	CurrentState = NewState; //객체값 변경
 	BlackboardComponent->SetValueAsEnum("CurrentState", static_cast<uint8>(CurrentState)); //블랙보드 갱신
 	
+}
+
+UAbilitySystemComponent* ABaseAIAnimal::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
+class UEmberCharacterAttributeSet* ABaseAIAnimal::GetCharacterAttributeSet() const
+{
+	return CharacterAttributeSet;
+}
+
+class UEmberAnimalAttributeSet* ABaseAIAnimal::GetAnimalAttributeSet() const
+{
+	return AnimalAttributeSet;
 }
 
 EAnimalAIPersonality ABaseAIAnimal::GetPersonality() const
@@ -126,22 +155,22 @@ void ABaseAIAnimal::SetDetails()
 	{
 	case EAnimalAIPersonality::Agile:
 		{
-			WalkSpeed *= 1.2f;
+			//WalkSpeed *= 1.2f;
 			break;
 		}
 	case EAnimalAIPersonality::Cowardly:
 		{
-			WanderRange *= 1.2f;
+			//WanderRange *= 1.2f;
 			break;
 		}
 	case EAnimalAIPersonality::Lazy:
 		{
-			WalkSpeed *= 0.8f;
+			//WalkSpeed *= 0.8f;
 			break;
 		}
 	case EAnimalAIPersonality::Outsider:
 		{
-			WanderRange *= 1.2f;
+			//WanderRange *= 1.2f;
 			break;
 		}
 		default:
