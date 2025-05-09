@@ -23,8 +23,12 @@ public: /* Character */
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void PossessedBy(AController* NewController) override;
 
+	UPROPERTY(EditAnywhere, Category = "InteractionSystem")
+	TObjectPtr<class UInteractionComponent> InteractionComponent;
+	
 public:
 	virtual UMeleeTraceComponent* GetMeleeTraceComponent() const;
+
 protected:
 	void SetupEmberInputComponent() const;
 
