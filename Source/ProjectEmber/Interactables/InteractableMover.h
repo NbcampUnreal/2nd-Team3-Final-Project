@@ -17,8 +17,8 @@ public:
 
 protected:
 	
-	UFUNCTION()
-	void TimelineProgress(float Value);
+	// UFUNCTION()
+	// void TimelineProgress(float Value);
 	
 private:
 	UPROPERTY(EditInstanceOnly, Category="Interaction")

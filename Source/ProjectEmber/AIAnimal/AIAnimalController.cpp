@@ -90,10 +90,16 @@ void AAIAnimalController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus S
     {
         if (const ABaseAIAnimal* TargetAnimal = Cast<ABaseAIAnimal>(Actor))
         {
+            const UAbilitySystemComponent* TargetAsc = TargetAnimal->GetAbilitySystemComponent();
+            const UAbilitySystemComponent* SourceAsc = Cast<ABaseAIAnimal>(GetPawn())->GetAbilitySystemComponent();
+
+            const UEmberAnimalAttributeSet* TargetAttribute = TargetAsc->GetSet<UEmberAnimalAttributeSet>();
+            const UEmberAnimalAttributeSet* SourceAttribute = SourceAsc->GetSet<UEmberAnimalAttributeSet>();
+            
             float Distance = FVector::Dist(GetPawn()->GetActorLocation(), TargetAnimal->GetActorLocation());
             //파워 우선순위 판단
-            const int32 PawnWildPower = Cast<ABaseAIAnimal>(GetPawn())->GetWildPower();
-            const int32 TargetWildPower = TargetAnimal->GetWildPower();
+            const int32 PawnWildPower = SourceAttribute->GetWildPower();
+            const int32 TargetWildPower = TargetAttribute->GetWildPower();
             
             if (PawnWildPower <= TargetWildPower) //우선순위가 높거나 같으면
             {
