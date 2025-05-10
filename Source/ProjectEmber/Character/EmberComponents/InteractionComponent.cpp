@@ -120,6 +120,11 @@ void UInteractionComponent::OnPickupOverlapEnd(UPrimitiveComponent* OverlappedCo
 
 void UInteractionComponent::SetCurrentInteractable(UObject* NewInteractable)
 {
+	if (bIsLocked)
+	{
+		EMBER_LOG(LogTemp, Warning, TEXT("Current Interactable is locked"));
+		return;
+	}
 	CurrentInteractable = NewInteractable;
 }
 
@@ -144,6 +149,7 @@ void UInteractionComponent::Interact()
 
 void UInteractionComponent::StartGather()
 {
+	bIsLocked = true;
 	PlayInteractMontage();
 	
 	/*if (!GatherWidget)
@@ -157,7 +163,6 @@ void UInteractionComponent::StartGather()
 
 	GatherElapsed = 0.f;
 	
-	// 반복 타이머 시작
 	GetWorld()->GetTimerManager().SetTimer(
 		GatherTimerHandle,
 		this,
@@ -185,6 +190,8 @@ void UInteractionComponent::StopGather()
 		GatherWidget = nullptr;
 	}*/
 
+	bIsLocked = false;
+	SetCurrentInteractable(nullptr);
 	PickupTrigger->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	PickupTrigger->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	PickupTrigger->SetGenerateOverlapEvents(false);
@@ -245,12 +252,11 @@ void UInteractionComponent::PlayInteractMontage()
 				
 				float Duration = AnimInst->Montage_Play(InteractMontage, 1.0f);
 				EMBER_LOG(LogTemp, Warning, TEXT("Montage_Play returned duration %f"), Duration);
-				EMBER_LOG(LogTemp, Warning, TEXT("Binding OnMontageEnded to %s"), *InteractMontage->GetName());
 			}
 		}
 		else
 		{
-			EMBER_LOG(LogTemp, Warning, TEXT("AnumMontage is NULL"));
+			EMBER_LOG(LogTemp, Warning, TEXT("AnimMontage is NULL"));
 		}
 	}
 }
@@ -291,12 +297,10 @@ void UInteractionComponent::OnMontageEnded(UAnimMontage* Montage, bool bInterrup
 			this, &UInteractionComponent::OnMontageEnded
 		);
 		
-		// ② 재생 (PlayRate은 필요 시 조정)
 		CachedAnimInstance->Montage_Play(InteractMontage, 1.0f);
 	}
 	else if (!bLoopMontage)
 	{
-		// 반복 해제 시 처리 (이동 재개 등)
 		if (AEmberCharacter* Char = Cast<AEmberCharacter>(GetOwner()))
 		{
 			if (Char->GetCharacterMovement())
