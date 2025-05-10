@@ -74,6 +74,7 @@ public:
 	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 private:
+	bool bIsLocked = false;
 
 	UPROPERTY(VisibleAnywhere, Category = "Interactable")
 	UBoxComponent* GatherTrigger;
