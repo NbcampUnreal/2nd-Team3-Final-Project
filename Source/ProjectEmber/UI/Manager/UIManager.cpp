@@ -3,10 +3,10 @@
 
 void UUIManager::Initialize(FSubsystemCollectionBase& Collection)
 {
-	RegisterLayer(ELayer::Game,     WidgetClasses.FindChecked(ELayer::Game));
+	/*RegisterLayer(ELayer::Game,     WidgetClasses.FindChecked(ELayer::Game));
 	RegisterLayer(ELayer::GameMenu, WidgetClasses.FindChecked(ELayer::GameMenu));
 	RegisterLayer(ELayer::Menu,     WidgetClasses.FindChecked(ELayer::Menu));
-	RegisterLayer(ELayer::Modal,    WidgetClasses.FindChecked(ELayer::Modal));
+	RegisterLayer(ELayer::Modal,    WidgetClasses.FindChecked(ELayer::Modal));*/
 }
 
 void UUIManager::RegisterLayer(const ELayer Layer, const TSubclassOf<UEmberBaseWidget>& WidgetClass)
