@@ -3,6 +3,8 @@
 #include "ProjectEmberGameMode.h"
 #include "ProjectEmberPlayerController.h"
 #include "ProjectEmberCharacter.h"
+#include "Blueprint/UserWidget.h"
+#include "Kismet/GameplayStatics.h"
 #include "UObject/ConstructorHelpers.h"
 
 AProjectEmberGameMode::AProjectEmberGameMode()
@@ -23,4 +25,29 @@ AProjectEmberGameMode::AProjectEmberGameMode()
 	{
 		PlayerControllerClass = PlayerControllerBPClass.Class;
 	}*/
+}
+
+void AProjectEmberGameMode::BeginPlay()
+{
+    Super::BeginPlay();
+
+    FString CurrentLevelName = UGameplayStatics::GetCurrentLevelName(this, true); // true: streaming 없이 전체 이름
+
+    if (CurrentLevelName.Equals("TestMap"))
+    {
+        if (MainMenuWidgetClass)
+        {
+            APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+            if (PC)
+            {
+                UUserWidget* Menu = CreateWidget<UUserWidget>(PC, MainMenuWidgetClass);
+                if (Menu)
+                {
+                    Menu->AddToViewport();
+                    PC->bShowMouseCursor = true;
+                    PC->SetInputMode(FInputModeUIOnly());
+                }
+            }
+        }
+    }
 }
