@@ -10,7 +10,9 @@
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
 				"AIModule",
-				"Engine"
+				"Engine",
+				"UMG",
+				"DeveloperSettings"
 			]
 		},
 		{
@@ -37,6 +39,10 @@
 		},
 		{
 			"Name": "GameplayAbilities",
+			"Enabled": true
+		},
+		{
+			"Name": "EasyMultiSave",
 			"Enabled": true
 		}
 	]

@@ -15,7 +15,11 @@ void UGA_AttackHitCheck::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-	CurrentLevel = TriggerEventData->EventMagnitude;
+	/*
+	GetAbilitySystemComponentFromActorInfo_Ensured
+	FMeleeTraceHit*/
+	//CurrentLevel = TriggerEventData->EventMagnitude;
+	
 	// Plugin : MeleeAttack * AttackTraceTask = MeleeAttack::CreateTask(this, MeleeAttack::StaticClass());
 	// if (AttackTraceTask)
 	// {

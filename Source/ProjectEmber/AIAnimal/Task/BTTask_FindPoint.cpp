@@ -4,6 +4,7 @@
 
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AIController.h"
+#include "AIAnimal/TestFood.h"
 #include "Kismet/GameplayStatics.h"
 #include "ProjectEmber/AIAnimal/BaseAIAnimal.h"
 
@@ -35,12 +36,14 @@ EBTNodeResult::Type UBTTask_FindPoint::ExecuteTask(UBehaviorTreeComponent& Comp,
 	FVector ActorLocation = AIPawn->GetActorLocation();
 	const float WanderRange = BlackboardComp->GetValueAsFloat("WanderRange");
 
+	const bool bIsRest = BlackboardComp->GetValueAsBool("IsRest"); 
 	const bool bIsHungry = BlackboardComp->GetValueAsBool("IsHungry");
 	const uint8 CurrentState = BlackboardComp->GetValueAsEnum("CurrentState");
-
+	
+	
 	if (CurrentState == static_cast<uint8>(EAnimalAIState::Idle))
 	{
-		if (bIsHungry)
+		if (bIsHungry && bIsRest)
 		{
 			// 상호작용 가능한 가장 가까운 대상 찾기 -> 다른 객체와 타겟 겹치지 않게 처리해야함
 			TArray<AActor*> InteractiveObjects;
@@ -49,11 +52,20 @@ EBTNodeResult::Type UBTTask_FindPoint::ExecuteTask(UBehaviorTreeComponent& Comp,
 			// 가장 가까운 오브젝트 찾기
 			AActor* ClosestObject = nullptr;
 			float ClosestDistance = SearchRadius;
-			FVector AILocation = AIPawn->GetActorLocation();
 
 			for (AActor* Object : InteractiveObjects)
-			{   // 해당 AI Controller를 보유한 Actor의 Location과, Interactive를 태그로 가지고 있는 Objects와의 거리를 산출
-				float Distance = FVector::Dist(AILocation, Object->GetActorLocation());
+			{
+				//다른 객체와 이미 상호작용중이면 다음으로 넘어감
+				if (Object->GetClass()->ImplementsInterface(UInteractiveObject::StaticClass()))
+				{
+					bool IsSelected = IInteractiveObject::Execute_GetIsSelected(Object);
+					if (IsSelected)
+					{
+						continue;
+					}
+				}
+				// 해당 AI Controller를 보유한 Actor의 Location과, Interactive를 태그로 가지고 있는 Objects와의 거리를 산출
+				float Distance = FVector::Dist(ActorLocation, Object->GetActorLocation());
 				if (Distance < ClosestDistance)
 				{
 					// 가장 가까운 오브젝트를 변수에 할당하기 위함.
@@ -65,28 +77,31 @@ EBTNodeResult::Type UBTTask_FindPoint::ExecuteTask(UBehaviorTreeComponent& Comp,
 			// 결과를 블랙보드에 저장
 			if (ClosestObject)
 			{
-				BlackboardComp->SetValueAsObject(GetSelectedBlackboardKey(), ClosestObject);
+				BlackboardComp->SetValueAsObject("TargetActor", ClosestObject);
 				BlackboardComp->SetValueAsVector("TargetLocation", ClosestObject->GetActorLocation());
-				BlackboardComp->SetValueAsEnum("CurrentState", static_cast<uint8>(EAnimalAIState::Wander));
+				IInteractiveObject::Execute_SetIsSelected(ClosestObject, true);
 				UE_LOG(LogTemp, Warning, TEXT("AnimalController::TargetLocation 업데이트 성공. %f, %f, %f"), ClosestObject->GetActorLocation().X, ClosestObject->GetActorLocation().Y, ClosestObject->GetActorLocation().Z );
 				return Super::ExecuteTask(Comp, NodeMemory);
 			}
 			//먹이의 상호작용 호출하는 task 만들어야함 ->먹이셀프삭제, 동물 헝그리설정 변경
 		}
-		// 어슬렁거리기 로직
-		const int RandomSign = FMath::RandRange(0,1);
-		const float RandomWanderRangeX = FMath::RandRange(0.1f, 1.0f);
-		const float RandomWanderRangeY = FMath::RandRange(0.1f, 1.0f);
-		if (RandomSign == 1)
+		if (!bIsRest)
 		{
-			ActorLocation.X += WanderRange * RandomWanderRangeX;
-			ActorLocation.Y += WanderRange * RandomWanderRangeY;
+			FRotator Rotator = AIPawn->GetActorRotation();
+			Rotator.Yaw *= -1.0f;
+			AIPawn->SetActorRotation(Rotator);
+			ActorLocation = GenerateRandomLocation(ActorLocation, WanderRange);
+			
+			if (BlackboardComp)
+			{
+				BlackboardComp->SetValueAsVector("SafeLocation", ActorLocation);
+				BlackboardComp->SetValueAsEnum("CurrentState", static_cast<uint8>(EAnimalAIState::Warning));
+				UE_LOG(LogTemp, Warning, TEXT("AnimalController::SafeLocation 업데이트 성공. %f, %f, %f"), ActorLocation.X, ActorLocation.Y, ActorLocation.Z );
+			}
+			return Super::ExecuteTask(Comp, NodeMemory);
 		}
-		else
-		{
-			ActorLocation.X -= WanderRange * RandomWanderRangeX;
-			ActorLocation.Y -= WanderRange * RandomWanderRangeY;
-		}
+		
+		ActorLocation = GenerateRandomLocation(ActorLocation, WanderRange);
 		if (BlackboardComp)
 		{
 			BlackboardComp->SetValueAsVector("TargetLocation", ActorLocation);
@@ -94,6 +109,13 @@ EBTNodeResult::Type UBTTask_FindPoint::ExecuteTask(UBehaviorTreeComponent& Comp,
 		}
 		return Super::ExecuteTask(Comp, NodeMemory);
 	}
-	
 	return Super::ExecuteTask(Comp, NodeMemory);
+}
+
+FVector UBTTask_FindPoint::GenerateRandomLocation(FVector BaseLocation, float Range)
+{
+	const int RandomSign = FMath::RandRange(0, 1) == 0 ? -1 : 1;
+	const float RandomX = RandomSign * FMath::RandRange(0.1f, 1.0f) * Range;
+	const float RandomY = RandomSign * FMath::RandRange(0.1f, 1.0f) * Range;
+	return BaseLocation + FVector(RandomX, RandomY, 0.f);
 }
