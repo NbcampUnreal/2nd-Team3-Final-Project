@@ -5,14 +5,12 @@
 #include "UIManager.h"
 #include "UIManagerHelper.generated.h"
 
-/**
- * 
- */
-UCLASS()
+UCLASS(Blueprintable)
 class PROJECTEMBER_API UUIManagerHelper : public UObject
 {
 	GENERATED_BODY()
 	
 public:
-	TMap<ELayer, TSubclassOf<UEmberBaseWidget>> WidgetClasses;
+	/*UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UIManager")
+	TMap<ELayer, TSubclassOf<UEmberBaseWidget>> WidgetClasses;*/
 };

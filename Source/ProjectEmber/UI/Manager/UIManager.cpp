@@ -1,24 +1,16 @@
 ﻿#include "UIManager.h"
-#include "UI/BaseWidget/EmberBaseWidget.h"
+#include "UIManagerHelper.h"
 
 void UUIManager::Initialize(FSubsystemCollectionBase& Collection)
 {
-	/*RegisterLayer(ELayer::Game,     WidgetClasses.FindChecked(ELayer::Game));
-	RegisterLayer(ELayer::GameMenu, WidgetClasses.FindChecked(ELayer::GameMenu));
-	RegisterLayer(ELayer::Menu,     WidgetClasses.FindChecked(ELayer::Menu));
-	RegisterLayer(ELayer::Modal,    WidgetClasses.FindChecked(ELayer::Modal));*/
-}
-
-void UUIManager::RegisterLayer(const ELayer Layer, const TSubclassOf<UEmberBaseWidget>& WidgetClass)
-{
-	WidgetClasses.Add(Layer, WidgetClass);
+	//WidgetClassesHelper = NewObject<UUIManagerHelper>(GetTransientPackage(), WidgetClassesHelperClass);
 }
 
 void UUIManager::Open(const ELayer Layer)
 {
 	if (UEmberBaseWidget* Widget = GetOrCreate(Layer))
 	{
-		Widget->Show();
+		//Widget->Show();
 	}
 }
 
@@ -26,7 +18,7 @@ void UUIManager::Close(const ELayer Layer)
 {
 	if (UEmberBaseWidget* Widget = GetOrCreate(Layer))
 	{
-		Widget->Hide();
+		//Widget->Hide();
 	}
 }
 
@@ -34,7 +26,7 @@ void UUIManager::Toggle(const ELayer Layer)
 {
 	if (UEmberBaseWidget* Widget = GetOrCreate(Layer))
 	{
-		Widget->Toggle();
+		//Widget->Toggle();
 	}
 }
 
@@ -45,7 +37,8 @@ UEmberBaseWidget* UUIManager::GetOrCreate(ELayer Layer)
 		return Widgets[Layer];
 	}
 	
-	if (const TSubclassOf<UEmberBaseWidget> WidgetClass = WidgetClasses.FindRef(Layer))
+	/*
+	if (const TSubclassOf<UEmberBaseWidget> WidgetClass = WidgetClassesHelper->WidgetClasses.FindRef(Layer))
 	{
 		if (UEmberBaseWidget* Widget = CreateWidget<UEmberBaseWidget>(GetWorld(), WidgetClass))
 		{
@@ -53,7 +46,7 @@ UEmberBaseWidget* UUIManager::GetOrCreate(ELayer Layer)
 			Widgets.Add(Layer, Widget);
 			return Widget;
 		}
-	}
+	}*/
 	return nullptr;
 }
 
