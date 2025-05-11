@@ -112,8 +112,8 @@ void AEmberCharacter::PossessedBy(AController* NewController)
 
             SetupEmberInputComponent();
 
-            APlayerController* PlayerController = CastChecked<APlayerController>(NewController);
-            PlayerController->ConsoleCommand(TEXT("ShowDebug AbilitySystem"));
+            /*APlayerController* PlayerController = CastChecked<APlayerController>(NewController);
+            PlayerController->ConsoleCommand(TEXT("ShowDebug AbilitySystem"));*/
         }
     }
 }
