@@ -27,7 +27,15 @@ ABaseAIAnimal::ABaseAIAnimal()
 	GenerateRandom();
 
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-
+	if (AbilitySystemComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AbilitySystemComponent::성공"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AbilitySystemComponent::실패."));
+	}
+	
 	CharacterAttributeSet = CreateDefaultSubobject<UEmberCharacterAttributeSet>(TEXT("CharacterAttributeSet"));
 	AnimalAttributeSet = CreateDefaultSubobject<UEmberAnimalAttributeSet>(TEXT("AnimalAttributeSet"));
 	
@@ -53,9 +61,7 @@ void ABaseAIAnimal::BeginPlay()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ABaseAIAnimal::AIController 초기화 실패."));
 	}
-	//방법1 : 일정주기마다 무조건 배고픔 활성화 
-	//GetWorldTimerManager().SetTimer(TimerHandle, this,&ABaseAIAnimal::SetFullness,5.0f,true); 
-
+	
 	if (HpBarWidgetClass)
 	{
 		HpBarWidget->SetWidgetClass(HpBarWidgetClass);
@@ -65,6 +71,8 @@ void ABaseAIAnimal::BeginPlay()
 
 		HpBarWidget->UpdateAbilitySystemComponent();
 	}
+	
+	GetWorldTimerManager().SetTimer(TimerHandle, this,&ABaseAIAnimal::DecreaseFullness,5.0f,true); 
 }
 
 void ABaseAIAnimal::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -75,14 +83,6 @@ void ABaseAIAnimal::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 void ABaseAIAnimal::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	Fullness -= 0.1f;
-	Fullness = FMath::Clamp(Fullness, 0.0f, 100.0f);
-	if (bIsHungry == false && Fullness <= 50.0f)
-	{
-		bIsHungry = true;
-		BlackboardComponent->SetValueAsBool("IsHungry", bIsHungry);
-	}
-	UE_LOG(LogTemp, Warning, TEXT("Tick :: Fullness , IsHungry %f, %d") ,Fullness, bIsHungry);
 }
 
 void ABaseAIAnimal::SetFullness()
@@ -102,6 +102,30 @@ void ABaseAIAnimal::GenerateRandom()
 	Personality = static_cast<EAnimalAIPersonality>(RandomPersonality);
 	Fullness = FMath::FRandRange(0.f, 100.f);
 	bIsHungry = Fullness <= 50.f;
+}
+
+void ABaseAIAnimal::DecreaseFullness()
+{
+	Fullness -= 1.f;
+	Fullness = FMath::Clamp(Fullness, 0.0f, 100.0f);
+	if (bIsHungry == false && Fullness <= 50.0f)
+	{
+		bIsHungry = true;
+		BlackboardComponent->SetValueAsBool("IsHungry", bIsHungry);
+	}
+	UE_LOG(LogTemp, Warning, TEXT("DecreaseFullness :: Fullness , IsHungry %f, %d") ,Fullness, bIsHungry);
+}
+void ABaseAIAnimal::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	// 타이머 해제
+	GetWorldTimerManager().ClearTimer(TimerHandle);
+}
+
+float ABaseAIAnimal::GetWildPower() const
+{
+	return WildPower;
 }
 
 EAnimalAIState ABaseAIAnimal::GetCurrentState() const
@@ -143,6 +167,7 @@ void ABaseAIAnimal::PlayInteractMontage(uint8 InState)
 		PlayAnimMontage(Montage, 1.0f);
 	}
 }
+
 
 UNavigationInvokerComponent* ABaseAIAnimal::GetNavInvoker() const
 {
