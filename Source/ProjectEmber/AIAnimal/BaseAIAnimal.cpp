@@ -17,7 +17,7 @@ ABaseAIAnimal::ABaseAIAnimal()
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	NavGenerationRadius = 4000.0f; //시각,청각 인지 버뮈보다 인보커 생성 범위가 커야함
 	NavRemovalRadius = 4300.0f;
-	//NavInvokerComponent = CreateDefaultSubobject<UNavigationInvokerComponent>("NavInvokerComponent");
+	NavInvokerComponent = CreateDefaultSubobject<UNavigationInvokerComponent>("NavInvokerComponent");
 
 
 	
@@ -82,7 +82,7 @@ void ABaseAIAnimal::BeginPlay()
 	
 	GetWorldTimerManager().SetTimer(TimerHandle, this,&ABaseAIAnimal::DecreaseFullness,5.0f,true);
 
-	//NavInvokerComponent->SetGenerationRadii(NavGenerationRadius, NavRemovalRadius);
+	NavInvokerComponent->SetGenerationRadii(NavGenerationRadius, NavRemovalRadius);
 }
 
 void ABaseAIAnimal::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

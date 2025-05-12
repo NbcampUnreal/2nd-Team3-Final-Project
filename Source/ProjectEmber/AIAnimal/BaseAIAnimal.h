@@ -110,8 +110,8 @@ protected:
 	void SetDetails();
 
 	// Invoker 관련 변수
-	/*UPROPERTY(BlueprintReadWrite, Category = Navigation, meta = (AllowPrivateAccess = "true"))
-	UNavigationInvokerComponent* NavInvokerComponent;*/
+	UPROPERTY(BlueprintReadWrite, Category = Navigation, meta = (AllowPrivateAccess = "true"))
+	UNavigationInvokerComponent* NavInvokerComponent;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Navigation)
 	float NavGenerationRadius;
