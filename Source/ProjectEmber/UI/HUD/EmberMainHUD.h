@@ -5,6 +5,7 @@
 #include "GameplayTagContainer.h"
 #include "EmberMainHUD.generated.h"
 
+class ULayerDebugger;
 class UEmberLayerBase;
 
 UCLASS(Blueprintable, BlueprintType)
@@ -45,7 +46,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
 	void ToggleDebugLayer();
 protected:
-	TObjectPtr<UUserWidget> PrimaryDebugLayer;
+	TObjectPtr<ULayerDebugger> PrimaryDebugLayer;
 	bool bDebugLayerVisible = false;
 //#endif
 };
