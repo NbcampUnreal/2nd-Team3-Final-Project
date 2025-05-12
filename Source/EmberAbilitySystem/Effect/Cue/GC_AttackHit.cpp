@@ -4,13 +4,10 @@
 
 UGC_AttackHit::UGC_AttackHit()
 {
-	static ConstructorHelpers::FObjectFinder<UParticleSystem> ExplosionRef(
-	TEXT("/Script/Engine.ParticleSystem'/Game/StarterContent/Particles/P_Explosion.P_Explosion'")
-);
 	
-	if (ExplosionRef.Succeeded())
+//	if (ExplosionRef.Succeeded())
 	{
-		ParticleSystem = ExplosionRef.Object;
+//		ParticleSystem = ExplosionRef.Object;
 	}
 }
 
