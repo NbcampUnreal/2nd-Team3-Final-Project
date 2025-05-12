@@ -11,7 +11,7 @@ public class MeleeTrace : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core", "GameplayTags",
+				"Core", "GameplayTags", "GameplayAbilities"
 			}
 		);
 		
@@ -22,7 +22,7 @@ public class MeleeTrace : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				"DeveloperSettings", "GameplayAbilities"
+				"DeveloperSettings"
 			}
 		);
 	}
