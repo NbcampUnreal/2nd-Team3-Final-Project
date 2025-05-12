@@ -24,7 +24,7 @@ public:
 private:
 	UEmberBaseWidget* GetOrCreate(ELayer Layer);
 
-	UPROPERTY(Config)
+	UPROPERTY()
 	TSubclassOf<UUIManagerHelper> WidgetClassesHelperClass;
 	
 	UPROPERTY()
