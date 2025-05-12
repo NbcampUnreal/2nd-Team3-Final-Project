@@ -19,6 +19,9 @@
 			"Name": "MeleeTrace",
 			"Type": "Runtime",
 			"LoadingPhase": "PreDefault",
+			"AdditionalDependencies": [
+				"GameplayAbilities"
+			],
 			"PlatformAllowList": [
 				"Win64",
 				"Mac",
