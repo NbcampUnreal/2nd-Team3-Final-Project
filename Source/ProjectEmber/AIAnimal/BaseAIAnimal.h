@@ -54,7 +54,7 @@ class PROJECTEMBER_API ABaseAIAnimal : public ACharacter, public IAbilitySystemI
 public:
 	ABaseAIAnimal();
 
-	
+	virtual void PossessedBy(AController* NewController) override;
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -77,10 +77,10 @@ public: /* AbilitySystem */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
 	UFUNCTION(BlueprintCallable, Category = Attribute)
-	class UEmberAnimalAttributeSet* GetAnimalAttributeSet() const;
+	const class UEmberAnimalAttributeSet* GetAnimalAttributeSet() const;
 	
 	UFUNCTION(BlueprintCallable, Category = Attribute)
-	class UEmberCharacterAttributeSet* GetCharacterAttributeSet() const;
+	const class UEmberCharacterAttributeSet* GetCharacterAttributeSet() const;
 	
 protected:
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
@@ -110,8 +110,8 @@ protected:
 	void SetDetails();
 
 	// Invoker 관련 변수
-	UPROPERTY(BlueprintReadWrite, Category = Navigation, meta = (AllowPrivateAccess = "true"))
-	UNavigationInvokerComponent* NavInvokerComponent;
+	/*UPROPERTY(BlueprintReadWrite, Category = Navigation, meta = (AllowPrivateAccess = "true"))
+	UNavigationInvokerComponent* NavInvokerComponent;*/
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Navigation)
 	float NavGenerationRadius;
