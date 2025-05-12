@@ -1,5 +1,6 @@
 ﻿#include "EmberMainHUD.h"
 #include "EmberLog/EmberLog.h"
+#include "UI/Debug/LayerDebugger.h"
 #include "UI/Layer/EmberLayerBase.h"
 
 void AEmberMainHUD::BeginPlay()
@@ -14,7 +15,7 @@ void AEmberMainHUD::BeginPlay()
 //#if !UE_BUILD_SHIPPING
 		if (UWidget* DebugLayer = Widget->GetWidgetFromName(TEXT("LayerDebugger")))
 		{
-			PrimaryDebugLayer = Cast<UUserWidget>(DebugLayer);
+			PrimaryDebugLayer = Cast<ULayerDebugger>(DebugLayer);
 		}
 //#endif
 	}
@@ -31,6 +32,7 @@ bool AEmberMainHUD::RegisterLayer(const FGameplayTag LayerTag, UEmberLayerBase* 
 		if (!EmberLayers.Contains(LayerTag))
 		{
 			EmberLayers.Add(LayerTag, Layer);
+			//PrimaryDebugLayer->SetChangedLayer();
 			return true;
 		}
 	}
@@ -44,6 +46,7 @@ void AEmberMainHUD::PushInitialWidget()
 	for (const auto WidgetClass : InitWidgetClasses)
 	{
 		PushContentToLayer(WidgetClass.Key, WidgetClass.Value);
+		//PrimaryDebugLayer->SetChangedLayer();
 	}
 }
 
@@ -52,6 +55,7 @@ void AEmberMainHUD::PopContentToLayer(const FGameplayTag LayerTag)
 	if (UEmberLayerBase* Layer = *EmberLayers.Find(LayerTag))
 	{
 		Layer->PopWidget();
+		//PrimaryDebugLayer->SetChangedLayer();
 	}
 }
 
@@ -59,7 +63,9 @@ UUserWidget* AEmberMainHUD::PushContentToLayer(const FGameplayTag LayerTag, cons
 {
 	if (UEmberLayerBase* Layer = *EmberLayers.Find(LayerTag))
 	{
-		return Layer->PushWidget(WidgetClass);
+		UUserWidget* PushWidget = Layer->PushWidget(WidgetClass);
+		//PrimaryDebugLayer->SetChangedLayer();
+		return PushWidget;
 	}
 
 	return nullptr;
@@ -70,6 +76,7 @@ void AEmberMainHUD::ClearToLayer(FGameplayTag LayerTag)
 	if (UEmberLayerBase* Layer = *EmberLayers.Find(LayerTag))
 	{
 		Layer->ClearStack();
+		//PrimaryDebugLayer->SetChangedLayer();
 	}
 }
 

@@ -19,4 +19,16 @@ class PROJECTEMBER_API UUIFunctionLibrary : public UBlueprintFunctionLibrary
 public:
 	UFUNCTION(BlueprintCallable, Category = "UIFunctionLibrary")
 	static bool RegisterLayer(APlayerController* OwningPlayer, FGameplayTag LayerTag, UEmberLayerBase* Layer);
+
+	UFUNCTION(BlueprintCallable, Category = "UIFunctionLibrary")
+	static UUserWidget* PushContentToLayer(APlayerController* OwningPlayer, FGameplayTag LayerTag, const TSubclassOf<UUserWidget>& WidgetClass);
+
+	UFUNCTION(BlueprintCallable, Category = "UIFunctionLibrary")
+	static void PopContentToLayer(APlayerController* OwningPlayer, FGameplayTag LayerTag);
+
+	UFUNCTION(BlueprintCallable, Category = "UIFunctionLibrary")
+	static void ClearToLayer(APlayerController* OwningPlayer, FGameplayTag LayerTag);
+
+	UFUNCTION(BlueprintCallable, Category = "UIFunctionLibrary")
+	static void FocusGame(APlayerController* OwningPlayer);
 };
