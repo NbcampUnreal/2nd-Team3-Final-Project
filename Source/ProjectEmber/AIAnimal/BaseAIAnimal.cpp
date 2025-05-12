@@ -17,8 +17,8 @@ ABaseAIAnimal::ABaseAIAnimal()
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	NavGenerationRadius = 4000.0f; //시각,청각 인지 버뮈보다 인보커 생성 범위가 커야함
 	NavRemovalRadius = 4300.0f;
-	NavInvokerComponent = CreateDefaultSubobject<UNavigationInvokerComponent>("NavInvokerComponent");
-	NavInvokerComponent->SetGenerationRadii(NavGenerationRadius, NavRemovalRadius);
+	//NavInvokerComponent = CreateDefaultSubobject<UNavigationInvokerComponent>("NavInvokerComponent");
+
 
 	
 	bIsShouldSwim = false;
@@ -42,6 +42,14 @@ ABaseAIAnimal::ABaseAIAnimal()
 	HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
 	HpBarWidget->SetupAttachment(GetMesh());
 	HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
+}
+
+void ABaseAIAnimal::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	AbilitySystemComponent->InitStats(UEmberCharacterAttributeSet::StaticClass(), nullptr);
+	AbilitySystemComponent->InitStats(UEmberAnimalAttributeSet::StaticClass(), nullptr);
 }
 
 void ABaseAIAnimal::BeginPlay()
@@ -72,7 +80,9 @@ void ABaseAIAnimal::BeginPlay()
 		HpBarWidget->UpdateAbilitySystemComponent();
 	}
 	
-	GetWorldTimerManager().SetTimer(TimerHandle, this,&ABaseAIAnimal::DecreaseFullness,5.0f,true); 
+	GetWorldTimerManager().SetTimer(TimerHandle, this,&ABaseAIAnimal::DecreaseFullness,5.0f,true);
+
+	//NavInvokerComponent->SetGenerationRadii(NavGenerationRadius, NavRemovalRadius);
 }
 
 void ABaseAIAnimal::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -145,14 +155,15 @@ UAbilitySystemComponent* ABaseAIAnimal::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
-class UEmberCharacterAttributeSet* ABaseAIAnimal::GetCharacterAttributeSet() const
+const class UEmberCharacterAttributeSet* ABaseAIAnimal::GetCharacterAttributeSet() const
 {
-	return CharacterAttributeSet;
+	
+	return AbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>();
 }
 
-class UEmberAnimalAttributeSet* ABaseAIAnimal::GetAnimalAttributeSet() const
+const class UEmberAnimalAttributeSet* ABaseAIAnimal::GetAnimalAttributeSet() const
 {
-	return AnimalAttributeSet;
+	return AbilitySystemComponent->GetSet<UEmberAnimalAttributeSet>();
 }
 
 EAnimalAIPersonality ABaseAIAnimal::GetPersonality() const
@@ -171,7 +182,7 @@ void ABaseAIAnimal::PlayInteractMontage(uint8 InState)
 
 UNavigationInvokerComponent* ABaseAIAnimal::GetNavInvoker() const
 {
-	return NavInvokerComponent;
+	return nullptr;//NavInvokerComponent;
 }
 
 void ABaseAIAnimal::SetDetails()
