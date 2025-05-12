@@ -83,9 +83,8 @@ EBTNodeResult::Type UBTTask_FindPoint::ExecuteTask(UBehaviorTreeComponent& Comp,
 				UE_LOG(LogTemp, Warning, TEXT("AnimalController::TargetLocation 업데이트 성공. %f, %f, %f"), ClosestObject->GetActorLocation().X, ClosestObject->GetActorLocation().Y, ClosestObject->GetActorLocation().Z );
 				return Super::ExecuteTask(Comp, NodeMemory);
 			}
-			//먹이의 상호작용 호출하는 task 만들어야함 ->먹이셀프삭제, 동물 헝그리설정 변경
 		}
-		if (!bIsRest)
+		if (!bIsRest) //맞지 않았지만 시가, 청각으로 위험을 감지했으면, 타겟엑터는 감지할 때 정해짐
 		{
 			FRotator Rotator = AIPawn->GetActorRotation();
 			Rotator.Yaw *= -1.0f;
