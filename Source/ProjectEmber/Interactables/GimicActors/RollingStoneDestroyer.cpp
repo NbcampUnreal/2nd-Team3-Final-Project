@@ -3,6 +3,7 @@
 #include "Interactables/GimicActors/RollingStone.h"
 
 #include "Components/BoxComponent.h"
+#include "EmberLog/EmberLog.h"
 
 ARollingStoneDestroyer::ARollingStoneDestroyer()
 {
@@ -20,8 +21,15 @@ void ARollingStoneDestroyer::OnOverlapBegin(UPrimitiveComponent* OverlappedComp,
 {
 	if (ARollingStone* Actor = Cast<ARollingStone>(OtherActor))
 	{
-		Spawner->DestroyRollingStone();
-		Spawner->SpawnRollingStone();
+		if (Spawner)
+		{
+			Spawner->DestroyRollingStone();
+			Spawner->SpawnRollingStone();
+		}
+		else
+		{
+			EMBER_LOG(LogTemp, Warning, TEXT("Spawner is NULL"));
+		}
 	}
 }
 
