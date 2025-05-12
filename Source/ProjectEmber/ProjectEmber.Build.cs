@@ -13,7 +13,7 @@ public class ProjectEmber : ModuleRules
         PublicDependencyModuleNames.AddRange(new string[]
         {
 	        "Core", "CoreUObject", "Engine", "InputCore", "NavigationSystem", "AIModule", "Niagara", "EnhancedInput",
-	        "NavigationSystem", "GameplayTags"
+	        "NavigationSystem", "GameplayTags","UMG"
         });
         
         PrivateDependencyModuleNames.AddRange(new string[]
@@ -23,7 +23,7 @@ public class ProjectEmber : ModuleRules
 	        "GameplayAbilities",
 	        "EmberAbilitySystem",
 	        "EmberUtils",
-	        "UMG", "MeleeTrace"
+	        "MeleeTrace"
         });
     }
 }

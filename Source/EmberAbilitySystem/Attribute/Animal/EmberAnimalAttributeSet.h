@@ -25,18 +25,14 @@ public:
     virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 
 public: /* Behavior Tree Variable */
-    ATTRIBUTE_ACCESSORS(UEmberAnimalAttributeSet, BumperRange)
-    ATTRIBUTE_ACCESSORS(UEmberAnimalAttributeSet, WarningRange)
+    ATTRIBUTE_ACCESSORS(UEmberAnimalAttributeSet, Fullness)
     ATTRIBUTE_ACCESSORS(UEmberAnimalAttributeSet, WalkSpeed)
     ATTRIBUTE_ACCESSORS(UEmberAnimalAttributeSet, WanderRange)
     ATTRIBUTE_ACCESSORS(UEmberAnimalAttributeSet, WildPower)
     
 protected: 
     UPROPERTY(BlueprintReadOnly, Category = "Animal", Meta = (AllowPrivateAccess = true))
-    FGameplayAttributeData BumperRange;
-    
-    UPROPERTY(BlueprintReadOnly, Category = "Animal", Meta = (AllowPrivateAccess = true))
-    FGameplayAttributeData WarningRange;
+    FGameplayAttributeData Fullness;
     
     UPROPERTY(BlueprintReadOnly, Category = "Animal", Meta = (AllowPrivateAccess = true))
     FGameplayAttributeData WalkSpeed;
