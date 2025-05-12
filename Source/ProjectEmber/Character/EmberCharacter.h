@@ -25,6 +25,9 @@ public: /* Character */
 
 	UPROPERTY(EditAnywhere, Category = "InteractionSystem")
 	TObjectPtr<class UInteractionComponent> InteractionComponent;
+
+	UPROPERTY(EditAnywhere, Category="Interaction")
+	UAnimMontage* InteractMontage;
 	
 public:
 	virtual UMeleeTraceComponent* GetMeleeTraceComponent() const;

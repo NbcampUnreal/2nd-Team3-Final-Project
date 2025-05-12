@@ -14,6 +14,7 @@ public:
 	AInteractableMover();
 	
 	virtual void Interact_Implementation(AActor* Caller) override;
+	virtual float GetGatherTime_Implementation() override; 
 
 protected:
 	
