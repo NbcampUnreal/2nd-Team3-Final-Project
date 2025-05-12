@@ -62,8 +62,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void PlayInteractMontage(uint8 InState);
 	
-	float GetWanderRange() const;
-	int32 GetWildPower() const;
+	float GetWildPower() const;
 
 	EAnimalAIState GetCurrentState() const;
 
@@ -72,7 +71,7 @@ public:
 
 	void GenerateRandom();
 	void DecreaseFullness();
-	void EndPlay(EEndPlayReason::Type EndPlayReason);
+	virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
 
 public: /* AbilitySystem */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
@@ -147,6 +146,9 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	bool bIsShouldSwim = false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	float WildPower;
 
 	FTimerHandle TimerHandle;
 

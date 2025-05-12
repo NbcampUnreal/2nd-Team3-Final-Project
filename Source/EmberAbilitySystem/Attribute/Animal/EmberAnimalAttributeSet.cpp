@@ -6,7 +6,6 @@
 UEmberAnimalAttributeSet::UEmberAnimalAttributeSet()
 {
 	/* Behavior Tree */
-	InitBumperRange(100.0f);
 	InitFullness(100.0f);
 	InitWalkSpeed(300.0f);
 	InitWanderRange(500.0f);

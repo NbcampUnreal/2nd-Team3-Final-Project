@@ -27,7 +27,15 @@ ABaseAIAnimal::ABaseAIAnimal()
 	GenerateRandom();
 
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-
+	if (AbilitySystemComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AbilitySystemComponent::성공"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AbilitySystemComponent::실패."));
+	}
+	
 	CharacterAttributeSet = CreateDefaultSubobject<UEmberCharacterAttributeSet>(TEXT("CharacterAttributeSet"));
 	AnimalAttributeSet = CreateDefaultSubobject<UEmberAnimalAttributeSet>(TEXT("AnimalAttributeSet"));
 	
@@ -115,6 +123,11 @@ void ABaseAIAnimal::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	GetWorldTimerManager().ClearTimer(TimerHandle);
 }
 
+float ABaseAIAnimal::GetWildPower() const
+{
+	return WildPower;
+}
+
 EAnimalAIState ABaseAIAnimal::GetCurrentState() const
 {
 	return CurrentState;
@@ -154,6 +167,7 @@ void ABaseAIAnimal::PlayInteractMontage(uint8 InState)
 		PlayAnimMontage(Montage, 1.0f);
 	}
 }
+
 
 UNavigationInvokerComponent* ABaseAIAnimal::GetNavInvoker() const
 {
