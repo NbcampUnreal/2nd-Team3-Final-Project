@@ -62,8 +62,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void PlayInteractMontage(uint8 InState);
 	
-	float GetWanderRange() const;
-	int32 GetWildPower() const;
+	float GetWildPower() const;
 
 	EAnimalAIState GetCurrentState() const;
 
@@ -71,6 +70,8 @@ public:
 	void SetFullness();
 
 	void GenerateRandom();
+	void DecreaseFullness();
+	virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
 
 public: /* AbilitySystem */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
@@ -145,8 +146,16 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	bool bIsShouldSwim = false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	float WildPower;
 
 	FTimerHandle TimerHandle;
+
+	//콜라이더 추가해서 오버랩 이벤트 -> 누가 때렸는지(타겟엑터) -> IsHit 변경(BT를 위한), state 변경(Task를 위한)-> BT에서 성격에 따라 분기(일반이면 도망, 용감함이면 쫓아가면서 공격)
+	//블랙보드에 성격 추가, BT에도 성격으로 조건 거는 부분 있음 -> 코드 작성할 때 성격 확인 해야함
+	//공격적동물용 BT 따로 생성함
+	//체이서용 파인드타겟 task 따로 만들기, state 변경도 분리해야함(분기에 따라 하나씩 다 만드는 것도 고려해봄직)
 };
 
 
