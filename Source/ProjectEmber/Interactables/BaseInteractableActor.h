@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Interactable.h"
 #include "GameFramework/Actor.h"
 #include "BaseInteractableActor.generated.h"
@@ -24,4 +25,7 @@ public:
 	virtual float GetGatherTime_Implementation() override; 
 
 
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable")
+	FGameplayTagContainer GameplayTagContainer;
 };

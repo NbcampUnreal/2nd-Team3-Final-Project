@@ -67,6 +67,7 @@ void UEmberInputHandlerComponent::RegisterMapping(APlayerController* PC, int32 P
     if (auto* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
     {
         Subsystem->AddMappingContext(InputMappingContext, Priority, Options);
+        Subsystem->AddMappingContext(UIInputMappingContext, Priority, Options);
     }
 }
 
@@ -76,5 +77,6 @@ void UEmberInputHandlerComponent::UnregisterMapping(APlayerController* PC)
     if (auto* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
     {
         Subsystem->RemoveMappingContext(InputMappingContext);
+        Subsystem->RemoveMappingContext(UIInputMappingContext);
     }
 }
