@@ -62,6 +62,9 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	
+	virtual void ActorPreSave_Implementation() override;
+	virtual void ActorLoaded_Implementation() override;
+	
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void PlayInteractMontage(uint8 InState);
 	
@@ -75,6 +78,7 @@ public:
 	void DecreaseFullness();
 	virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
 
+
 public: /* AbilitySystem */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
@@ -85,7 +89,7 @@ public: /* AbilitySystem */
 	const class UEmberCharacterAttributeSet* GetCharacterAttributeSet() const;
 
 	UFUNCTION()
-	void OnHit(const UAbilitySystemComponent* AbilitySystemComponent);
+	void OnHit(AActor* InstigatorActor);
 	
 protected:
 	UFUNCTION(BlueprintCallable, Category = AI)
@@ -101,10 +105,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem", SaveGame)
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 	
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	TObjectPtr<class UEmberCharacterAttributeSet> CharacterAttributeSet;
 	
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	TObjectPtr<class UEmberAnimalAttributeSet> AnimalAttributeSet;
 	
 	UPROPERTY(EditAnywhere, Category = "HpBar")
