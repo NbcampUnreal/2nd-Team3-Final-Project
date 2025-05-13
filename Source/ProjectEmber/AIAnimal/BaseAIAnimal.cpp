@@ -48,6 +48,7 @@ void ABaseAIAnimal::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
+	CharacterAttributeSet->OnHit.AddDynamic(this, &ABaseAIAnimal::OnHit);
 	AbilitySystemComponent->InitStats(UEmberCharacterAttributeSet::StaticClass(), nullptr);
 	AbilitySystemComponent->InitStats(UEmberAnimalAttributeSet::StaticClass(), nullptr);
 }
@@ -153,6 +154,10 @@ void ABaseAIAnimal::SetCurrentState(EAnimalAIState NewState)
 UAbilitySystemComponent* ABaseAIAnimal::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
+}
+
+void ABaseAIAnimal::OnHit(const UAbilitySystemComponent* AbilitySystemComponent)
+{
 }
 
 const class UEmberCharacterAttributeSet* ABaseAIAnimal::GetCharacterAttributeSet() const
