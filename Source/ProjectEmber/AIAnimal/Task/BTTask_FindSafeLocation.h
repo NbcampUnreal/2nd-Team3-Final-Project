@@ -4,18 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/Tasks/BTTask_BlackboardBase.h"
-#include "BTTask_ChangeState.generated.h"
+#include "BTTask_FindSafeLocation.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PROJECTEMBER_API UBTTask_ChangeState : public UBTTask_BlackboardBase
+class PROJECTEMBER_API UBTTask_FindSafeLocation : public UBTTask_BlackboardBase
 {
 	GENERATED_BODY()
 
 public:
-	UBTTask_ChangeState();
-
+	UBTTask_FindSafeLocation();
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+	FVector GenerateRandomLocation(const FVector& BaseLocation, float Range);
 };

@@ -53,14 +53,11 @@ void AAIAnimalController::BeginPlay()
 {
     Super::BeginPlay();
     PerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &AAIAnimalController::OnTargetPerceptionUpdated);
-    if (IsValid(GetBlackboardComponent()))
-    {
-        GetBlackboardComponent()->SetValueAsBool("IsRest", true);
-        GetBlackboardComponent()->SetValueAsFloat("SleepTime", fSleepTime);
-        GetBlackboardComponent()->SetValueAsBool("IsShouldSleep",bIsShouldSleep);
-        GetBlackboardComponent()->SetValueAsEnum("CurrentState",
-                                                static_cast<uint8>(Cast<ABaseAIAnimal>(GetPawn())->GetCurrentState()) );    
-    }
+    BlackboardComponent->SetValueAsBool("IsRest", true);
+    BlackboardComponent->SetValueAsFloat("SleepTime", fSleepTime);
+    BlackboardComponent->SetValueAsBool("IsShouldSleep",bIsShouldSleep);
+    BlackboardComponent->SetValueAsEnum("CurrentState",
+                                            static_cast<uint8>(Cast<ABaseAIAnimal>(GetPawn())->GetCurrentState()) );
 }
 
 void AAIAnimalController::OnPossess(APawn* InPawn)
@@ -121,6 +118,7 @@ void AAIAnimalController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus S
             {
                 //여기서 인식되면 타겟, 거리 등록
                 BBComponent->SetValueAsBool("IsRest", false);
+                BBComponent->SetValueAsEnum("CurrentState", static_cast<uint8>(EAnimalAIState::Warning));
                 BBComponent->SetValueAsObject("TargetActor", Actor);
             
             }
