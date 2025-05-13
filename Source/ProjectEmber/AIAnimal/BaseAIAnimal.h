@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
+#include "EMSActorSaveInterface.h"
 #include "BaseAIAnimal.generated.h"
 
 class UAISenseConfig_Hearing;
@@ -47,7 +48,7 @@ enum class EAnimalAIPersonality : uint8
 };
 
 UCLASS()
-class PROJECTEMBER_API ABaseAIAnimal : public ACharacter, public IAbilitySystemInterface
+class PROJECTEMBER_API ABaseAIAnimal : public ACharacter, public IAbilitySystemInterface, public IEMSActorSaveInterface
 {
 	GENERATED_BODY()
 
@@ -81,9 +82,12 @@ public: /* AbilitySystem */
 	
 	UFUNCTION(BlueprintCallable, Category = Attribute)
 	const class UEmberCharacterAttributeSet* GetCharacterAttributeSet() const;
+
+	UFUNCTION()
+	void OnHit(const UAbilitySystemComponent* AbilitySystemComponent);
 	
 protected:
-	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
+	UPROPERTY(EditAnywhere, Category = "AbilitySystem", SaveGame)
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 	
 	UPROPERTY()
@@ -95,7 +99,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "HpBar")
 	TSubclassOf<class UUserWidget> HpBarWidgetClass;
 	
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, SaveGame)
 	TObjectPtr<class UEmberWidgetComponent> HpBarWidget;
 	
 protected:

@@ -8,6 +8,7 @@
 #include "GameFramework/Character.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "DrawDebugHelpers.h"
+#include "EMSCompSaveInterface.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
 
@@ -52,16 +53,21 @@ void AAIAnimalController::BeginPlay()
 {
     Super::BeginPlay();
     PerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &AAIAnimalController::OnTargetPerceptionUpdated);
-    GetBlackboardComponent()->SetValueAsBool("IsRest", true);
-    GetBlackboardComponent()->SetValueAsFloat("SleepTime", fSleepTime);
-    GetBlackboardComponent()->SetValueAsBool("IsShouldSleep",bIsShouldSleep);
-    GetBlackboardComponent()->SetValueAsEnum("CurrentState",
-                                            static_cast<uint8>(Cast<ABaseAIAnimal>(GetPawn())->GetCurrentState()) );
+    if (IsValid(GetBlackboardComponent()))
+    {
+        GetBlackboardComponent()->SetValueAsBool("IsRest", true);
+        GetBlackboardComponent()->SetValueAsFloat("SleepTime", fSleepTime);
+        GetBlackboardComponent()->SetValueAsBool("IsShouldSleep",bIsShouldSleep);
+        GetBlackboardComponent()->SetValueAsEnum("CurrentState",
+                                                static_cast<uint8>(Cast<ABaseAIAnimal>(GetPawn())->GetCurrentState()) );    
+    }
 }
 
 void AAIAnimalController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
+
+    
     // 비헤이비어 트리 실행
     if (BehaviorTree)
     {

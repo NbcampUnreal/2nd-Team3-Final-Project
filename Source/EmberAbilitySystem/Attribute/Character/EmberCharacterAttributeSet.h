@@ -12,6 +12,7 @@ GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName)			   \
 GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOutOfHealthDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHitDelegate,const UAbilitySystemComponent*, TargetAsc);
 
 UCLASS()
 class EMBERABILITYSYSTEM_API UEmberCharacterAttributeSet : public UAttributeSet
@@ -33,7 +34,7 @@ public:
 	ATTRIBUTE_ACCESSORS(UEmberCharacterAttributeSet, Damage);
 	
 	mutable FOutOfHealthDelegate OnOutOfHealth;
-	
+	mutable FHitDelegate OnHit;
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Attack", Meta = (AllowPrivateAccess=true))
 	FGameplayAttributeData AttackRate;
