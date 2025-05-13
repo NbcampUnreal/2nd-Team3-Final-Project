@@ -4,11 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Components/WidgetComponent.h"
+#include "EMSActorSaveInterface.h"
 #include "EmberWidgetComponent.generated.h"
 
 
 UCLASS()
-class PROJECTEMBER_API UEmberWidgetComponent : public UWidgetComponent
+class PROJECTEMBER_API UEmberWidgetComponent : public UWidgetComponent, public IEMSActorSaveInterface
 {
 	GENERATED_BODY()
 

@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
 #include "GameplayEffectTypes.h"
+#include "EMSActorSaveInterface.h"
 #include "BaseAIAnimal.generated.h"
 
 class UMeleeTraceComponent;
@@ -49,7 +50,7 @@ enum class EAnimalAIPersonality : uint8
 };
 
 UCLASS()
-class PROJECTEMBER_API ABaseAIAnimal : public ACharacter, public IAbilitySystemInterface
+class PROJECTEMBER_API ABaseAIAnimal : public ACharacter, public IAbilitySystemInterface, public IEMSActorSaveInterface
 {
 	GENERATED_BODY()
 
@@ -61,6 +62,9 @@ public:
 	void OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
+	
+	virtual void ActorPreSave_Implementation() override;
+	virtual void ActorLoaded_Implementation() override;
 	
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void PlayInteractMontage(uint8 InState);
@@ -75,6 +79,7 @@ public:
 	void DecreaseFullness();
 	virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
 
+
 public: /* AbilitySystem */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
@@ -83,6 +88,9 @@ public: /* AbilitySystem */
 	
 	UFUNCTION(BlueprintCallable, Category = Attribute)
 	const class UEmberCharacterAttributeSet* GetCharacterAttributeSet() const;
+
+	UFUNCTION()
+	void OnHit(AActor* InstigatorActor);
 	
 protected:
 	UFUNCTION(BlueprintCallable, Category = AI)
@@ -98,19 +106,19 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void SetDetails();
 	
-	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
+	UPROPERTY(EditAnywhere, Category = "AbilitySystem", SaveGame)
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 	
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	TObjectPtr<class UEmberCharacterAttributeSet> CharacterAttributeSet;
 	
-	UPROPERTY()
+	UPROPERTY(SaveGame)
 	TObjectPtr<class UEmberAnimalAttributeSet> AnimalAttributeSet;
 	
 	UPROPERTY(EditAnywhere, Category = "HpBar")
 	TSubclassOf<class UUserWidget> HpBarWidgetClass;
 	
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, SaveGame)
 	TObjectPtr<class UEmberWidgetComponent> HpBarWidget;
 	
 	// Invoker 관련 변수
