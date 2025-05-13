@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "AlsCharacter.h"
 #include "AbilitySystemInterface.h"
+#include "EMSActorSaveInterface.h"
 #include "EmberCharacter.generated.h"
 
 class UAlsCameraComponent;
@@ -11,7 +12,7 @@ class UMeleeTraceComponent;
 struct FInputActionValue;
 
 UCLASS()
-class PROJECTEMBER_API AEmberCharacter : public AAlsCharacter, public IAbilitySystemInterface
+class PROJECTEMBER_API AEmberCharacter : public AAlsCharacter, public IAbilitySystemInterface, public IEMSActorSaveInterface
 {
 	GENERATED_BODY()
 

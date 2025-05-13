@@ -8,6 +8,7 @@
 #include "GameFramework/Character.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "DrawDebugHelpers.h"
+#include "EMSCompSaveInterface.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
 
@@ -62,6 +63,8 @@ void AAIAnimalController::BeginPlay()
 void AAIAnimalController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
+
+    
     // 비헤이비어 트리 실행
     if (BehaviorTree)
     {
