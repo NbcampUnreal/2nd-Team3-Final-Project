@@ -7,8 +7,10 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AbilitySystemComponent.h"
+#include "GameplayEffectExtension.h"
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
+#include "Components/BoxComponent.h"
 #include "UI/EmberWidgetComponent.h"
 
 ABaseAIAnimal::ABaseAIAnimal()
@@ -17,25 +19,13 @@ ABaseAIAnimal::ABaseAIAnimal()
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	NavGenerationRadius = 4000.0f; //시각,청각 인지 버뮈보다 인보커 생성 범위가 커야함
 	NavRemovalRadius = 4300.0f;
-	//NavInvokerComponent = CreateDefaultSubobject<UNavigationInvokerComponent>("NavInvokerComponent");
+	NavInvokerComponent = CreateDefaultSubobject<UNavigationInvokerComponent>("NavInvokerComponent");
 
-
-	
 	bIsShouldSwim = false;
-  
 	CurrentState = EAnimalAIState::Idle;
 	GenerateRandom();
 
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-	if (AbilitySystemComponent)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("AbilitySystemComponent::성공"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("AbilitySystemComponent::실패."));
-	}
-	
 	CharacterAttributeSet = CreateDefaultSubobject<UEmberCharacterAttributeSet>(TEXT("CharacterAttributeSet"));
 	AnimalAttributeSet = CreateDefaultSubobject<UEmberAnimalAttributeSet>(TEXT("AnimalAttributeSet"));
 	
@@ -61,14 +51,7 @@ void ABaseAIAnimal::BeginPlay()
 	if (AIController)
 	{
 		BlackboardComponent = AIController->GetBlackboardComponent();
-		if (!BlackboardComponent)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("ABaseAIAnimal::블랙보드 초기화 실패."));
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ABaseAIAnimal::AIController 초기화 실패."));
+	
 	}
 	
 	if (HpBarWidgetClass)
@@ -80,21 +63,35 @@ void ABaseAIAnimal::BeginPlay()
 
 		HpBarWidget->UpdateAbilitySystemComponent();
 	}
-	
+	NavInvokerComponent->SetGenerationRadii(NavGenerationRadius, NavRemovalRadius);
 	GetWorldTimerManager().SetTimer(TimerHandle, this,&ABaseAIAnimal::DecreaseFullness,5.0f,true);
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UEmberCharacterAttributeSet::GetHealthAttribute()).AddUObject(this, &ThisClass::OnHealthChanged);
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UEmberCharacterAttributeSet::GetMaxHealthAttribute()).AddUObject(this, &ThisClass::OnMaxHealthChanged);
 
-	//NavInvokerComponent->SetGenerationRadii(NavGenerationRadius, NavRemovalRadius);
-}
-
-void ABaseAIAnimal::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	//test
+	BlackboardComponent->SetValueAsEnum("Personality", static_cast<uint8>(Personality)); 
 }
 
 void ABaseAIAnimal::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
+
+void ABaseAIAnimal::OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData)
+{
+	UE_LOG(LogTemp, Warning, TEXT(" ABaseAIAnimal::OnHealthChanged::성공"));
+	//속도 빨라졌다 서서히 감소 추가해야함
+	BlackboardComponent->SetValueAsBool("IsRest", false);
+	BlackboardComponent->SetValueAsBool("IsHit", true);
+	//여기서 타겟오브젝트 설정 -> 이미  IsRest, IsHit가 값이 위에처럼 설정되면 다른 노드로 들어가지 않음
+	
+}
+
+void ABaseAIAnimal::OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData)
+{
+	UE_LOG(LogTemp, Warning, TEXT("ABaseAIAnimal::OnMaxHealthChanged::성공"));
+}
+
 
 void ABaseAIAnimal::SetFullness()
 {
@@ -109,8 +106,9 @@ void ABaseAIAnimal::SetFullness()
 
 void ABaseAIAnimal::GenerateRandom()
 {
-	int32 RandomPersonality = FMath::RandRange(0, static_cast<int32>(EAnimalAIPersonality::End) - 1);
-	Personality = static_cast<EAnimalAIPersonality>(RandomPersonality);
+	//int32 RandomPersonality = FMath::RandRange(0, static_cast<int32>(EAnimalAIPersonality::End) - 1);
+	//Personality = static_cast<EAnimalAIPersonality>(RandomPersonality);
+	Personality = EAnimalAIPersonality::Brave;
 	Fullness = FMath::FRandRange(0.f, 100.f);
 	bIsHungry = Fullness <= 50.f;
 }

@@ -5,9 +5,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
+#include "GameplayEffectTypes.h"
 #include "EMSActorSaveInterface.h"
 #include "BaseAIAnimal.generated.h"
 
+class UBoxComponent;
 class UAISenseConfig_Hearing;
 class UAISenseConfig_Sight;
 class UAIPerceptionComponent;
@@ -23,7 +25,6 @@ UENUM(BlueprintType)
 enum class EAnimalAIState : uint8
 {
 	Idle			UMETA(DisplayName = "Idle"),
-	FindFood        UMETA(DisplayName = "FindFood"), 
 	Wander			UMETA(DisplayName = "Wander"),
 	Attack			UMETA(DisplayName = "Attack"),
 	Hit				UMETA(DisplayName = "Hit"),
@@ -56,15 +57,15 @@ public:
 	ABaseAIAnimal();
 
 	virtual void PossessedBy(AController* NewController) override;
+	void OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
+	void OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void PlayInteractMontage(uint8 InState);
 	
 	float GetWildPower() const;
-
 	EAnimalAIState GetCurrentState() const;
 
 	void SetCurrentState(EAnimalAIState NewState);
@@ -87,6 +88,16 @@ public: /* AbilitySystem */
 	void OnHit(const UAbilitySystemComponent* AbilitySystemComponent);
 	
 protected:
+	UFUNCTION(BlueprintCallable, Category = AI)
+	EAnimalAIPersonality GetPersonality() const;
+	
+	UFUNCTION(BlueprintCallable, Category = AI)
+	UNavigationInvokerComponent* GetNavInvoker() const;
+
+	//DT 생성 전까지 쓸 Test함수
+	UFUNCTION(BlueprintCallable, Category = AI)
+	void SetDetails();
+	
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem", SaveGame)
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 	
@@ -102,20 +113,9 @@ protected:
 	UPROPERTY(BlueprintReadOnly, SaveGame)
 	TObjectPtr<class UEmberWidgetComponent> HpBarWidget;
 	
-protected:
-	UFUNCTION(BlueprintCallable, Category = AI)
-	EAnimalAIPersonality GetPersonality() const;
-	
-	UFUNCTION(BlueprintCallable, Category = AI)
-	UNavigationInvokerComponent* GetNavInvoker() const;
-
-	//DT 생성 전까지 쓸 Test함수
-	UFUNCTION(BlueprintCallable, Category = AI)
-	void SetDetails();
-
 	// Invoker 관련 변수
-	/*UPROPERTY(BlueprintReadWrite, Category = Navigation, meta = (AllowPrivateAccess = "true"))
-	UNavigationInvokerComponent* NavInvokerComponent;*/
+	UPROPERTY(BlueprintReadWrite, Category = Navigation, meta = (AllowPrivateAccess = "true"))
+	UNavigationInvokerComponent* NavInvokerComponent;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Navigation)
 	float NavGenerationRadius;

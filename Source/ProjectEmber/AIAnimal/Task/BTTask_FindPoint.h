@@ -18,8 +18,8 @@ public:
 	UBTTask_FindPoint();
 
 	//태스크 실행 로직
-	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& Comp, uint8* NodeMemory) override;
-	FVector GenerateRandomLocation(FVector BaseLocation, float Range);
+	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+	FVector GenerateRandomLocation(const FVector& BaseLocation, float Range);
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Search", meta = (AllowPrivateAccess = "true"))
