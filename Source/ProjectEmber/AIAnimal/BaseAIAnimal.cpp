@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayEffectExtension.h"
+#include "MeleeTraceComponent.h"
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
 #include "Components/BoxComponent.h"
@@ -28,7 +29,7 @@ ABaseAIAnimal::ABaseAIAnimal()
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	CharacterAttributeSet = CreateDefaultSubobject<UEmberCharacterAttributeSet>(TEXT("CharacterAttributeSet"));
 	AnimalAttributeSet = CreateDefaultSubobject<UEmberAnimalAttributeSet>(TEXT("AnimalAttributeSet"));
-	
+	MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
 	HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
 	HpBarWidget->SetupAttachment(GetMesh());
 	HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
@@ -83,7 +84,29 @@ void ABaseAIAnimal::OnHealthChanged(const FOnAttributeChangeData& OnAttributeCha
 	BlackboardComponent->SetValueAsBool("IsRest", false);
 	BlackboardComponent->SetValueAsBool("IsHit", true);
 	//여기서 타겟오브젝트 설정 -> 이미  IsRest, IsHit가 값이 위에처럼 설정되면 다른 노드로 들어가지 않음
-	
+	if (Personality != EAnimalAIPersonality::Brave)
+	{
+		return;
+	}
+	BlackboardComponent->SetValueAsEnum("CurrentState", static_cast<uint8>(EAnimalAIState::Attack));
+	// TArray<AActor*> TargetActor;
+	// // 플레이어 태그를 가진 엑터를 타겟엑터로 등록 -> 플레이어 전용 코드
+	// //맞았을 때 한 번만 여기서 타겟엑터 등록, 그 다음 서비스에서 거리 갱신
+	// UGameplayStatics::GetAllActorsWithTag(GetWorld(), "Player", TargetActor);
+	// AActor* ClosestObject = nullptr;
+	// for (auto Actor : TargetActor)
+	// {
+	// 	if (Actor)
+	// 	{
+	// 		ClosestObject = Actor;
+	// 	}
+	// }
+	// // 결과를 블랙보드에 저장
+	// if (ClosestObject)
+	// {
+	// 	BlackboardComponent->SetValueAsObject("TargetActor", ClosestObject);
+	// 	BlackboardComponent->SetValueAsVector("TargetLocation", ClosestObject->GetActorLocation());
+	// }
 }
 
 void ABaseAIAnimal::OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData)

@@ -8,6 +8,7 @@
 #include "GameplayEffectTypes.h"
 #include "BaseAIAnimal.generated.h"
 
+class UMeleeTraceComponent;
 class UBoxComponent;
 class UAISenseConfig_Hearing;
 class UAISenseConfig_Sight;
@@ -90,6 +91,9 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = AI)
 	UNavigationInvokerComponent* GetNavInvoker() const;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UMeleeTraceComponent* MeleeTraceComponent;
+	
 	//DT 생성 전까지 쓸 Test함수
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void SetDetails();
