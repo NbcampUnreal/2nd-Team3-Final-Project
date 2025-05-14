@@ -11,7 +11,7 @@ public class EmberUtils : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
-                "Core",
+                "Core","UMG"
             }
         );
 
@@ -22,7 +22,8 @@ public class EmberUtils : ModuleRules
                 "Engine",
                 "Slate",
                 "SlateCore",
-                "GameplayTags"
+                "GameplayTags",
+                "ProjectEmber"
             }
         );
     }
