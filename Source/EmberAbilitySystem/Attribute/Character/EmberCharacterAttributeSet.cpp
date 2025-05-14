@@ -66,7 +66,9 @@ void UEmberCharacterAttributeSet::PostGameplayEffectExecute(const struct FGamepl
 	{
 		EMBER_LOG(LogEmber,Log,TEXT("Damage: %f"), GetDamage());
 		SetHealth(FMath::Clamp(GetHealth() - GetDamage(), MinimumHealth, GetMaxHealth()));
-		SetDamage(0.0f); 
+		SetDamage(0.0f);
+		
+		OnHit.Broadcast(Data.EffectSpec.GetContext().GetInstigator());
 	}
 
 	if (GetHealth() <= MinimumHealth && !bOutOfHealth)

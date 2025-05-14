@@ -26,16 +26,18 @@ bool ARollingStoneSpawner::GetIsSpawning() const
 
 void ARollingStoneSpawner::SpawnRollingStone()
 {
-	if (!RollingStone && RollingStoneClass)
+	if (bIsSpawning)
 	{
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = this;                           // 소유자 지정 (옵션)
-		SpawnParams.Instigator = GetInstigator();           // 인스티게이터 지정 (옵션)
-		SpawnParams.SpawnCollisionHandlingOverride =        // 충돌 처리 방식
-			ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+		if (!RollingStone && RollingStoneClass)
+		{
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Owner = this;                           // 소유자 지정 (옵션)
+			SpawnParams.Instigator = GetInstigator();           // 인스티게이터 지정 (옵션)
+			SpawnParams.SpawnCollisionHandlingOverride =        // 충돌 처리 방식
+				ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 	
-		RollingStone = GetWorld()->SpawnActor<ARollingStone>(RollingStoneClass, GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
-		bIsSpawning = true;
+			RollingStone = GetWorld()->SpawnActor<ARollingStone>(RollingStoneClass, GetActorLocation(), FRotator::ZeroRotator, SpawnParams);
+		}
 	}
 }
 
@@ -45,7 +47,18 @@ void ARollingStoneSpawner::DestroyRollingStone()
 	{
 		RollingStone->Destroy();
 		RollingStone = nullptr;
-		
+	}
+}
+
+void ARollingStoneSpawner::PlayGimic_Implementation()
+{
+	if (!bIsSpawning)
+	{
+		bIsSpawning = true;
+		SpawnRollingStone();
+	}
+	else
+	{
 		bIsSpawning = false;
 	}
 }
