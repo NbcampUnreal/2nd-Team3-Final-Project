@@ -1,13 +1,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Gimic.h"
 #include "GameFramework/Actor.h"
 #include "RollingStoneSpawner.generated.h"
 
 class ARollingStone;
 
 UCLASS()
-class PROJECTEMBER_API ARollingStoneSpawner : public AActor
+class PROJECTEMBER_API ARollingStoneSpawner : public AActor, public IGimic
 {
 	GENERATED_BODY()
 	
@@ -22,6 +23,11 @@ public:
 	bool GetIsSpawning() const;
 	void SpawnRollingStone();
 	void DestroyRollingStone();
+
+	virtual void PlayGimic_Implementation() override;
+
+public:
+	UPROPERTY(EditAnywhere, Category = "Stone");
 	bool bIsSpawning = false;
 
 	UPROPERTY(EditAnywhere, Category = "Stone")
