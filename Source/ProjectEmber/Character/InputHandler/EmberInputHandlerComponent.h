@@ -24,7 +24,8 @@ public:
 	
 	void RegisterMapping(APlayerController* PC, int32 Priority = 0, const FModifyContextOptions& Options = FModifyContextOptions());
 	void UnregisterMapping(APlayerController* PC);
-	
+
+public: /* Base Input */
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<UInputMappingContext> InputMappingContext;
 	
@@ -72,4 +73,28 @@ public:
 
 	UPROPERTY(EditAnywhere, Category="Input") 
 	TObjectPtr<UInputAction> InteractAction;
+
+public: /* UI Input */
+	/* Comment : UI does not always run when you press it */
+	
+	UPROPERTY(EditAnywhere, Category="Input|UI")
+	TObjectPtr<UInputMappingContext> UIInputMappingContext;
+
+	UPROPERTY(EditAnywhere, Category="Input|UI") 
+	TObjectPtr<UInputAction> UIInventoryAction;
+	
+	UPROPERTY(EditAnywhere, Category="Input|UI") 
+	TObjectPtr<UInputAction> UIQuestAction;
+
+	UPROPERTY(EditAnywhere, Category="Input|UI") 
+	TObjectPtr<UInputAction> UICraftingAction;
+
+	UPROPERTY(EditAnywhere, Category="Input|UI") 
+	TObjectPtr<UInputAction> UIMapAction;
+
+	UPROPERTY(EditAnywhere, Category="Input|UI") 
+	TObjectPtr<UInputAction> UISkillAction;
+
+	UPROPERTY(EditAnywhere, Category="Input|UI") 
+	TObjectPtr<UInputAction> UIPauseAction;
 };
