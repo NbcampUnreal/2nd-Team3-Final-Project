@@ -2,6 +2,7 @@
 #include "Components/Button.h"
 #include "Kismet/GameplayStatics.h"
 #include "EmberSettingWidget.h"
+#include "GameInstance/EmberGameInstance.h"
 
 void UEmberMainMenuWidget::NativeConstruct()
 {
@@ -24,11 +25,10 @@ void UEmberMainMenuWidget::OnNewGameClicked()
 {
     RemoveFromParent();
 
-    FTimerHandle TempHandle;
-    GetWorld()->GetTimerManager().SetTimer(TempHandle, [this]()
-        {
-            UGameplayStatics::OpenLevel(this, FName("L_Als_Playground"));
-        }, 0.1f, false);
+    if (UEmberGameInstance* GI = Cast<UEmberGameInstance>(UGameplayStatics::GetGameInstance(GetWorld())))
+    {
+        GI->RequestOpenLevel("L_Als_Playground");
+    }
 }
 
 void UEmberMainMenuWidget::OnContinueClicked()
