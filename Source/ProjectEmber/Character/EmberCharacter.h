@@ -29,7 +29,17 @@ public: /* Character */
 
 	UPROPERTY(EditAnywhere, Category="Interaction")
 	UAnimMontage* InteractMontage;
-	
+
+	UFUNCTION()
+	void OnWaterBeginOverlap(UPrimitiveComponent* OverlappedComp,
+							 AActor* OtherActor,
+							 UPrimitiveComponent* OtherComp,
+							 int32 OtherBodyIndex,
+							 bool bFromSweep,
+							 const FHitResult& SweepResult);
+	UFUNCTION()
+	void OnWaterEndOverlap(UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor, UPrimitiveComponent* OtherComp, int OtherBodyIndex);
 public:
 	virtual UMeleeTraceComponent* GetMeleeTraceComponent() const;
 
