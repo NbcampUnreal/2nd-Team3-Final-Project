@@ -175,6 +175,7 @@ void AAlsCharacter::BeginPlay()
 	ViewState.NetworkSmoothing.bEnabled |= IsValid(Settings) &&
 		Settings->View.bEnableNetworkSmoothing && GetLocalRole() == ROLE_SimulatedProxy;
 
+
 	// Update states to use the initial desired values.
 
 	ApplyDesiredStance();
@@ -492,6 +493,10 @@ void AAlsCharacter::OnMovementModeChanged(const EMovementMode PreviousMovementMo
 			SetLocomotionMode(AlsLocomotionModeTags::InAir);
 			break;
 
+		case MOVE_Swimming:
+			SetLocomotionMode(AlsLocomotionModeTags::InWater);
+			break;
+		
 		default:
 			SetLocomotionMode(FGameplayTag::EmptyTag);
 			break;

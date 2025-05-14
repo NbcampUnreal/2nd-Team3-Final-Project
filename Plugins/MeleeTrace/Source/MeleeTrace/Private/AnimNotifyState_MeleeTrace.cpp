@@ -2,7 +2,6 @@
 
 #include "AnimNotifyState_MeleeTrace.h"
 
-#include "AbilitySystemBlueprintLibrary.h"
 #include "Animation/AnimSequenceBase.h"
 #include "Components/SkeletalMeshComponent.h"
 
@@ -10,7 +9,6 @@
 #include "MeleeTraceComponent.h"
 #include "MeleeTraceDebug.h"
 #include "MeleeTraceShape.h"
-#include "Abilities/GameplayAbilityTypes.h"
 
 #if UE_VERSION_OLDER_THAN(5, 0, 0)
 void UAnimNotifyState_MeleeTrace::NotifyBegin(
@@ -30,9 +28,6 @@ void UAnimNotifyState_MeleeTrace::NotifyBegin(USkeletalMeshComponent* MeshComp,
 
 	if (const AActor* OwnerActor = MeshComp->GetOwner())
 	{
-		FGameplayEventData PayloadData;
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(const_cast<AActor*>(OwnerActor), TriggerGameplayTag,PayloadData);
-		
 		if (UMeleeTraceComponent* MeleeTraceComponent = OwnerActor->FindComponentByClass<UMeleeTraceComponent>())
 		{
 			if (!ensure(MeleeTraceInfo.TraceShape->IsValidLowLevelFast()))

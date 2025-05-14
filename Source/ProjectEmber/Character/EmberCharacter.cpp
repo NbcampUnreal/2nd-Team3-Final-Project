@@ -8,8 +8,11 @@
 #include "Framework/EmberPlayerState.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "WaterBodyActor.h"
 #include "Animation/AnimInstance.h"
+#include "Components/CapsuleComponent.h"
 #include "Engine/LocalPlayer.h"
+#include "GameFramework/PhysicsVolume.h"
 #include "UI/EmberWidgetComponent.h"
 #include "MeleeTrace/Public/MeleeTraceComponent.h"
 #include "Utility/AlsVector.h"
@@ -49,6 +52,36 @@ void AEmberCharacter::BeginPlay()
 
         HpBarWidget->UpdateAbilitySystemComponent();
     }
+
+    GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AEmberCharacter::OnWaterBeginOverlap);
+    GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &AEmberCharacter::OnWaterEndOverlap);
+}
+
+void AEmberCharacter::OnWaterBeginOverlap(UPrimitiveComponent* OverlappedComp,
+                             AActor* OtherActor,
+                             UPrimitiveComponent* OtherComp,
+                             int32 OtherBodyIndex,
+                             bool bFromSweep,
+                             const FHitResult& SweepResult)
+{
+    // PhysicsVolume 기반 수영 모드 전환
+    if (APhysicsVolume* Vol = Cast<APhysicsVolume>(OtherActor))
+    {
+        if (Vol->bWaterVolume)
+            GetCharacterMovement()->SetMovementMode(MOVE_Swimming);
+    }
+    // 또는 WaterBody 액터 직접 체크
+    else if (OtherActor->IsA<AWaterBody>())
+    {
+        GetCharacterMovement()->SetMovementMode(MOVE_Swimming);
+    }
+}
+
+void AEmberCharacter::OnWaterEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+    UPrimitiveComponent* OtherComp, int OtherBodyIndex)
+{
+    if (GetCharacterMovement()->MovementMode == MOVE_Swimming)
+        GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 }
 
 UAbilitySystemComponent* AEmberCharacter::GetAbilitySystemComponent() const
