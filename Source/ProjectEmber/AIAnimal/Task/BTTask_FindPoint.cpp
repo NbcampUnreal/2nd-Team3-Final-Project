@@ -13,9 +13,9 @@ UBTTask_FindPoint::UBTTask_FindPoint()
 	NodeName = TEXT("FindPoint");
 }
 
-EBTNodeResult::Type UBTTask_FindPoint::ExecuteTask(UBehaviorTreeComponent& Comp, uint8* NodeMemory)
+EBTNodeResult::Type UBTTask_FindPoint::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	AAIController* AIController = Comp.GetAIOwner();
+	AAIController* AIController = OwnerComp.GetAIOwner();
 	if (!AIController)
 	{
 		return EBTNodeResult::Failed;
@@ -27,7 +27,7 @@ EBTNodeResult::Type UBTTask_FindPoint::ExecuteTask(UBehaviorTreeComponent& Comp,
 		return EBTNodeResult::Failed;
 	}
 
-	UBlackboardComponent* BlackboardComp = Comp.GetBlackboardComponent();
+	UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!BlackboardComp)
 	{
 		return EBTNodeResult::Failed;
@@ -58,8 +58,7 @@ EBTNodeResult::Type UBTTask_FindPoint::ExecuteTask(UBehaviorTreeComponent& Comp,
 				//다른 객체와 이미 상호작용중이면 다음으로 넘어감
 				if (Object->GetClass()->ImplementsInterface(UInteractiveObject::StaticClass()))
 				{
-					bool IsSelected = IInteractiveObject::Execute_GetIsSelected(Object);
-					if (IsSelected)
+					if (IInteractiveObject::Execute_GetIsSelected(Object))
 					{
 						continue;
 					}
@@ -81,23 +80,8 @@ EBTNodeResult::Type UBTTask_FindPoint::ExecuteTask(UBehaviorTreeComponent& Comp,
 				BlackboardComp->SetValueAsVector("TargetLocation", ClosestObject->GetActorLocation());
 				IInteractiveObject::Execute_SetIsSelected(ClosestObject, true);
 				UE_LOG(LogTemp, Warning, TEXT("AnimalController::TargetLocation 업데이트 성공. %f, %f, %f"), ClosestObject->GetActorLocation().X, ClosestObject->GetActorLocation().Y, ClosestObject->GetActorLocation().Z );
-				return Super::ExecuteTask(Comp, NodeMemory);
+				return Super::ExecuteTask(OwnerComp, NodeMemory);
 			}
-		}
-		if (!bIsRest) //맞지 않았지만 시가, 청각으로 위험을 감지했으면, 타겟엑터는 감지할 때 정해짐
-		{
-			FRotator Rotator = AIPawn->GetActorRotation();
-			Rotator.Yaw *= -1.0f;
-			AIPawn->SetActorRotation(Rotator);
-			ActorLocation = GenerateRandomLocation(ActorLocation, WanderRange);
-			
-			if (BlackboardComp)
-			{
-				BlackboardComp->SetValueAsVector("SafeLocation", ActorLocation);
-				BlackboardComp->SetValueAsEnum("CurrentState", static_cast<uint8>(EAnimalAIState::Warning));
-				UE_LOG(LogTemp, Warning, TEXT("AnimalController::SafeLocation 업데이트 성공. %f, %f, %f"), ActorLocation.X, ActorLocation.Y, ActorLocation.Z );
-			}
-			return Super::ExecuteTask(Comp, NodeMemory);
 		}
 		
 		ActorLocation = GenerateRandomLocation(ActorLocation, WanderRange);
@@ -106,12 +90,12 @@ EBTNodeResult::Type UBTTask_FindPoint::ExecuteTask(UBehaviorTreeComponent& Comp,
 			BlackboardComp->SetValueAsVector("TargetLocation", ActorLocation);
 			UE_LOG(LogTemp, Warning, TEXT("AnimalController::TargetLocation 업데이트 성공. %f, %f, %f"), ActorLocation.X, ActorLocation.Y, ActorLocation.Z );
 		}
-		return Super::ExecuteTask(Comp, NodeMemory);
+		return Super::ExecuteTask(OwnerComp, NodeMemory);
 	}
-	return Super::ExecuteTask(Comp, NodeMemory);
+	return Super::ExecuteTask(OwnerComp, NodeMemory);
 }
 
-FVector UBTTask_FindPoint::GenerateRandomLocation(FVector BaseLocation, float Range)
+FVector UBTTask_FindPoint::GenerateRandomLocation(const FVector& BaseLocation, float Range)
 {
 	const int RandomSign = FMath::RandRange(0, 1) == 0 ? -1 : 1;
 	const float RandomX = RandomSign * FMath::RandRange(0.1f, 1.0f) * Range;

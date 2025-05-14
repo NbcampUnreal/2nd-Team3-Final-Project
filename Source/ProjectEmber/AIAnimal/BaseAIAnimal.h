@@ -5,8 +5,12 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
+#include "GameplayEffectTypes.h"
+#include "EMSActorSaveInterface.h"
 #include "BaseAIAnimal.generated.h"
 
+class UMeleeTraceComponent;
+class UBoxComponent;
 class UAISenseConfig_Hearing;
 class UAISenseConfig_Sight;
 class UAIPerceptionComponent;
@@ -22,7 +26,6 @@ UENUM(BlueprintType)
 enum class EAnimalAIState : uint8
 {
 	Idle			UMETA(DisplayName = "Idle"),
-	FindFood        UMETA(DisplayName = "FindFood"), 
 	Wander			UMETA(DisplayName = "Wander"),
 	Attack			UMETA(DisplayName = "Attack"),
 	Hit				UMETA(DisplayName = "Hit"),
@@ -47,23 +50,26 @@ enum class EAnimalAIPersonality : uint8
 };
 
 UCLASS()
-class PROJECTEMBER_API ABaseAIAnimal : public ACharacter, public IAbilitySystemInterface
+class PROJECTEMBER_API ABaseAIAnimal : public ACharacter, public IAbilitySystemInterface, public IEMSActorSaveInterface
 {
 	GENERATED_BODY()
 
 public:
 	ABaseAIAnimal();
 
-	
+	virtual void PossessedBy(AController* NewController) override;
+	void OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
+	void OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	
+	virtual void ActorPreSave_Implementation() override;
+	virtual void ActorLoaded_Implementation() override;
 	
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void PlayInteractMontage(uint8 InState);
 	
 	float GetWildPower() const;
-
 	EAnimalAIState GetCurrentState() const;
 
 	void SetCurrentState(EAnimalAIState NewState);
@@ -73,30 +79,18 @@ public:
 	void DecreaseFullness();
 	virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
 
+
 public: /* AbilitySystem */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
 	UFUNCTION(BlueprintCallable, Category = Attribute)
-	class UEmberAnimalAttributeSet* GetAnimalAttributeSet() const;
+	const class UEmberAnimalAttributeSet* GetAnimalAttributeSet() const;
 	
 	UFUNCTION(BlueprintCallable, Category = Attribute)
-	class UEmberCharacterAttributeSet* GetCharacterAttributeSet() const;
-	
-protected:
-	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
-	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
-	
-	UPROPERTY()
-	TObjectPtr<class UEmberCharacterAttributeSet> CharacterAttributeSet;
-	
-	UPROPERTY()
-	TObjectPtr<class UEmberAnimalAttributeSet> AnimalAttributeSet;
-	
-	UPROPERTY(EditAnywhere, Category = "HpBar")
-	TSubclassOf<class UUserWidget> HpBarWidgetClass;
-	
-	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<class UEmberWidgetComponent> HpBarWidget;
+	const class UEmberCharacterAttributeSet* GetCharacterAttributeSet() const;
+
+	UFUNCTION()
+	void OnHit(AActor* InstigatorActor);
 	
 protected:
 	UFUNCTION(BlueprintCallable, Category = AI)
@@ -105,10 +99,28 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = AI)
 	UNavigationInvokerComponent* GetNavInvoker() const;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UMeleeTraceComponent* MeleeTraceComponent;
+	
 	//DT 생성 전까지 쓸 Test함수
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void SetDetails();
-
+	
+	UPROPERTY(EditAnywhere, Category = "AbilitySystem", SaveGame)
+	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
+	
+	UPROPERTY(SaveGame)
+	TObjectPtr<class UEmberCharacterAttributeSet> CharacterAttributeSet;
+	
+	UPROPERTY(SaveGame)
+	TObjectPtr<class UEmberAnimalAttributeSet> AnimalAttributeSet;
+	
+	UPROPERTY(EditAnywhere, Category = "HpBar")
+	TSubclassOf<class UUserWidget> HpBarWidgetClass;
+	
+	UPROPERTY(BlueprintReadOnly, SaveGame)
+	TObjectPtr<class UEmberWidgetComponent> HpBarWidget;
+	
 	// Invoker 관련 변수
 	UPROPERTY(BlueprintReadWrite, Category = Navigation, meta = (AllowPrivateAccess = "true"))
 	UNavigationInvokerComponent* NavInvokerComponent;

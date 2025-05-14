@@ -10,9 +10,9 @@ UBTTask_Interact::UBTTask_Interact()
 	NodeName = TEXT("Interact");
 }
 
-EBTNodeResult::Type UBTTask_Interact::ExecuteTask(UBehaviorTreeComponent& Comp, uint8* NodeMemory)
+EBTNodeResult::Type UBTTask_Interact::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	AAIController* AIController = Comp.GetAIOwner();
+	AAIController* AIController = OwnerComp.GetAIOwner();
 	if (!AIController)
 	{
 		return EBTNodeResult::Failed;
@@ -24,7 +24,7 @@ EBTNodeResult::Type UBTTask_Interact::ExecuteTask(UBehaviorTreeComponent& Comp, 
 		return EBTNodeResult::Failed;
 	}
 
-	UBlackboardComponent* BlackboardComp = Comp.GetBlackboardComponent();
+	UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!BlackboardComp)
 	{
 		return EBTNodeResult::Failed;
@@ -50,7 +50,7 @@ EBTNodeResult::Type UBTTask_Interact::ExecuteTask(UBehaviorTreeComponent& Comp, 
 			return EBTNodeResult::Failed;
 		}
 		
-		AICharacter->PlayInteractMontage(static_cast<uint8>(EAnimalAIState::FindFood));
+		AICharacter->PlayInteractMontage(static_cast<uint8>(EAnimalAIState::Idle)); //enum을 넘기고는 있지만 아직 사용하지 않음
 		AICharacter->SetFullness();
 		BlackboardComp->SetValueAsBool("IsHungry", false);
 		IInteractiveObject::Execute_Interact(TargetActor, AICharacter); //먹이 삭제
@@ -60,5 +60,5 @@ EBTNodeResult::Type UBTTask_Interact::ExecuteTask(UBehaviorTreeComponent& Comp, 
 		return EBTNodeResult::Succeeded;
 	}
 	
-	return Super::ExecuteTask(Comp, NodeMemory);
+	return Super::ExecuteTask(OwnerComp, NodeMemory);
 }
