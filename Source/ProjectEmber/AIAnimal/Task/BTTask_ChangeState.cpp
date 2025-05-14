@@ -12,9 +12,9 @@ UBTTask_ChangeState::UBTTask_ChangeState()
 	NodeName = TEXT("ChangeState");
 }
 
-EBTNodeResult::Type UBTTask_ChangeState::ExecuteTask(UBehaviorTreeComponent& Comp, uint8* NodeMemory)
+EBTNodeResult::Type UBTTask_ChangeState::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	AAIController* AIController =  Comp.GetAIOwner();
+	AAIController* AIController =  OwnerComp.GetAIOwner();
 	if (!AIController)
 	{
 		return EBTNodeResult::Failed;
@@ -36,5 +36,5 @@ EBTNodeResult::Type UBTTask_ChangeState::ExecuteTask(UBehaviorTreeComponent& Com
 	BlackboardComp->SetValueAsBool("IsHit", false);
 	BlackboardComp->SetValueAsBool("IsRest", true);
 	
-	return Super::ExecuteTask(Comp, NodeMemory);
+	return Super::ExecuteTask(OwnerComp, NodeMemory);
 }

@@ -25,7 +25,7 @@ public class EmberAbilitySystem : ModuleRules
                 "Slate",
                 "SlateCore",
                 "GameplayTasks",
-                "GameplayTags"
+                "GameplayTags", "EasyMultiSave", "UMG"
             }
         );
     }

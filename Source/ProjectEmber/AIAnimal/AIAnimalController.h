@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "EMSActorSaveInterface.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISenseConfig_Sight.h"
@@ -18,17 +19,17 @@ class UAISenseConfig_Sight;
  * 
  */
 UCLASS()
-class PROJECTEMBER_API AAIAnimalController : public AAIController
+class PROJECTEMBER_API AAIAnimalController : public AAIController, public IEMSActorSaveInterface
 {
 	GENERATED_BODY()
 
 public:
 	AAIAnimalController();
 
-	UPROPERTY(BlueprintReadWrite, Category = "AI")
+	UPROPERTY(BlueprintReadWrite, Category = "AI", SaveGame)
 	UBehaviorTreeComponent* BehaviorTreeComponent;
 
-	UPROPERTY(BlueprintReadWrite, Category = "AI")
+	UPROPERTY(BlueprintReadWrite, Category = "AI", SaveGame)
 	UBlackboardComponent* BlackboardComponent;
 	
 	UPROPERTY(EditAnywhere, Category = "AI")
@@ -37,18 +38,18 @@ public:
 	FVector SafePoint;
 	
 	//인식 관련 변수
-	UPROPERTY(BlueprintReadWrite, Category = AI, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadWrite, Category = AI, meta = (AllowPrivateAccess = "true"), SaveGame)
 	UAIPerceptionComponent* PerceptionComp;
 
-	UPROPERTY(BlueprintReadWrite, Category = AI, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadWrite, Category = AI, meta = (AllowPrivateAccess = "true"), SaveGame)
 	UAISenseConfig_Sight* SightConfig;
  
-	UPROPERTY(BlueprintReadWrite, Category = AI, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadWrite, Category = AI, meta = (AllowPrivateAccess = "true"), SaveGame)
 	UAISenseConfig_Hearing* HearingConfig;
 
 	UBlackboardComponent* BBComponent = nullptr;
 	
-	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
+	UPROPERTY(EditAnywhere, Category = "AbilitySystem", SaveGame)
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 	
 protected:
