@@ -12,7 +12,7 @@ struct PROJECTEMBER_API FAreaAudioDataStruct : public FTableRowBase
 	
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EAreaSoundType AreaSoundType;
+	EAreaSoundType AreaSoundType = EAreaSoundType::LobbySound;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSoftObjectPtr<USoundBase> Sound;
