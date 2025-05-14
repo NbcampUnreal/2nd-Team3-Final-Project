@@ -15,7 +15,7 @@ void ABaseInteractableActor::BeginPlay()
 
 void ABaseInteractableActor::Interact_Implementation(AActor* Caller)
 {
-	IInteractable::Interact_Implementation(Caller);
+	
 }
 
 float ABaseInteractableActor::GetGatherTime_Implementation()
