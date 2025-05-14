@@ -4,42 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Core/ItemTypes.h"
+#include "UI/SlotWidget/EmberSlotDataProviderInterface.h"
 #include "InventoryManagerComponent.generated.h"
 
-struct FConsumableComponentRow;
+struct FConsumableInfoRow;
 class UItemSubsystem;
 class UAbilitySystemComponent;
 
-USTRUCT(BlueprintType)
-struct FInventorySlotData
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory Slot")
-	FName ItemID = NAME_None;
-
-	// 해당 슬롯에 있는 아이템의 개수
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory Slot", meta = (ClampMin = "0"))
-	int32 Quantity = 0;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory Slot")
-	int32 MaxStackSize = 1;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory Slot")
-	TOptional<FDataTableRowHandle> ConsumableComponentHandle;
-	
-	bool IsEmpty() const { return ItemID.IsNone() || Quantity <= 0; }
-	void Clear()
-	{
-		ItemID = NAME_None;
-		Quantity = 0;
-		MaxStackSize = 1;
-		ConsumableComponentHandle.Reset();
-	}
-};
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInventoryChangedDelegate, int32, SlotIndex, const FInventorySlotData&, SlotData);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class PROJECTEMBER_API UInventoryManagerComponent : public UActorComponent
+class PROJECTEMBER_API UInventoryManagerComponent : public UActorComponent, public IEmberSlotDataProviderInterface
 {
    GENERATED_BODY()
 
@@ -61,10 +37,13 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category = "Inventory", meta = (ClampMin = "1"))
     int32 InventoryCapacity = 30;
 
+	/*/** 월드에 드랍될 아이템 액터의 블루프린트 클래스 (에디터에서 설정) #1#
+	UPROPERTY(EditDefaultsOnly, Category = "Inventory|Drop Item")
+	TSubclassOf<AMyDroppedItemActor> DroppedItemActorClass;*/
 public:
 	
     UFUNCTION(BlueprintCallable, Category = "Inventory")
-    int32 AddItem(FName ItemIDToAdd, int32 QuantityToAdd);
+	int32 AddItemAndHandleOverflow(FName ItemIDToAdd, int32 QuantityToAdd, FVector DropLocation, FRotator DropRotation);
 
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     int32 RemoveItemFromSlot(int32 SlotIndex, int32 QuantityToRemove = 0);
@@ -84,12 +63,24 @@ public:
     bool GetSlotDataByIndex(int32 SlotIndex, FInventorySlotData& OutSlotData) const;
 
 protected:
+	/**
+ * 내부적으로 인벤토리 슬롯에 아이템을 추가하려고 시도하고, 실제로 추가된 수량을 반환합니다.
+ * (기존 AddItem 함수의 로직이 여기로 이동)
+ */
+	int32 TryAddItemsToSlots(FName ItemIDToAdd, int32 QuantityToAdd);
     void InitializeInventorySlots();
 
 	int32 FindEmptySlot() const;
 
     bool IsSlotFull(int32 SlotIndex) const;
 
-    void HandleItemConsumption(const FConsumableComponentRow* ConsumeData);
-		
+    void HandleItemConsumption(const FConsumableInfoRow* ConsumeData);
+
+	void SpawnDroppedItem(FName ItemIDToDrop, int32 QuantityToDrop, FVector SpawnLocation, FRotator SpawnRotation);
+
+public:
+   virtual int32 GetSlotCount() const override;
+
+	UPROPERTY(BlueprintAssignable, Category = "Inventory")
+   FOnInventoryChangedDelegate OnInventoryChanged;
 };

@@ -2,6 +2,7 @@
 
 
 #include "ItemSubsystem.h"
+#include "Core/ItemTypes.h"
 
 void UItemSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -50,11 +51,11 @@ TObjectPtr<UDataTable> UItemSubsystem::LoadDataTable(const TSoftObjectPtr<UDataT
     return LoadedTable;
 }
 
-const FItemBaseInfoRow* UItemSubsystem::GetItemBaseData(FName ItemID) const
+const FItemMasterInfoRow* UItemSubsystem::GetItemMasterInfoRow(FName ItemID) const
 {
     if (LoadedItemBaseDataTable)
     {
-        return LoadedItemBaseDataTable->FindRow<FItemBaseInfoRow>(ItemID, TEXT("GetItemBaseData"));
+        return LoadedItemBaseDataTable->FindRow<FItemMasterInfoRow>(ItemID, TEXT("GetItemBaseData"));
     }
     UE_LOG(LogTemp, Error, TEXT("Failed to load LoadedItemBaseDataTable"));
     return nullptr;
