@@ -21,18 +21,27 @@ ABaseAIAnimal::ABaseAIAnimal()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
-	NavGenerationRadius = 4000.0f; //시각,청각 인지 버뮈보다 인보커 생성 범위가 커야함
-	NavRemovalRadius = 4300.0f;
-	NavInvokerComponent = CreateDefaultSubobject<UNavigationInvokerComponent>("NavInvokerComponent");
 
 	bIsShouldSwim = false;
 	CurrentState = EAnimalAIState::Idle;
 	GenerateRandom();
+	
+	NavGenerationRadius = 4000.0f; //시각,청각 인지 버뮈보다 인보커 생성 범위가 커야함
+	NavRemovalRadius = 4300.0f;
+	NavInvokerComponent = CreateDefaultSubobject<UNavigationInvokerComponent>("NavInvokerComponent");
 
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	CharacterAttributeSet = CreateDefaultSubobject<UEmberCharacterAttributeSet>(TEXT("CharacterAttributeSet"));
 	AnimalAttributeSet = CreateDefaultSubobject<UEmberAnimalAttributeSet>(TEXT("AnimalAttributeSet"));
+	FEmberAnimalAttributeData AttributeData;
+	AttributeData.Fullness = Fullness;
+	AttributeData.WalkSpeed = WalkSpeed;
+	AttributeData.WanderRange = WanderRange;
+	AttributeData.WildPower = WildPower;
+	AnimalAttributeSet->InitFromData(AttributeData);
+	EMBER_LOG(LogEmber, Warning,TEXT("ABaseAIAnimal::WanderRange:: %f"),WanderRange); 
 	MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
+
 	HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
 	HpBarWidget->SetupAttachment(GetMesh());
 	HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
@@ -65,25 +74,46 @@ void ABaseAIAnimal::BeginPlay()
 
 		HpBarWidget->UpdateAbilitySystemComponent();
 	}
+	
 	NavInvokerComponent->SetGenerationRadii(NavGenerationRadius, NavRemovalRadius);
-	GetWorldTimerManager().SetTimer(TimerHandle, this, &ABaseAIAnimal::DecreaseFullness, 5.0f, true);
+	
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UEmberCharacterAttributeSet::GetHealthAttribute()).
 	                        AddUObject(this, &ThisClass::OnHealthChanged);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 		UEmberCharacterAttributeSet::GetMaxHealthAttribute()).AddUObject(this, &ThisClass::OnMaxHealthChanged);
-
 	if (const UEmberCharacterAttributeSet* Attribute = AbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>())
 	{
 		const_cast<UEmberCharacterAttributeSet*>(Attribute)->OnHit.AddDynamic(this, &ABaseAIAnimal::OnHit);
 	}
-
-	//test
-	BlackboardComponent->SetValueAsEnum("Personality", static_cast<uint8>(Personality));
+	
+	GetWorldTimerManager().SetTimer(TimerHandle, this, &ABaseAIAnimal::DecreaseFullness, 5.0f, true);
 }
 
 void ABaseAIAnimal::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
+{
+	EMBER_LOG(LogTemp, Warning, TEXT("%s"), *InstigatorActor->GetName());
+	//속도 빨라졌다 서서히 감소 추가해야함
+	
+	if (BlackboardComponent)
+	{
+		BlackboardComponent->SetValueAsBool("IsRest", false);
+		BlackboardComponent->SetValueAsBool("IsHit", true);
+		//여기서 타겟오브젝트 설정 -> 이미  IsRest, IsHit가 값이 위에처럼 설정되면 다른 노드로 들어가지 않음
+		if (AActor* TargetActor = Cast<AController>(InstigatorActor->GetOwner())->GetPawn())
+		{
+			BlackboardComponent->SetValueAsObject("TargetActor", TargetActor);
+		}
+		if (Personality != EAnimalAIPersonality::Brave)
+		{
+			return;
+		}
+		BlackboardComponent->SetValueAsEnum("CurrentState", static_cast<uint8>(EAnimalAIState::Attack));
+	}
 }
 
 void ABaseAIAnimal::ActorPreSave_Implementation()
@@ -113,40 +143,12 @@ void ABaseAIAnimal::ActorLoaded_Implementation()
 		FOnAttributeChangeData ChangeData;
 		ChangeData.NewValue = CharacterAttributeSet->GetHealth();
 		Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(ChangeData);
-		EMBER_LOG(LogEmber, Warning,TEXT("%f"),CharacterAttributeSet->GetHealth()); 
 	}
 }
 
 void ABaseAIAnimal::OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData)
 {
 	UE_LOG(LogTemp, Warning, TEXT(" ABaseAIAnimal::OnHealthChanged::성공"));
-	//속도 빨라졌다 서서히 감소 추가해야함
-	BlackboardComponent->SetValueAsBool("IsRest", false);
-	BlackboardComponent->SetValueAsBool("IsHit", true);
-	//여기서 타겟오브젝트 설정 -> 이미  IsRest, IsHit가 값이 위에처럼 설정되면 다른 노드로 들어가지 않음
-	if (Personality != EAnimalAIPersonality::Brave)
-	{
-		return;
-	}
-	BlackboardComponent->SetValueAsEnum("CurrentState", static_cast<uint8>(EAnimalAIState::Attack));
-	// TArray<AActor*> TargetActor;
-	// // 플레이어 태그를 가진 엑터를 타겟엑터로 등록 -> 플레이어 전용 코드
-	// //맞았을 때 한 번만 여기서 타겟엑터 등록, 그 다음 서비스에서 거리 갱신
-	// UGameplayStatics::GetAllActorsWithTag(GetWorld(), "Player", TargetActor);
-	// AActor* ClosestObject = nullptr;
-	// for (auto Actor : TargetActor)
-	// {
-	// 	if (Actor)
-	// 	{
-	// 		ClosestObject = Actor;
-	// 	}
-	// }
-	// // 결과를 블랙보드에 저장
-	// if (ClosestObject)
-	// {
-	// 	BlackboardComponent->SetValueAsObject("TargetActor", ClosestObject);
-	// 	BlackboardComponent->SetValueAsVector("TargetLocation", ClosestObject->GetActorLocation());
-	// }
 }
 
 void ABaseAIAnimal::OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData)
@@ -168,9 +170,9 @@ void ABaseAIAnimal::SetFullness()
 
 void ABaseAIAnimal::GenerateRandom()
 {
-	//int32 RandomPersonality = FMath::RandRange(0, static_cast<int32>(EAnimalAIPersonality::End) - 1);
-	//Personality = static_cast<EAnimalAIPersonality>(RandomPersonality);
-	Personality = EAnimalAIPersonality::Brave;
+	int32 RandomPersonality = FMath::RandRange(0, static_cast<int32>(EAnimalAIPersonality::End) - 1);
+	Personality = static_cast<EAnimalAIPersonality>(RandomPersonality);
+	SetDetails();
 	Fullness = FMath::FRandRange(0.f, 100.f);
 	bIsHungry = Fullness <= 50.f;
 }
@@ -184,7 +186,6 @@ void ABaseAIAnimal::DecreaseFullness()
 		bIsHungry = true;
 		BlackboardComponent->SetValueAsBool("IsHungry", bIsHungry);
 	}
-	UE_LOG(LogTemp, Warning, TEXT("DecreaseFullness :: Fullness , IsHungry %f, %d"), Fullness, bIsHungry);
 }
 
 void ABaseAIAnimal::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -200,9 +201,9 @@ float ABaseAIAnimal::GetWildPower() const
 	return WildPower;
 }
 
-EAnimalAIState ABaseAIAnimal::GetCurrentState() const
+float ABaseAIAnimal::GetWanderRange() const
 {
-	return CurrentState;
+	return WanderRange;
 }
 
 void ABaseAIAnimal::SetCurrentState(EAnimalAIState NewState)
@@ -216,11 +217,6 @@ UAbilitySystemComponent* ABaseAIAnimal::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
-void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
-{
-	EMBER_LOG(LogTemp, Warning, TEXT("%s"), *InstigatorActor->GetName());
-}
-
 const class UEmberCharacterAttributeSet* ABaseAIAnimal::GetCharacterAttributeSet() const
 {
 	return AbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>();
@@ -231,11 +227,6 @@ const class UEmberAnimalAttributeSet* ABaseAIAnimal::GetAnimalAttributeSet() con
 	return AbilitySystemComponent->GetSet<UEmberAnimalAttributeSet>();
 }
 
-EAnimalAIPersonality ABaseAIAnimal::GetPersonality() const
-{
-	return Personality;
-}
-
 void ABaseAIAnimal::PlayInteractMontage(uint8 InState)
 {
 	if (Montage)
@@ -244,10 +235,14 @@ void ABaseAIAnimal::PlayInteractMontage(uint8 InState)
 	}
 }
 
-
-UNavigationInvokerComponent* ABaseAIAnimal::GetNavInvoker() const
+EAnimalAIState ABaseAIAnimal::GetCurrentState()
 {
-	return nullptr; //NavInvokerComponent;
+	return CurrentState;
+}
+
+EAnimalAIPersonality ABaseAIAnimal::GetPersonality()
+{
+	return Personality;
 }
 
 void ABaseAIAnimal::SetDetails()
@@ -256,25 +251,29 @@ void ABaseAIAnimal::SetDetails()
 	{
 	case EAnimalAIPersonality::Agile:
 		{
-			//WalkSpeed *= 1.2f;
+			WalkSpeed *= 1.2f;
 			break;
 		}
 	case EAnimalAIPersonality::Cowardly:
 		{
-			//WanderRange *= 1.2f;
+			WanderRange *= 1.2f;
 			break;
 		}
 	case EAnimalAIPersonality::Lazy:
 		{
-			//WalkSpeed *= 0.8f;
+			WalkSpeed *= 0.8f;
 			break;
 		}
 	case EAnimalAIPersonality::Outsider:
 		{
-			//WanderRange *= 1.2f;
+			WanderRange *= 1.2f;
 			break;
 		}
 	default:
+		{
+			WalkSpeed = 300.0f;
+			WanderRange = 500.0f;
+		}
 		break;
 	}
 }

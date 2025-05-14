@@ -78,8 +78,11 @@ void UInteractionComponent::OnGatherOverlapBegin(UPrimitiveComponent* Overlapped
 {
 	if (ABaseInteractableActor* Actor = Cast<ABaseInteractableActor>(OtherActor))
 	{
-		EMBER_LOG(LogTemp, Warning, TEXT("Gather Event Activate"));
-		SetCurrentInteractable(Actor);
+		if (!Cast<ABasePickupActor>(Actor))
+		{
+			EMBER_LOG(LogTemp, Warning, TEXT("Gather Event Activate"));
+			SetCurrentInteractable(Actor);
+		}
 	}
 }
 
@@ -95,13 +98,10 @@ void UInteractionComponent::OnGatherOverlapEnd(UPrimitiveComponent* OverlappedCo
 void UInteractionComponent::OnPickupOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (ABaseInteractableActor* Actor = Cast<ABaseInteractableActor>(OtherActor))
+	if (ABasePickupActor* Actor = Cast<ABasePickupActor>(OtherActor))
 	{
 		EMBER_LOG(LogTemp, Warning, TEXT("Pickup Event Activate"));
-		if (ABasePickupActor* DetailActor = Cast<ABasePickupActor>(OtherActor))
-		{
-			SetCurrentInteractable(DetailActor);
-		}
+		SetCurrentInteractable(Actor);
 	}
 }
 
@@ -192,11 +192,12 @@ void UInteractionComponent::StopGather()
 
 	bIsLocked = false;
 	SetCurrentInteractable(nullptr);
+	
 	PickupTrigger->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	PickupTrigger->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	PickupTrigger->SetGenerateOverlapEvents(false);
-	PickupTrigger->SetGenerateOverlapEvents(true);
-	PickupTrigger->UpdateOverlaps();
+
+	GatherTrigger->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GatherTrigger->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 }
 
 void UInteractionComponent::GatherTick()
