@@ -184,6 +184,43 @@ int32 UInventoryManagerComponent::GetSlotCount() const
     return InventoryCapacity;
 }
 
+void UInventoryManagerComponent::MoveItemByIndex(int32 IndexTo, int32 IndexForm, int32 InQuantity)
+{
+    if (!InventorySlots.IsValidIndex(IndexTo) ||
+        !InventorySlots.IsValidIndex(IndexForm))
+    {
+        EMBER_LOG(LogEmber, Warning, TEXT("CombineItemByIndex: Index is not valid."));
+        return;
+    }
+    
+    FInventorySlotData& SlotTo = InventorySlots[IndexTo];
+    FInventorySlotData& SlotForm = InventorySlots[IndexForm];
+    if (SlotTo.ItemID.IsNone())
+    {
+        EMBER_LOG(LogEmber, Warning, TEXT("CombineItemByIndex: InParameter is not valid."));
+        return;
+    }
+    
+    if (!SlotForm.ItemID.IsNone() && SlotTo.ItemID != SlotForm.ItemID)
+    {
+        EMBER_LOG(LogEmber, Warning, TEXT("CombineItemByIndex: 도착슬롯이 비어있지않거나 아이템의 종류가 다릅니다"));
+    }
+
+    InQuantity = FMath::Min(SlotTo.Quantity, InQuantity);
+    
+    if (SlotForm.ItemID.IsNone())
+    {
+        SlotForm = FInventorySlotData(SlotTo);
+        SlotForm.Quantity = 0;
+    }
+
+    SlotForm.Quantity += InQuantity;
+    OnInventoryChanged.Broadcast(IndexForm, InventorySlots[IndexForm]);
+
+    RemoveItemFromSlot(IndexTo, InQuantity);
+}
+
+
 int32 UInventoryManagerComponent::RemoveItemFromSlot(int32 SlotIndex, int32 QuantityToRemove /*= 0*/)
 {
     if (!InventorySlots.IsValidIndex(SlotIndex) || InventorySlots[SlotIndex].IsEmpty())
@@ -201,8 +238,6 @@ int32 UInventoryManagerComponent::RemoveItemFromSlot(int32 SlotIndex, int32 Quan
         InventorySlots[SlotIndex].Clear(); // 슬롯 비우기
     }
 
-    // TODO: 인벤토리 변경 델리게이트 호출
-    // OnInventoryChanged.Broadcast();
     OnInventoryChanged.Broadcast(SlotIndex, InventorySlots[SlotIndex]);
 
     return RemoveAmount;

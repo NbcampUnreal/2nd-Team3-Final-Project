@@ -23,6 +23,12 @@ FWidgetSlotData::FWidgetSlotData(const FInventorySlotData& InSlotData)
 	}
 }
 
+void UEmberBaseSlotWidget::InitSlot(int32 InSlotIndex, TScriptInterface<IEmberSlotDataProviderInterface> InDataProvider)
+{
+	SlotIndex = InSlotIndex;
+	DataProvider = InDataProvider;
+}
+
 void UEmberBaseSlotWidget::SetSlotData(const FInventorySlotData& InSlotData)
 {
 	EMBER_LOG(LogTemp, Warning, TEXT("Slot: %s"), *InSlotData.ItemID.ToString());

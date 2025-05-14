@@ -105,6 +105,9 @@ protected: /* Input */
 	TObjectPtr<UEmberInputHandlerComponent> InputHandler;
 
 	friend class UEmberInputHandlerComponent;
+
+protected: /* Inventory */
+	TObjectPtr<class UInventoryManagerComponent> InventoryManager;
 };
 
 

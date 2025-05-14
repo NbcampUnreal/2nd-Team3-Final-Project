@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "EmberSlotDataProviderInterface.h"
 #include "Blueprint/UserWidget.h"
 #include "Item/Core/EmberItemStruct.h"
 #include "EmberBaseSlotWidget.generated.h"
@@ -60,6 +61,9 @@ class PROJECTEMBER_API UEmberBaseSlotWidget : public UUserWidget
 
 public:
 	UFUNCTION(BlueprintCallable)
+	void InitSlot(int32 InSlotIndex, TScriptInterface<IEmberSlotDataProviderInterface> InDataProvider);
+	
+	UFUNCTION(BlueprintCallable)
 	void SetSlotData(const FInventorySlotData& InSlotData);
 	
 	virtual void UpdateSlot();
@@ -78,6 +82,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Slot")
 	FWidgetSlotData SlotData;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slot")
-	TSubclassOf<UDragDropOperation> DragDropOperation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TScriptInterface<IEmberSlotDataProviderInterface> DataProvider;
+
 };
