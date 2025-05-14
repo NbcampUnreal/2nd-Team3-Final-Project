@@ -5,11 +5,6 @@
 
 UEmberAnimalAttributeSet::UEmberAnimalAttributeSet()
 {
-	/* Behavior Tree */
-	InitFullness(100.0f);
-	InitWalkSpeed(300.0f);
-	InitWanderRange(500.0f);
-	InitWildPower(0.0f);
 }
 
 void UEmberAnimalAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
@@ -29,4 +24,12 @@ bool UEmberAnimalAttributeSet::PreGameplayEffectExecute(struct FGameplayEffectMo
 void UEmberAnimalAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
+}
+
+void UEmberAnimalAttributeSet::InitFromData(const FEmberAnimalAttributeData& Data)
+{
+	InitFullness(Data.Fullness);
+	InitWalkSpeed(Data.WalkSpeed);
+	InitWanderRange(Data.WanderRange);
+	InitWildPower(Data.WildPower);
 }
