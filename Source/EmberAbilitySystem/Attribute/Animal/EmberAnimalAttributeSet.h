@@ -12,6 +12,24 @@
     GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
     GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
+USTRUCT(BlueprintType)
+struct FEmberAnimalAttributeData
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float Fullness = 100.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float WalkSpeed = 300.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float WanderRange = 500.f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float WildPower = 0.f;
+};
+
 UCLASS()
 class EMBERABILITYSYSTEM_API UEmberAnimalAttributeSet : public UAttributeSet, public IEMSActorSaveInterface
 {
@@ -24,6 +42,7 @@ public:
     virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
     virtual bool PreGameplayEffectExecute(struct FGameplayEffectModCallbackData& Data) override;
     virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
+    void InitFromData(const FEmberAnimalAttributeData& Data);
 
 public: /* Behavior Tree Variable */
     ATTRIBUTE_ACCESSORS(UEmberAnimalAttributeSet, Fullness)

@@ -58,29 +58,31 @@ public:
 	ABaseAIAnimal();
 
 	virtual void PossessedBy(AController* NewController) override;
-	void OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
-	void OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
+	virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
 	
 	virtual void ActorPreSave_Implementation() override;
 	virtual void ActorLoaded_Implementation() override;
 	
+	void OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
+	void OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
+
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void PlayInteractMontage(uint8 InState);
-	
-	float GetWildPower() const;
-	EAnimalAIState GetCurrentState() const;
 
+	EAnimalAIState GetCurrentState();
+	EAnimalAIPersonality GetPersonality();
+	float GetWildPower() const;
+	float GetWanderRange() const;
 	void SetCurrentState(EAnimalAIState NewState);
 	void SetFullness();
 
 	void GenerateRandom();
 	void DecreaseFullness();
-	virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
-
-
-public: /* AbilitySystem */
+	
+	
+ /* AbilitySystem */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
 	UFUNCTION(BlueprintCallable, Category = Attribute)
@@ -93,12 +95,6 @@ public: /* AbilitySystem */
 	void OnHit(AActor* InstigatorActor);
 	
 protected:
-	UFUNCTION(BlueprintCallable, Category = AI)
-	EAnimalAIPersonality GetPersonality() const;
-	
-	UFUNCTION(BlueprintCallable, Category = AI)
-	UNavigationInvokerComponent* GetNavInvoker() const;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UMeleeTraceComponent* MeleeTraceComponent;
 	
@@ -152,22 +148,23 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	bool bIsHungry = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	float Fullness = 100.f; //포만감
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	bool bIsShouldSwim = false;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	float Fullness; //포만감
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	float WildPower;
 
-	FTimerHandle TimerHandle;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	float WalkSpeed = 300.0f;
 
-	//콜라이더 추가해서 오버랩 이벤트 -> 누가 때렸는지(타겟엑터) -> IsHit 변경(BT를 위한), state 변경(Task를 위한)-> BT에서 성격에 따라 분기(일반이면 도망, 용감함이면 쫓아가면서 공격)
-	//블랙보드에 성격 추가, BT에도 성격으로 조건 거는 부분 있음 -> 코드 작성할 때 성격 확인 해야함
-	//공격적동물용 BT 따로 생성함
-	//체이서용 파인드타겟 task 따로 만들기, state 변경도 분리해야함(분기에 따라 하나씩 다 만드는 것도 고려해봄직)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	float WanderRange = 500.0f;
+	
+	FTimerHandle TimerHandle;
 };
 
 
