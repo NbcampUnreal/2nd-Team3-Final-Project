@@ -8,6 +8,7 @@
 #include "GameFramework/Character.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "DrawDebugHelpers.h"
+#include "EMSCompSaveInterface.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
 
@@ -52,16 +53,18 @@ void AAIAnimalController::BeginPlay()
 {
     Super::BeginPlay();
     PerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &AAIAnimalController::OnTargetPerceptionUpdated);
-    GetBlackboardComponent()->SetValueAsBool("IsRest", true);
-    GetBlackboardComponent()->SetValueAsFloat("SleepTime", fSleepTime);
-    GetBlackboardComponent()->SetValueAsBool("IsShouldSleep",bIsShouldSleep);
-    GetBlackboardComponent()->SetValueAsEnum("CurrentState",
+    BlackboardComponent->SetValueAsBool("IsRest", true);
+    BlackboardComponent->SetValueAsFloat("SleepTime", fSleepTime);
+    BlackboardComponent->SetValueAsBool("IsShouldSleep",bIsShouldSleep);
+    BlackboardComponent->SetValueAsEnum("CurrentState",
                                             static_cast<uint8>(Cast<ABaseAIAnimal>(GetPawn())->GetCurrentState()) );
 }
 
 void AAIAnimalController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
+
+    
     // 비헤이비어 트리 실행
     if (BehaviorTree)
     {
@@ -115,6 +118,7 @@ void AAIAnimalController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus S
             {
                 //여기서 인식되면 타겟, 거리 등록
                 BBComponent->SetValueAsBool("IsRest", false);
+                BBComponent->SetValueAsEnum("CurrentState", static_cast<uint8>(EAnimalAIState::Warning));
                 BBComponent->SetValueAsObject("TargetActor", Actor);
             
             }
