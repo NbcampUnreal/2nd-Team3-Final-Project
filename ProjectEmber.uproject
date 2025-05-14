@@ -61,7 +61,8 @@
 		},
 		{
 			"Name": "SteamIntegrationKit",
-			"Enabled": true
+			"Enabled": true,
+			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/122c9894af2649c8a9c2a25452562547"
 		},
 		{
 			"Name": "EnvironmentQueryEditor",

@@ -37,25 +37,20 @@ EBTNodeResult::Type UBTTask_FindSafeLocation::ExecuteTask(UBehaviorTreeComponent
 	const EAnimalAIState State = static_cast<EAnimalAIState>(BlackboardComp->GetValueAsEnum("CurrentState"));
 	const float WanderRange = BlackboardComp->GetValueAsFloat("WanderRange");
 	
-	if (State == EAnimalAIState::Warning) //맞지 않았지만 시가, 청각으로 위험을 감지했으면, 타겟엑터는 감지할 때 정해짐
+	//여기 더 자연스럽게 수정하기
 	{
-		//여기 더 자연스럽게 수정하기
-		{
-			FRotator Rotator = AIPawn->GetActorRotation();
-			Rotator.Yaw *= -1.0f;
-			AIPawn->SetActorRotation(Rotator);
-			ActorLocation = GenerateRandomLocation(ActorLocation, WanderRange*2.0f);
-		}
-		
-		if (BlackboardComp)
-		{
-			BlackboardComp->SetValueAsVector("SafeLocation", ActorLocation);
-			BlackboardComp->SetValueAsEnum("CurrentState", static_cast<uint8>(EAnimalAIState::Warning));
-			UE_LOG(LogTemp, Warning, TEXT("UBTTask_FindSafeLocation::SafeLocation 업데이트 성공. %f, %f, %f"), ActorLocation.X, ActorLocation.Y, ActorLocation.Z );
-		}
-		return Super::ExecuteTask(OwnerComp, NodeMemory);
+		FRotator Rotator = AIPawn->GetActorRotation();
+		Rotator.Yaw *= -1.0f;
+		AIPawn->SetActorRotation(Rotator);
+		ActorLocation = GenerateRandomLocation(ActorLocation, WanderRange*2.0f);
 	}
 	
+	if (BlackboardComp)
+	{
+		BlackboardComp->SetValueAsVector("SafeLocation", ActorLocation);
+		BlackboardComp->SetValueAsEnum("CurrentState", static_cast<uint8>(EAnimalAIState::Warning));
+		UE_LOG(LogTemp, Warning, TEXT("UBTTask_FindSafeLocation::SafeLocation 업데이트 성공. %f, %f, %f"), ActorLocation.X, ActorLocation.Y, ActorLocation.Z );
+	}
 	return Super::ExecuteTask(OwnerComp, NodeMemory);
 }
 
