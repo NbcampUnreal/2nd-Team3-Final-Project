@@ -3,13 +3,14 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "AbilitySystemInterface.h"
+#include "EMSActorSaveInterface.h"
 #include "EmberUserWidget.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PROJECTEMBER_API UEmberUserWidget : public UUserWidget, public IAbilitySystemInterface
+class PROJECTEMBER_API UEmberUserWidget : public UUserWidget, public IAbilitySystemInterface, public IEMSActorSaveInterface
 {
 	GENERATED_BODY()
 
