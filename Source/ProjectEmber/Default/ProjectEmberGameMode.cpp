@@ -4,6 +4,7 @@
 #include "ProjectEmberPlayerController.h"
 #include "ProjectEmberCharacter.h"
 #include "Blueprint/UserWidget.h"
+#include "GameInstance/EmberGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 #include "UObject/ConstructorHelpers.h"
 
