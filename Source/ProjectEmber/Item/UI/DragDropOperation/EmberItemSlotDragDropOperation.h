@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Blueprint/DragDropOperation.h"
 #include "Item/Core/EmberItemStruct.h"
 #include "EmberItemSlotDragDropOperation.generated.h"
@@ -17,8 +18,10 @@ class PROJECTEMBER_API UEmberItemSlotDragDropOperation : public UDragDropOperati
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite,  Category="Payload", meta=(ExposeOnSpawn=true))
 	int32 SlotIndex;
-	
-	/*
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite,  Category="Payload", meta=(ExposeOnSpawn=true))
-	int32 DraggedQuantity;*/
+	FGameplayTag SlotType; 
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite,  Category="Payload", meta=(ExposeOnSpawn=true))
+	int32 DraggedQuantity;
 };

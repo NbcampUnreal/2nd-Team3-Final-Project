@@ -27,7 +27,7 @@ public:
 	
 	
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TScriptInterface<IEmberSlotDataProviderInterface> DataProvider;
 
 };

@@ -10,9 +10,11 @@
 #include "EnhancedInputComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Engine/LocalPlayer.h"
+#include "Item/InventoryManagerComponent.h"
 #include "UI/EmberWidgetComponent.h"
 #include "MeleeTrace/Public/MeleeTraceComponent.h"
 #include "Utility/AlsVector.h"
+#include "Item/InventoryManagerComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(EmberCharacter)
 
@@ -29,8 +31,11 @@ AEmberCharacter::AEmberCharacter()
     InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 
     MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
+
+    InventoryManager = CreateDefaultSubobject<UInventoryManagerComponent>(TEXT("InventoryManager1"));
     
     HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
+    
     HpBarWidget->SetupAttachment(GetMesh());
     HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
 
