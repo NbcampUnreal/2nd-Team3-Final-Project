@@ -9,13 +9,13 @@ USTRUCT(BlueprintType)
 struct PROJECTEMBER_API FAreaAudioDataStruct : public FTableRowBase
 {
 	GENERATED_BODY()
-	
+
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EAreaSoundType AreaSoundType = EAreaSoundType::LobbySound;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSoftObjectPtr<USoundBase> Sound;
+	TSoftObjectPtr<USoundBase> Sound = nullptr;
 };
 
 
