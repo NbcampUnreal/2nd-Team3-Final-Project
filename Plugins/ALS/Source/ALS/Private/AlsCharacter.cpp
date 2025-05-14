@@ -1521,7 +1521,9 @@ void AAlsCharacter::CharacterMovement_OnPhysicsRotation(const float DeltaTime)
 
 void AAlsCharacter::RefreshGroundedRotation(const float DeltaTime)
 {
-	if (LocomotionAction.IsValid() || LocomotionMode != AlsLocomotionModeTags::Grounded)
+	if (LocomotionAction.IsValid() || (LocomotionMode != AlsLocomotionModeTags::Grounded && LocomotionMode !=
+		AlsLocomotionModeTags::InWater)
+	)
 	{
 		return;
 	}
