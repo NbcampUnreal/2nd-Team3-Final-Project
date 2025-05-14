@@ -12,8 +12,8 @@ struct PROJECTEMBER_API FUISFXAudioDataStruct : public FTableRowBase
 	
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EUISfxSoundType UISfxSoundType;
+	EUISfxSoundType UISfxSoundType = EUISfxSoundType::Click;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSoftObjectPtr<USoundBase> Sound;
+	TSoftObjectPtr<USoundBase> Sound = nullptr;
 };
