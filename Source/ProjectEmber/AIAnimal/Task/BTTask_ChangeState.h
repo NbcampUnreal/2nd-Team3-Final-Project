@@ -17,5 +17,5 @@ class PROJECTEMBER_API UBTTask_ChangeState : public UBTTask_BlackboardBase
 public:
 	UBTTask_ChangeState();
 
-	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& Comp, uint8* NodeMemory) override;
+	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 };

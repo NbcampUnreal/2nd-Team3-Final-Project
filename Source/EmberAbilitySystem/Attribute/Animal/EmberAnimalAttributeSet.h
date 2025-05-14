@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "AttributeSet.h"
 #include "AbilitySystemComponent.h"
+#include "EMSActorSaveInterface.h"
 #include "EmberAnimalAttributeSet.generated.h"
 
 #define ATTRIBUTE_ACCESSORS(ClassName, PropertyName) \
@@ -12,7 +13,7 @@
     GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 
 UCLASS()
-class EMBERABILITYSYSTEM_API UEmberAnimalAttributeSet : public UAttributeSet
+class EMBERABILITYSYSTEM_API UEmberAnimalAttributeSet : public UAttributeSet, public IEMSActorSaveInterface
 {
     GENERATED_BODY()
 
@@ -31,15 +32,15 @@ public: /* Behavior Tree Variable */
     ATTRIBUTE_ACCESSORS(UEmberAnimalAttributeSet, WildPower)
     
 protected: 
-    UPROPERTY(BlueprintReadOnly, Category = "Animal", Meta = (AllowPrivateAccess = true))
+    UPROPERTY(BlueprintReadOnly, Category = "Animal", Meta = (AllowPrivateAccess = true), SaveGame)
     FGameplayAttributeData Fullness;
     
-    UPROPERTY(BlueprintReadOnly, Category = "Animal", Meta = (AllowPrivateAccess = true))
+    UPROPERTY(BlueprintReadOnly, Category = "Animal", Meta = (AllowPrivateAccess = true), SaveGame)
     FGameplayAttributeData WalkSpeed;
     
-    UPROPERTY(BlueprintReadOnly, Category = "Animal", Meta = (AllowPrivateAccess = true))
+    UPROPERTY(BlueprintReadOnly, Category = "Animal", Meta = (AllowPrivateAccess = true), SaveGame)
     FGameplayAttributeData WanderRange;
     
-    UPROPERTY(BlueprintReadOnly, Category = "Animal", Meta = (AllowPrivateAccess = true))
+    UPROPERTY(BlueprintReadOnly, Category = "Animal", Meta = (AllowPrivateAccess = true), SaveGame)
     FGameplayAttributeData WildPower;
 };
