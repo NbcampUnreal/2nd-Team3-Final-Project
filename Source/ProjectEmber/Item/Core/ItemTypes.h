@@ -14,38 +14,38 @@ class UTexture2D;
 class USoundBase;
 class UGameplayEffect;
 
+
+
 // 기본 아이템 정보
 USTRUCT(BlueprintType)
-struct FItemBaseInfoRow : public FTableRowBase
+struct FItemMasterInfoRow : public FTableRowBase
 {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Base Info")
-    FText ItemDisplayName;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ItemMasterInfoRow")
+    FText ItemDisplayName = FText();
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory Component")
-    FText ItemDescription;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ItemMasterInfoRow")
+    FText ItemDescription = FText();
     
     // 아이템의 기능적/데이터적 컴포넌트(특성)들을 정의하는 다른 데이터 테이블 행들을 참조
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Base Info")
-    TArray<FDataTableRowHandle> ItemComponentHandles;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ItemMasterInfoRow")
+    TArray<FDataTableRowHandle> ItemData;
 };
 
 USTRUCT(BlueprintType)
-struct FInventoryComponentRow : public FTableRowBase
+struct FSlotInfoRow : public FTableRowBase
 {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory Component")
-    TSoftObjectPtr<UTexture2D> ItemIcon;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "SlotInfo")
+    TSoftObjectPtr<UTexture2D> ItemIcon = nullptr;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory Component", meta = (ClampMin = "1"))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "SlotInfo", meta = (ClampMin = "1"))
     int32 MaxStackSize = 1;
 
     // (선택 사항) 인벤토리 정렬 순서, 무게 등
     
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item Base Info")
-    TArray<FDataTableRowHandle> ItemComponentHandles;
 };
 
 
@@ -56,10 +56,10 @@ struct FItemEffectApplicationInfo
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
-    TSubclassOf<UGameplayEffect> GameplayEffectClass;
+    TSubclassOf<UGameplayEffect> GameplayEffectClass = nullptr;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Categories = "Gameplay.Effect.SetByCaller"))
-    FGameplayTag MagnitudeSetByCallerTag;
+    FGameplayTag MagnitudeSetByCallerTag = FGameplayTag::EmptyTag;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     float Magnitude = 0.0f;
@@ -68,20 +68,15 @@ struct FItemEffectApplicationInfo
 
 // 소비 컴포넌트 정보 (DT_ConsumableComponent 용)
 USTRUCT(BlueprintType)
-struct FConsumableComponentRow : public FTableRowBase
+struct FConsumableInfoRow : public FTableRowBase
 {
     GENERATED_BODY()
 
-    // 최대 사용 횟수 (0 또는 1은 보통 1회 사용 후 소멸)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Consumable Component", meta = (ClampMin = "0"))
-    int32 MaxCharges = 1;
+    int32 ConsumeAmount = 1;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Consumable Component")
-    TSubclassOf<UGameplayEffect> CooldownGameplayEffect;
-
-    // 소비 시 재생할 사운드 (선택 사항)
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Consumable Component")
-    TSoftObjectPtr<USoundBase> ConsumeSound;
+    TSubclassOf<UGameplayEffect> CooldownGameplayEffect = nullptr;
 
     // 소비 시 적용될 효과 목록 (GAS 연동)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Consumable Component")
