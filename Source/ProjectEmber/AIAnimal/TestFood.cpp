@@ -3,50 +3,33 @@
 
 #include "TestFood.h"
 
-#include "BaseAIAnimal.h"
+#include "AbilitySystemComponent.h"
 
 
 // Sets default values
 ATestFood::ATestFood()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
 }
 
-// Called when the game starts or when spawned
 void ATestFood::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
-// Called every frame
-void ATestFood::Tick(float DeltaTime)
+bool ATestFood::GetSelected()
 {
-	Super::Tick(DeltaTime);
-}
-
-void ATestFood::Interact_Implementation(AActor* Interactor)
-{
-	IInteractiveObject::Interact_Implementation(Interactor);
-	UE_LOG(LogTemp, Warning, TEXT("ATestFood::상호작용 성공, 먹이 삭제함"));
-	Destroy();
-}
-
-FGameplayTag ATestFood::GetTag_Implementation()
-{
-	IInteractiveObject::GetTag_Implementation();
-	return GameplayTag;
-}
-
-bool ATestFood::GetIsSelected_Implementation()
-{
-	IInteractiveObject::GetIsSelected_Implementation();
 	return bIsSelected;
 }
 
-void ATestFood::SetIsSelected_Implementation(const bool InSelect)
+const FGameplayTagContainer& ATestFood::GetGameplayTagContainer()
 {
-	IInteractiveObject::SetIsSelected_Implementation(InSelect);
-	bIsSelected = InSelect;
+	return GameplayTagContainer;
 }
+
+void ATestFood::SetSelected(const bool InIsSelected)
+{
+	bIsSelected = InIsSelected;
+}
+
+
+

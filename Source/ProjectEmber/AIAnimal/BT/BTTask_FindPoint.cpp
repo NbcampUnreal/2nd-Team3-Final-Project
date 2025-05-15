@@ -1,10 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "ProjectEmber/AIAnimal/Task/BTTask_FindPoint.h"
+#include "ProjectEmber/AIAnimal/BT/BTTask_FindPoint.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AIController.h"
 #include "AIAnimal/TestFood.h"
+//#include "Interactables/Interactable.h"
 #include "Kismet/GameplayStatics.h"
 #include "ProjectEmber/AIAnimal/BaseAIAnimal.h"
 
@@ -56,9 +57,9 @@ EBTNodeResult::Type UBTTask_FindPoint::ExecuteTask(UBehaviorTreeComponent& Owner
 			for (AActor* Object : InteractiveObjects)
 			{
 				//다른 객체와 이미 상호작용중이면 다음으로 넘어감
-				if (Object->GetClass()->ImplementsInterface(UInteractiveObject::StaticClass()))
+				if (Object->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
 				{
-					if (IInteractiveObject::Execute_GetIsSelected(Object))
+					if (Cast<ATestFood>(Object)->GetSelected())
 					{
 						continue;
 					}
@@ -78,7 +79,7 @@ EBTNodeResult::Type UBTTask_FindPoint::ExecuteTask(UBehaviorTreeComponent& Owner
 			{
 				BlackboardComp->SetValueAsObject("TargetActor", ClosestObject);
 				BlackboardComp->SetValueAsVector("TargetLocation", ClosestObject->GetActorLocation());
-				IInteractiveObject::Execute_SetIsSelected(ClosestObject, true);
+				Cast<ATestFood>(ClosestObject)->SetSelected(true);
 				UE_LOG(LogTemp, Warning, TEXT("AnimalController::TargetLocation 업데이트 성공. %f, %f, %f"), ClosestObject->GetActorLocation().X, ClosestObject->GetActorLocation().Y, ClosestObject->GetActorLocation().Z );
 				return Super::ExecuteTask(OwnerComp, NodeMemory);
 			}

@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AIAnimal/Task/BTTask_FindSafeLocation.h"
+#include "AIAnimal/BT/BTTask_FindSafeLocation.h"
 
 #include "AIController.h"
 #include "AIAnimal/BaseAIAnimal.h"

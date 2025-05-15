@@ -1,8 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AIAnimal/BTService_UpdateDistanceToTarget.h"
-
+#include "BTService_UpdateDistanceToTarget.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 
@@ -57,6 +56,7 @@ void UBTService_UpdateDistanceToTarget::TickNode(UBehaviorTreeComponent& OwnerCo
 			float Distance = FVector::Dist(AIPawn->GetActorLocation(), Target->GetActorLocation());
 			UE_LOG(LogTemp, Warning, TEXT("Distance %f"), Distance);
 			BlackboardComp->SetValueAsFloat("DistanceToTarget", Distance);
+			BlackboardComp->SetValueAsVector("TargetLocation", Target->GetActorLocation());
 		}
 		else
 		{
