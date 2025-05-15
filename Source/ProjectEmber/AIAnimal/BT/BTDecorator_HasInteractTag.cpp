@@ -1,11 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "ProjectEmber/AIAnimal/BTDecorator_HasInteractTag.h"
+#include "ProjectEmber/AIAnimal/BT/BTDecorator_HasInteractTag.h"
 
 #include "AIController.h"
-#include "TestFood.h"
+#include "AIAnimal/TestFood.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Interactables/Interactable.h"
 
 UBTDecorator_HasInteractTag::UBTDecorator_HasInteractTag()
 {
@@ -37,9 +38,9 @@ bool UBTDecorator_HasInteractTag::CalculateRawConditionValue(UBehaviorTreeCompon
 	{
 		return false;
 	}
-	if (TargetActor->GetClass()->ImplementsInterface(UInteractiveObject::StaticClass()))
+	if (TargetActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
 	{
-		if (IInteractiveObject::Execute_GetTag(TargetActor).MatchesTag(FoodTag))
+		if (Cast<ATestFood>(TargetActor)->GetGameplayTagContainer().HasTag(FoodTag))
 		{
 			return true; 
 		}

@@ -1,9 +1,11 @@
-#include "ProjectEmber/AIAnimal/Task/BTTask_Interact.h"
+#include "ProjectEmber/AIAnimal/BT/BTTask_Interact.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AIController.h"
+#include "AIAnimal/TestFood.h"
 #include "GameFramework/Character.h"
+//#include "Interactables/BaseInteractableActor.h"
+#include "Interactables/Interactable.h"
 #include "ProjectEmber/AIAnimal/BaseAIAnimal.h"
-#include "ProjectEmber/AIAnimal/TestFood.h"
 
 UBTTask_Interact::UBTTask_Interact()
 {
@@ -42,7 +44,7 @@ EBTNodeResult::Type UBTTask_Interact::ExecuteTask(UBehaviorTreeComponent& OwnerC
 		return EBTNodeResult::Failed; // 너무 멀리 있음
 	}
 
-	if (TargetActor->GetClass()->ImplementsInterface(UInteractiveObject::StaticClass()))
+	if (TargetActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
 	{
 		ABaseAIAnimal* AICharacter = Cast<ABaseAIAnimal>(AIPawn);
 		if (!AICharacter)
@@ -53,7 +55,7 @@ EBTNodeResult::Type UBTTask_Interact::ExecuteTask(UBehaviorTreeComponent& OwnerC
 		AICharacter->PlayInteractMontage(static_cast<uint8>(EAnimalAIState::Idle)); //enum을 넘기고는 있지만 아직 사용하지 않음
 		AICharacter->SetFullness();
 		BlackboardComp->SetValueAsBool("IsHungry", false);
-		IInteractiveObject::Execute_Interact(TargetActor, AICharacter); //먹이 삭제
+		Cast<ATestFood>(TargetActor)->Interact_Implementation(AICharacter); //먹이 삭제
 		BlackboardComp->SetValueAsObject(GetSelectedBlackboardKey(), nullptr);
 		
 		// 태스크 성공 반환

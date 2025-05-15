@@ -64,7 +64,8 @@ public:
 	
 	virtual void ActorPreSave_Implementation() override;
 	virtual void ActorLoaded_Implementation() override;
-	
+	virtual void PostInitializeComponents() override;
+
 	void OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 
@@ -137,6 +138,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Montage)
 	UAnimMontage* Montage;
 	
+	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
+	TSubclassOf<class UGameplayAbility> Ability;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AnimalEnum)
 	EAnimalAIState	CurrentState;
 
@@ -153,7 +157,7 @@ protected:
 	bool bIsShouldSwim = false;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	float Fullness; //포만감
+	float Fullness = 40.0f; //포만감
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	float WildPower;
