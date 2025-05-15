@@ -121,7 +121,8 @@ void AEmberCharacter::PossessedBy(AController* NewController)
     if (AEmberPlayerState* EmberPlayerState = GetPlayerState<AEmberPlayerState>())
     {
         AbilitySystemComponent = EmberPlayerState->GetAbilitySystemComponent();
-
+        Super::SetAbilitySystemComponent(AbilitySystemComponent);
+        
         if (const UEmberCharacterAttributeSet* CurrentAttributeSet = AbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>())
         {
             CurrentAttributeSet->OnOutOfHealth.AddDynamic(this, &ThisClass::OnOutOfHealth);

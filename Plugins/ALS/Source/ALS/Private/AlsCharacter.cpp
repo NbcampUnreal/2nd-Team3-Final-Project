@@ -17,11 +17,18 @@
 #include "Utility/AlsUtility.h"
 #include "Utility/AlsVector.h"
 
+#include "AbilitySystemComponent.h"
+
 #include UE_INLINE_GENERATED_CPP_BY_NAME(AlsCharacter)
 
 namespace AlsCharacterConstants
 {
 	constexpr auto MinAimingYawAngleLimit{70.0f};
+}
+
+void AAlsCharacter::SetAbilitySystemComponent(UAbilitySystemComponent* InAbilitySystemComponent)
+{
+	AscInstance = InAbilitySystemComponent;
 }
 
 AAlsCharacter::AAlsCharacter(const FObjectInitializer& ObjectInitializer) : Super{
@@ -519,6 +526,12 @@ void AAlsCharacter::SetLocomotionMode(const FGameplayTag& NewLocomotionMode)
 
 void AAlsCharacter::NotifyLocomotionModeChanged(const FGameplayTag& PreviousLocomotionMode)
 {
+	if (AscInstance)
+	{
+		AscInstance->RemoveLooseGameplayTag(PreviousLocomotionMode);
+		AscInstance->AddLooseGameplayTag(LocomotionMode);
+	}
+	
 	ApplyDesiredStance();
 
 	if (LocomotionMode == AlsLocomotionModeTags::Grounded &&
@@ -621,7 +634,10 @@ void AAlsCharacter::OnReplicated_DesiredAiming(const bool bPreviousDesiredAiming
 	OnDesiredAimingChanged(bPreviousDesiredAiming);
 }
 
-void AAlsCharacter::OnDesiredAimingChanged_Implementation(const bool bPreviousDesiredAiming) {}
+void AAlsCharacter::OnDesiredAimingChanged_Implementation(const bool bPreviousDesiredAiming)
+{
+	
+}
 
 void AAlsCharacter::SetDesiredRotationMode(const FGameplayTag& NewDesiredRotationMode)
 {
@@ -681,6 +697,12 @@ void AAlsCharacter::NotifyRotationModeChanged(const FGameplayTag& PreviousRotati
 	// This prevents the actor from rotating in the last input direction after the
 	// rotation mode has been changed and the actor is not moving at that moment.
 
+	if (AscInstance)
+	{
+		AscInstance->RemoveLooseGameplayTag(PreviousRotationMode);
+		AscInstance->AddLooseGameplayTag(RotationMode);
+	}
+	
 	LocomotionState.bRotationTowardsLastInputDirectionBlocked = true;
 
 	OnRotationModeChanged(PreviousRotationMode);
@@ -899,7 +921,14 @@ void AAlsCharacter::SetStance(const FGameplayTag& NewStance)
 	}
 }
 
-void AAlsCharacter::OnStanceChanged_Implementation(const FGameplayTag& PreviousStance) {}
+void AAlsCharacter::OnStanceChanged_Implementation(const FGameplayTag& PreviousStance)
+{
+	if (AscInstance)
+	{
+		AscInstance->RemoveLooseGameplayTag(PreviousStance);
+		AscInstance->AddLooseGameplayTag(Stance);
+	}
+}
 
 void AAlsCharacter::SetDesiredGait(const FGameplayTag& NewDesiredGait)
 {
@@ -952,7 +981,14 @@ void AAlsCharacter::SetGait(const FGameplayTag& NewGait)
 	}
 }
 
-void AAlsCharacter::OnGaitChanged_Implementation(const FGameplayTag& PreviousGait) {}
+void AAlsCharacter::OnGaitChanged_Implementation(const FGameplayTag& PreviousGait)
+{
+	if (AscInstance)
+	{
+		AscInstance->RemoveLooseGameplayTag(PreviousGait);
+		AscInstance->AddLooseGameplayTag(Gait);
+	}
+}
 
 void AAlsCharacter::RefreshGait()
 {
@@ -1061,6 +1097,12 @@ void AAlsCharacter::SetOverlayMode(const FGameplayTag& NewOverlayMode, const boo
 
 	OnOverlayModeChanged(PreviousOverlayMode);
 
+	if (AscInstance)
+	{
+		AscInstance->RemoveLooseGameplayTag(PreviousOverlayMode);
+		AscInstance->AddLooseGameplayTag(OverlayMode);
+	}
+	
 	if (bSendRpc)
 	{
 		if (GetLocalRole() >= ROLE_Authority)
@@ -1089,7 +1131,10 @@ void AAlsCharacter::OnReplicated_OverlayMode(const FGameplayTag& PreviousOverlay
 	OnOverlayModeChanged(PreviousOverlayMode);
 }
 
-void AAlsCharacter::OnOverlayModeChanged_Implementation(const FGameplayTag& PreviousOverlayMode) {}
+void AAlsCharacter::OnOverlayModeChanged_Implementation(const FGameplayTag& PreviousOverlayMode)
+{
+
+}
 
 void AAlsCharacter::SetLocomotionAction(const FGameplayTag& NewLocomotionAction)
 {
@@ -1105,6 +1150,12 @@ void AAlsCharacter::SetLocomotionAction(const FGameplayTag& NewLocomotionAction)
 
 void AAlsCharacter::NotifyLocomotionActionChanged(const FGameplayTag& PreviousLocomotionAction)
 {
+	if (AscInstance)
+	{
+		AscInstance->RemoveLooseGameplayTag(PreviousLocomotionAction);
+		AscInstance->AddLooseGameplayTag(LocomotionAction);
+	}
+	
 	if (!LocomotionAction.IsValid())
 	{
 		AlsCharacterMovement->SetInputBlocked(false);
