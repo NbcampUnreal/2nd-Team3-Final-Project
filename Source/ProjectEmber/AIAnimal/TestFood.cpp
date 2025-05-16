@@ -10,21 +10,26 @@
 // Sets default values
 ATestFood::ATestFood()
 {
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
 }
 
+// Called when the game starts or when spawned
 void ATestFood::BeginPlay()
 {
 	Super::BeginPlay();
+	
 }
 
 void ATestFood::Interact_Implementation(AActor* Caller)
 {
-	IInteractiveObject::Interact_Implementation(Interactor);
+	Super::Interact_Implementation(Caller);
+
 	UE_LOG(LogTemp, Warning, TEXT("ATestFood::상호작용 성공, 먹이 삭제함"));
 
 	FGameplayEventData Payload;
 	Payload.OptionalObject = this;
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Interactor, FGameplayTag::RequestGameplayTag(TEXT("Trigger.Animal.Interact.Harvest")), Payload);
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Caller, FGameplayTag::RequestGameplayTag(TEXT("Trigger.Animal.Interact.Harvest")), Payload);
 	//Destroy();
 }
 
@@ -45,8 +50,4 @@ const FGameplayTagContainer& ATestFood::GetGameplayTagContainer()
 
 void ATestFood::SetSelected(const bool InIsSelected)
 {
-	bIsSelected = InIsSelected;
 }
-
-
-
