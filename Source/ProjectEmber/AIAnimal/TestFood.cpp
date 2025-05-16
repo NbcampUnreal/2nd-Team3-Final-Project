@@ -16,6 +16,16 @@ void ATestFood::BeginPlay()
 	Super::BeginPlay();
 }
 
+void ATestFood::Interact_Implementation(AActor* Caller)
+{
+	Super::Interact_Implementation(Caller);
+}
+
+float ATestFood::GetGatherTime_Implementation()
+{
+	return Super::GetGatherTime_Implementation();
+}
+
 bool ATestFood::GetSelected()
 {
 	return bIsSelected;
