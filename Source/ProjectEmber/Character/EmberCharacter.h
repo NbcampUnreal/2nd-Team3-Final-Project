@@ -6,6 +6,7 @@
 #include "EMSActorSaveInterface.h"
 #include "EmberCharacter.generated.h"
 
+struct FGameplayAbilitySpec;
 class UAlsCameraComponent;
 class UEmberInputHandlerComponent;
 class UMeleeTraceComponent;
@@ -62,6 +63,7 @@ protected:
 	virtual void OnOutOfHealth();
 
 	void AbilityInputPressed(int32 InputID);
+	FGameplayAbilitySpec* GetSpecFromOverlayMode() const;
 protected:
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;

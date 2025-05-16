@@ -1,4 +1,5 @@
-﻿#include "EmberCharacter.h"
+﻿// ReSharper disable CppMemberFunctionMayBeConst
+#include "EmberCharacter.h"
 #include "EmberAbilitySystem/Attribute/Character/EmberCharacterAttributeSet.h"
 #include "InputHandler/EmberInputHandlerComponent.h"
 #include "EmberComponents/InteractionComponent.h"
@@ -11,6 +12,7 @@
 #include "WaterBodyActor.h"
 #include "Animation/AnimInstance.h"
 #include "Components/CapsuleComponent.h"
+#include "Define/CharacterDefine.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/PhysicsVolume.h"
 #include "UI/EmberWidgetComponent.h"
@@ -100,18 +102,58 @@ void AEmberCharacter::OnOutOfHealth()
 
 void AEmberCharacter::AbilityInputPressed(int32 InputID)
 {
-    if (FGameplayAbilitySpec* Spec = AbilitySystemComponent->FindAbilitySpecFromInputID(InputID))
+    if (InputID == 0)
     {
-        Spec->InputPressed = true;
-        if (Spec->IsActive())
+        if (FGameplayAbilitySpec* Spec = GetSpecFromOverlayMode())
         {
-            AbilitySystemComponent->AbilitySpecInputPressed(*Spec); 
-        }
-        else
-        {
-            AbilitySystemComponent->TryActivateAbility(Spec->Handle);
+            Spec->InputPressed = true;
+            if (Spec->IsActive())
+            {
+                AbilitySystemComponent->AbilitySpecInputPressed(*Spec);
+            }
+            else
+            {
+                AbilitySystemComponent->TryActivateAbility(Spec->Handle);
+            }
         }
     }
+    else
+    {
+        if (FGameplayAbilitySpec* Spec = AbilitySystemComponent->FindAbilitySpecFromInputID(InputID))
+        {
+            Spec->InputPressed = true;
+            if (Spec->IsActive())
+            {
+                AbilitySystemComponent->AbilitySpecInputPressed(*Spec);
+            }
+            else
+            {
+                AbilitySystemComponent->TryActivateAbility(Spec->Handle);
+            }
+        }
+    }
+}
+
+FGameplayAbilitySpec* AEmberCharacter::GetSpecFromOverlayMode() const
+{
+    if (OverlayMode == AlsOverlayModeTags::Default)    
+    {
+        return AbilitySystemComponent->FindAbilitySpecFromInputID(static_cast<int32>(EInputID::Default));
+    }
+    else if (OverlayMode == AlsOverlayModeTags::Sword) 
+    {
+        return AbilitySystemComponent->FindAbilitySpecFromInputID(static_cast<int32>(EInputID::Sword));
+    }
+    else if (OverlayMode == AlsOverlayModeTags::Hatchet) 
+    {
+        return AbilitySystemComponent->FindAbilitySpecFromInputID(static_cast<int32>(EInputID::Hatchet));
+    }
+    else if (OverlayMode == AlsOverlayModeTags::PickAxe) 
+    {
+        return AbilitySystemComponent->FindAbilitySpecFromInputID(static_cast<int32>(EInputID::PickAxe));
+    }
+
+    return AbilitySystemComponent->FindAbilitySpecFromInputID(static_cast<int32>(EInputID::Attack));
 }
 
 void AEmberCharacter::PossessedBy(AController* NewController)
