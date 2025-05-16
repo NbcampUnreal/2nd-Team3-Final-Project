@@ -2,8 +2,9 @@
 
 
 #include "TestFood.h"
-
-#include "AbilitySystemComponent.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "BaseAIAnimal.h"
+#include "Abilities/GameplayAbilityTypes.h"
 
 
 // Sets default values
@@ -18,7 +19,13 @@ void ATestFood::BeginPlay()
 
 void ATestFood::Interact_Implementation(AActor* Caller)
 {
-	Super::Interact_Implementation(Caller);
+	IInteractiveObject::Interact_Implementation(Interactor);
+	UE_LOG(LogTemp, Warning, TEXT("ATestFood::상호작용 성공, 먹이 삭제함"));
+
+	FGameplayEventData Payload;
+	Payload.OptionalObject = this;
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Interactor, FGameplayTag::RequestGameplayTag(TEXT("Trigger.Animal.Interact.Harvest")), Payload);
+	//Destroy();
 }
 
 float ATestFood::GetGatherTime_Implementation()
