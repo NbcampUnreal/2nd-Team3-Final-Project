@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "GameplayTagContainer.h"
 #include "Interactables/BaseInteractableActor.h"
 #include "TestFood.generated.h"
 
