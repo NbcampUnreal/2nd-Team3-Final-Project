@@ -2,6 +2,7 @@
 
 
 #include "ItemSubsystem.h"
+#include "Core/ItemTypes.h"
 
 void UItemSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -11,6 +12,7 @@ void UItemSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     LoadedItemBaseDataTable = LoadDataTable(ItemBaseDataTablePtr, TEXT("ItemBase"));
     LoadedInventoryComponentDataTable = LoadDataTable(InventoryComponentDataTablePtr, TEXT("InventoryComponent"));
     LoadedConsumableComponentDataTable = LoadDataTable(ConsumableComponentDataTablePtr, TEXT("ConsumableComponent"));
+    LoadedConsumableEquipmentDataTable = LoadDataTable(EquipmentComponentDataTablePtr, TEXT("EquipmentComponent"));
 
 }
 
@@ -19,6 +21,7 @@ void UItemSubsystem::Deinitialize()
     LoadedItemBaseDataTable = nullptr;
     LoadedInventoryComponentDataTable = nullptr;
     LoadedConsumableComponentDataTable = nullptr;
+    LoadedConsumableEquipmentDataTable = nullptr;
 
     UE_LOG(LogTemp, Log, TEXT("UMyItemSubsystem Deinitializing."));
     Super::Deinitialize();
@@ -50,11 +53,11 @@ TObjectPtr<UDataTable> UItemSubsystem::LoadDataTable(const TSoftObjectPtr<UDataT
     return LoadedTable;
 }
 
-const FItemBaseInfoRow* UItemSubsystem::GetItemBaseData(FName ItemID) const
+const FItemMasterInfoRow* UItemSubsystem::GetItemMasterInfoRow(FName ItemID) const
 {
     if (LoadedItemBaseDataTable)
     {
-        return LoadedItemBaseDataTable->FindRow<FItemBaseInfoRow>(ItemID, TEXT("GetItemBaseData"));
+        return LoadedItemBaseDataTable->FindRow<FItemMasterInfoRow>(ItemID, TEXT("GetItemBaseData"));
     }
     UE_LOG(LogTemp, Error, TEXT("Failed to load LoadedItemBaseDataTable"));
     return nullptr;
