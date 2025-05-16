@@ -3,21 +3,22 @@
 #include "Kismet/GameplayStatics.h"
 #include "EmberSettingWidget.h"
 #include "GameInstance/EmberGameInstance.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 void UEmberMainMenuWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	if (UButton* NewGameButton = Cast<UButton>(GetWidgetFromName(TEXT("NewGameButton"))))
-		NewGameButton->OnClicked.AddDynamic(this, &UEmberMainMenuWidget::OnNewGameClicked);
+    if (NewGameButton)
+        NewGameButton->OnClicked.AddDynamic(this, &UEmberMainMenuWidget::OnNewGameClicked);
 
-    if (UButton* ContinueButton = Cast<UButton>(GetWidgetFromName(TEXT("ContinueButton"))))
+    if (ContinueButton)
         ContinueButton->OnClicked.AddDynamic(this, &UEmberMainMenuWidget::OnContinueClicked);
 
-    if (UButton* SettingsButton = Cast<UButton>(GetWidgetFromName(TEXT("SettingsButton"))))
+    if (SettingsButton)
         SettingsButton->OnClicked.AddDynamic(this, &UEmberMainMenuWidget::OnSettingsClicked);
 
-    if (UButton* QuitButton = Cast<UButton>(GetWidgetFromName(TEXT("QuitButton"))))
+    if (QuitButton)
         QuitButton->OnClicked.AddDynamic(this, &UEmberMainMenuWidget::OnQuitClicked);
 }
 
@@ -38,14 +39,19 @@ void UEmberMainMenuWidget::OnContinueClicked()
 
 void UEmberMainMenuWidget::OnSettingsClicked()
 {
-    this->RemoveFromParent();
-
     if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
     {
-        if (auto* Settings = CreateWidget<UEmberSettingWidget>(PC, UEmberSettingWidget::StaticClass()))
+        if (SettingWidgetClass)
         {
-            this->RemoveFromParent();
-            Settings->AddToViewport();
+            if (UEmberSettingWidget* Settings = CreateWidget<UEmberSettingWidget>(PC, SettingWidgetClass))
+            {
+                RemoveFromParent();
+
+                Settings->AddToViewport();
+
+                PC->bShowMouseCursor = true;
+                PC->SetInputMode(FInputModeUIOnly());
+            }
         }
     }
 }
