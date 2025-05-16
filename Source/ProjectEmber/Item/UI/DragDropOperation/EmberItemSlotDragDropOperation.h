@@ -5,7 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Blueprint/DragDropOperation.h"
-#include "Item/Core/EmberItemStruct.h"
+#include "Item/UI/SlotWidget/EmberSlotDataProviderInterface.h"
+
 #include "EmberItemSlotDragDropOperation.generated.h"
 
 /**
@@ -20,8 +21,12 @@ public:
 	int32 SlotIndex;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite,  Category="Payload", meta=(ExposeOnSpawn=true))
+	int32 DraggedQuantity;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite,  Category="Payload", meta=(ExposeOnSpawn=true))
+	TScriptInterface<UEmberSlotDataProviderInterface> Provider;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite,  Category="Payload", meta=(ExposeOnSpawn=true))
 	FGameplayTag SlotType; 
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite,  Category="Payload", meta=(ExposeOnSpawn=true))
-	int32 DraggedQuantity;
 };

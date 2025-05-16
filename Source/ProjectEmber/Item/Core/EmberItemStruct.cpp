@@ -4,6 +4,7 @@
 #include "EmberItemStruct.h"
 #include "ItemSystemLibrary.h"
 #include "ItemTypes.h"
+#include "EmberLog/EmberLog.h"
 #include "Item/ItemSubsystem.h"
 
 FInventorySlotData::FInventorySlotData(const FName& InItemID)
@@ -13,7 +14,7 @@ FInventorySlotData::FInventorySlotData(const FName& InItemID)
 		ItemID = InItemID;
 		ItemDisplayName = InItemMasterInfo->ItemDescription;
 		ItemDescription = InItemMasterInfo->ItemDescription;
-            
+
 		for (const FDataTableRowHandle& Handle : InItemMasterInfo->ItemData)
 		{
 			if (Handle.IsNull() || !Handle.DataTable) continue;
@@ -33,7 +34,42 @@ FInventorySlotData::FInventorySlotData(const FName& InItemID)
 				{
 					ConsumableData = Handle;
 				}
+				else if (RowStructType == FEquipmentInfoRow::StaticStruct())
+				{
+					EquipmentData = Handle;
+				}
 			}
 		}
 	}
+}
+
+FQuickSlotData::FQuickSlotData(int32 InInventorySlotIndex, const FInventorySlotData& InInventorySlotData)
+{
+	InventorySlotIndex = InInventorySlotIndex;
+	InventorySlotData = FInventorySlotData(InInventorySlotData);
+}
+
+FEmberItemInfo::FEmberItemInfo(const FInventorySlotData& InItemInventorySlotData)
+{
+	ItemID = InItemInventorySlotData.ItemID;
+
+	TArray<FItemEffectApplicationInfo> InActiveEffects;
+
+	if (InItemInventorySlotData.ConsumableData.IsSet())
+	{
+		if (FConsumableInfoRow* ConsumeInfo = InItemInventorySlotData.ConsumableData->GetRow<FConsumableInfoRow>(TEXT("ConsumeInfo")))
+		{
+			InActiveEffects.Append(ConsumeInfo->EffectsToApplyOnConsume);
+		}
+	}
+	if (InItemInventorySlotData.EquipmentData.IsSet())
+	{
+		if (FEquipmentInfoRow* EquipmentInfo = InItemInventorySlotData.EquipmentData->GetRow<FEquipmentInfoRow>(TEXT("ConsumeInfo")))
+		{
+			EMBER_LOG(LogTemp, Warning, TEXT("Item : %d"), EquipmentInfo->ActiveEffects.Num());
+			InActiveEffects.Append(EquipmentInfo->ActiveEffects);
+			ItemTags.AddTag(EquipmentInfo->EquipmentTag);
+		}
+	}
+	ActiveEffects = InActiveEffects;
 }

@@ -14,7 +14,7 @@
 #include "UI/EmberWidgetComponent.h"
 #include "MeleeTrace/Public/MeleeTraceComponent.h"
 #include "Utility/AlsVector.h"
-#include "Item/InventoryManagerComponent.h"
+#include "Item/UserItemManger.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(EmberCharacter)
 
@@ -32,7 +32,7 @@ AEmberCharacter::AEmberCharacter()
 
     MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
 
-    InventoryManager = CreateDefaultSubobject<UInventoryManagerComponent>(TEXT("InventoryManager1"));
+    EmberItemManager = CreateDefaultSubobject<UUserItemManger>(TEXT("ItenManager"));
     
     HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
     

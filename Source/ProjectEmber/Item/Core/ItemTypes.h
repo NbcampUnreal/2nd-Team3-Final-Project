@@ -82,3 +82,23 @@ struct FConsumableInfoRow : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Consumable Component")
     TArray<FItemEffectApplicationInfo> EffectsToApplyOnConsume;
 };
+
+// 장비 컴포넌트 정보 (DT_ConsumableComponent 용)
+USTRUCT(BlueprintType)
+struct FEquipmentInfoRow : public FTableRowBase
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Consumable Component", meta = (ClampMin = "0"))
+    FGameplayTag EquipmentTag = FGameplayTag::EmptyTag;
+
+    // 소비 시 적용될 효과 목록 (GAS 연동)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Consumable Component")
+    TArray<FItemEffectApplicationInfo> PassiveEffects;
+    
+    // 소비 시 적용될 효과 목록 (GAS 연동)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Consumable Component")
+    TArray<FItemEffectApplicationInfo> ActiveEffects;
+};
+
+

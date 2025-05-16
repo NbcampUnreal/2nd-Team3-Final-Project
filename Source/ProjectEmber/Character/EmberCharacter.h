@@ -107,7 +107,9 @@ protected: /* Input */
 	friend class UEmberInputHandlerComponent;
 
 protected: /* Inventory */
-	TObjectPtr<class UInventoryManagerComponent> InventoryManager;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "EmberCharacter")
+	TObjectPtr<class UUserItemManger> EmberItemManager;
+	
 };
 
 

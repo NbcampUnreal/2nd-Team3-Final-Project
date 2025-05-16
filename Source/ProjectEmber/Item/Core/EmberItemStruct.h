@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
+#include "ItemTypes.h"
 #include "EmberItemStruct.generated.h"
 /**
  * 
@@ -33,6 +35,9 @@ struct FInventorySlotData
     TOptional<FDataTableRowHandle> ConsumableData;
     
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory Slot")
+    TOptional<FDataTableRowHandle> EquipmentData;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory Slot")
     TOptional<FDataTableRowHandle> SlotData;
 
     FInventorySlotData() = default;
@@ -47,6 +52,56 @@ struct FInventorySlotData
         Quantity = 0;
         MaxStackSize = 1;
         ConsumableData.Reset();
+        EquipmentData.Reset();
         SlotData.Reset();
+    }
+};
+
+
+USTRUCT(BlueprintType)
+struct FQuickSlotData
+{
+    GENERATED_BODY()
+
+    int32 InventorySlotIndex = 0;
+
+    FInventorySlotData InventorySlotData;
+
+    FQuickSlotData() = default;
+    FQuickSlotData(int32 InInventorySlotIndex, const FInventorySlotData& InInventorySlotData);
+    
+    bool IsEmpty() const { return InventorySlotData.ItemID.IsNone() || InventorySlotData.Quantity <= 0; }
+    
+    void Clear()
+    {
+        InventorySlotData.Clear();
+    }
+};
+
+USTRUCT(BlueprintType)
+struct FEmberItemInfo
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ItemMasterInfoRow")
+    FName ItemID;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ItemMasterInfoRow")
+    FGameplayTagContainer ItemTags;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ItemMasterInfoRow")
+    TArray<FItemEffectApplicationInfo> ActiveEffects;
+	
+    FEmberItemInfo() = default;
+
+    FEmberItemInfo(const FInventorySlotData& InItemID);
+    
+    bool IsEmpty() const { return ItemID.IsNone();}
+    
+    void Clear()
+    {
+        ItemID = NAME_None;
+        ItemTags.Reset();
+        ActiveEffects.Empty();
     }
 };

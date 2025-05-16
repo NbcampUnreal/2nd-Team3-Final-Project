@@ -12,8 +12,6 @@
 UInventoryManagerComponent::UInventoryManagerComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
-
-    InventoryCapacity = 30;
 }
 
 void UInventoryManagerComponent::BeginPlay()
@@ -40,14 +38,14 @@ void UInventoryManagerComponent::InitializeInventorySlots()
     InventorySlots.SetNum(InventoryCapacity);
 }
 
-int32 UInventoryManagerComponent::AddItemAndHandleOverflow(FName ItemIDToAdd, int32 QuantityToAdd, FVector DropLocation, FRotator DropRotation)
+int32 UInventoryManagerComponent::AddItemAndHandleOverflow_Implementation(FName ItemIDToAdd, int32 QuantityToAdd, FVector DropLocation, FRotator DropRotation)
 {
     if (ItemIDToAdd.IsNone() || QuantityToAdd <= 0)
     {
         return 0;
     }
 
-    const int32 QuantityActuallyAddedToSlots = TryAddItemsToSlots(ItemIDToAdd, QuantityToAdd);
+    const int32 QuantityActuallyAddedToSlots = TryAddItemsToSlots(ItemIDToAdd, QuantityToAdd, -1);
 
     const int32 QuantityLeftToDrop = QuantityToAdd - QuantityActuallyAddedToSlots;
 
@@ -61,7 +59,7 @@ int32 UInventoryManagerComponent::AddItemAndHandleOverflow(FName ItemIDToAdd, in
     return QuantityActuallyAddedToSlots;
 }
 
-int32 UInventoryManagerComponent::TryAddItemsToSlots(FName ItemIDToAdd, int32 QuantityToAdd)
+int32 UInventoryManagerComponent::TryAddItemsToSlots(FName ItemIDToAdd, int32 QuantityToAdd, int32 InSlotIndex)
 {
     if (!ItemSubsystem || ItemIDToAdd.IsNone() || QuantityToAdd <= 0)
     {
@@ -73,18 +71,14 @@ int32 UInventoryManagerComponent::TryAddItemsToSlots(FName ItemIDToAdd, int32 Qu
 
     
     TOptional<FInventorySlotData> TmpInventorySlotData;
-    
-    for (int32 SlotIndex = 0; SlotIndex < InventorySlots.Num(); ++SlotIndex)
-    {
-        FInventorySlotData& Slot = InventorySlots[SlotIndex];
 
+    if (InventorySlots.IsValidIndex(InSlotIndex))
+    {
+        FInventorySlotData& Slot = InventorySlots[InSlotIndex];
         if (Slot.ItemID == ItemIDToAdd)
         {
-            if (!TmpInventorySlotData.IsSet())
-            {
-                TmpInventorySlotData = Slot;
-            }
-            
+            TmpInventorySlotData = Slot;
+
             int32 CurrentMaxStack = Slot.MaxStackSize; // 또는 TemplateSlotDataForExistingItem.GetValue().CachedMaxStackSize
             if (CurrentMaxStack > 1 && Slot.Quantity < CurrentMaxStack)
             {
@@ -95,7 +89,7 @@ int32 UInventoryManagerComponent::TryAddItemsToSlots(FName ItemIDToAdd, int32 Qu
                 QuantityAdded += AddAmount;
                 QuantityLeftToAdd -= AddAmount;
                 
-                OnInventoryChanged.Broadcast(SlotIndex, Slot);
+                OnInventoryChanged.Broadcast(InSlotIndex, InventorySlots[InSlotIndex]);
                 
                 if (QuantityLeftToAdd <= 0)
                 {
@@ -104,7 +98,40 @@ int32 UInventoryManagerComponent::TryAddItemsToSlots(FName ItemIDToAdd, int32 Qu
             }
         }
     }
+    else if (InSlotIndex < 0)
+    {
+        for (int32 SlotIndex = 0; SlotIndex < InventorySlots.Num(); ++SlotIndex)
+        {
+            FInventorySlotData& Slot = InventorySlots[SlotIndex];
 
+            if (Slot.ItemID == ItemIDToAdd)
+            {
+                if (!TmpInventorySlotData.IsSet())
+                {
+                    TmpInventorySlotData = Slot;
+                }
+            
+                int32 CurrentMaxStack = Slot.MaxStackSize; // 또는 TemplateSlotDataForExistingItem.GetValue().CachedMaxStackSize
+                if (CurrentMaxStack > 1 && Slot.Quantity < CurrentMaxStack)
+                {
+                    int32 CanAddToSlot = CurrentMaxStack - Slot.Quantity;
+                    int32 AddAmount = FMath::Min(QuantityLeftToAdd, CanAddToSlot);
+
+                    Slot.Quantity += AddAmount;
+                    QuantityAdded += AddAmount;
+                    QuantityLeftToAdd -= AddAmount;
+                
+                    OnInventoryChanged.Broadcast(SlotIndex, InventorySlots[SlotIndex]);
+                
+                    if (QuantityLeftToAdd <= 0)
+                    {
+                        return QuantityAdded;
+                    }
+                }
+            }
+        }
+    }
+    
     if (QuantityLeftToAdd > 0)
     {
         if (!TmpInventorySlotData.IsSet())
@@ -179,9 +206,14 @@ void UInventoryManagerComponent::SpawnDroppedItem(FName ItemIDToDrop, int32 Quan
     }*/
 }
 
-int32 UInventoryManagerComponent::GetSlotCount() const
+int32 UInventoryManagerComponent::GetSlotCount_Implementation() const
 {
     return InventoryCapacity;
+}
+
+FGameplayTag UInventoryManagerComponent::GetSlotType_Implementation() const
+{
+    return SlotTag;
 }
 
 void UInventoryManagerComponent::MoveItemByIndex(int32 IndexTo, int32 IndexForm, int32 InQuantity)
@@ -217,11 +249,11 @@ void UInventoryManagerComponent::MoveItemByIndex(int32 IndexTo, int32 IndexForm,
     SlotForm.Quantity += InQuantity;
     OnInventoryChanged.Broadcast(IndexForm, InventorySlots[IndexForm]);
 
-    RemoveItemFromSlot(IndexTo, InQuantity);
+    RemoveItemFromSlot_Implementation(IndexTo, InQuantity);
 }
 
 
-int32 UInventoryManagerComponent::RemoveItemFromSlot(int32 SlotIndex, int32 QuantityToRemove /*= 0*/)
+int32 UInventoryManagerComponent::RemoveItemFromSlot_Implementation(int32 SlotIndex, int32 QuantityToRemove /*= 0*/)
 {
     if (!InventorySlots.IsValidIndex(SlotIndex) || InventorySlots[SlotIndex].IsEmpty())
     {
@@ -243,12 +275,18 @@ int32 UInventoryManagerComponent::RemoveItemFromSlot(int32 SlotIndex, int32 Quan
     return RemoveAmount;
 }
 
-void UInventoryManagerComponent::UseItemInSlot(int32 SlotIndex)
+void UInventoryManagerComponent::UseItemInSlot_Implementation(int32 SlotIndex)
 {
-    FInventorySlotData SlotData;
-    if (!GetSlotDataByIndex(SlotIndex, SlotData) || SlotData.IsEmpty())
+    if (InventorySlots.IsValidIndex(SlotIndex))
     {
-        EMBER_LOG(LogTemp, Warning, TEXT("UseItemInSlot: Invalid or empty slot index %d"), SlotIndex);
+        EMBER_LOG(LogTemp, Warning, TEXT("UseItemInSlot: Invalid slot index %d"), SlotIndex);
+        return;
+    }
+
+    FInventorySlotData& SlotData = InventorySlots[SlotIndex];
+    if (SlotData.ItemID.IsNone())
+    {
+        EMBER_LOG(LogTemp, Warning, TEXT("UseItemInSlot: empty slot index %d"), SlotIndex);
         return;
     }
     
@@ -261,7 +299,7 @@ void UInventoryManagerComponent::UseItemInSlot(int32 SlotIndex)
         if (const FConsumableInfoRow* ConsumeData = ConsumeHandle.GetRow<FConsumableInfoRow>(TEXT("UseItemInSlot_GetConsumeData")))
         {
             HandleItemConsumption(ConsumeData);
-            RemoveItemFromSlot(SlotIndex, ConsumeData->ConsumeAmount);
+            RemoveItemFromSlot_Implementation(SlotIndex, ConsumeData->ConsumeAmount);
         }
         else
         {
@@ -277,15 +315,48 @@ void UInventoryManagerComponent::UseItemInSlot(int32 SlotIndex)
 
 }
 
-
-bool UInventoryManagerComponent::GetSlotDataByIndex(int32 SlotIndex, FInventorySlotData& OutSlotData) const
+int32 UInventoryManagerComponent::GetSlotMaxRow_Implementation() const
 {
-    if (InventorySlots.IsValidIndex(SlotIndex))
+    return SlotMaxRow;
+}
+
+void UInventoryManagerComponent::MovedInItemByAnotherProvider(int32 IndexTo,
+    TScriptInterface<UEmberSlotDataProviderInterface> AnotherProvider, int32 IndexFrom, int32 Quantity)
+{
+    int32 AddItem = TryAddItemsToSlots(IEmberSlotDataProviderInterface::Execute_GetSlotItemID(AnotherProvider.GetObject(), IndexFrom) , Quantity, IndexTo);
+    IEmberSlotDataProviderInterface::Execute_RemoveItemFromSlot(AnotherProvider.GetObject(), IndexFrom, AddItem);
+}
+
+FName UInventoryManagerComponent::GetSlotItemID_Implementation(int32 InIndex) const
+{
+    if (InventorySlots.IsValidIndex(InIndex))
     {
-        OutSlotData = InventorySlots[SlotIndex];
-        return true;
+        return InventorySlots[InIndex].ItemID;
     }
-    return false;
+    return FName();
+}
+
+void UInventoryManagerComponent::MoveItemBySlot_Implementation(const FGameplayTag& InSlotTag, int32 IndexTo,
+    const TScriptInterface<UEmberSlotDataProviderInterface>& AnotherProvider, int32 IndexFrom, int32 Quantity)
+{
+    if (SlotTag == InSlotTag)
+    {
+        MoveItemByIndex(IndexTo, IndexFrom, Quantity);
+    }
+    else
+    {
+        MovedInItemByAnotherProvider(IndexTo, AnotherProvider, IndexFrom, Quantity);
+    }
+}
+
+
+FInventorySlotData UInventoryManagerComponent::GetSlotDataByIndex(int32 InSlotIndex) const
+{
+    if (InventorySlots.IsValidIndex(InSlotIndex))
+    {
+        return InventorySlots[InSlotIndex];
+    }
+    return FInventorySlotData();
 }
 
 int32 UInventoryManagerComponent::FindEmptySlot() const

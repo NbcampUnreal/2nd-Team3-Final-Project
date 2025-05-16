@@ -33,12 +33,17 @@ protected:
     UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category = "DataTables", meta = (AllowedClasses = "/Script/Engine.DataTable", DisplayName = "Consumable Component Data Table"))
     TSoftObjectPtr<UDataTable> ConsumableComponentDataTablePtr;
 
+    UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category = "DataTables", meta = (AllowedClasses = "/Script/Engine.DataTable", DisplayName = "Consumable Component Data Table"))
+    TSoftObjectPtr<UDataTable> EquipmentComponentDataTablePtr;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item DataTables")
     TObjectPtr<UDataTable> LoadedItemBaseDataTable = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item DataTables")
     TObjectPtr<UDataTable> LoadedInventoryComponentDataTable = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item DataTables")
     TObjectPtr<UDataTable> LoadedConsumableComponentDataTable = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item DataTables")
+    TObjectPtr<UDataTable> LoadedConsumableEquipmentDataTable = nullptr;
     
     /** 데이터 테이블 로드를 위한 내부 헬퍼 함수 */
     TObjectPtr<UDataTable> LoadDataTable(const TSoftObjectPtr<UDataTable>& DataTablePtr, const FName& TableIdentifier) const;
