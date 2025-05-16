@@ -13,7 +13,7 @@
 				"Engine",
 				"UMG",
 				"DeveloperSettings",
-				"GameplayAbilities"
+				"GameplayAbilities",
 				"UMGEditor"
 			]
 		},
