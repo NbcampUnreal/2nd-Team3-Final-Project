@@ -144,39 +144,64 @@ void UDialogueComponent::PositionDetachedCamera()
 }
 void UDialogueComponent::Interact()
 {
-    if (bPlayerInRange && DialogueWidgetClass)
+    APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+    ACharacter* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+
+    if (DialogueWidget)
     {
-        APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-        AActor* OwnerActor = GetOwner();
+        DialogueWidget->RemoveFromParent();
+        DialogueWidget = nullptr;
 
-        if (PC && OwnerActor && !DialogueWidget)
+        if (TalkPromptWidget)
         {
-            RepositionNPCForDialogue();
-            PositionDetachedCamera();
+            TalkPromptWidget->SetVisibility(true);
+        }
 
-            ACharacter* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-            if (Player && Player->GetMesh())
+        if (Player && Player->GetMesh())
+        {
+            Player->GetMesh()->SetVisibility(true, true);
+        }
+
+        if (PC)
+        {
+            PC->SetViewTargetWithBlend(PC->GetPawn(), 0.5f);
+            PC->bShowMouseCursor = false;
+
+            FInputModeGameOnly InputMode;
+            PC->SetInputMode(InputMode);
+        }
+
+        UE_LOG(LogTemp, Warning, TEXT("[DialogueComponent] Dialogue ended."));
+        return;
+    }
+
+    if (bPlayerInRange && DialogueWidgetClass && PC && GetOwner())
+    {
+        RepositionNPCForDialogue();
+        PositionDetachedCamera();
+
+        if (Player && Player->GetMesh())
+        {
+            Player->GetMesh()->SetVisibility(false, true);
+        }
+
+        DialogueWidget = CreateWidget<UUserWidget>(PC, DialogueWidgetClass);
+        if (DialogueWidget)
+        {
+            DialogueWidget->AddToViewport();
+            PC->bShowMouseCursor = true;
+
+            FInputModeGameAndUI InputMode;
+            InputMode.SetWidgetToFocus(DialogueWidget->TakeWidget());
+            InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+            PC->SetInputMode(InputMode);
+
+            if (TalkPromptWidget)
             {
-                Player->GetMesh()->SetVisibility(false, true);
+                TalkPromptWidget->SetVisibility(false);
             }
 
-            DialogueWidget = CreateWidget<UUserWidget>(PC, DialogueWidgetClass);
-            if (DialogueWidget)
-            {
-                DialogueWidget->AddToViewport();
-                PC->bShowMouseCursor = true;
-
-                FInputModeUIOnly InputMode;
-                InputMode.SetWidgetToFocus(DialogueWidget->TakeWidget());
-                InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-                PC->SetInputMode(InputMode);
-
-             
-                if (TalkPromptWidget)
-                {
-                    TalkPromptWidget->SetVisibility(false);
-                }
-            }
+            UE_LOG(LogTemp, Warning, TEXT("[DialogueComponent] Dialogue started."));
         }
     }
 }
