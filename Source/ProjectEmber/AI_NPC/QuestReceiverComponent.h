@@ -11,6 +11,16 @@ struct FQuestStorageInfo
 {
     GENERATED_BODY()
 
+    FQuestStorageInfo()
+        : QuestNumber(0)
+        , QuestName(TEXT(""))
+        , ObjectiveNames()
+        , ObjectiveProgress()
+        , bIsTracking(false)
+        , bIsComplete(false)
+    {
+    }
+
     UPROPERTY(BlueprintReadWrite)
     int32 QuestNumber;
 
