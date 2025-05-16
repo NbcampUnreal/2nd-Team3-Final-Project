@@ -6,8 +6,8 @@
 #include "AbilitySystemComponent.h"
 #include "GameplayEffect.h"
 #include "GameplayEffectTypes.h"
-#include "ItemSubsystem.h"
 #include "Engine/GameInstance.h"
+#include "Item/ItemSubsystem.h"
 
 UGameInstance* UItemSystemLibrary::GetGameInstance()
 {
