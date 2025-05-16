@@ -3,16 +3,11 @@
 #include "AIAnimalController.h"
 #include "NavigationInvokerComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "Chaos/PBDSuspensionConstraintData.h"
-#include "Kismet/GameplayStatics.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "AbilitySystemComponent.h"
 #include "EMSFunctionLibrary.h"
-#include "GameplayEffectExtension.h"
 #include "MeleeTraceComponent.h"
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
-#include "Components/BoxComponent.h"
 #include "EmberLog/EmberLog.h"
 #include "UI/EmberHpBarUserWidget.h"
 #include "UI/EmberWidgetComponent.h"
@@ -24,7 +19,7 @@ ABaseAIAnimal::ABaseAIAnimal()
 
 	bIsShouldSwim = false;
 	CurrentState = EAnimalAIState::Idle;
-	GenerateRandom();
+	
 	
 	NavGenerationRadius = 4000.0f; //시각,청각 인지 버뮈보다 인보커 생성 범위가 커야함
 	NavRemovalRadius = 4300.0f;
@@ -33,13 +28,15 @@ ABaseAIAnimal::ABaseAIAnimal()
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	CharacterAttributeSet = CreateDefaultSubobject<UEmberCharacterAttributeSet>(TEXT("CharacterAttributeSet"));
 	AnimalAttributeSet = CreateDefaultSubobject<UEmberAnimalAttributeSet>(TEXT("AnimalAttributeSet"));
+
 	FEmberAnimalAttributeData AttributeData;
+	GenerateRandom();
 	AttributeData.Fullness = Fullness;
 	AttributeData.WalkSpeed = WalkSpeed;
 	AttributeData.WanderRange = WanderRange;
 	AttributeData.WildPower = WildPower;
 	AnimalAttributeSet->InitFromData(AttributeData);
-	EMBER_LOG(LogEmber, Warning,TEXT("ABaseAIAnimal::WanderRange:: %f"),WanderRange); 
+
 	MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
 
 	HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
@@ -53,6 +50,12 @@ void ABaseAIAnimal::PossessedBy(AController* NewController)
 
 	AbilitySystemComponent->InitStats(UEmberCharacterAttributeSet::StaticClass(), nullptr);
 	AbilitySystemComponent->InitStats(UEmberAnimalAttributeSet::StaticClass(), nullptr);
+}
+
+void ABaseAIAnimal::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	
 }
 
 void ABaseAIAnimal::BeginPlay()
@@ -76,28 +79,49 @@ void ABaseAIAnimal::BeginPlay()
 	}
 	
 	NavInvokerComponent->SetGenerationRadii(NavGenerationRadius, NavRemovalRadius);
+
 	
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UEmberCharacterAttributeSet::GetHealthAttribute()).
-	                        AddUObject(this, &ThisClass::OnHealthChanged);
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-		UEmberCharacterAttributeSet::GetMaxHealthAttribute()).AddUObject(this, &ThisClass::OnMaxHealthChanged);
-	if (const UEmberCharacterAttributeSet* Attribute = AbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>())
+	//InitAbilityActorInfo 호출 위치: 네트워크 플레이가 아니고 싱글 플레이나 로컬 전용이라면 괜찮음
+	//서버와 클라이언트 동기화가 중요하다면 BeginPlay()에서 호출
+	if (AbilitySystemComponent)
 	{
-		const_cast<UEmberCharacterAttributeSet*>(Attribute)->OnHit.AddDynamic(this, &ABaseAIAnimal::OnHit);
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+
+		for (const TSubclassOf<UGameplayAbility>& AbilityClass : StartAbilities)
+		{
+			if (AbilityClass) //Ability : TSubclassOf<UGameplayAbility> -> 어빌리티 상속받으면 다 ok 클래스에 대한 포인터 정보를 담은 템플릿
+						//*Ability : 실제 클래스 포인터 (UClass*) 로 암묵적 변환됨 == AbilityClass.Get(), 이 타입의 클래스가 지정되어 있는가?
+			{
+				FGameplayAbilitySpec AbilitySpec(AbilityClass);
+				AbilitySystemComponent->GiveAbility(AbilitySpec);
+			}
+		}
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UEmberAnimalAttributeSet::GetFullnessAttribute()).
+								AddUObject(this, &ThisClass::OnFullnessChanged);
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UEmberCharacterAttributeSet::GetHealthAttribute()).
+								AddUObject(this, &ThisClass::OnHealthChanged);
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+			UEmberCharacterAttributeSet::GetMaxHealthAttribute()).AddUObject(this, &ThisClass::OnMaxHealthChanged);
+		if (const UEmberCharacterAttributeSet* Attribute = AbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>())
+		{
+			const_cast<UEmberCharacterAttributeSet*>(Attribute)->OnHit.AddDynamic(this, &ABaseAIAnimal::OnHit);
+		}
 	}
-	
 	GetWorldTimerManager().SetTimer(TimerHandle, this, &ABaseAIAnimal::DecreaseFullness, 5.0f, true);
 }
 
 void ABaseAIAnimal::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	UE_LOG(LogTemp, Warning, TEXT("SetFullness :: Fullness , IsHungry %f, %d"), Fullness, bIsHungry);
 }
 
 void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 {
+	//현재 InstigatorActor = 플레이어스테이트 , 동물이 때린다면?
+	//-> 만약 터지면 동물도 스테이트 쓸건지 체크하는 ai 설정 있음, 그걸 쓸건지 아니며 다른방법 찾던지, 일단 보류
 	EMBER_LOG(LogTemp, Warning, TEXT("%s"), *InstigatorActor->GetName());
-	//속도 빨라졌다 서서히 감소 추가해야함
+	//속도 빨라졌다 서서히 감소 추가해야함->이팩트로 적용예정
 	
 	if (BlackboardComponent)
 	{
@@ -156,16 +180,15 @@ void ABaseAIAnimal::OnMaxHealthChanged(const FOnAttributeChangeData& OnAttribute
 	UE_LOG(LogTemp, Warning, TEXT("ABaseAIAnimal::OnMaxHealthChanged::성공"));
 }
 
-
-void ABaseAIAnimal::SetFullness()
+void ABaseAIAnimal::OnFullnessChanged(const FOnAttributeChangeData& OnAttributeChangeData)
 {
-	bIsHungry = !bIsHungry;
-	if (!bIsHungry)
-	{
-		Fullness = 100.0f;
-		UE_LOG(LogTemp, Warning, TEXT("SetFullness :: Fullness , IsHungry %f, %d"), Fullness, bIsHungry);
-	}
+	//들어오면 무조건 배부름 상태
+	Fullness = OnAttributeChangeData.NewValue;
+	bIsHungry = false;
+	BlackboardComponent->SetValueAsFloat("Fullness", Fullness);
 	BlackboardComponent->SetValueAsBool("IsHungry", bIsHungry);
+	BlackboardComponent->SetValueAsObject("TargetActor", nullptr);
+	UE_LOG(LogTemp, Warning, TEXT("OnFullnessChanged :: Fullness , IsHungry %f, %d"), Fullness, bIsHungry);
 }
 
 void ABaseAIAnimal::GenerateRandom()
@@ -173,7 +196,7 @@ void ABaseAIAnimal::GenerateRandom()
 	int32 RandomPersonality = FMath::RandRange(0, static_cast<int32>(EAnimalAIPersonality::End) - 1);
 	Personality = static_cast<EAnimalAIPersonality>(RandomPersonality);
 	SetDetails();
-	Fullness = FMath::FRandRange(0.f, 100.f);
+	Fullness = FMath::FRandRange(0.f, 50.f);
 	bIsHungry = Fullness <= 50.f;
 }
 
@@ -204,6 +227,11 @@ float ABaseAIAnimal::GetWildPower() const
 float ABaseAIAnimal::GetWanderRange() const
 {
 	return WanderRange;
+}
+
+const UAnimMontage* ABaseAIAnimal::GetMontage()
+{
+	return Montage;
 }
 
 void ABaseAIAnimal::SetCurrentState(EAnimalAIState NewState)

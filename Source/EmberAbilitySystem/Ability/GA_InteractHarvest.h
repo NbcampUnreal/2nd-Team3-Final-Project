@@ -28,7 +28,11 @@ protected:
 		const FGameplayAbilityActorInfo* OwnerInfo,
 		const FGameplayAbilityActivationInfo ActivationInfo,
 		const FGameplayEventData* TriggerEventData) override;
-
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability")
+	TSubclassOf<UGameplayEffect> EffectToApply;
+	//에디터 실행해서 이팩트 만들고 어트리뷰트셋 포만도 변경 -> 베이스애니멀에 어트리뷰트벨류체인지드포만도변경되면에 포만도 항목으로 함수 바인딩해서 블랙보드 생신
+	
 private:
 	UFUNCTION()
 	void OnCompleteCallback();
@@ -36,5 +40,6 @@ private:
 	UFUNCTION()
 	void OnInterruptedCallback();
 	
+	TWeakObjectPtr<const AActor> Instigator;
 	TWeakObjectPtr<const AActor> HarvestTarget;
 };
