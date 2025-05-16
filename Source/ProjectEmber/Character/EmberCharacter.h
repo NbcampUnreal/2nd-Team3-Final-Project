@@ -6,6 +6,7 @@
 #include "EMSActorSaveInterface.h"
 #include "EmberCharacter.generated.h"
 
+struct FGameplayAbilitySpec;
 class UAlsCameraComponent;
 class UEmberInputHandlerComponent;
 class UMeleeTraceComponent;
@@ -29,7 +30,17 @@ public: /* Character */
 
 	UPROPERTY(EditAnywhere, Category="Interaction")
 	UAnimMontage* InteractMontage;
-	
+
+	UFUNCTION()
+	void OnWaterBeginOverlap(UPrimitiveComponent* OverlappedComp,
+							 AActor* OtherActor,
+							 UPrimitiveComponent* OtherComp,
+							 int32 OtherBodyIndex,
+							 bool bFromSweep,
+							 const FHitResult& SweepResult);
+	UFUNCTION()
+	void OnWaterEndOverlap(UPrimitiveComponent* OverlappedComponent,
+	AActor* OtherActor, UPrimitiveComponent* OtherComp, int OtherBodyIndex);
 public:
 	virtual UMeleeTraceComponent* GetMeleeTraceComponent() const;
 
@@ -52,6 +63,7 @@ protected:
 	virtual void OnOutOfHealth();
 
 	void AbilityInputPressed(int32 InputID);
+	FGameplayAbilitySpec* GetSpecFromOverlayMode() const;
 protected:
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
@@ -105,6 +117,11 @@ protected: /* Input */
 	TObjectPtr<UEmberInputHandlerComponent> InputHandler;
 
 	friend class UEmberInputHandlerComponent;
+
+protected: /* Inventory */
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "EmberCharacter")
+	TObjectPtr<class UUserItemManger> EmberItemManager;
+	
 };
 
 
