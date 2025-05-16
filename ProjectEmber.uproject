@@ -12,7 +12,8 @@
 				"AIModule",
 				"Engine",
 				"UMG",
-				"DeveloperSettings"
+				"DeveloperSettings",
+				"CinematicCamera"
 			]
 		},
 		{
