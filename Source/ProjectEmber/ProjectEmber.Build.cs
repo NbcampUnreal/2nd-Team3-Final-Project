@@ -23,7 +23,7 @@ public class ProjectEmber : ModuleRules
 	        "GameplayAbilities",
 	        "EmberAbilitySystem",
 	        "EmberUtils",
-	        "MeleeTrace", "EasyMultiSave"
+	        "MeleeTrace", "EasyMultiSave", "Water"
         });
     }
 }
