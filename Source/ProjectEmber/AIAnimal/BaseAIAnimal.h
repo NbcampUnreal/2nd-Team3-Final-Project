@@ -68,7 +68,8 @@ public:
 
 	void OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
-
+	void OnFullnessChanged(const FOnAttributeChangeData& OnAttributeChangeData);
+	
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void PlayInteractMontage(uint8 InState);
 
@@ -76,9 +77,9 @@ public:
 	EAnimalAIPersonality GetPersonality();
 	float GetWildPower() const;
 	float GetWanderRange() const;
+	const UAnimMontage* GetMontage();
 	void SetCurrentState(EAnimalAIState NewState);
-	void SetFullness();
-
+	
 	void GenerateRandom();
 	void DecreaseFullness();
 	
@@ -102,7 +103,7 @@ protected:
 	//DT 생성 전까지 쓸 Test함수
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void SetDetails();
-	
+
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem", SaveGame)
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 	
@@ -139,7 +140,7 @@ protected:
 	UAnimMontage* Montage;
 	
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
-	TSubclassOf<class UGameplayAbility> Ability;
+	TArray<TSubclassOf<class UGameplayAbility>> StartAbilities;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AnimalEnum)
 	EAnimalAIState	CurrentState;
@@ -170,5 +171,3 @@ protected:
 	
 	FTimerHandle TimerHandle;
 };
-
-

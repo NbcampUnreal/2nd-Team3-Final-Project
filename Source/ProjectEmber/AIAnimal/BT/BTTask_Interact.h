@@ -22,5 +22,8 @@ public:
 
 	protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI", meta = (AllowPrivateAccess = "true"))
+	FGameplayTag InteractTaskTag;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI", meta = (AllowPrivateAccess = "true"))
 	float InteractionDistance = 200.0f;
 };

@@ -21,10 +21,19 @@ void ATestFood::BeginPlay()
 	
 }
 
-// Called every frame
-void ATestFood::Tick(float DeltaTime)
+void ATestFood::Interact_Implementation(AActor* Caller)
 {
-	Super::Tick(DeltaTime);
+	Super::Interact_Implementation(Caller);
+}
+
+float ATestFood::GetGatherTime_Implementation()
+{
+	return Super::GetGatherTime_Implementation();
+}
+
+bool ATestFood::GetSelected()
+{
+  return bIsSelected;
 }
 
 void ATestFood::Interact_Implementation(AActor* Interactor)
