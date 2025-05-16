@@ -2,8 +2,9 @@
 
 
 #include "TestFood.h"
-
+#include "AbilitySystemBlueprintLibrary.h"
 #include "BaseAIAnimal.h"
+#include "Abilities/GameplayAbilityTypes.h"
 
 
 // Sets default values
@@ -20,33 +21,33 @@ void ATestFood::BeginPlay()
 	
 }
 
-// Called every frame
-void ATestFood::Tick(float DeltaTime)
+void ATestFood::Interact_Implementation(AActor* Caller)
 {
-	Super::Tick(DeltaTime);
-}
+	Super::Interact_Implementation(Caller);
 
-void ATestFood::Interact_Implementation(AActor* Interactor)
-{
-	IInteractiveObject::Interact_Implementation(Interactor);
 	UE_LOG(LogTemp, Warning, TEXT("ATestFood::상호작용 성공, 먹이 삭제함"));
-	Destroy();
+
+	FGameplayEventData Payload;
+	Payload.OptionalObject = this;
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Caller, FGameplayTag::RequestGameplayTag(TEXT("Trigger.Animal.Interact.Harvest")), Payload);
+	//Destroy();
 }
 
-FGameplayTag ATestFood::GetTag_Implementation()
+float ATestFood::GetGatherTime_Implementation()
 {
-	IInteractiveObject::GetTag_Implementation();
-	return GameplayTag;
+	return Super::GetGatherTime_Implementation();
 }
 
-bool ATestFood::GetIsSelected_Implementation()
+bool ATestFood::GetSelected()
 {
-	IInteractiveObject::GetIsSelected_Implementation();
 	return bIsSelected;
 }
 
-void ATestFood::SetIsSelected_Implementation(const bool InSelect)
+const FGameplayTagContainer& ATestFood::GetGameplayTagContainer()
 {
-	IInteractiveObject::SetIsSelected_Implementation(InSelect);
-	bIsSelected = InSelect;
+	return GameplayTagContainer;
+}
+
+void ATestFood::SetSelected(const bool InIsSelected)
+{
 }

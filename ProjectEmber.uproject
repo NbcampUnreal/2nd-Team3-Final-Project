@@ -13,6 +13,7 @@
 				"Engine",
 				"UMG",
 				"DeveloperSettings",
+				"GameplayAbilities"
 				"UMGEditor"
 			]
 		},
@@ -62,6 +63,14 @@
 		},
 		{
 			"Name": "PCG",
+			"Enabled": true
+		},
+		{
+			"Name": "PCGGeometryScriptInterop",
+			"Enabled": true
+		},
+		{
+			"Name": "Water",
 			"Enabled": true
 		}
 	]
