@@ -12,6 +12,7 @@ void UItemSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     LoadedItemBaseDataTable = LoadDataTable(ItemBaseDataTablePtr, TEXT("ItemBase"));
     LoadedInventoryComponentDataTable = LoadDataTable(InventoryComponentDataTablePtr, TEXT("InventoryComponent"));
     LoadedConsumableComponentDataTable = LoadDataTable(ConsumableComponentDataTablePtr, TEXT("ConsumableComponent"));
+    LoadedConsumableEquipmentDataTable = LoadDataTable(EquipmentComponentDataTablePtr, TEXT("EquipmentComponent"));
 
 }
 
@@ -20,6 +21,7 @@ void UItemSubsystem::Deinitialize()
     LoadedItemBaseDataTable = nullptr;
     LoadedInventoryComponentDataTable = nullptr;
     LoadedConsumableComponentDataTable = nullptr;
+    LoadedConsumableEquipmentDataTable = nullptr;
 
     UE_LOG(LogTemp, Log, TEXT("UMyItemSubsystem Deinitializing."));
     Super::Deinitialize();
