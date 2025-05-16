@@ -3,69 +3,36 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayTagContainer.h"
-#include "GameFramework/Actor.h"
+#include "AbilitySystemInterface.h"
+#include "Interactables/BaseInteractableActor.h"
 #include "TestFood.generated.h"
 
-UINTERFACE(MinimalAPI, Blueprintable)
-class UInteractiveObject : public UInterface
-{
-	GENERATED_BODY()
-};
-
-class IInteractiveObject
-{
-	GENERATED_BODY()
-
-public:
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent , Category = "InteractiveObject")
-	void Interact(AActor* Interactor);
-
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent , Category = "InteractiveObject")
-	FGameplayTag GetTag();
-
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent , Category = "InteractiveObject")
-	bool GetIsSelected();
-
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent , Category = "InteractiveObject")
-	void SetIsSelected(const bool InSelect = true);
-};
-
 UCLASS()
-class PROJECTEMBER_API ATestFood : public AActor, public IInteractiveObject
+class PROJECTEMBER_API ATestFood : public ABaseInteractableActor
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this actor's properties
 	ATestFood();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
+	
 public:
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	virtual void Interact_Implementation(AActor* Caller) override;
+	virtual float GetGatherTime_Implementation() override; 
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
-	void Interact(AActor* Interactor);
-	virtual void Interact_Implementation(AActor* Interactor) override;
-
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interaction")
-	FGameplayTag GetTag();
-	virtual FGameplayTag GetTag_Implementation() override;
-
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent , Category = "InteractiveObject")
-	bool GetIsSelected();
-	virtual bool GetIsSelected_Implementation() override;
-
-	UFUNCTION(BlueprintCallable, BlueprintNativeEvent , Category = "InteractiveObject")
-	void SetIsSelected(const bool InSelect = true);
-	virtual void SetIsSelected_Implementation(const bool InSelect = true) override;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "GameplayTag")
-	FGameplayTag GameplayTag;
+	UFUNCTION(BlueprintCallable)
+	bool GetSelected();
 	
+	UFUNCTION(BlueprintCallable)
+	const FGameplayTagContainer& GetGameplayTagContainer();
+
+	UFUNCTION(BlueprintCallable)
+	void SetSelected(const bool InIsSelected);
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable")
 	bool bIsSelected = false;
 };

@@ -64,10 +64,12 @@ public:
 	
 	virtual void ActorPreSave_Implementation() override;
 	virtual void ActorLoaded_Implementation() override;
-	
+	virtual void PostInitializeComponents() override;
+
 	void OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
-
+	void OnFullnessChanged(const FOnAttributeChangeData& OnAttributeChangeData);
+	
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void PlayInteractMontage(uint8 InState);
 
@@ -75,9 +77,9 @@ public:
 	EAnimalAIPersonality GetPersonality();
 	float GetWildPower() const;
 	float GetWanderRange() const;
+	const UAnimMontage* GetMontage();
 	void SetCurrentState(EAnimalAIState NewState);
-	void SetFullness();
-
+	
 	void GenerateRandom();
 	void DecreaseFullness();
 	
@@ -101,7 +103,7 @@ protected:
 	//DT 생성 전까지 쓸 Test함수
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void SetDetails();
-	
+
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem", SaveGame)
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 	
@@ -137,6 +139,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Montage)
 	UAnimMontage* Montage;
 	
+	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
+	TArray<TSubclassOf<class UGameplayAbility>> StartAbilities;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AnimalEnum)
 	EAnimalAIState	CurrentState;
 
@@ -153,7 +158,7 @@ protected:
 	bool bIsShouldSwim = false;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	float Fullness; //포만감
+	float Fullness = 40.0f; //포만감
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	float WildPower;
@@ -166,5 +171,3 @@ protected:
 	
 	FTimerHandle TimerHandle;
 };
-
-

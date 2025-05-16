@@ -31,14 +31,25 @@ void UGA_InteractHarvest::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 		return;
 	}
 
-	// 이벤트 페이로드에서 Destroy할 대상 추출
-	if (TriggerEventData->OptionalObject)
-	{
-		HarvestTarget = Cast<AActor>(TriggerEventData->OptionalObject.Get());
-	}
+	//이벤트 페이로드에서 Destroy할 대상 추출
+	// if (TriggerEventData->OptionalObject)
+	// {
+	// 	HarvestTarget = Cast<AActor>(TriggerEventData->OptionalObject.Get());
+	// }
 
+	if (TriggerEventData->Target)
+	{
+		HarvestTarget = TriggerEventData->Target;
+	}
+	
+	//if (OwnerInfo->OwnerActor)// TWeakObjectPtr<AActor>를 if 조건문에 직접 사용하는 것이 금지되었음을 의미
+	if (OwnerInfo->OwnerActor.IsValid())
+	{
+		Instigator = OwnerInfo->OwnerActor;
+	}
+	
 	// 몽타주 재생
-	if (Montage)
+	if (Montage) //애니멀의 어비리티의 몽타주가 null
 	{
 		UAbilityTask_PlayMontageAndWait* Task =	UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("LootHarvest"), Montage);
 
@@ -56,6 +67,16 @@ void UGA_InteractHarvest::OnCompleteCallback()
 {
 	bool bReplicatedEndAbility = true;
 	bool bWasCancelled = false;
+	
+	if (EffectToApply)
+	{
+		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(EffectToApply, GetAbilityLevel());
+		if (SpecHandle.IsValid())
+		{
+			ApplyGameplayEffectSpecToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, SpecHandle);
+		}
+	}
+	
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
 	
 	if (AActor* HarvestActor = const_cast<AActor*>(HarvestTarget.Get()))
