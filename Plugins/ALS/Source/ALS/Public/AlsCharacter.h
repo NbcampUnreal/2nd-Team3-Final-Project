@@ -10,6 +10,7 @@
 #include "Utility/AlsGameplayTags.h"
 #include "AlsCharacter.generated.h"
 
+class UAbilitySystemComponent;
 struct FAlsMantlingParameters;
 struct FAlsMantlingTraceSettings;
 class UAlsCharacterMovementComponent;
@@ -23,6 +24,11 @@ class ALS_API AAlsCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
+public:/* My Custom Function and Variable */
+
+	void SetAbilitySystemComponent(UAbilitySystemComponent* InAbilitySystemComponent);
+private:
+	TObjectPtr<UAbilitySystemComponent> AscInstance;
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Als Character")
 	TObjectPtr<UAlsCharacterMovementComponent> AlsCharacterMovement;
