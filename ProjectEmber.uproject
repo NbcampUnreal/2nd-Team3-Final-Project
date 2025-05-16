@@ -12,7 +12,8 @@
 				"AIModule",
 				"Engine",
 				"UMG",
-				"DeveloperSettings"
+				"DeveloperSettings",
+				"GameplayAbilities"
 			]
 		},
 		{
@@ -61,6 +62,10 @@
 		},
 		{
 			"Name": "PCG",
+			"Enabled": true
+		},
+		{
+			"Name": "PCGGeometryScriptInterop",
 			"Enabled": true
 		}
 	]

@@ -3,16 +3,11 @@
 #include "AIAnimalController.h"
 #include "NavigationInvokerComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "Chaos/PBDSuspensionConstraintData.h"
-#include "Kismet/GameplayStatics.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "AbilitySystemComponent.h"
 #include "EMSFunctionLibrary.h"
-#include "GameplayEffectExtension.h"
 #include "MeleeTraceComponent.h"
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
-#include "Components/BoxComponent.h"
 #include "EmberLog/EmberLog.h"
 #include "UI/EmberHpBarUserWidget.h"
 #include "UI/EmberWidgetComponent.h"
@@ -53,6 +48,14 @@ void ABaseAIAnimal::PossessedBy(AController* NewController)
 
 	AbilitySystemComponent->InitStats(UEmberCharacterAttributeSet::StaticClass(), nullptr);
 	AbilitySystemComponent->InitStats(UEmberAnimalAttributeSet::StaticClass(), nullptr);
+}
+
+void ABaseAIAnimal::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	AbilitySystemComponent->InitAbilityActorInfo(this, this);
+	FGameplayAbilitySpec AbilitySpec(Ability);
+	AbilitySystemComponent->GiveAbility(AbilitySpec);
 }
 
 void ABaseAIAnimal::BeginPlay()
@@ -96,6 +99,8 @@ void ABaseAIAnimal::Tick(float DeltaTime)
 
 void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 {
+	//현재 InstigatorActor = 플레이어스테이트 , 동물이 때린다면?
+	//-> 만약 터지면 동물도 스테이트 쓸건지 체크하는 ai 설정 있음, 그걸 쓸건지 아니며 다른방법 찾던지, 일단 보류
 	EMBER_LOG(LogTemp, Warning, TEXT("%s"), *InstigatorActor->GetName());
 	//속도 빨라졌다 서서히 감소 추가해야함
 	
@@ -173,7 +178,7 @@ void ABaseAIAnimal::GenerateRandom()
 	int32 RandomPersonality = FMath::RandRange(0, static_cast<int32>(EAnimalAIPersonality::End) - 1);
 	Personality = static_cast<EAnimalAIPersonality>(RandomPersonality);
 	SetDetails();
-	Fullness = FMath::FRandRange(0.f, 100.f);
+	Fullness = FMath::FRandRange(0.f, 50.f);
 	bIsHungry = Fullness <= 50.f;
 }
 
