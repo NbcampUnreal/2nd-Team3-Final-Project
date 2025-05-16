@@ -7,6 +7,19 @@
 #include "AlsViewSettings.h"
 #include "AlsCharacterSettings.generated.h"
 
+USTRUCT(BlueprintType)
+struct FAlsSwimSettings
+{
+	GENERATED_BODY()
+
+	/** 최대 수영 속도 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly) float MaxSwimSpeed = 200.0f;
+	/** 물속 가속도 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly) float SwimAcceleration = 1024.0f;
+	/** 수영 브레이킹 감쇠 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly) float BrakingDecelerationSwimming = 2000.0f;
+};
+
 UCLASS(Blueprintable, BlueprintType)
 class ALS_API UAlsCharacterSettings : public UDataAsset
 {
@@ -58,6 +71,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings")
 	FAlsRollingSettings Rolling;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Locomotion|Swim")
+	FAlsSwimSettings SwimSettings;
 public:
 	UAlsCharacterSettings();
 
