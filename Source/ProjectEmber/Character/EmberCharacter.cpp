@@ -1,4 +1,5 @@
-﻿#include "EmberCharacter.h"
+﻿// ReSharper disable CppMemberFunctionMayBeConst
+#include "EmberCharacter.h"
 #include "EmberAbilitySystem/Attribute/Character/EmberCharacterAttributeSet.h"
 #include "InputHandler/EmberInputHandlerComponent.h"
 #include "EmberComponents/InteractionComponent.h"
@@ -8,13 +9,15 @@
 #include "Framework/EmberPlayerState.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "WaterBodyActor.h"
 #include "Animation/AnimInstance.h"
+#include "Components/CapsuleComponent.h"
+#include "Define/CharacterDefine.h"
 #include "Engine/LocalPlayer.h"
-#include "Item/InventoryManagerComponent.h"
+#include "GameFramework/PhysicsVolume.h"
 #include "UI/EmberWidgetComponent.h"
 #include "MeleeTrace/Public/MeleeTraceComponent.h"
 #include "Utility/AlsVector.h"
-#include "Item/UserItemManger.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(EmberCharacter)
 
@@ -31,11 +34,8 @@ AEmberCharacter::AEmberCharacter()
     InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 
     MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
-
-    EmberItemManager = CreateDefaultSubobject<UUserItemManger>(TEXT("ItenManager"));
     
     HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
-    
     HpBarWidget->SetupAttachment(GetMesh());
     HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
 
@@ -54,6 +54,36 @@ void AEmberCharacter::BeginPlay()
 
         HpBarWidget->UpdateAbilitySystemComponent();
     }
+
+    GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AEmberCharacter::OnWaterBeginOverlap);
+    GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &AEmberCharacter::OnWaterEndOverlap);
+}
+
+void AEmberCharacter::OnWaterBeginOverlap(UPrimitiveComponent* OverlappedComp,
+                             AActor* OtherActor,
+                             UPrimitiveComponent* OtherComp,
+                             int32 OtherBodyIndex,
+                             bool bFromSweep,
+                             const FHitResult& SweepResult)
+{
+    // PhysicsVolume 기반 수영 모드 전환
+    if (APhysicsVolume* Vol = Cast<APhysicsVolume>(OtherActor))
+    {
+        if (Vol->bWaterVolume)
+            GetCharacterMovement()->SetMovementMode(MOVE_Swimming);
+    }
+    // 또는 WaterBody 액터 직접 체크
+    else if (OtherActor->IsA<AWaterBody>())
+    {
+        GetCharacterMovement()->SetMovementMode(MOVE_Swimming);
+    }
+}
+
+void AEmberCharacter::OnWaterEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+    UPrimitiveComponent* OtherComp, int OtherBodyIndex)
+{
+    if (GetCharacterMovement()->MovementMode == MOVE_Swimming)
+        GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 }
 
 UAbilitySystemComponent* AEmberCharacter::GetAbilitySystemComponent() const
@@ -72,18 +102,58 @@ void AEmberCharacter::OnOutOfHealth()
 
 void AEmberCharacter::AbilityInputPressed(int32 InputID)
 {
-    if (FGameplayAbilitySpec* Spec = AbilitySystemComponent->FindAbilitySpecFromInputID(InputID))
+    if (InputID == 0)
     {
-        Spec->InputPressed = true;
-        if (Spec->IsActive())
+        if (FGameplayAbilitySpec* Spec = GetSpecFromOverlayMode())
         {
-            AbilitySystemComponent->AbilitySpecInputPressed(*Spec); 
-        }
-        else
-        {
-            AbilitySystemComponent->TryActivateAbility(Spec->Handle);
+            Spec->InputPressed = true;
+            if (Spec->IsActive())
+            {
+                AbilitySystemComponent->AbilitySpecInputPressed(*Spec);
+            }
+            else
+            {
+                AbilitySystemComponent->TryActivateAbility(Spec->Handle);
+            }
         }
     }
+    else
+    {
+        if (FGameplayAbilitySpec* Spec = AbilitySystemComponent->FindAbilitySpecFromInputID(InputID))
+        {
+            Spec->InputPressed = true;
+            if (Spec->IsActive())
+            {
+                AbilitySystemComponent->AbilitySpecInputPressed(*Spec);
+            }
+            else
+            {
+                AbilitySystemComponent->TryActivateAbility(Spec->Handle);
+            }
+        }
+    }
+}
+
+FGameplayAbilitySpec* AEmberCharacter::GetSpecFromOverlayMode() const
+{
+    if (OverlayMode == AlsOverlayModeTags::Default)    
+    {
+        return AbilitySystemComponent->FindAbilitySpecFromInputID(static_cast<int32>(EInputID::Default));
+    }
+    else if (OverlayMode == AlsOverlayModeTags::Sword) 
+    {
+        return AbilitySystemComponent->FindAbilitySpecFromInputID(static_cast<int32>(EInputID::Sword));
+    }
+    else if (OverlayMode == AlsOverlayModeTags::Hatchet) 
+    {
+        return AbilitySystemComponent->FindAbilitySpecFromInputID(static_cast<int32>(EInputID::Hatchet));
+    }
+    else if (OverlayMode == AlsOverlayModeTags::PickAxe) 
+    {
+        return AbilitySystemComponent->FindAbilitySpecFromInputID(static_cast<int32>(EInputID::PickAxe));
+    }
+
+    return AbilitySystemComponent->FindAbilitySpecFromInputID(static_cast<int32>(EInputID::Attack));
 }
 
 void AEmberCharacter::PossessedBy(AController* NewController)
@@ -93,7 +163,8 @@ void AEmberCharacter::PossessedBy(AController* NewController)
     if (AEmberPlayerState* EmberPlayerState = GetPlayerState<AEmberPlayerState>())
     {
         AbilitySystemComponent = EmberPlayerState->GetAbilitySystemComponent();
-
+        Super::SetAbilitySystemComponent(AbilitySystemComponent);
+        
         if (const UEmberCharacterAttributeSet* CurrentAttributeSet = AbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>())
         {
             CurrentAttributeSet->OnOutOfHealth.AddDynamic(this, &ThisClass::OnOutOfHealth);

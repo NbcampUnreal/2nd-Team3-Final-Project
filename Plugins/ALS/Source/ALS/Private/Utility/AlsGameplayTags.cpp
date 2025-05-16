@@ -10,6 +10,7 @@ namespace AlsLocomotionModeTags
 {
 	UE_DEFINE_GAMEPLAY_TAG(Grounded, FName{TEXTVIEW("Als.LocomotionMode.Grounded")})
 	UE_DEFINE_GAMEPLAY_TAG(InAir, FName{TEXTVIEW("Als.LocomotionMode.InAir")})
+	UE_DEFINE_GAMEPLAY_TAG(InWater, FName{TEXTVIEW("Als.LocomotionMode.InWater")})
 }
 
 namespace AlsRotationModeTags
@@ -47,6 +48,9 @@ namespace AlsOverlayModeTags
 	UE_DEFINE_GAMEPLAY_TAG(Binoculars, FName{TEXTVIEW("Als.OverlayMode.Binoculars")})
 	UE_DEFINE_GAMEPLAY_TAG(Box, FName{TEXTVIEW("Als.OverlayMode.Box")})
 	UE_DEFINE_GAMEPLAY_TAG(Barrel, FName{TEXTVIEW("Als.OverlayMode.Barrel")})
+	UE_DEFINE_GAMEPLAY_TAG(Sword, FName{TEXTVIEW("Als.OverlayMode.Sword")})
+	UE_DEFINE_GAMEPLAY_TAG(Hatchet, FName{TEXTVIEW("Als.OverlayMode.Hatchet")})
+	UE_DEFINE_GAMEPLAY_TAG(PickAxe, FName{TEXTVIEW("Als.OverlayMode.PickAxe")})
 }
 
 namespace AlsLocomotionActionTags

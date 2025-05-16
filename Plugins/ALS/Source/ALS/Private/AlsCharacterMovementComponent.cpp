@@ -10,6 +10,7 @@
 #include "Utility/AlsRotation.h"
 #include "Utility/AlsUtility.h"
 #include "Utility/AlsVector.h"
+#include "Settings/AlsCharacterSettings.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(AlsCharacterMovementComponent)
 
@@ -230,6 +231,19 @@ void UAlsCharacterMovementComponent::OnMovementModeChanged(const EMovementMode P
 {
 	Super::OnMovementModeChanged(PreviousMovementMode, PreviousCustomMode);
 
+	if (MovementMode == MOVE_Swimming)
+	{
+		if (const auto* AlsChar = Cast<AAlsCharacter>(GetOwner()))
+		{
+			// UAlsCharacterSettings 에 정의해 둔 SwimSettings 참조
+			const auto& SwimCfg = AlsChar->GetSettings()->SwimSettings;
+
+			MaxSwimSpeed               = SwimCfg.MaxSwimSpeed;
+			BrakingDecelerationSwimming= SwimCfg.BrakingDecelerationSwimming;
+			// 그 외 물리 파라미터도 여기서 세팅…
+		}
+	}
+	
 	// This removes some very noticeable changes in the mesh location when the
 	// character automatically uncrouches at the end of the roll in the air.
 
