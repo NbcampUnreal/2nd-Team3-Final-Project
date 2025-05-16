@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "AIController.h"
+#include "Blueprint/UserWidget.h"
+#include "QuestReceiverComponent.h" 
 #include "QuestGiverComponent.generated.h"
 
 
@@ -12,17 +15,48 @@ class PROJECTEMBER_API UQuestGiverComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
-	// Sets default values for this component's properties
-	UQuestGiverComponent();
+public:
+    UQuestGiverComponent();
+    virtual void BeginPlay() override;
+
+    UFUNCTION(BlueprintCallable)
+    void SetupComponentDispatchers(AActor* NPCRef, UQuestReceiverComponent* QuestReceiver);
+
+    UFUNCTION(BlueprintCallable)
+    void UpdateQuestMarker();
+
+    UFUNCTION(BlueprintCallable)
+    void SetupDebugBindings();
+
+    // Callback Functions
+    UFUNCTION()
+    void OnQuestAccepted(const FQuestStorageInfo& QuestInfo);
+
+    UFUNCTION()
+    void OnQuestAbandoned(const FQuestStorageInfo& QuestInfo);
+
+    UFUNCTION()
+    void OnQuestCompleted(const FQuestStorageInfo& QuestInfo);
+
+    UFUNCTION()
+    void OnQuestUpdated(const FQuestStorageInfo& QuestInfo);
 
 protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest|Visual")
+    UStaticMeshComponent* ExclamationMarkSM;
 
-public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest|Visual")
+    UStaticMeshComponent* QuestionMarkSM;
 
-		
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest|UI")
+    TSubclassOf<UUserWidget> QuestWidgetClass;
+
+    UPROPERTY()
+    UUserWidget* QuestWidget;
+
+    UPROPERTY()
+    AAIController* CachedAIController;
+
+    UPROPERTY()
+    UQuestReceiverComponent* CachedReceiver;
 };
