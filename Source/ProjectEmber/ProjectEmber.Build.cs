@@ -13,7 +13,7 @@ public class ProjectEmber : ModuleRules
         PublicDependencyModuleNames.AddRange(new string[]
         {
 	        "Core", "CoreUObject", "Engine", "InputCore", "NavigationSystem", "AIModule", "Niagara", "EnhancedInput",
-	        "NavigationSystem", "GameplayTags","UMG","CinematicCamera"
+	        "NavigationSystem", "GameplayTags","UMG","CinematicCamera", "Slate", "SlateCore"
         });
         
         PrivateDependencyModuleNames.AddRange(new string[]
