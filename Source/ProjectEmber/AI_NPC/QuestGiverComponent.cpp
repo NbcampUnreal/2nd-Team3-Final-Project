@@ -1,34 +1,112 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "QuestGiverComponent.h"
+#include "QuestReceiverComponent.h"
+#include "AIController.h"
+#include "Blueprint/UserWidget.h"
+#include "Components/InputComponent.h"
+#include "GameFramework/PlayerController.h"
 
-// Sets default values for this component's properties
 UQuestGiverComponent::UQuestGiverComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
+    PrimaryComponentTick.bCanEverTick = false;
 }
 
-
-// Called when the game starts
 void UQuestGiverComponent::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 
-	// ...
-	
+    APawn* OwnerPawn = Cast<APawn>(GetOwner());
+    if (OwnerPawn)
+    {
+        CachedAIController = Cast<AAIController>(OwnerPawn->GetController());
+
+        if (QuestWidgetClass)
+        {
+            QuestWidget = CreateWidget<UUserWidget>(GetWorld(), QuestWidgetClass);
+            if (QuestWidget)
+            {
+                QuestWidget->AddToViewport();
+                QuestWidget->SetVisibility(ESlateVisibility::Hidden);
+            }
+        }
+    }
+
+    SetupDebugBindings();
+    UpdateQuestMarker(); // 마커 초기화용 호출 추가
 }
 
-
-// Called every frame
-void UQuestGiverComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UQuestGiverComponent::SetupComponentDispatchers(AActor* NPCRef, UQuestReceiverComponent* QuestReceiver)
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+    if (!QuestReceiver) return;
 
-	// ...
+    CachedReceiver = QuestReceiver;
+
+    QuestReceiver->OnQuestAccepted.AddDynamic(this, &UQuestGiverComponent::OnQuestAccepted);
+    QuestReceiver->OnQuestAbandoned.AddDynamic(this, &UQuestGiverComponent::OnQuestAbandoned);
+    QuestReceiver->OnQuestCompleted.AddDynamic(this, &UQuestGiverComponent::OnQuestCompleted);
+    QuestReceiver->OnQuestUpdated.AddDynamic(this, &UQuestGiverComponent::OnQuestUpdated);
+
+    UpdateQuestMarker(); // 연결 후 마커 상태 즉시 갱신
 }
 
+void UQuestGiverComponent::UpdateQuestMarker()
+{
+    if (!CachedReceiver)
+    {
+        if (ExclamationMarkSM) ExclamationMarkSM->SetVisibility(false);
+        if (QuestionMarkSM) QuestionMarkSM->SetVisibility(true);
+        return;
+    }
+
+    int32 ActiveQuests = 0;
+    for (const FQuestStorageInfo& Quest : CachedReceiver->GetQuestLog())
+    {
+        if (!Quest.bIsComplete)
+        {
+            ActiveQuests++;
+        }
+    }
+
+    if (ExclamationMarkSM)
+    {
+        ExclamationMarkSM->SetVisibility(ActiveQuests > 0);
+    }
+
+    if (QuestionMarkSM)
+    {
+        QuestionMarkSM->SetVisibility(ActiveQuests == 0);
+    }
+}
+
+void UQuestGiverComponent::SetupDebugBindings()
+{
+    APlayerController* PC = GetWorld()->GetFirstPlayerController();
+    if (PC && PC->InputComponent)
+    {
+        FInputActionBinding& Bind = PC->InputComponent->BindAction("DebugQuestMarker", IE_Pressed, this, &UQuestGiverComponent::UpdateQuestMarker);
+        Bind.bConsumeInput = true;
+    }
+}
+
+void UQuestGiverComponent::OnQuestAccepted(const FQuestStorageInfo& QuestInfo)
+{
+    UE_LOG(LogTemp, Log, TEXT("Quest Accepted: %s"), *QuestInfo.QuestName);
+    UpdateQuestMarker();
+}
+
+void UQuestGiverComponent::OnQuestAbandoned(const FQuestStorageInfo& QuestInfo)
+{
+    UE_LOG(LogTemp, Warning, TEXT("Quest Abandoned: %s"), *QuestInfo.QuestName);
+    UpdateQuestMarker();
+}
+
+void UQuestGiverComponent::OnQuestCompleted(const FQuestStorageInfo& QuestInfo)
+{
+    UE_LOG(LogTemp, Log, TEXT("Quest Completed: %s"), *QuestInfo.QuestName);
+    UpdateQuestMarker();
+}
+
+void UQuestGiverComponent::OnQuestUpdated(const FQuestStorageInfo& QuestInfo)
+{
+    UE_LOG(LogTemp, Log, TEXT("Quest Updated: %s"), *QuestInfo.QuestName);
+    UpdateQuestMarker();
+}
