@@ -15,6 +15,7 @@
 #include "Define/CharacterDefine.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/PhysicsVolume.h"
+#include "Item/UserItemManger.h"
 #include "UI/EmberWidgetComponent.h"
 #include "MeleeTrace/Public/MeleeTraceComponent.h"
 #include "Utility/AlsVector.h"
@@ -34,6 +35,8 @@ AEmberCharacter::AEmberCharacter()
     InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 
     MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
+    
+    EmberItemManager = CreateDefaultSubobject<UUserItemManger>(TEXT("UserItemComponent"));
     
     HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
     HpBarWidget->SetupAttachment(GetMesh());
