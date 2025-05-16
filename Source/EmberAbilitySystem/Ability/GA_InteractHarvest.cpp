@@ -32,10 +32,10 @@ void UGA_InteractHarvest::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	}
 
 	//이벤트 페이로드에서 Destroy할 대상 추출
-	// if (TriggerEventData->OptionalObject)
-	// {
-	// 	HarvestTarget = Cast<AActor>(TriggerEventData->OptionalObject.Get());
-	// }
+	if (TriggerEventData->OptionalObject)
+	{
+		HarvestTarget = Cast<AActor>(TriggerEventData->OptionalObject2.Get());
+	}
 
 	if (TriggerEventData->Target)
 	{
@@ -47,20 +47,25 @@ void UGA_InteractHarvest::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	{
 		Instigator = OwnerInfo->OwnerActor;
 	}
-	
-	// 몽타주 재생
-	if (Montage) //애니멀의 어비리티의 몽타주가 null
-	{
-		UAbilityTask_PlayMontageAndWait* Task =	UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("LootHarvest"), Montage);
 
-		Task->OnCompleted.AddDynamic(this, &UGA_InteractHarvest::OnCompleteCallback);
-		Task->OnInterrupted.AddDynamic(this, &UGA_InteractHarvest::OnInterruptedCallback);
-		Task->ReadyForActivation();
+	UAnimMontage* ResultMontage;
+	if (TriggerEventData->OptionalObject2)
+	{
+		ResultMontage = const_cast<UAnimMontage*>(Cast<const UAnimMontage>(TriggerEventData->OptionalObject2.Get()));
 	}
 	else
 	{
-		OnCompleteCallback();
+		ResultMontage = Montage;
 	}
+
+	ensure(ResultMontage);
+	
+	// 몽타주 재생
+	UAbilityTask_PlayMontageAndWait* Task =	UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("LootHarvest"), ResultMontage);
+
+	Task->OnCompleted.AddDynamic(this, &UGA_InteractHarvest::OnCompleteCallback);
+	Task->OnInterrupted.AddDynamic(this, &UGA_InteractHarvest::OnInterruptedCallback);
+	Task->ReadyForActivation();
 }
 
 void UGA_InteractHarvest::OnCompleteCallback()
