@@ -3,11 +3,11 @@
 UQuickSlotManagerComponent::UQuickSlotManagerComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+	InventoryCapacity = QuickSlotCapacity;
 }
 
 void UQuickSlotManagerComponent::BeginPlay()
 {
-	InventoryCapacity = QuickSlotCapacity;
 	Super::BeginPlay();
 }
 
