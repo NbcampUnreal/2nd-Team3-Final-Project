@@ -21,11 +21,6 @@ public:
 	UPROPERTY(BlueprintAssignable, Category="QuickSlot")
 	FOnQuickSlotChangedDelegate OnQuickSlotChanged;
 
-protected:
-	UPROPERTY(EditDefaultsOnly, Category="QuickSlot")
-	int32 QuickSlotCapacity = 10;
 
-	UPROPERTY(EditDefaultsOnly, Category="QuickSlot")
-	FGameplayTag QuickSlotTag;
 	
 };
