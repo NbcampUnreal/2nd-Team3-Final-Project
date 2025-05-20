@@ -19,6 +19,7 @@ class PROJECTEMBER_API UEmberBaseSlotsPanel : public UUserWidget
 
 public:
 	virtual void NativeOnInitialized() override;
+	
 	UFUNCTION(BlueprintCallable)
 	virtual void InitializePanel();
 
@@ -30,7 +31,9 @@ public:
 	
 	UFUNCTION(BlueprintNativeEvent, Category="Slots Panel", meta=(DisplayName="CreateAndArrageSlots"))
 	void BP_SetProvider();
-	
+
+	UFUNCTION()
+	virtual void SlotChanged(int32 InIndex, const FInstancedStruct& InSlotData);
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Slots Panel")
 	TScriptInterface<IEmberSlotDataProviderInterface> DataProvider;

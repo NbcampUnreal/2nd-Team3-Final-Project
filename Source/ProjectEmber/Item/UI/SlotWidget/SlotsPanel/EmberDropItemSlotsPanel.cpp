@@ -1,27 +1,21 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "EmberQuickSlotsPanel.h"
+#include "EmberDropItemSlotsPanel.h"
 
-#include "EmberLog/EmberLog.h"
 #include "GameFramework/Character.h"
+#include "Item/EmberDropItemManager.h"
 #include "Item/UserItemManger.h"
-#include "Item/QuickSlotManager.h"
-#include "Item/UI/SlotWidget/Slot/EmberBaseSlotWidget.h"
 
-void UEmberQuickSlotsPanel::BP_SetProvider_Implementation()
+void UEmberDropItemSlotsPanel::BP_SetProvider_Implementation()
 {
 	Super::BP_SetProvider_Implementation();
-	
+
 	if (GetOwningPlayer() && GetOwningPlayer()->GetCharacter())
 	{
 		if (TObjectPtr<UUserItemManger> ItemManger = GetOwningPlayer()->GetCharacter()->GetComponentByClass<UUserItemManger>())
 		{
-			DataProvider = ItemManger->GetQuickSlotManager();
-			if (!DataProvider)
-			{
-				EMBER_LOG(LogTemp, Warning, TEXT("DataProvider IsNull"));
-			}
+			DataProvider = ItemManger->GetEmberDropItemManager();
 		}
 	}
 }

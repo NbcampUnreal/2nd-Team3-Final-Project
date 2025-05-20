@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "EmberBaseSlotsPanel.h"
-#include "EmberQuickSlotsPanel.generated.h"
+#include "EmberDropItemSlotsPanel.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PROJECTEMBER_API UEmberQuickSlotsPanel : public UEmberBaseSlotsPanel
+class PROJECTEMBER_API UEmberDropItemSlotsPanel : public UEmberBaseSlotsPanel
 {
 	GENERATED_BODY()
 

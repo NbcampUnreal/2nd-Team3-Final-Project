@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Item/Core/EmberItemStruct.h"
 #include "UObject/Interface.h"
 #include "EmberSlotDataProviderInterface.generated.h"
 
@@ -36,7 +37,10 @@ public:
 	FGameplayTag GetSlotType() const;
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "SlotProvider")
-	int32 AddItemAndHandleOverflow(FName ItemIDToAdd, int32 QuantityToAdd, FVector DropLocation, FRotator DropRotation);
+	int32 AddItem(const FItemPair& Item, int32 InSlotIndex = -1);
+
+	UFUNCTION(BlueprintNativeEvent, Category = "SlotProvider")
+	TArray<FItemPair> AddItems(const TArray<FItemPair>& Items);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "SlotProvider")
 	int32 RemoveItemFromSlot(int32 SlotIndex, int32 QuantityToRemove);
@@ -45,6 +49,6 @@ public:
 	void UseItemInSlot(int32 SlotIndex);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "SlotProvider")
-	void MoveItemBySlot(const FGameplayTag& SlotTag, int32 IndexTo, const TScriptInterface<UEmberSlotDataProviderInterface>& AnotherProvider, int32 IndexFrom, int32 Quantity);
+	void MoveItemByWidget(const FGameplayTag& SlotTag, int32 IndexTo, const TScriptInterface<UEmberSlotDataProviderInterface>& AnotherProvider, int32 IndexFrom, int32 Quantity);
 	
 };
