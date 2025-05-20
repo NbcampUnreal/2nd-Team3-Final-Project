@@ -24,12 +24,25 @@ class ALS_API AAlsCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-public:/* My Custom Function and Variable */
+public:/* My Custom Function & Variable */
 
 	void SetAbilitySystemComponent(UAbilitySystemComponent* InAbilitySystemComponent);
+	bool CanChangeGait(const FGameplayTag& NewGait) const;
+	
+	UFUNCTION(BlueprintCallable, Category = "ALS|Character")
+	void SetForceGameplayTags(const FGameplayTagContainer& InForceGameplayTags);
+
+	UFUNCTION(BlueprintCallable, Category = "ALS|Character")
+	void ResetForceGameplayTags();
+
+	UFUNCTION(BlueprintCallable, Category="ALS|Tags")
+	void RemoveGameplayTagFromAsc(const FGameplayTag Tag) const;
+	
 private:
 	TObjectPtr<UAbilitySystemComponent> AscInstance;
-protected:
+	FGameplayTagContainer ForceGameplayTags;
+	
+protected: /* AlsCharacter */
 	UPROPERTY(BlueprintReadOnly, Category = "Als Character")
 	TObjectPtr<UAlsCharacterMovementComponent> AlsCharacterMovement;
 
