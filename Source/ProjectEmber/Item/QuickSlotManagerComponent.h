@@ -16,11 +16,14 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-
+	
 public:
+	FName SelectQuickSlot(int32 InIndex);
+
 	UPROPERTY(BlueprintAssignable, Category="QuickSlot")
 	FOnQuickSlotChangedDelegate OnQuickSlotChanged;
 
-
-	
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="QuickSlot")
+	int32 CurrentQuickSlotIndex = -1;
 };
