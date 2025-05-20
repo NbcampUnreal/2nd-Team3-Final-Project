@@ -4,17 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "EmberBaseSlotsPanel.h"
-#include "EmberQuickSlotsPanel.generated.h"
+#include "EmberEquipmentSlotsPanel.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PROJECTEMBER_API UEmberQuickSlotsPanel : public UEmberBaseSlotsPanel
+class PROJECTEMBER_API UEmberEquipmentSlotsPanel : public UEmberBaseSlotsPanel
 {
 	GENERATED_BODY()
-
 public:
+	virtual void BP_CreateSlots_Implementation() override;
 	virtual void BP_SetProvider_Implementation() override;
 
 };

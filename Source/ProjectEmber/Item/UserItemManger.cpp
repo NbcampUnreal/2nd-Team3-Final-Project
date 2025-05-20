@@ -3,8 +3,10 @@
 
 #include "UserItemManger.h"
 
-#include "InventoryManagerComponent.h"
-#include "QuickSlotManagerComponent.h"
+#include "InventoryManager.h"
+#include "QuickSlotManager.h"
+#include "EmberDropItemManager.h"
+#include "EmberEquipmentManager.h"
 
 
 // Sets default values for this component's properties
@@ -14,8 +16,36 @@ UUserItemManger::UUserItemManger()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
 
-	InventoryManager = CreateDefaultSubobject<UInventoryManagerComponent>(TEXT("InventoryManager"));
-	QuickSlotManager = CreateDefaultSubobject<UQuickSlotManagerComponent>(TEXT("QuickSlotManager"));
+	if (!GetOwner())
+	{
+		return;
+	}
+	
+	InventoryManager = CreateDefaultSubobject<UInventoryManager>(TEXT("InventoryManager"));
+	if (InventoryManager)
+	{
+		InventoryManager->InitSlot(InventoryMaxSlot, InventoryMaxSlotRow, GetOwner());
+	}
+	QuickSlotManager = CreateDefaultSubobject<UQuickSlotManager>(TEXT("QuickSlotManager"));
+	if (QuickSlotManager)
+	{
+		QuickSlotManager->InitSlot(QuickMaxSlot, QuickMaxSlotRow, GetOwner());
+	}
+
+	DropItemManager = CreateDefaultSubobject<UEmberDropItemManager>(TEXT("DropItemManager"));
+	if (DropItemManager)
+	{
+		DropItemManager->InitSlot(DropItemMaxSlot, DropItemMaxSlotRow, GetOwner());
+	}
+	
+	EquipmentManager = CreateDefaultSubobject<UEmberEquipmentManager>(TEXT("EquipmentManager"));
+
+	if (EquipmentManager)
+	{
+		EquipmentManager->InitSlot(4, 0, GetOwner());
+	}
+
+	
 	// ...
 }
 
@@ -40,7 +70,11 @@ void UUserItemManger::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 
 FEmberItemInfo UUserItemManger::GetQuickSlotInfo(int32 InIndex)
 {
-	return FEmberItemInfo(QuickSlotManager->GetSlotDataByIndex(InIndex));
+	if (const FEmberItemInfo* Item = QuickSlotManager->GetSlotDataByIndex(InIndex).GetPtr<FEmberItemInfo>())
+	{
+		return FEmberItemInfo(*Item);
+	}
+	return FEmberItemInfo();
 }
 
 void UUserItemManger::UseQuickSlotInfo(int32 InIndex)
@@ -50,7 +84,11 @@ void UUserItemManger::UseQuickSlotInfo(int32 InIndex)
 
 FEmberItemInfo UUserItemManger::GetInventorySlotInfo(int32 InIndex)
 {
-	return FEmberItemInfo(InventoryManager->GetSlotDataByIndex(InIndex));
+	if (const FEmberItemInfo* Item = InventoryManager->GetSlotDataByIndex(InIndex).GetPtr<FEmberItemInfo>())
+	{
+		return FEmberItemInfo(*Item);
+	}
+	return FEmberItemInfo();
 }
 
 void UUserItemManger::UseInventorySlotInfo(int32 InIndex)
@@ -58,28 +96,74 @@ void UUserItemManger::UseInventorySlotInfo(int32 InIndex)
 	InventoryManager->UseItemInSlot_Implementation(InIndex);
 }
 
-void UUserItemManger::AddItem(FName ItemID, int32 Quantity)
+void UUserItemManger::AddItem(FName ItemID, int32 Quantity, int32 InSlotIndex)
 {
-	InventoryManager->AddItemAndHandleOverflow_Implementation(ItemID, Quantity, GetOwner()->GetActorLocation(), FRotator::ZeroRotator);
+	InventoryManager->AddItem_Implementation(FItemPair(ItemID, Quantity), InSlotIndex);
 }
 
-const class UInventoryManagerComponent* UUserItemManger::GetInventoryManager() const
-{
-	return InventoryManager;
-}
-
-UInventoryManagerComponent* UUserItemManger::GetInventoryManager()
+const UInventoryManager* UUserItemManger::GetInventoryManager() const
 {
 	return InventoryManager;
 }
 
-const class UQuickSlotManagerComponent* UUserItemManger::GetQuickSlotManagerComponent() const
+UInventoryManager* UUserItemManger::GetInventoryManager()
+{
+	return InventoryManager;
+}
+
+const UQuickSlotManager* UUserItemManger::GetQuickSlotManager() const
 {
 	return QuickSlotManager;
 }
 
-UQuickSlotManagerComponent* UUserItemManger::GetQuickSlotManagerComponent()
+UQuickSlotManager* UUserItemManger::GetQuickSlotManager()
 {
 	return QuickSlotManager;
 }
 
+const UEmberEquipmentManager* UUserItemManger::GetEquipmentManager() const
+{
+	return EquipmentManager;
+}
+
+UEmberEquipmentManager* UUserItemManger::GetEquipmentManager()
+{
+	return EquipmentManager;
+}
+
+const class UEmberDropItemManager* UUserItemManger::GetEmberDropItemManager() const
+{
+	return DropItemManager;
+}
+
+UEmberDropItemManager* UUserItemManger::GetEmberDropItemManager()
+{
+	return DropItemManager;
+}
+
+TArray<FItemPair> UUserItemManger::GetItems_Implementation()
+{
+	TArray<FItemPair> Items;
+	for (const FInstancedStruct& SlotInstance : InventoryManager->GetInventorySlots())
+	{
+		if (const FEmberSlotData* SlotData = SlotInstance.GetPtr<FEmberSlotData>())
+		{
+			if (!SlotData->bIsEmpty())
+			{
+				FItemPair Item;
+		
+				Item.ItemID = SlotData->ItemID;
+				Item.Quantity = SlotData->Quantity;
+
+				Items.Add(Item);
+			}
+		}
+	}
+
+	return Items;
+}
+
+bool UUserItemManger::bTryConsumeResource_Implementation(const TArray<FItemPair>& RequireItems)
+{
+	return true;
+}
