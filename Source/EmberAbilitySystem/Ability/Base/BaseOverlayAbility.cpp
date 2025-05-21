@@ -4,7 +4,10 @@
 #include "BaseOverlayAbility.h"
 
 #include "AbilitySystemComponent.h"
+#include "AlsCharacter.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
+#include "EmberLog/EmberLog.h"
 #include "GameFramework/Character.h"
 
 UBaseOverlayAbility::UBaseOverlayAbility()
@@ -26,8 +29,13 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	}
 
 	LaunchCharacterForward(ActorInfo);
+
+	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
+	{
+		Character->SetForceGameplayTags(ForceGameplayTags);
+	}
 	
-	AbilitySystemComponent = CastChecked<UAbilitySystemComponent>(ActorInfo->AvatarActor.Get()->GetComponentByClass(UAbilitySystemComponent::StaticClass()));
+	AbilitySystemComponent = GetAbilitySystemComponentFromActorInfo();
 
 	UAbilityTask_PlayMontageAndWait* PlayMontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 			this, NAME_None, MontageToPlay);
@@ -36,6 +44,18 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	PlayMontageTask->OnInterrupted.AddDynamic(this, &UBaseOverlayAbility::OnMontageInterrupted);
 	PlayMontageTask->OnCancelled.AddDynamic(this, &UBaseOverlayAbility::OnMontageInterrupted);
 	PlayMontageTask->ReadyForActivation();
+
+	if (!bLoopingMontage && bCanCombo)
+	{
+		static const FGameplayTag ComboTag = FGameplayTag::RequestGameplayTag(TEXT("Combat.Combo.Next"));
+		UAbilityTask_WaitGameplayEvent* ComboTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
+			this, ComboTag, nullptr, false);
+		
+		ComboTask->EventReceived.AddDynamic(this, &UBaseOverlayAbility::OnComboNotify);
+		ComboTask->ReadyForActivation();
+	}
+
+	
 }
 
 void UBaseOverlayAbility::CancelAbility(const FGameplayAbilitySpecHandle Handle,
@@ -50,27 +70,38 @@ void UBaseOverlayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+
+	bComboInputReceived = false;
+	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
+	{
+		Character->ResetForceGameplayTags();
+	}
 }
 
 void UBaseOverlayAbility::InputPressed(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo)
 {
-	Super::InputPressed(Handle, ActorInfo, ActivationInfo);
-
 	bComboInputReceived = true;
+}
+
+void UBaseOverlayAbility::InputReleased(const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo)
+{
+	bComboInputReceived = false;
+	
+	EndAbility(Handle, ActorInfo, ActivationInfo,true, true);
 }
 
 void UBaseOverlayAbility::OnMontageCompleted()
 {
-	if (bCanCombo && NextComboTag.IsValid() && bComboInputReceived)
+	if (bCanCombo && NextComboAbility && bComboInputReceived && !bLoopingMontage)
 	{
-		// Tag에 매핑된 Ability를 ASC 에서 찾아서 실행
-		AbilitySystemComponent->TryActivateAbilitiesByTag(FGameplayTagContainer(NextComboTag), true);
+		AbilitySystemComponent->TryActivateAbilityByClass(NextComboAbility,true);
 	}
-	
+
 	bool bReplicatedEndAbility = true;
 	bool bWasCancelled = false;
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);	
 }
 
 void UBaseOverlayAbility::OnMontageInterrupted()
@@ -78,6 +109,18 @@ void UBaseOverlayAbility::OnMontageInterrupted()
 	bool bReplicatedEndAbility = true;
 	bool bWasCancelled = true;
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
+}
+
+void UBaseOverlayAbility::OnComboNotify(const FGameplayEventData Payload)
+{
+	if (bCanCombo && bComboInputReceived)
+	{
+		AbilitySystemComponent->TryActivateAbilityByClass(NextComboAbility,false);
+		
+		bool bReplicatedEndAbility = true;
+		bool bWasCancelled = false;
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
+	}
 }
 
 void UBaseOverlayAbility::LaunchCharacterForward(const FGameplayAbilityActorInfo* ActorInfo) const

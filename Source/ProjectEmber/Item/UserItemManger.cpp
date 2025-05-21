@@ -167,3 +167,9 @@ bool UUserItemManger::bTryConsumeResource_Implementation(const TArray<FItemPair>
 {
 	return true;
 }
+
+FName UUserItemManger::SelectQuickSlot(const int32 InIndex) const
+{
+	return QuickSlotManager->SelectQuickSlot(InIndex);
+}
+

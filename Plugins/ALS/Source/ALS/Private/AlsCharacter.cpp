@@ -31,6 +31,50 @@ void AAlsCharacter::SetAbilitySystemComponent(UAbilitySystemComponent* InAbility
 	AscInstance = InAbilitySystemComponent;
 }
 
+bool AAlsCharacter::CanChangeGait(const FGameplayTag& NewGait) const
+{
+	if (AscInstance)
+	{
+		if (ForceGameplayTags.HasTag(NewGait))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Force gait to %s"), *NewGait.ToString());		
+			return true;
+		}
+
+		const FString LockTagString = NewGait.ToString() + TEXT(".Lock");
+		const FGameplayTag LockTag = FGameplayTag::RequestGameplayTag(*LockTagString);
+		if (AscInstance->HasMatchingGameplayTag(LockTag))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Lock gait to %s"), *LockTag.ToString());
+			return false;
+		}
+
+		return true;	
+	}
+	else
+	{
+		return true;
+	}
+}
+
+void AAlsCharacter::SetForceGameplayTags(const FGameplayTagContainer& InForceGameplayTags)
+{
+	ForceGameplayTags = InForceGameplayTags;
+}
+
+void AAlsCharacter::ResetForceGameplayTags()
+{
+	ForceGameplayTags = FGameplayTagContainer{};
+}
+
+void AAlsCharacter::RemoveGameplayTagFromAsc(const FGameplayTag Tag) const
+{
+	if (AscInstance)
+	{
+		AscInstance->RemoveLooseGameplayTag(Tag);
+	}
+}
+
 AAlsCharacter::AAlsCharacter(const FObjectInitializer& ObjectInitializer) : Super{
 	ObjectInitializer.SetDefaultSubobjectClass<UAlsCharacterMovementComponent>(CharacterMovementComponentName)
 }
@@ -942,6 +986,13 @@ void AAlsCharacter::SetDesiredGait(const FGameplayTag& NewDesiredGait, const boo
 		return;
 	}
 
+	if (!CanChangeGait(NewDesiredGait))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Cannot change gait to %s"), *NewDesiredGait.ToString());
+		return;
+	}
+
+	
 	DesiredGait = NewDesiredGait;
 
 	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, DesiredGait, this)
@@ -973,6 +1024,11 @@ void AAlsCharacter::SetGait(const FGameplayTag& NewGait)
 {
 	if (Gait != NewGait)
 	{
+		if (!CanChangeGait(NewGait))
+		{
+			return;
+		}
+		
 		const auto PreviousGait{Gait};
 
 		Gait = NewGait;

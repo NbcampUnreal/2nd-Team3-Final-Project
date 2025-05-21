@@ -68,6 +68,10 @@ public:
 	TArray<FItemPair> GetItems_Implementation();
 
 	bool bTryConsumeResource_Implementation(const TArray<FItemPair>& RequireItems);
+
+public: /* Quick Slot Interaction */
+	FName SelectQuickSlot(int32 InIndex) const;
+	
 public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")

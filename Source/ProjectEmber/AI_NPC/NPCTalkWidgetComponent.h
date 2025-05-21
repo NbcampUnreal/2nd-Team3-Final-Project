@@ -15,6 +15,8 @@ class PROJECTEMBER_API UNPCTalkWidgetComponent : public UWidgetComponent
 	GENERATED_BODY()
 
 public:
-	UNPCTalkWidgetComponent();
-};
+    UNPCTalkWidgetComponent();
 
+protected:
+    virtual void OnRegister() override;  
+};

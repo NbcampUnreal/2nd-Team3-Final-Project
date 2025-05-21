@@ -1,16 +1,34 @@
 #include "QuestReceiverComponent.h"
 #include "TimerManager.h"
+#include "QuestDataRow.h" 
+#include "Engine/DataTable.h"
 
 UQuestReceiverComponent::UQuestReceiverComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
 }
 
+void UQuestReceiverComponent::AcceptQuest(UDataTable* QuestDataTable, FName RowName)
+{
+    if (!QuestDataTable) return;
 
+    const FQuestDataRow* QuestRow = QuestDataTable->FindRow<FQuestDataRow>(RowName, TEXT("AcceptQuest"));
+    if (!QuestRow) return;
+
+    FQuestStorageInfo NewQuest;
+    NewQuest.QuestID = QuestRow->QuestID;
+    NewQuest.QuestName = QuestRow->QuestName;
+    NewQuest.ObjectiveNames = QuestRow->ObjectiveNames;
+    NewQuest.ObjectiveProgress.Init(0, QuestRow->ObjectiveGoals.Num());
+    NewQuest.bIsTracking = true;
+    NewQuest.bIsComplete = false;
+
+    AddTrackedQuest(NewQuest);
+}
 
 void UQuestReceiverComponent::AddTrackedQuest(const FQuestStorageInfo& Quest)
 {
-    int32 Index = FindQuestIndex(Quest.QuestNumber);
+    int32 Index = FindQuestIndex(Quest.QuestID);
     if (Index == INDEX_NONE)
     {
         QuestLog.Add(Quest);
@@ -25,7 +43,7 @@ void UQuestReceiverComponent::AddTrackedQuest(const FQuestStorageInfo& Quest)
 
 void UQuestReceiverComponent::RemoveTrackedQuest(const FQuestStorageInfo& Quest)
 {
-    int32 Index = FindQuestIndex(Quest.QuestNumber);
+    int32 Index = FindQuestIndex(Quest.QuestID);
     if (Index != INDEX_NONE)
     {
         QuestLog[Index].bIsTracking = false;
@@ -73,6 +91,7 @@ void UQuestReceiverComponent::UpdateQuestObjective(int32 QuestID, const FString&
     }
 }
 
+
 void UQuestReceiverComponent::RemoveTrackingObjective(int32 QuestID, const FString& ObjectiveName)
 {
     int32 Index = FindQuestIndex(QuestID);
@@ -95,7 +114,7 @@ int32 UQuestReceiverComponent::FindQuestIndex(int32 QuestID) const
 {
     for (int32 i = 0; i < QuestLog.Num(); ++i)
     {
-        if (QuestLog[i].QuestNumber == QuestID)
+        if (QuestLog[i].QuestID == QuestID)
         {
             return i;
         }
@@ -106,4 +125,22 @@ int32 UQuestReceiverComponent::FindQuestIndex(int32 QuestID) const
 const TArray<FQuestStorageInfo>& UQuestReceiverComponent::GetQuestLog() const
 {
     return QuestLog;
+}
+void UQuestReceiverComponent::NotifyTalkObjectiveCompleted(FName ObjectiveName)
+{
+    FString ObjectiveNameStr = ObjectiveName.ToString();
+
+    for (int32 i = 0; i < QuestLog.Num(); ++i)
+    {
+        FQuestStorageInfo& Quest = QuestLog[i];
+        for (int32 j = 0; j < Quest.ObjectiveNames.Num(); ++j)
+        {
+            if (Quest.ObjectiveNames[j] == ObjectiveNameStr)
+            {
+                Quest.ObjectiveProgress[j] = FMath::Clamp(Quest.ObjectiveProgress[j] + 1, 0, 1);
+                OnQuestUpdated.Broadcast(Quest);
+                return;
+            }
+        }
+    }
 }

@@ -17,9 +17,24 @@ protected:
     UFUNCTION()
     void OnVideoButtonClicked();
 
-    UPROPERTY(meta = (BindWidget))
+    UFUNCTION()
+    void OnAudioButtonClicked();
+
+    UFUNCTION()
+    void OnBackButtonClicked();
+
+    UPROPERTY(meta = (BindWidget)) 
     UButton* VideoButton;
 
     UPROPERTY(meta = (BindWidget))
+    UButton* AudioButton;
+
+    UPROPERTY(meta = (BindWidget))
+    UButton* BackButton;
+
+    UPROPERTY(meta = (BindWidget))
     UWidgetSwitcher* SettingsContentSwitcher;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI", meta = (AllowPrivateAccess = "true"))
+    TSubclassOf<UUserWidget> MainMenuWidgetClass;
 };
