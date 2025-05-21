@@ -84,3 +84,8 @@ UQuickSlotManagerComponent* UUserItemManger::GetQuickSlotManagerComponent()
 	return QuickSlotManager;
 }
 
+FName UUserItemManger::SelectQuickSlot(const int32 InIndex) const
+{
+	return QuickSlotManager->SelectQuickSlot(InIndex);
+}
+
