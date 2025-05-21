@@ -64,3 +64,8 @@ void UEmberGameInstance::RequestOpenLevel(FName MapName)
 			UGameplayStatics::OpenLevel(this, MapName);
 		}, 0.8f, false);
 }
+
+void UEmberGameInstance::TestPlaySFX(ESfxSoundType SoundType, const FName RowName, FVector Location)
+{
+	AudioSubsystem->PlaySFX(SoundType, RowName, Location);
+}

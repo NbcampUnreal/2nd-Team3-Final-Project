@@ -1,5 +1,8 @@
 ﻿#include "EmberMainHUD.h"
+
+#include "Character/EmberCharacter.h"
 #include "EmberLog/EmberLog.h"
+#include "UI/BaseWidget/GameMenuWidget.h"
 #include "UI/Debug/LayerDebugger.h"
 #include "UI/Layer/EmberLayerBase.h"
 
@@ -32,6 +35,7 @@ bool AEmberMainHUD::RegisterLayer(const FGameplayTag LayerTag, UEmberLayerBase* 
 		if (!EmberLayers.Contains(LayerTag))
 		{
 			EmberLayers.Add(LayerTag, Layer);
+
 			//PrimaryDebugLayer->SetChangedLayer();
 			return true;
 		}
@@ -98,6 +102,11 @@ void AEmberMainHUD::SetGameMovementInputLock(bool bLock)
 bool AEmberMainHUD::GetGameMovementInputLock()
 {
 	return bIsGameMovementInputLock;
+}
+
+UEmberLayerBase* AEmberMainHUD::GetLayer(FGameplayTag LayerTag) const
+{
+	return *EmberLayers.Find(LayerTag);
 }
 
 //#if !UE_BUILD_SHIPPING

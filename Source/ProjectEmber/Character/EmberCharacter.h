@@ -6,6 +6,8 @@
 #include "EMSActorSaveInterface.h"
 #include "EmberCharacter.generated.h"
 
+class UGameMenuWidget;
+class UEmberLayerBase;
 struct FInputActionInstance;
 struct FGameplayAbilitySpec;
 class UAlsCameraComponent;
@@ -94,7 +96,9 @@ protected: /* Camera */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EmberCharacter|Input")
 	float LookRightRate{240.0f};
 
-protected: /* Input */
+public: /* Input */
+	void BindUIInput(UGameMenuWidget* Layer);
+protected:
 	virtual void Input_OnLookMouse(const FInputActionValue& ActionValue);
 	virtual void Input_OnLook(const FInputActionValue& ActionValue);
 	virtual void Input_OnMove(const FInputActionValue& ActionValue);
