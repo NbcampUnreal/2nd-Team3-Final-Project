@@ -13,11 +13,14 @@
 #include "Animation/AnimInstance.h"
 #include "Components/CapsuleComponent.h"
 #include "Define/CharacterDefine.h"
+#include "EmberLog/EmberLog.h"
 #include "Engine/LocalPlayer.h"
+#include "FunctionLibrary/UIFunctionLibrary.h"
 #include "GameFramework/PhysicsVolume.h"
 #include "Item/UserItemManger.h"
 #include "UI/EmberWidgetComponent.h"
 #include "MeleeTrace/Public/MeleeTraceComponent.h"
+#include "UI/HUD/EmberMainHUD.h"
 #include "Utility/AlsVector.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(EmberCharacter)
@@ -29,9 +32,7 @@ AEmberCharacter::AEmberCharacter()
     Camera->SetRelativeRotation_Direct(FRotator(0.0f, 90.0f, 0.0f));
     
     InputHandler = CreateDefaultSubobject<UEmberInputHandlerComponent>(TEXT("InputHandler"));
-
-    AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-  
+    
     InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 
     MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
@@ -41,52 +42,78 @@ AEmberCharacter::AEmberCharacter()
     HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
     HpBarWidget->SetupAttachment(GetMesh());
     HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
-
+    
 }
 
 void AEmberCharacter::BeginPlay()
 {
     Super::BeginPlay();
+    
+    if (GetController()->IsLocalController())
+    {
+        if (AEmberPlayerState* EmberPlayerState = GetPlayerState<AEmberPlayerState>())
+        {
+            AbilitySystemComponent = EmberPlayerState->GetAbilitySystemComponent();
+            Super::SetAbilitySystemComponent(AbilitySystemComponent);
+        
+            if (const UEmberCharacterAttributeSet* CurrentAttributeSet = AbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>())
+            {
+                CurrentAttributeSet->OnOutOfHealth.AddDynamic(this, &ThisClass::OnOutOfHealth);
+            }
+        
+            AbilitySystemComponent->InitAbilityActorInfo(EmberPlayerState, this);    
+        
+        
+            for (const TSubclassOf<UGameplayAbility>& Ability : StartAbilities)
+            {
+                FGameplayAbilitySpec StartAbilitySpec = Ability;
+                AbilitySystemComponent->GiveAbility(StartAbilitySpec);
+            }
 
+            for (const auto& StartInputAbility : StartInputAbilities)
+            {
+                FGameplayAbilitySpec StartAbilitySpec(StartInputAbility.Value);
+                StartAbilitySpec.InputID = StartInputAbility.Key;
+                AbilitySystemComponent->GiveAbility(StartAbilitySpec);
+            }
+
+            for (const auto& StartInputAbility : StartRightInputAbilities)
+            {
+                FGameplayAbilitySpec StartAbilitySpec(StartInputAbility.Value);
+                StartAbilitySpec.InputID = StartInputAbility.Key;
+                AbilitySystemComponent->GiveAbility(StartAbilitySpec);
+            }
+        
+            /*TArray<FGameplayAbilitySpec> Specs = AbilitySystemComponent->GetActivatableAbilities();
+            UE_LOG(LogEmber, Warning, TEXT("→ Specs 개수: %d"), Specs.Num());
+            for (const FGameplayAbilitySpec& Spec : Specs)
+            {
+                UE_LOG(LogEmber, Warning, TEXT("→ Spec: %s"), *Spec.Ability->GetName());
+            }*/
+        
+        
+            /*APlayerController* PlayerController = CastChecked<APlayerController>(NewController);
+            PlayerController->ConsoleCommand(TEXT("ShowDebug AbilitySystem"));*/
+            //bClientAbility = true;   
+        }
+    }
+    
     if (HpBarWidgetClass)
     {
         HpBarWidget->SetWidgetClass(HpBarWidgetClass);
         HpBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
         HpBarWidget->SetDrawSize(FVector2D(200.0f,20.0f));
         HpBarWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-        HpBarWidget->UpdateAbilitySystemComponent();
-    }
-
-    GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AEmberCharacter::OnWaterBeginOverlap);
-    GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &AEmberCharacter::OnWaterEndOverlap);
-}
-
-void AEmberCharacter::OnWaterBeginOverlap(UPrimitiveComponent* OverlappedComp,
-                             AActor* OtherActor,
-                             UPrimitiveComponent* OtherComp,
-                             int32 OtherBodyIndex,
-                             bool bFromSweep,
-                             const FHitResult& SweepResult)
-{
-    // PhysicsVolume 기반 수영 모드 전환
-    if (APhysicsVolume* Vol = Cast<APhysicsVolume>(OtherActor))
-    {
-        if (Vol->bWaterVolume)
-            GetCharacterMovement()->SetMovementMode(MOVE_Swimming);
-    }
-    // 또는 WaterBody 액터 직접 체크
-    else if (OtherActor->IsA<AWaterBody>())
-    {
-        GetCharacterMovement()->SetMovementMode(MOVE_Swimming);
+        
+        HpBarWidget->UpdateAbilitySystemComponent(this);
     }
 }
 
-void AEmberCharacter::OnWaterEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-    UPrimitiveComponent* OtherComp, int OtherBodyIndex)
+void AEmberCharacter::PossessedBy(AController* NewController)
 {
-    if (GetCharacterMovement()->MovementMode == MOVE_Swimming)
-        GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+    Super::PossessedBy(NewController);
+
+    SetupEmberInputComponent();
 }
 
 UAbilitySystemComponent* AEmberCharacter::GetAbilitySystemComponent() const
@@ -105,6 +132,13 @@ void AEmberCharacter::OnOutOfHealth()
 
 void AEmberCharacter::AbilityInputPressed(int32 InputID)
 {
+    if (UUIFunctionLibrary::GetIsAbilityInputLock(Cast<APlayerController>(GetController())))
+    {
+        return;
+    }
+
+    bool bActive = false;
+    
     if (InputID == 0)
     {
         if (FGameplayAbilitySpec* Spec = GetSpecFromOverlayMode())
@@ -113,10 +147,11 @@ void AEmberCharacter::AbilityInputPressed(int32 InputID)
             if (Spec->IsActive())
             {
                 AbilitySystemComponent->AbilitySpecInputPressed(*Spec);
+                bActive = true;
             }
             else
             {
-                AbilitySystemComponent->TryActivateAbility(Spec->Handle);
+                bActive = AbilitySystemComponent->TryActivateAbility(Spec->Handle);
             }
         }
     }
@@ -128,74 +163,97 @@ void AEmberCharacter::AbilityInputPressed(int32 InputID)
             if (Spec->IsActive())
             {
                 AbilitySystemComponent->AbilitySpecInputPressed(*Spec);
+                bActive = true;
             }
             else
             {
-                AbilitySystemComponent->TryActivateAbility(Spec->Handle);
+                bActive = AbilitySystemComponent->TryActivateAbility(Spec->Handle);
+            }
+        }
+    }
+
+    /* 콤보 공격을 이어주기 위함 기존 Input Ability 들은 인식되지만
+     * 콤보 공격은 Input으로 이어지는게 아니다 보니 찾아서 호출시켜줘야됨
+     */
+    if (bActive == false)
+    {
+        for (auto& Spec : AbilitySystemComponent->GetActivatableAbilities())
+        {
+            if (Spec.InputID == INDEX_NONE && Spec.IsActive())
+            {
+                AbilitySystemComponent->AbilitySpecInputPressed(Spec);
             }
         }
     }
 }
 
-FGameplayAbilitySpec* AEmberCharacter::GetSpecFromOverlayMode() const
+FGameplayAbilitySpec* AEmberCharacter::GetSpecFromOverlayMode(const bool IsRightInput) const
 {
+    int32 InputID = 0;
     if (OverlayMode == AlsOverlayModeTags::Default)    
     {
-        return AbilitySystemComponent->FindAbilitySpecFromInputID(static_cast<int32>(EInputID::Default));
+        InputID = static_cast<int32>(EInputID::Default);
     }
     else if (OverlayMode == AlsOverlayModeTags::Sword) 
     {
-        return AbilitySystemComponent->FindAbilitySpecFromInputID(static_cast<int32>(EInputID::Sword));
+        InputID = static_cast<int32>(EInputID::Sword);
     }
     else if (OverlayMode == AlsOverlayModeTags::Hatchet) 
     {
-        return AbilitySystemComponent->FindAbilitySpecFromInputID(static_cast<int32>(EInputID::Hatchet));
+        InputID = static_cast<int32>(EInputID::Hatchet);
     }
     else if (OverlayMode == AlsOverlayModeTags::PickAxe) 
     {
-        return AbilitySystemComponent->FindAbilitySpecFromInputID(static_cast<int32>(EInputID::PickAxe));
+        InputID = static_cast<int32>(EInputID::PickAxe);
     }
-
-    return AbilitySystemComponent->FindAbilitySpecFromInputID(static_cast<int32>(EInputID::Attack));
-}
-
-void AEmberCharacter::PossessedBy(AController* NewController)
-{
-    Super::PossessedBy(NewController);
-
-    if (AEmberPlayerState* EmberPlayerState = GetPlayerState<AEmberPlayerState>())
+    else if (OverlayMode == AlsOverlayModeTags::Spear) 
     {
-        AbilitySystemComponent = EmberPlayerState->GetAbilitySystemComponent();
-        Super::SetAbilitySystemComponent(AbilitySystemComponent);
-        
-        if (const UEmberCharacterAttributeSet* CurrentAttributeSet = AbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>())
+        InputID = static_cast<int32>(EInputID::Spear);
+    }
+    else if (OverlayMode == AlsOverlayModeTags::Dagger) 
+    {
+        InputID = static_cast<int32>(EInputID::Dagger);
+    }
+    else if (OverlayMode == AlsOverlayModeTags::SwordTwoHanded) 
+    {
+        InputID = static_cast<int32>(EInputID::SwordTwoHanded);
+    }
+    
+    if (IsRightInput)
+    {
+        InputID += 1000;
+    }
+
+    ensureMsgf(InputID != 0, TEXT("%s: GetSpecFromOverlayMode produced InputID == 0 (OverlayMode=%s, IsRightInput=%d)"),
+           *GetName(), *OverlayMode.ToString(), IsRightInput);
+    
+    return AbilitySystemComponent->FindAbilitySpecFromInputID(InputID);
+}
+
+void AEmberCharacter::TryAbilityFromOnAim(const bool bPressed)
+{
+    if (FGameplayAbilitySpec* Spec = GetSpecFromOverlayMode(true))
+    {
+        Spec->InputPressed = bPressed;
+
+        if (Spec->IsActive())
         {
-            CurrentAttributeSet->OnOutOfHealth.AddDynamic(this, &ThisClass::OnOutOfHealth);
+            if (bPressed)
+            {
+                AbilitySystemComponent->AbilitySpecInputPressed(*Spec);
+            }
+            else
+            {
+                AbilitySystemComponent->AbilitySpecInputReleased(*Spec);
+            }
         }
-		
-        if (AbilitySystemComponent)
+        else if (bPressed)
         {
-            AbilitySystemComponent->InitAbilityActorInfo(EmberPlayerState, this);
-            for (const TSubclassOf<UGameplayAbility>& Ability : StartAbilities)
-            {
-                FGameplayAbilitySpec StartAbilitySpec = Ability;
-                AbilitySystemComponent->GiveAbility(StartAbilitySpec);
-            }
-
-            for (const auto& StartInputAbility : StartInputAbilities)
-            {
-                FGameplayAbilitySpec StartAbilitySpec(StartInputAbility.Value);
-                StartAbilitySpec.InputID = StartInputAbility.Key;
-                AbilitySystemComponent->GiveAbility(StartAbilitySpec);
-            }
-
-            SetupEmberInputComponent();
-
-            /*APlayerController* PlayerController = CastChecked<APlayerController>(NewController);
-            PlayerController->ConsoleCommand(TEXT("ShowDebug AbilitySystem"));*/
-        }
+            AbilitySystemComponent->TryActivateAbility(Spec->Handle);
+        }    
     }
 }
+
 
 UMeleeTraceComponent* AEmberCharacter::GetMeleeTraceComponent() const
 {
@@ -269,6 +327,11 @@ void AEmberCharacter::Input_OnLook(const FInputActionValue& ActionValue)
 
 void AEmberCharacter::Input_OnMove(const FInputActionValue& ActionValue)
 {
+    if (UUIFunctionLibrary::GetIsGameMovementInputLock(Cast<APlayerController>(GetController())))
+    {
+        return;
+    }
+    
     const auto Value = UAlsVector::ClampMagnitude012D(ActionValue.Get<FVector2D>());
     const auto ForwardDir = UAlsVector::AngleToDirectionXY(UE_REAL_TO_FLOAT(GetViewState().Rotation.Yaw));
     const auto RightDir   = UAlsVector::PerpendicularCounterClockwiseXY(ForwardDir);
@@ -290,6 +353,11 @@ void AEmberCharacter::Input_OnWalk()
 
 void AEmberCharacter::Input_OnCrouch()
 {
+    if (UUIFunctionLibrary::GetIsGameMovementInputLock(Cast<APlayerController>(GetController())))
+    {
+        return;
+    }
+    
     if (GetDesiredStance() == AlsStanceTags::Standing)
         SetDesiredStance(AlsStanceTags::Crouching);
     else
@@ -298,6 +366,11 @@ void AEmberCharacter::Input_OnCrouch()
 
 void AEmberCharacter::Input_OnJump(const FInputActionValue& ActionValue)
 {
+    if (AbilitySystemComponent->HasMatchingGameplayTag(AlsInputActionTags::LockJumping))
+    {
+        return;
+    }
+    
     if (ActionValue.Get<bool>())
     {
         if (GetCharacterMovement()->IsFalling())
@@ -325,7 +398,16 @@ void AEmberCharacter::Input_OnJump(const FInputActionValue& ActionValue)
 
 void AEmberCharacter::Input_OnAim(const FInputActionValue& ActionValue)
 {
-    SetDesiredAiming(ActionValue.Get<bool>());
+    TryAbilityFromOnAim(ActionValue.Get<bool>());
+    
+    if (OverlayMode == AlsOverlayModeTags::Default)
+    {
+        
+    }
+    else
+    {
+        SetDesiredAiming(ActionValue.Get<bool>());    
+    }
 }
 
 void AEmberCharacter::Input_OnRagdoll()
@@ -336,6 +418,14 @@ void AEmberCharacter::Input_OnRagdoll()
 
 void AEmberCharacter::Input_OnRoll()
 {
+    if (AbilitySystemComponent->HasMatchingGameplayTag(AlsInputActionTags::LockRolling))
+    {
+        return;
+    }
+
+    const FGameplayTagContainer CancelTags(AlsInputActionTags::OverlayAction);
+    AbilitySystemComponent->CancelAbilities(&CancelTags);
+    
     StartRolling(1.3f);
 }
 
@@ -358,6 +448,41 @@ void AEmberCharacter::Input_OnViewMode()
 void AEmberCharacter::Input_OnSwitchShoulder()
 {
     Camera->SetRightShoulder(!Camera->IsRightShoulder());
+}
+
+void AEmberCharacter::Input_OnQuickSlot(int32 PressedIndex)
+{
+    EMBER_LOG(LogEmber, Warning, TEXT("PressedIndex : %d"), PressedIndex);
+    
+    FName SelectItemName = EmberItemManager->SelectQuickSlot(PressedIndex);
+    if (SelectItemName.IsNone())
+    {
+        SetOverlayMode(AlsOverlayModeTags::Default);
+        return;
+    }
+
+    const FString ItemNameStr = SelectItemName.ToString();
+
+    if (ItemNameStr.Contains(TEXT("Sword")))
+    {
+        SetOverlayMode(AlsOverlayModeTags::Sword);
+    }
+    else if (ItemNameStr.Contains(TEXT("Bow")))
+    {
+        SetOverlayMode(AlsOverlayModeTags::Bow);
+    }
+    else if (ItemNameStr.Contains(TEXT("Hatchet")))
+    {
+        SetOverlayMode(AlsOverlayModeTags::Hatchet);
+    }
+    else if (ItemNameStr.Contains(TEXT("PickAxe")))
+    {
+        SetOverlayMode(AlsOverlayModeTags::PickAxe);
+    }
+    else // else는 잡템
+    {
+        SetOverlayMode(AlsOverlayModeTags::Default);
+    }
 }
 
 void AEmberCharacter::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DisplayInfo, float& Unused, float& VerticalLocation)

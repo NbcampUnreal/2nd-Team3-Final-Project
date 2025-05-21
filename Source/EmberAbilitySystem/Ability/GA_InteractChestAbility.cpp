@@ -74,7 +74,9 @@ void UGA_InteractChestAbility::OnOpenFinished()
 
             if (const ACharacter* Character = Cast<ACharacter>(Pawn))
             {
-                Character->GetCharacterMovement()->DisableMovement(); // 이동막기
+                UUIFunctionLibrary::FocusUI(PC,ChestWidgetInstance,true,true,true);
+                
+                /*Character->GetCharacterMovement()->DisableMovement(); // 이동막기
                 PC->SetIgnoreLookInput(true); // 카메라 막기
                 PC->SetShowMouseCursor(true); // 커서 보이기
 
@@ -84,7 +86,7 @@ void UGA_InteractChestAbility::OnOpenFinished()
                 FInputModeUIOnly InputMode;
                 InputMode.SetWidgetToFocus(ChestWidgetInstance->TakeWidget());
                 InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-                PC->SetInputMode(InputMode);
+                PC->SetInputMode(InputMode);*/
             }
         }
 
@@ -137,15 +139,9 @@ void UGA_InteractChestAbility::OnCloseFinished()
     //막은거 전부 복구
     if (ACharacter* Character = Cast<ACharacter>(GetAvatarActorFromActorInfo()))
     {
-        Character->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-
         if (APlayerController* PC = Cast<APlayerController>(Character->GetController()))
         {
-            PC->SetShowMouseCursor(false);
-            PC->SetIgnoreLookInput(false);
-            
-            FInputModeGameOnly GameInput;
-            PC->SetInputMode(GameInput);
+            UUIFunctionLibrary::FocusGame(PC);
         }
     }
     
