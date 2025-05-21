@@ -152,7 +152,7 @@ void UDialogueComponent::OnPlayerExitRadius(UPrimitiveComponent* OverlappedComp,
 
 void UDialogueComponent::Interact()
 {
-    if (!bPlayerInRange || !DialogueWidgetClass) return;
+    if (!bPlayerInRange || !DialogueWidgetClass || bDialogueFinished) return;
 
     APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
     AActor* OwnerActor = GetOwner();
@@ -179,12 +179,14 @@ void UDialogueComponent::Interact()
     DialogueWidget = CreateWidget<UUserWidget>(PC, DialogueWidgetClass);
     if (DialogueWidget)
     {
-        DialogueWidget->AddToViewport();
+        const int32 HighZOrder = 999;  
+        DialogueWidget->AddToViewport(HighZOrder); 
 
         FInputModeGameAndUI InputMode;
         InputMode.SetWidgetToFocus(DialogueWidget->TakeWidget());
         InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
         PC->SetInputMode(InputMode);
+        PC->bShowMouseCursor = true;
 
         SetInputMappingContext(UIInputMappingContext);
 
@@ -193,7 +195,7 @@ void UDialogueComponent::Interact()
             TalkPromptWidget->SetVisibility(false);
         }
 
-        UE_LOG(LogTemp, Warning, TEXT("[Interact] DialogueWidget created and shown."));
+        UE_LOG(LogTemp, Warning, TEXT("[Interact] DialogueWidget created and shown (ZOrder %d)."), HighZOrder);
     }
 
     AdvanceDialogue();
@@ -284,7 +286,8 @@ void UDialogueComponent::ShowQuestUI()
         return;
     }
 
-    QuestUI->AddToViewport();
+    const int32 QuestZOrder = 999;
+    QuestUI->AddToViewport(QuestZOrder);
     PC->bShowMouseCursor = true;
 
     FInputModeGameAndUI InputMode;
@@ -295,6 +298,17 @@ void UDialogueComponent::ShowQuestUI()
     QuestUI->QuestDataTable = QuestDataTable;
     QuestUI->QuestRowName = QuestRowName;
 
+    const FQuestDataRow* Row = QuestDataTable->FindRow<FQuestDataRow>(QuestRowName, TEXT("QuestWidget"));
+    if (Row)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[ShowQuestUI] Setting quest info to widget: %s"), *Row->QuestName);
+        QuestUI->SetQuestInfoFromDataRow(*Row); 
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("[ShowQuestUI] Cannot find quest row: %s"), *QuestRowName.ToString());
+    }
+
     QuestUI->OnQuestAccepted.BindLambda([this, PC, QuestReceiver]() {
         UE_LOG(LogTemp, Warning, TEXT("[QuestWidget] Accept clicked."));
         QuestReceiver->AcceptQuest(this->QuestDataTable, this->QuestRowName);
@@ -302,7 +316,7 @@ void UDialogueComponent::ShowQuestUI()
         ACharacter* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
         if (Player && Player->GetMesh())
         {
-            Player->GetMesh()->SetVisibility(true, true);  
+            Player->GetMesh()->SetVisibility(true, true);
         }
 
         SetInputMappingContext(GameplayInputMappingContext);
@@ -327,6 +341,7 @@ void UDialogueComponent::ShowQuestUI()
             }
 
             SetInputMappingContext(GameplayInputMappingContext);
+            bDialogueFinished = false;
 
             if (AActor* Owner = GetOwner())
             {

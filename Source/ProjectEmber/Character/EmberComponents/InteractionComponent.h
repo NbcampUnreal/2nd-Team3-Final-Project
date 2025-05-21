@@ -39,33 +39,21 @@ public:
 					  UPrimitiveComponent* OtherComp,
 					  int32 OtherBodyIndex);
 
-	UFUNCTION()
-	void OnPickupOverlapBegin(UPrimitiveComponent* OverlappedComp,
-						AActor* OtherActor,
-						UPrimitiveComponent* OtherComp,
-						int32 OtherBodyIndex,
-						bool bFromSweep,
-						const FHitResult& SweepResult);
-
-	UFUNCTION()
-	void OnPickupOverlapEnd(UPrimitiveComponent* OverlappedComp,
-					  AActor* OtherActor,
-					  UPrimitiveComponent* OtherComp,
-					  int32 OtherBodyIndex);
 	
 	UFUNCTION()
-	void OnTalkOverlapBegin(UPrimitiveComponent* OverlappedComp,
-		             AActor* OtherActor,
-		             UPrimitiveComponent* OtherComp,
-		             int32 OtherBodyIndex,
-		             bool bFromSweep,
-		             const FHitResult& SweepResult);
+	void OnInteractOverlapBegin(UPrimitiveComponent* OverlappedComp,
+	                            AActor* OtherActor,
+	                            UPrimitiveComponent* OtherComp,
+	                            int32 OtherBodyIndex,
+	                            bool bFromSweep,
+	                            const FHitResult& SweepResult);
 
 	UFUNCTION()
-	void OnTalkOverlapEnd(UPrimitiveComponent* OverlappedComp, 
-		            AActor* OtherActor,
-		            UPrimitiveComponent* OtherComp, 
-		            int32 OtherBodyIndex);
+	void OnInteractOverlapEnd(UPrimitiveComponent* OverlappedComp,
+	                          AActor* OtherActor,
+	                          UPrimitiveComponent* OtherComp,
+	                          int32 OtherBodyIndex);
+
 
 	// 상호작용 가능한 액터 오버랩 이벤트 발생시 인터페이스 함수 구현부 저장
 	UFUNCTION()
@@ -97,10 +85,7 @@ private:
 	UBoxComponent* GatherTrigger;
 
 	UPROPERTY(VisibleAnywhere, Category = "Interactable")
-	UBoxComponent* PickupTrigger;
-
-	UPROPERTY(VisibleAnywhere, Category = "Interactable")
-	UBoxComponent* TalkTrigger;
+	UBoxComponent* OnInteractOverTrigger;
 	
 	FTimerHandle GatherTimerHandle;
 	
