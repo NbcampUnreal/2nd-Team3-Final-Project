@@ -38,6 +38,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category="UI|Layer")
 	TArray<TObjectPtr<UUserWidget>> Stack;
 
-	UPROPERTY(meta=(BindWidget))
+	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
 	UBorder* Border;
 };
