@@ -24,7 +24,7 @@ public:
 	int32 DraggedQuantity;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite,  Category="Payload", meta=(ExposeOnSpawn=true))
-	TScriptInterface<UEmberSlotDataProviderInterface> Provider;
+	TScriptInterface<IEmberSlotDataProviderInterface> Provider;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite,  Category="Payload", meta=(ExposeOnSpawn=true))
 	FGameplayTag SlotType; 

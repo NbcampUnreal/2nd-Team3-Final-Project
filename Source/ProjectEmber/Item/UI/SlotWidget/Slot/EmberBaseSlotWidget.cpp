@@ -12,18 +12,22 @@
 #include "Item/Core/ItemSystemLibrary.h"
 #include "Item/UI/DragDropOperation/EmberItemSlotDragDropOperation.h"
 
-FWidgetSlotData::FWidgetSlotData(const FInventorySlotData& InSlotData)
+FWidgetSlotData::FWidgetSlotData(const FInstancedStruct& InSlotData)
 {
-	ItemID = InSlotData.ItemID;
-	Quantity = InSlotData.Quantity;
-	MaxStackSize = InSlotData.MaxStackSize;
-	ItemDisplayName = InSlotData.ItemDisplayName;
-	ItemDescription = InSlotData.ItemDescription;
-	if (InSlotData.SlotData)
+	if (const FEmberSlotData* Slot = InSlotData.GetPtr<FEmberSlotData>())
 	{
-		if (const FSlotInfoRow* SlotInfoRow = InSlotData.SlotData->GetRow<FSlotInfoRow>("SlotInfo"))
+		UE_LOG(LogTemp, Display, TEXT("InventoryManagerComponent4: SlotData %d"),Slot->Quantity);
+		ItemID = Slot->ItemID;
+		Quantity = Slot->Quantity;
+		MaxStackSize = Slot->MaxStackSize;
+		ItemDisplayName = Slot->ItemDisplayName;
+		ItemDescription = Slot->ItemDescription;
+		if (Slot->SlotData)
 		{
-			ItemIcon = SlotInfoRow->ItemIcon;
+			if (const FSlotInfoRow* SlotInfoRow = Slot->SlotData->GetRow<FSlotInfoRow>("SlotInfo"))
+			{
+				ItemIcon = SlotInfoRow->ItemIcon;
+			}
 		}
 	}
 }
@@ -52,7 +56,7 @@ void UEmberBaseSlotWidget::InitSlot(int32 InSlotIndex, TScriptInterface<IEmberSl
 	}
 }
 
-void UEmberBaseSlotWidget::SetSlotData(const FInventorySlotData& InSlotData)
+void UEmberBaseSlotWidget::SetSlotData(const FInstancedStruct& InSlotData)
 {
 	SlotData = FWidgetSlotData(InSlotData);
 
