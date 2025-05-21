@@ -88,6 +88,8 @@ public:
 	UFUNCTION()
 	void OnMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
+	UFUNCTION()
+	void TriggerAdvanceDialogue();
 private:
 	bool bIsLocked = false;
 
