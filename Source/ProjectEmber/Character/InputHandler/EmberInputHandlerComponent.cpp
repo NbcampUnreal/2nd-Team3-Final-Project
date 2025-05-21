@@ -2,6 +2,7 @@
 #include "../EmberCharacter.h"
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputComponent.h"
+#include "AI_NPC/DialogueComponent.h"
 #include "Character/EmberComponents/InteractionComponent.h"
 
 UEmberInputHandlerComponent::UEmberInputHandlerComponent()
@@ -46,17 +47,31 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
         Bind(AimAction,           ETriggerEvent::Canceled,   &AEmberCharacter::Input_OnAim);
         Bind(RagdollAction,       ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnRagdoll);
         Bind(RollAction,          ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnRoll);
-        Bind(RotationModeAction,  ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnRotationMode);
-        Bind(ViewModeAction,      ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnViewMode);
+        //Bind(RotationModeAction,  ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnRotationMode);
+        //Bind(ViewModeAction,      ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnViewMode);
         Bind(SwitchShoulderAction,ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnSwitchShoulder);
 
-        if (UInteractionComponent* Comp = Character->InteractionComponent.Get())
+        UInteractionComponent* Comp = Character->InteractionComponent.Get();
+        if (Comp)
         {
             InputComponent->BindAction(InteractAction, ETriggerEvent::Started, Comp, &UInteractionComponent::Interact);
             InputComponent->BindAction(InteractAction, ETriggerEvent::Completed, Comp, &UInteractionComponent::StopGather);
         }
+
+        if (IsValid(NextDialogueAction) && Comp)
+        {
+            InputComponent->BindAction(NextDialogueAction, ETriggerEvent::Started, Comp, &UInteractionComponent::TriggerAdvanceDialogue);
+        }
     }
 
+    int32 Index = 0;
+    for (auto Action : QuickSlotActions)
+    {
+        if (IsValid(Action))
+        {
+            InputComponent->BindAction(Action, ETriggerEvent::Started, Character, &AEmberCharacter::Input_OnQuickSlot,Index++);
+        }
+    }
     // Ability input
     InputComponent->BindAction(AttackAction, ETriggerEvent::Started, Character, &AEmberCharacter::AbilityInputPressed, 0);
 }

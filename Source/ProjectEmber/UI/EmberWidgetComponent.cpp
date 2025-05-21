@@ -1,11 +1,11 @@
 ﻿#include "EmberWidgetComponent.h"
 #include "EmberUserWidget.h"
 
-void UEmberWidgetComponent::UpdateAbilitySystemComponent() const
+void UEmberWidgetComponent::UpdateAbilitySystemComponent(AActor* InOwner) const
 {
 	if (UEmberUserWidget* EmberUserWidget = Cast<UEmberUserWidget>(GetWidget()))
 	{
-		EmberUserWidget->SetAbilitySystemComponent(GetOwner());
+		EmberUserWidget->SetAbilitySystemComponent(InOwner);
 	}
 }
 

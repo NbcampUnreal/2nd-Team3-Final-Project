@@ -6,6 +6,7 @@
 #include "EMSActorSaveInterface.h"
 #include "EmberCharacter.generated.h"
 
+struct FInputActionInstance;
 struct FGameplayAbilitySpec;
 class UAlsCameraComponent;
 class UEmberInputHandlerComponent;
@@ -31,16 +32,6 @@ public: /* Character */
 	UPROPERTY(EditAnywhere, Category="Interaction")
 	UAnimMontage* InteractMontage;
 
-	UFUNCTION()
-	void OnWaterBeginOverlap(UPrimitiveComponent* OverlappedComp,
-							 AActor* OtherActor,
-							 UPrimitiveComponent* OtherComp,
-							 int32 OtherBodyIndex,
-							 bool bFromSweep,
-							 const FHitResult& SweepResult);
-	UFUNCTION()
-	void OnWaterEndOverlap(UPrimitiveComponent* OverlappedComponent,
-	AActor* OtherActor, UPrimitiveComponent* OtherComp, int OtherBodyIndex);
 public:
 	virtual UMeleeTraceComponent* GetMeleeTraceComponent() const;
 
@@ -63,7 +54,8 @@ protected:
 	virtual void OnOutOfHealth();
 
 	void AbilityInputPressed(int32 InputID);
-	FGameplayAbilitySpec* GetSpecFromOverlayMode() const;
+	FGameplayAbilitySpec* GetSpecFromOverlayMode(const bool IsRightInput = false) const;
+	void TryAbilityFromOnAim(const bool bPressed);
 protected:
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
@@ -74,6 +66,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
 	TMap<int32, TSubclassOf<class UGameplayAbility>> StartInputAbilities;
 
+	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
+	TMap<int32, TSubclassOf<class UGameplayAbility>> StartRightInputAbilities;
+	
+	bool bClientAbility{false};
 public: /* Als */
 	virtual void NotifyControllerChanged() override; // 컨트롤러 변경 시 매핑 등록/해제
 	virtual void DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DisplayInfo, float& Unused, float& VerticalLocation) override;
@@ -112,6 +108,7 @@ protected: /* Input */
 	virtual void Input_OnRotationMode();
 	virtual void Input_OnViewMode();
 	virtual void Input_OnSwitchShoulder();
+	virtual void Input_OnQuickSlot(int32 PressedIndex);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "EmberCharacter")
 	TObjectPtr<UEmberInputHandlerComponent> InputHandler;
