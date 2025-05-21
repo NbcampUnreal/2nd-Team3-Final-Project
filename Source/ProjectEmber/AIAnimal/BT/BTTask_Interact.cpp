@@ -33,8 +33,8 @@ EBTNodeResult::Type UBTTask_Interact::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	{
 		return EBTNodeResult::Failed;
 	}
-
-	UObject* TargetObject = BlackboardComp->GetValueAsObject("TargetActor");
+	
+	UObject* TargetObject = BlackboardComp->GetValueAsObject("NTargetFood");
 	AActor* TargetActor = Cast<AActor>(TargetObject);
 	if (!TargetActor)
 	{
@@ -63,7 +63,7 @@ EBTNodeResult::Type UBTTask_Interact::ExecuteTask(UBehaviorTreeComponent& OwnerC
 		
 		//여기서는 어빌리티 호출만 해줌, 어빌리티 트리거 이벤트 -> 몽타주 재생 -> 재생되는 몽타주에 노티파이 -> 노티파이에서 실제로 먹는게 다 끝날 때, 중간에 끊길 때 경우 처리
 		FGameplayEventData Payload;
-		Payload.EventTag = InteractTaskTag;
+		Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.Interact.Harvest");
 		Payload.Instigator = AICharacter;
 		Payload.Target = TargetActor;
 		Payload.OptionalObject = TargetActor;

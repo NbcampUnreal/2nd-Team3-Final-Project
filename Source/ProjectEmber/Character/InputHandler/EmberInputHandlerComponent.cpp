@@ -57,6 +57,14 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
         }
     }
 
+    int32 Index = 0;
+    for (auto Action : QuickSlotActions)
+    {
+        if (IsValid(Action))
+        {
+            InputComponent->BindAction(Action, ETriggerEvent::Started, Character, &AEmberCharacter::Input_OnQuickSlot,Index++);
+        }
+    }
     // Ability input
     InputComponent->BindAction(AttackAction, ETriggerEvent::Started, Character, &AEmberCharacter::AbilityInputPressed, 0);
 }

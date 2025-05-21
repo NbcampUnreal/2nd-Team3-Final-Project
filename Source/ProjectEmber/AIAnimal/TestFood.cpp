@@ -38,6 +38,11 @@ float ATestFood::GetGatherTime_Implementation()
 	return Super::GetGatherTime_Implementation();
 }
 
+void ATestFood::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
+{
+	TagContainer = GameplayTagContainer;
+}
+
 bool ATestFood::GetSelected()
 {
 	return bIsSelected;
