@@ -4,6 +4,7 @@
 #include "EnhancedInputComponent.h"
 #include "AI_NPC/DialogueComponent.h"
 #include "Character/EmberComponents/InteractionComponent.h"
+#include "UI/HUD/EmberMainHUD.h"
 
 UEmberInputHandlerComponent::UEmberInputHandlerComponent()
 {
@@ -74,6 +75,15 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
     }
     // Ability input
     InputComponent->BindAction(AttackAction, ETriggerEvent::Started, Character, &AEmberCharacter::AbilityInputPressed, 0);
+
+
+    if (APlayerController* PlayerController = Cast<APlayerController>(Character->GetController()))
+    {
+        AEmberMainHUD* HUD = Cast<AEmberMainHUD>(PlayerController->GetHUD());
+
+        InputComponent->BindAction(UIInventoryAction, ETriggerEvent::Started, HUD, &AEmberMainHUD::Input_ToggleLayer, FGameplayTag::RequestGameplayTag(TEXT("UI.Layer.GameMenu")), FName(TEXT("Inventory")));
+        InputComponent->BindAction(UIQuestAction, ETriggerEvent::Started, HUD, &AEmberMainHUD::Input_ToggleLayer, FGameplayTag::RequestGameplayTag(TEXT("UI.Layer.GameMenu")), FName(TEXT("Quest")));
+    }
 }
 
 void UEmberInputHandlerComponent::RegisterMapping(APlayerController* PC, int32 Priority, const FModifyContextOptions& Options)

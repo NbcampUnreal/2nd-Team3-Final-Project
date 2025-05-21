@@ -34,10 +34,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category="UI|Layer")
 	FText GetStackListNames();
 
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="UI|Layer")
+	void Input_ToggleLayer(FName ChildName);
+
 protected:
 	UPROPERTY(BlueprintReadOnly, Category="UI|Layer")
 	TArray<TObjectPtr<UUserWidget>> Stack;
 
-	UPROPERTY(meta=(BindWidget))
+	UPROPERTY(BlueprintReadOnly, meta=(BindWidget))
 	UBorder* Border;
 };

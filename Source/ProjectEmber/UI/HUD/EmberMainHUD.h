@@ -5,6 +5,7 @@
 #include "GameplayTagContainer.h"
 #include "EmberMainHUD.generated.h"
 
+struct FInputActionValue;
 class ULayerDebugger;
 class UEmberLayerBase;
 
@@ -42,6 +43,11 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
 	bool GetGameMovementInputLock();
+
+	
+	void Input_ToggleLayer(const FInputActionValue& ActionValue
+						  , FGameplayTag LayerTag
+						  , FName LayerWidgetName);
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI|HUD")
 	TSubclassOf<UUserWidget> PrimaryLayoutClass;
