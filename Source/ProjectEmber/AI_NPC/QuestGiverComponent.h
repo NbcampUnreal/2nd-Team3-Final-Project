@@ -42,11 +42,13 @@ public:
     void OnQuestUpdated(const FQuestStorageInfo& QuestInfo);
 
 protected:
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest|Visual")
-    UStaticMeshComponent* ExclamationMarkSM;
+    UPROPERTY(EditAnywhere, Category = "Quest Marker")
+    UStaticMesh* QuestionMarkMesh;
+    UStaticMeshComponent* QuestionMarkComponent = nullptr;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest|Visual")
-    UStaticMeshComponent* QuestionMarkSM;
+    UPROPERTY(EditAnywhere, Category = "Quest Marker")
+    UStaticMesh* ExclamationMarkMesh;
+    UStaticMeshComponent* ExclamationMarkComponent = nullptr;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest|UI")
     TSubclassOf<UUserWidget> QuestWidgetClass;

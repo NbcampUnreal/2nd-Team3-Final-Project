@@ -2,6 +2,7 @@
 #include "../EmberCharacter.h"
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputComponent.h"
+#include "AI_NPC/DialogueComponent.h"
 #include "Character/EmberComponents/InteractionComponent.h"
 
 UEmberInputHandlerComponent::UEmberInputHandlerComponent()
@@ -50,10 +51,16 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
         Bind(ViewModeAction,      ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnViewMode);
         Bind(SwitchShoulderAction,ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnSwitchShoulder);
 
-        if (UInteractionComponent* Comp = Character->InteractionComponent.Get())
+        UInteractionComponent* Comp = Character->InteractionComponent.Get();
+        if (Comp)
         {
             InputComponent->BindAction(InteractAction, ETriggerEvent::Started, Comp, &UInteractionComponent::Interact);
             InputComponent->BindAction(InteractAction, ETriggerEvent::Completed, Comp, &UInteractionComponent::StopGather);
+        }
+
+        if (IsValid(NextDialogueAction) && Comp)
+        {
+            InputComponent->BindAction(NextDialogueAction, ETriggerEvent::Started, Comp, &UInteractionComponent::TriggerAdvanceDialogue);
         }
     }
 
