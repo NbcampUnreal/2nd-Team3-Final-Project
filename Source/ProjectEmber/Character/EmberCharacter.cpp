@@ -13,11 +13,14 @@
 #include "Animation/AnimInstance.h"
 #include "Components/CapsuleComponent.h"
 #include "Define/CharacterDefine.h"
+#include "EmberLog/EmberLog.h"
 #include "Engine/LocalPlayer.h"
+#include "FunctionLibrary/UIFunctionLibrary.h"
 #include "GameFramework/PhysicsVolume.h"
 #include "Item/UserItemManger.h"
 #include "UI/EmberWidgetComponent.h"
 #include "MeleeTrace/Public/MeleeTraceComponent.h"
+#include "UI/HUD/EmberMainHUD.h"
 #include "Utility/AlsVector.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(EmberCharacter)
@@ -105,6 +108,11 @@ void AEmberCharacter::OnOutOfHealth()
 
 void AEmberCharacter::AbilityInputPressed(int32 InputID)
 {
+    if (UUIFunctionLibrary::GetIsAbilityInputLock(Cast<APlayerController>(GetController())))
+    {
+        return;
+    }
+    
     if (InputID == 0)
     {
         if (FGameplayAbilitySpec* Spec = GetSpecFromOverlayMode())
@@ -269,6 +277,11 @@ void AEmberCharacter::Input_OnLook(const FInputActionValue& ActionValue)
 
 void AEmberCharacter::Input_OnMove(const FInputActionValue& ActionValue)
 {
+    if (UUIFunctionLibrary::GetIsGameMovementInputLock(Cast<APlayerController>(GetController())))
+    {
+        return;
+    }
+    
     const auto Value = UAlsVector::ClampMagnitude012D(ActionValue.Get<FVector2D>());
     const auto ForwardDir = UAlsVector::AngleToDirectionXY(UE_REAL_TO_FLOAT(GetViewState().Rotation.Yaw));
     const auto RightDir   = UAlsVector::PerpendicularCounterClockwiseXY(ForwardDir);
@@ -290,6 +303,11 @@ void AEmberCharacter::Input_OnWalk()
 
 void AEmberCharacter::Input_OnCrouch()
 {
+    if (UUIFunctionLibrary::GetIsGameMovementInputLock(Cast<APlayerController>(GetController())))
+    {
+        return;
+    }
+    
     if (GetDesiredStance() == AlsStanceTags::Standing)
         SetDesiredStance(AlsStanceTags::Crouching);
     else

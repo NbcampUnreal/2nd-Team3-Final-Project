@@ -80,6 +80,26 @@ void AEmberMainHUD::ClearToLayer(FGameplayTag LayerTag)
 	}
 }
 
+void AEmberMainHUD::SetGameLeftMouseInputLock(bool bLock)
+{
+	bIsGameLeftMouseInputLock = bLock;
+}
+
+bool AEmberMainHUD::GetGameLeftMouseInputLock()
+{
+	return bIsGameLeftMouseInputLock;
+}
+
+void AEmberMainHUD::SetGameMovementInputLock(bool bLock)
+{
+	bIsGameMovementInputLock = bLock;
+}
+
+bool AEmberMainHUD::GetGameMovementInputLock()
+{
+	return bIsGameMovementInputLock;
+}
+
 //#if !UE_BUILD_SHIPPING
 void AEmberMainHUD::ToggleDebugLayer()
 {
