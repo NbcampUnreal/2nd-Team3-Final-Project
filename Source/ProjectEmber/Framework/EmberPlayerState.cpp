@@ -7,7 +7,7 @@ AEmberPlayerState::AEmberPlayerState()
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AttributeSet = CreateDefaultSubobject<UEmberCharacterAttributeSet>(TEXT("AttributeSet"));
 	
-	//Multi AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetIsReplicated(true);
 }
 
 class UAbilitySystemComponent* AEmberPlayerState::GetAbilitySystemComponent() const

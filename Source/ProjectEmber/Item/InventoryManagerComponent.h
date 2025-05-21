@@ -100,7 +100,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Slot", meta = (ClampMin = "1"))
 	int32 SlotMaxRow = 10;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Slot", meta = (ClampMin = "1"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Slot", meta = (ClampMin = "1", AllowPrivateAccess = true))
 	FGameplayTag SlotTag;
 	/*/** 월드에 드랍될 아이템 액터의 블루프린트 클래스 (에디터에서 설정) #1#
 	UPROPERTY(EditDefaultsOnly, Category = "Inventory|Drop Item")

@@ -14,7 +14,7 @@ class PROJECTEMBER_API UEmberWidgetComponent : public UWidgetComponent, public I
 	GENERATED_BODY()
 
 public:
-	void UpdateAbilitySystemComponent() const;
+	void UpdateAbilitySystemComponent(AActor* InOwner) const;
 protected:
 	virtual void InitWidget() override;
 };
