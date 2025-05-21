@@ -42,6 +42,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
 	bool GetGameMovementInputLock();
+
+	UEmberLayerBase* GetLayer(FGameplayTag LayerTag) const;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI|HUD")
 	TSubclassOf<UUserWidget> PrimaryLayoutClass;
