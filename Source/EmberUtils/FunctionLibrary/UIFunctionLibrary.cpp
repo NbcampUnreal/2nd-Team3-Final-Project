@@ -103,7 +103,7 @@ void UUIFunctionLibrary::FocusUI(APlayerController* OwningPlayer, UUserWidget* W
 	OwningPlayer->bEnableClickEvents = true;
 	WidgetToFocus->SetUserFocus(OwningPlayer);
 	WidgetToFocus->SetKeyboardFocus();
-
+	
 	FInputModeGameAndUI Mode;
 	Mode.SetWidgetToFocus(WidgetToFocus->TakeWidget());
 	Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
