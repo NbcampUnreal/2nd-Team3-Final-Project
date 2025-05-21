@@ -4,11 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "QuestDataRow.h"
 #include "QuestWidget.generated.h"
 
 
 class UButton;
 class UDataTable;
+class UTextBlock;
 
 DECLARE_DELEGATE(FOnQuestAccepted)
 DECLARE_DELEGATE(FOnQuestRefused)
@@ -19,30 +21,44 @@ class PROJECTEMBER_API UQuestWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
+
+
+    virtual void NativeConstruct() override;
+
+    void SetQuestInfoFromDataRow(const FQuestDataRow& Data);
+
+    FOnQuestAccepted OnQuestAccepted;
+    FOnQuestRefused OnQuestRefused;
+
+    UPROPERTY(BlueprintReadWrite, Category = "QuestData")
+    FName QuestRowName;
+
+    UPROPERTY(BlueprintReadWrite, Category = "QuestData")
+    UDataTable* QuestDataTable;
+
+protected:
+    UFUNCTION()
+    void HandleAcceptClicked();
+
+    UFUNCTION()
+    void HandleRefuseClicked();
+
+    /** 바인딩된 위젯들 */
     UPROPERTY(meta = (BindWidget))
     UButton* AcceptButton;
 
     UPROPERTY(meta = (BindWidget))
     UButton* RefuseButton;
 
-    // 외부에서 설정해줄 퀘스트 데이터
-    UPROPERTY(BlueprintReadWrite, EditAnywhere)
-    UDataTable* QuestDataTable;
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* QuestNameText;
 
-    UPROPERTY(BlueprintReadWrite, EditAnywhere)
-    FName QuestRowName;
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* QuestDescriptionText;
 
-    // 델리게이트 바인딩
-    FOnQuestAccepted OnQuestAccepted;
-    FOnQuestRefused OnQuestRefused;
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* ObjectiveText;
 
-protected:
-    virtual void NativeConstruct() override;
-
-private:
-    UFUNCTION()
-    void HandleAcceptClicked();
-
-    UFUNCTION()
-    void HandleRefuseClicked();
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* RewardText;
 };
