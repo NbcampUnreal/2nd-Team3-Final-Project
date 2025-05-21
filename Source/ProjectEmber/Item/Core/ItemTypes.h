@@ -89,16 +89,15 @@ struct FEquipmentInfoRow : public FTableRowBase
 {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Consumable Component", meta = (ClampMin = "0"))
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment Component")
     FGameplayTag EquipmentTag = FGameplayTag::EmptyTag;
 
     // 소비 시 적용될 효과 목록 (GAS 연동)
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Consumable Component")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment Component")
     TArray<FItemEffectApplicationInfo> PassiveEffects;
     
     // 소비 시 적용될 효과 목록 (GAS 연동)
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Consumable Component")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment Component")
     TArray<FItemEffectApplicationInfo> ActiveEffects;
 };
-
 

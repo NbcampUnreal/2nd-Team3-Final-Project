@@ -5,13 +5,14 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "ItemTypes.h"
+#include "StructUtils/InstancedStruct.h"
 #include "EmberItemStruct.generated.h"
 /**
  * 
  */
 
 USTRUCT(BlueprintType)
-struct FInventorySlotData
+struct FEmberSlotData
 {
     GENERATED_BODY()
 
@@ -40,13 +41,21 @@ struct FInventorySlotData
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory Slot")
     TOptional<FDataTableRowHandle> SlotData;
 
-    FInventorySlotData() = default;
+    FEmberSlotData() = default;
+    virtual ~FEmberSlotData() = default;
 
-    FInventorySlotData(const FName& InItemID);
+    FEmberSlotData(const FName& InItemID, const int32 InQuantity = 0);
+
+    virtual void InitializeInstancedStruct(FInstancedStruct& OutInstancedStruct) const
+    {
+        OutInstancedStruct.InitializeAs<FEmberSlotData>(*this);
+    }
     
-    bool IsEmpty() const { return ItemID.IsNone() || Quantity <= 0; }
+    virtual bool bIsEmpty() const { return ItemID.IsNone() || Quantity <= 0; }
     
-    void Clear()
+    virtual bool bIsFull() const { return Quantity >= MaxStackSize; }
+    
+    virtual void Clear()
     {
         ItemID = NAME_None;
         Quantity = 0;
@@ -57,24 +66,27 @@ struct FInventorySlotData
     }
 };
 
-
 USTRUCT(BlueprintType)
-struct FQuickSlotData
+struct FEquipmentSlotData : public FEmberSlotData
 {
     GENERATED_BODY()
 
-    int32 InventorySlotIndex = 0;
+    TOptional<FEquipmentInfoRow> EquipmentInfo;
 
-    FInventorySlotData InventorySlotData;
+    FEquipmentSlotData() = default;
+    
+    FEquipmentSlotData(const FEmberSlotData& InInventorySlotData);
+    FEquipmentSlotData(const FName& InItemID, const int32 InQuantity);
 
-    FQuickSlotData() = default;
-    FQuickSlotData(int32 InInventorySlotIndex, const FInventorySlotData& InInventorySlotData);
-    
-    bool IsEmpty() const { return InventorySlotData.ItemID.IsNone() || InventorySlotData.Quantity <= 0; }
-    
-    void Clear()
+    virtual void InitializeInstancedStruct(FInstancedStruct& OutInstancedStruct) const override
     {
-        InventorySlotData.Clear();
+        OutInstancedStruct.InitializeAs<FEquipmentSlotData>(*this);
+    }
+    
+    virtual void Clear() override
+    {
+        Super::Clear();
+        EquipmentInfo = FEquipmentInfoRow();
     }
 };
 
@@ -94,7 +106,7 @@ struct FEmberItemInfo
 	
     FEmberItemInfo() = default;
 
-    FEmberItemInfo(const FInventorySlotData& InItemID);
+    FEmberItemInfo(const FEmberSlotData& InItemID);
     
     bool IsEmpty() const { return ItemID.IsNone();}
     
@@ -104,4 +116,30 @@ struct FEmberItemInfo
         ItemTags.Reset();
         ActiveEffects.Empty();
     }
+};
+
+USTRUCT(BlueprintType)
+struct FItemPair
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item struct")
+    FName ItemID;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item struct")
+    int32 Quantity;
+};
+
+
+USTRUCT(BlueprintType)
+struct FCraftInfoRow : public FTableRowBase
+{
+    GENERATED_BODY()
+ 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment Component")
+    FItemPair ResultItem;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment Component")
+    TArray<FItemPair> RequiredItem;
+
 };

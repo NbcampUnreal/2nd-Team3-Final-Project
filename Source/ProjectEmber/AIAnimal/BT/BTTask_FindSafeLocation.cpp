@@ -34,30 +34,37 @@ EBTNodeResult::Type UBTTask_FindSafeLocation::ExecuteTask(UBehaviorTreeComponent
 	}
 	
 	FVector ActorLocation = AIPawn->GetActorLocation();
-	const EAnimalAIState State = static_cast<EAnimalAIState>(BlackboardComp->GetValueAsEnum("CurrentState"));
+	//const EAnimalAIState State = static_cast<EAnimalAIState>(BlackboardComp->GetValueAsEnum("CurrentState"));
 	const float WanderRange = BlackboardComp->GetValueAsFloat("WanderRange");
 	
 	//여기 더 자연스럽게 수정하기
 	{
-		FRotator Rotator = AIPawn->GetActorRotation();
-		Rotator.Yaw *= -1.0f;
-		AIPawn->SetActorRotation(Rotator);
-		ActorLocation = GenerateRandomLocation(ActorLocation, WanderRange*2.0f);
+		//FRotator Rotator = AIPawn->GetActorRotation();
+		//Rotator.Yaw *= -1.0f;
+		//AIPawn->SetActorRotation(Rotator);
+		
+		UObject* TargetObject = BlackboardComp->GetValueAsObject("TargetActor");
+		AActor* TargetActor = Cast<AActor>(TargetObject);
+		FVector TargetActorLocation = TargetActor->GetActorLocation();
+		
+		ActorLocation = GenerateRandomLocation(TargetActorLocation, ActorLocation);
 	}
 	
 	if (BlackboardComp)
 	{
 		BlackboardComp->SetValueAsVector("SafeLocation", ActorLocation);
-		BlackboardComp->SetValueAsEnum("CurrentState", static_cast<uint8>(EAnimalAIState::Warning));
-		UE_LOG(LogTemp, Warning, TEXT("UBTTask_FindSafeLocation::SafeLocation 업데이트 성공. %f, %f, %f"), ActorLocation.X, ActorLocation.Y, ActorLocation.Z );
+		//BlackboardComp->SetValueAsEnum("CurrentState", static_cast<uint8>(EAnimalAIState::Warning));
+		//UE_LOG(LogTemp, Warning, TEXT("UBTTask_FindSafeLocation::SafeLocation 업데이트 성공. %f, %f, %f"), ActorLocation.X, ActorLocation.Y, ActorLocation.Z );
 	}
 	return Super::ExecuteTask(OwnerComp, NodeMemory);
 }
 
-FVector UBTTask_FindSafeLocation::GenerateRandomLocation(const FVector& BaseLocation, float Range)
+FVector UBTTask_FindSafeLocation::GenerateRandomLocation(const FVector& TargetActorLocation, const FVector& ActorLocation)
 {
-	const int RandomSign = FMath::RandRange(0, 1) == 0 ? -1 : 1;
-	const float RandomX = RandomSign * FMath::RandRange(0.1f, 1.0f) * Range;
-	const float RandomY = RandomSign * FMath::RandRange(0.1f, 1.0f) * Range;
-	return BaseLocation + FVector(RandomX, RandomY, 0.f);
+
+	FVector DirToThreat = (TargetActorLocation - ActorLocation).GetSafeNormal() * -1.0f; // 타겟 반대로 향하는방향
+	FVector RightVector = FVector::CrossProduct(DirToThreat, FVector::UpVector);
+	FVector Offset = RightVector * FMath::RandRange(-150.f, 150.f) + DirToThreat * FMath::RandRange(1000.f, 3000.f); // 좌우랜덤, 거리랜덤
+	
+	return ActorLocation + Offset;
 }

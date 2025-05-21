@@ -6,11 +6,13 @@
 
 #include "Components/AudioComponent.h"
 #include "Structs/UISFXAudioDataStruct.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundMix.h"
+#include "Sound/SoundClass.h"
 
 void UAudioSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-
 	AudioDataSettings = GetDefault<UAudioDataSettings>();
 	LoadDataTables();
 }
@@ -138,7 +140,7 @@ void UAudioSubsystem::PlayBGMSound(EAreaSoundType Type)
 
 	if (!IsValid(BgmComp))
 	{
-		BgmComp = UGameplayStatics::CreateSound2D(GetGameInstance(), BgmSoundMap[Type], BgmVolume);
+		BgmComp = UGameplayStatics::CreateSound2D(GetGameInstance(), BgmSoundMap[Type], MasterVolume * BgmVolume);
 		BgmComp->bAutoDestroy = false;
 	}
 
@@ -148,12 +150,8 @@ void UAudioSubsystem::PlayBGMSound(EAreaSoundType Type)
 	}
 
 	BgmComp->SetSound(BgmSoundMap[Type]);
+	BgmComp->SetVolumeMultiplier(MasterVolume * BgmVolume);
 	BgmComp->Play();
-}
-
-const float UAudioSubsystem::GetBgmVolume() const
-{
-	return BgmVolume;
 }
 
 void UAudioSubsystem::SetBgmVolume(float VolumeValue)
@@ -162,8 +160,13 @@ void UAudioSubsystem::SetBgmVolume(float VolumeValue)
 
 	if (IsValid(BgmComp))
 	{
-		BgmComp->SetVolumeMultiplier(BgmVolume);
+		BgmComp->SetVolumeMultiplier(MasterVolume * BgmVolume);
 	}
+}
+
+void UAudioSubsystem::SetEffectsVolume(float VolumeValue)
+{
+	EffectsVolume = FMath::Clamp(VolumeValue, 0.0f, 1.0f);
 }
 
 bool UAudioSubsystem::CheckValidOfBgmSource(EAreaSoundType SoundType)
@@ -220,6 +223,19 @@ bool UAudioSubsystem::CheckValidOfBgmAudio()
 	}
 
 	return true;
+}
+
+float UAudioSubsystem::GetBgmVolume() const
+{
+	return BgmVolume;
+}
+float UAudioSubsystem::GetMasterVolume() const
+{
+	return MasterVolume;
+}
+float UAudioSubsystem::GetEffectsVolume() const
+{
+	return EffectsVolume;
 }
 
 bool UAudioSubsystem::CheckValidOfCharacterAudio()

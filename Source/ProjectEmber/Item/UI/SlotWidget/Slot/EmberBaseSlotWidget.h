@@ -42,7 +42,7 @@ struct FWidgetSlotData
     
 	FWidgetSlotData() = default;
 
-	FWidgetSlotData(const FInventorySlotData& InSlotData);
+	FWidgetSlotData(const FInstancedStruct& InSlotData);
     
 	bool IsEmpty() const { return ItemID.IsNone() || Quantity <= 0; }
     
@@ -66,9 +66,9 @@ public:
 	virtual void NativeOnInitialized() override;
 	UFUNCTION(BlueprintCallable)
 	void InitSlot(int32 InSlotIndex, TScriptInterface<IEmberSlotDataProviderInterface> InDataProvider);
-	
+
 	UFUNCTION(BlueprintCallable)
-	void SetSlotData(const FInventorySlotData& InSlotData);
+	void SetSlotData(const FInstancedStruct& InSlotData);
 	
 	virtual void UpdateSlot();
 

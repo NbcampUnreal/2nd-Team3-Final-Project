@@ -8,6 +8,7 @@
 #include "EmberLog/EmberLog.h"
 #include "AudioSubsystem.generated.h"
 
+class USoundBase;
 class UAudioDataSettings;
 
 UCLASS()
@@ -28,12 +29,23 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 	void SetAndApplyMasterVolume(float NewVolume);
 
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+	void SetBgmVolume(float VolumeValue);
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+	void SetEffectsVolume(float VolumeValue);
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+	float GetMasterVolume() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+	float GetBgmVolume() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+	float GetEffectsVolume() const;
+
 	void PlayBGMSoundByArea(EAreaType Type);
 	void PlayBGMSound(EAreaSoundType Type);
-
-	const float GetBgmVolume() const;
-
-	void SetBgmVolume(float VolumeValue);
 	
 	bool CheckValidOfBgmSource(EAreaSoundType SoundType);
 	
@@ -63,8 +75,9 @@ public:
 					}
 					else
 					{
-						UGameplayStatics::PlaySoundAtLocation(WorldContext, Sound, Location, MasterVolume);
+						UGameplayStatics::PlaySoundAtLocation(WorldContext, Sound, Location, MasterVolume * EffectsVolume);
 						EMBER_LOG(LogTemp, Warning, TEXT("Play 3D Sound"));
+						//환경음 관련임
 					}
 				}
 				else
@@ -113,4 +126,8 @@ private:
 
 	UPROPERTY()
 	float BgmVolume = 0.5f;
+
+	UPROPERTY()
+	float EffectsVolume = 1.0f;
+
 };
