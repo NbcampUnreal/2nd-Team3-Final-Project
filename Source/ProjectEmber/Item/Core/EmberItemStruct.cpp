@@ -7,49 +7,70 @@
 #include "EmberLog/EmberLog.h"
 #include "Item/ItemSubsystem.h"
 
-FInventorySlotData::FInventorySlotData(const FName& InItemID)
+FEmberSlotData::FEmberSlotData(const FName& InItemID, const int32 InQuantity)
 {
-	if (const FItemMasterInfoRow* InItemMasterInfo = UItemSystemLibrary::GetItemSubsystem()->GetItemMasterInfoRow(InItemID))
+	if (UItemSystemLibrary::GetItemSubsystem())
 	{
-		ItemID = InItemID;
-		ItemDisplayName = InItemMasterInfo->ItemDescription;
-		ItemDescription = InItemMasterInfo->ItemDescription;
-
-		for (const FDataTableRowHandle& Handle : InItemMasterInfo->ItemData)
+		if (const FItemMasterInfoRow* InItemMasterInfo = UItemSystemLibrary::GetItemSubsystem()->GetItemMasterInfoRow(InItemID))
 		{
-			if (Handle.IsNull() || !Handle.DataTable) continue;
-
-
-			if (const UScriptStruct* RowStructType = Handle.DataTable->GetRowStruct())
+			ItemID = InItemID;
+			Quantity = InQuantity;
+			ItemDisplayName = InItemMasterInfo->ItemDescription;
+			ItemDescription = InItemMasterInfo->ItemDescription;
+			
+			for (const FDataTableRowHandle& Handle : InItemMasterInfo->ItemData)
 			{
-				if (RowStructType == FSlotInfoRow::StaticStruct())
+				if (Handle.IsNull() || !Handle.DataTable) continue;
+			
+				if (const UScriptStruct* RowStructType = Handle.DataTable->GetRowStruct())
 				{
-					SlotData = Handle;
-					if (const FSlotInfoRow* InvData = Handle.GetRow<FSlotInfoRow>(TEXT("FInventorySlotData_Constructor_Inv")))
+
+					if (RowStructType == FSlotInfoRow::StaticStruct())
 					{
-						MaxStackSize = (InvData->MaxStackSize > 0) ? InvData->MaxStackSize : 1;
+
+						SlotData = Handle;
+						if (const FSlotInfoRow* InvData = Handle.GetRow<FSlotInfoRow>(TEXT("FInventorySlotData_Constructor_Inv")))
+						{
+							MaxStackSize = (InvData->MaxStackSize > 0) ? InvData->MaxStackSize : 1;
+						}
 					}
-				}
-				else if (RowStructType == FConsumableInfoRow::StaticStruct())
-				{
-					ConsumableData = Handle;
-				}
-				else if (RowStructType == FEquipmentInfoRow::StaticStruct())
-				{
-					EquipmentData = Handle;
+					else if (RowStructType == FConsumableInfoRow::StaticStruct())
+					{
+						ConsumableData = Handle;
+					}
+					else if (RowStructType == FEquipmentInfoRow::StaticStruct())
+					{
+						EquipmentData = Handle;
+					}
 				}
 			}
 		}
 	}
 }
 
-FQuickSlotData::FQuickSlotData(int32 InInventorySlotIndex, const FInventorySlotData& InInventorySlotData)
+FEquipmentSlotData::FEquipmentSlotData(const FEmberSlotData& InEmberSlot) : FEmberSlotData(InEmberSlot)
 {
-	InventorySlotIndex = InInventorySlotIndex;
-	InventorySlotData = FInventorySlotData(InInventorySlotData);
+	if (InEmberSlot.EquipmentData)
+	{
+		if (FEquipmentInfoRow* Row = InEmberSlot.EquipmentData->GetRow<FEquipmentInfoRow>(TEXT("EquipmentInfo")))
+		{
+			EquipmentInfo = FEquipmentInfoRow(*Row);
+		}
+	}
 }
 
-FEmberItemInfo::FEmberItemInfo(const FInventorySlotData& InItemInventorySlotData)
+FEquipmentSlotData::FEquipmentSlotData(const FName& InItemID, const int32 InQuantity) : FEmberSlotData(InItemID, InQuantity)
+{
+	if (EquipmentData)
+	{
+		if (FEquipmentInfoRow* Row = EquipmentData->GetRow<FEquipmentInfoRow>(TEXT("EquipmentInfo")))
+		{
+			EquipmentInfo = FEquipmentInfoRow(*Row);
+		}
+	}
+}
+
+FEmberItemInfo::FEmberItemInfo(const FEmberSlotData& InItemInventorySlotData)
 {
 	ItemID = InItemInventorySlotData.ItemID;
 
