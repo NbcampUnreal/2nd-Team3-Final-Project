@@ -9,6 +9,7 @@
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
 #include "EmberLog/EmberLog.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "UI/EmberHpBarUserWidget.h"
 #include "UI/EmberWidgetComponent.h"
 
@@ -42,6 +43,22 @@ ABaseAIAnimal::ABaseAIAnimal()
 	HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
 	HpBarWidget->SetupAttachment(GetMesh());
 	HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
+
+	SetHiddenInGame();
+}
+
+void ABaseAIAnimal::SetHiddenInGame()
+{
+	SetActorHiddenInGame(true);
+	SetActorEnableCollision(false);
+	SetActorTickEnabled(false);
+}
+
+void ABaseAIAnimal::SetVisibleInGame()
+{
+	SetActorHiddenInGame(false);
+	SetActorEnableCollision(true);
+	SetActorTickEnabled(true);
 }
 
 void ABaseAIAnimal::PossessedBy(AController* NewController)
@@ -56,6 +73,11 @@ void ABaseAIAnimal::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 	
+}
+
+void ABaseAIAnimal::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
+{
+	TagContainer = AnimalTagContainer;
 }
 
 void ABaseAIAnimal::BeginPlay()
@@ -108,6 +130,12 @@ void ABaseAIAnimal::BeginPlay()
 		}
 	}
 	GetWorldTimerManager().SetTimer(TimerHandle, this, &ABaseAIAnimal::DecreaseFullness, 5.0f, true);
+
+	PatrolPoints.SetNum(4);
+
+	GetCharacterMovement()->bUseRVOAvoidance = true;
+	GetCharacterMovement()->AvoidanceConsiderationRadius = 800.0f; // AI가 다른 에이전트를 감지할 반경
+	GetCharacterMovement()->AvoidanceWeight = 0.5f;
 }
 
 void ABaseAIAnimal::Tick(float DeltaTime)
@@ -125,18 +153,15 @@ void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 	
 	if (BlackboardComponent)
 	{
-		BlackboardComponent->SetValueAsBool("IsRest", false);
-		BlackboardComponent->SetValueAsBool("IsHit", true);
-		//여기서 타겟오브젝트 설정 -> 이미  IsRest, IsHit가 값이 위에처럼 설정되면 다른 노드로 들어가지 않음
+		BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Attacked"); 
 		if (AActor* TargetActor = Cast<AController>(InstigatorActor->GetOwner())->GetPawn())
 		{
 			BlackboardComponent->SetValueAsObject("TargetActor", TargetActor);
 		}
-		if (Personality != EAnimalAIPersonality::Brave)
+		if (Personality == EAnimalAIPersonality::Brave)
 		{
-			return;
+			BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Attack"); 
 		}
-		BlackboardComponent->SetValueAsEnum("CurrentState", static_cast<uint8>(EAnimalAIState::Attack));
 	}
 }
 
@@ -187,8 +212,9 @@ void ABaseAIAnimal::OnFullnessChanged(const FOnAttributeChangeData& OnAttributeC
 	bIsHungry = false;
 	BlackboardComponent->SetValueAsFloat("Fullness", Fullness);
 	BlackboardComponent->SetValueAsBool("IsHungry", bIsHungry);
-	BlackboardComponent->SetValueAsObject("TargetActor", nullptr);
-	UE_LOG(LogTemp, Warning, TEXT("OnFullnessChanged :: Fullness , IsHungry %f, %d"), Fullness, bIsHungry);
+	BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
+	BlackboardComponent->SetValueAsObject("NTargetFood", nullptr);
+	BlackboardComponent->SetValueAsVector("NTargetFoodLocation", GetActorLocation());
 }
 
 void ABaseAIAnimal::GenerateRandom()
@@ -196,7 +222,7 @@ void ABaseAIAnimal::GenerateRandom()
 	int32 RandomPersonality = FMath::RandRange(0, static_cast<int32>(EAnimalAIPersonality::End) - 1);
 	Personality = static_cast<EAnimalAIPersonality>(RandomPersonality);
 	SetDetails();
-	Fullness = FMath::FRandRange(0.f, 50.f);
+	Fullness = FMath::FRandRange(50.f, 100.f);
 	bIsHungry = Fullness <= 50.f;
 }
 
@@ -207,6 +233,7 @@ void ABaseAIAnimal::DecreaseFullness()
 	if (bIsHungry == false && Fullness <= 50.0f)
 	{
 		bIsHungry = true;
+		BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
 		BlackboardComponent->SetValueAsBool("IsHungry", bIsHungry);
 	}
 }
@@ -232,6 +259,16 @@ float ABaseAIAnimal::GetWanderRange() const
 const UAnimMontage* ABaseAIAnimal::GetMontage()
 {
 	return Montage;
+}
+
+TArray<FVector>& ABaseAIAnimal::GetPatrolPoints()
+{
+	return PatrolPoints;
+}
+
+FGameplayTagContainer& ABaseAIAnimal::GetGameplayTagContainer()
+{
+	return AnimalTagContainer;
 }
 
 void ABaseAIAnimal::SetCurrentState(EAnimalAIState NewState)
