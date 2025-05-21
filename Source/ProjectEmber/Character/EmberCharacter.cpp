@@ -60,6 +60,8 @@ void AEmberCharacter::BeginPlay()
 
     GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AEmberCharacter::OnWaterBeginOverlap);
     GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &AEmberCharacter::OnWaterEndOverlap);
+
+
 }
 
 void AEmberCharacter::OnWaterBeginOverlap(UPrimitiveComponent* OverlappedComp,

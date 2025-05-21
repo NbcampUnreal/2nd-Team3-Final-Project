@@ -6,9 +6,11 @@
 #include "Components/ActorComponent.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
+#include "AI_NPC/DialogueComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "EmberInputHandlerComponent.generated.h"
+
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -74,6 +76,8 @@ public: /* Base Input */
 	UPROPERTY(EditAnywhere, Category="Input") 
 	TObjectPtr<UInputAction> InteractAction;
 
+	
+
 public: /* UI Input */
 	/* Comment : UI does not always run when you press it */
 	
@@ -97,4 +101,12 @@ public: /* UI Input */
 
 	UPROPERTY(EditAnywhere, Category="Input|UI") 
 	TObjectPtr<UInputAction> UIPauseAction;
+
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> NextDialogueAction;
+
+
+
+
+
 };
