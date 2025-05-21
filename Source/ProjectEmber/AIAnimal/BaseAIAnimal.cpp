@@ -97,7 +97,7 @@ void ABaseAIAnimal::BeginPlay()
 		HpBarWidget->SetDrawSize(FVector2D(200.0f, 20.0f));
 		HpBarWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-		HpBarWidget->UpdateAbilitySystemComponent();
+		HpBarWidget->UpdateAbilitySystemComponent(this);
 	}
 	
 	NavInvokerComponent->SetGenerationRadii(NavGenerationRadius, NavRemovalRadius);
