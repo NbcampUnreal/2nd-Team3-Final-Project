@@ -21,7 +21,9 @@ public:
 	void LoadDataTables();
 
 	void PlayBGM(EAreaSoundType SoundType);
-	void PlaySFX(ESfxSoundType SoundType, uint8 DetailSoundType, FVector Location = FVector::ZeroVector);
+
+	UFUNCTION(Blueprintable)
+	void PlaySFX(ESfxSoundType SoundType, const FName RowName, FVector Location = FVector::ZeroVector);
 
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 	void SetAndApplyMasterVolume(float NewVolume);
@@ -39,15 +41,12 @@ public:
 	//bool CheckValidOfUIAudio();
 	bool CheckValidOfCharacterAudio();
 	//bool CheckValidOfMonsterAudio();
-
-	template<typename EnumType, typename StructType>
-	void PlaySFXByType(UObject* WorldContext, UDataTable* Table, uint8 DetailSoundType, FVector Location)
+	
+	template<typename StructType>
+	void PlaySFXByRowName(UObject* WorldContext, UDataTable* Table, const FName RowName, FVector Location)
 	{
-		UEnum* EnumPtr = StaticEnum<EnumType>();
-
-		if (Table && EnumPtr)
+		if (Table)
 		{
-			FName RowName = FName(*EnumPtr->GetNameStringByValue(static_cast<int32>(DetailSoundType)));
 			const StructType* FoundRow = Table->FindRow<StructType>(RowName, TEXT("PlaySFXByType"));
 
 			if (FoundRow && !FoundRow->Sound.IsNull())

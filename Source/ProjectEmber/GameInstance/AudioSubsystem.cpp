@@ -12,6 +12,7 @@ void UAudioSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	Super::Initialize(Collection);
 
 	AudioDataSettings = GetDefault<UAudioDataSettings>();
+	LoadDataTables();
 }
 
 void UAudioSubsystem::LoadDataTables()
@@ -25,7 +26,7 @@ void UAudioSubsystem::LoadDataTables()
 
 		if (!AudioDataSettings->CharacterSounds.IsNull())
 		{
-			AreaSoundTable = AudioDataSettings->CharacterSounds.LoadSynchronous();
+			CharacterSoundTable = AudioDataSettings->CharacterSounds.LoadSynchronous();
 		}
 	}
 }
@@ -70,15 +71,15 @@ void UAudioSubsystem::PlayBGM(EAreaSoundType SoundType)
 	}
 }
 
-void UAudioSubsystem::PlaySFX(ESfxSoundType SoundType, uint8 DetailSoundType, FVector Location)
+void UAudioSubsystem::PlaySFX(ESfxSoundType SoundType, const FName RowName, FVector Location)
 {
 	switch (SoundType)
 	{
 	case ESfxSoundType::UI:
-		PlaySFXByType<EUISfxSoundType, FUISFXAudioDataStruct>(GetWorld(), UISfxSoundTable, DetailSoundType, FVector::ZeroVector);
+		PlaySFXByRowName<FUISFXAudioDataStruct>(GetWorld(), UISfxSoundTable, RowName, FVector::ZeroVector);
 		break;
 	case ESfxSoundType::Character:
-		PlaySFXByType<ECharacterSoundType, FCharacterAudioDataStruct>(GetWorld(), CharacterSoundTable, DetailSoundType, Location);
+		PlaySFXByRowName<FCharacterAudioDataStruct>(GetWorld(), CharacterSoundTable, RowName, Location);
 		break;
 	}
 }

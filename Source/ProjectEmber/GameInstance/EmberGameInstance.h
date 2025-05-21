@@ -31,6 +31,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RequestOpenLevel(FName MapName);
 
+	UFUNCTION(BlueprintCallable)
+	void TestPlaySFX(ESfxSoundType SoundType, const FName RowName, FVector Location = FVector::ZeroVector);
+	
 	// 현재 지역 확인용
 	EAreaType CurrentAreaType = EAreaType::GrasslandArea;
 
