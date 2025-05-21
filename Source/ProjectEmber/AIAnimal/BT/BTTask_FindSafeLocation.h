@@ -17,5 +17,5 @@ class PROJECTEMBER_API UBTTask_FindSafeLocation : public UBTTask_BlackboardBase
 public:
 	UBTTask_FindSafeLocation();
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
-	FVector GenerateRandomLocation(const FVector& BaseLocation, float Range);
+	FVector GenerateRandomLocation(const FVector& TargetActorLocation, const FVector& ActorLocation);
 };

@@ -31,6 +31,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
 	void ClearToLayer(FGameplayTag LayerTag);
 
+	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
+	void SetGameLeftMouseInputLock(bool bLock);
+
+	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
+	bool GetGameLeftMouseInputLock();
+
+	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
+	void SetGameMovementInputLock(bool bLock);
+
+	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
+	bool GetGameMovementInputLock();
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI|HUD")
 	TSubclassOf<UUserWidget> PrimaryLayoutClass;
@@ -41,12 +52,16 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI|HUD")
 	TMap<FGameplayTag, TSubclassOf<UUserWidget>> InitWidgetClasses;
 
-//#if !UE_BUILD_SHIPPING
+private:
+	bool bIsGameLeftMouseInputLock{false};
+	bool bIsGameMovementInputLock{false};
+	//#if !UE_BUILD_SHIPPING
 public:
 	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
 	void ToggleDebugLayer();
+
 protected:
 	TObjectPtr<ULayerDebugger> PrimaryDebugLayer;
 	bool bDebugLayerVisible = false;
-//#endif
+	//#endif
 };

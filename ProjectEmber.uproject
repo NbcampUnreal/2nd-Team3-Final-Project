@@ -58,10 +58,6 @@
 			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/42b0bb860bcd4995b70d40f152a6e9b9"
 		},
 		{
-			"Name": "EnvironmentQueryEditor",
-			"Enabled": false
-		},
-		{
 			"Name": "PCG",
 			"Enabled": true
 		},

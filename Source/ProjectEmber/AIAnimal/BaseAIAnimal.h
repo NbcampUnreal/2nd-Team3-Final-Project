@@ -7,6 +7,7 @@
 #include "AbilitySystemInterface.h"
 #include "GameplayEffectTypes.h"
 #include "EMSActorSaveInterface.h"
+#include "GameplayTagAssetInterface.h"
 #include "BaseAIAnimal.generated.h"
 
 class UMeleeTraceComponent;
@@ -50,7 +51,7 @@ enum class EAnimalAIPersonality : uint8
 };
 
 UCLASS()
-class PROJECTEMBER_API ABaseAIAnimal : public ACharacter, public IAbilitySystemInterface, public IEMSActorSaveInterface
+class PROJECTEMBER_API ABaseAIAnimal : public ACharacter, public IAbilitySystemInterface, public IEMSActorSaveInterface, public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
 
@@ -65,7 +66,8 @@ public:
 	virtual void ActorPreSave_Implementation() override;
 	virtual void ActorLoaded_Implementation() override;
 	virtual void PostInitializeComponents() override;
-
+	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
+	
 	void OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnFullnessChanged(const FOnAttributeChangeData& OnAttributeChangeData);
@@ -78,11 +80,19 @@ public:
 	float GetWildPower() const;
 	float GetWanderRange() const;
 	const UAnimMontage* GetMontage();
+	TArray<FVector>& GetPatrolPoints();
+	FGameplayTagContainer& GetGameplayTagContainer();
+	
 	void SetCurrentState(EAnimalAIState NewState);
 	
 	void GenerateRandom();
 	void DecreaseFullness();
 	
+	UFUNCTION()
+	void SetHiddenInGame();
+
+	UFUNCTION()
+	void SetVisibleInGame();
 	
  /* AbilitySystem */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
@@ -168,6 +178,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	float WanderRange = 500.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	FGameplayTagContainer AnimalTagContainer;
 	
 	FTimerHandle TimerHandle;
+	TArray<FVector> PatrolPoints;
 };
+//스포너 : 태그컨테이너 -> 스폰할 종류의 동물, 구조체 정의: 동물종류 , 몇마리, 리더 1 ,경비 4,팔로워  
+

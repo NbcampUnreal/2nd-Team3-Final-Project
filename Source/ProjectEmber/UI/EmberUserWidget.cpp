@@ -7,10 +7,6 @@ void UEmberUserWidget::SetAbilitySystemComponent(class AActor* InOwner)
 	{
 		AbilitySystemComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(InOwner);
 	}
-	else
-	{
-		check(true);
-	}
 }
 
 class UAbilitySystemComponent* UEmberUserWidget::GetAbilitySystemComponent() const

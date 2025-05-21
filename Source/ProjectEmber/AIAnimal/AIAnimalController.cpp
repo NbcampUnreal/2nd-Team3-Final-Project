@@ -30,15 +30,15 @@ AAIAnimalController::AAIAnimalController()
     SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
     HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
 
-    SightConfig->SightRadius = 500.0f;
-    SightConfig->LoseSightRadius = 800.0f;
+    SightConfig->SightRadius = 2000.0f;
+    SightConfig->LoseSightRadius = 2500.0f;
     SightConfig->PeripheralVisionAngleDegrees = 120.0f;
     SightConfig->SetMaxAge(3.0f);
     SightConfig->DetectionByAffiliation.bDetectEnemies = true;
     SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
     SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
     
-    HearingConfig->HearingRange = 500.0f;
+    HearingConfig->HearingRange = 1000.0f;
     HearingConfig->SetMaxAge(3.0f);
     HearingConfig->DetectionByAffiliation.bDetectEnemies = true;
     HearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
@@ -53,7 +53,6 @@ AAIAnimalController::AAIAnimalController()
 void AAIAnimalController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
-
     
     // 비헤이비어 트리 실행
     if (BehaviorTree)
@@ -62,9 +61,8 @@ void AAIAnimalController::OnPossess(APawn* InPawn)
         UseBlackboard(BehaviorTree->BlackboardAsset, BlackboardComponent); 
         // 블랙보드 초기화 성공, 비헤이비어 트리 실행
         RunBehaviorTree(BehaviorTree);
-        UE_LOG(LogTemp, Warning, TEXT("AnimalController::블랙보드 초기화 성공, 비헤이비어 트리 실행."));
     }
-
+    InitBlackboard();
     AbilitySystemComponent = CastChecked<ABaseAIAnimal>(InPawn)->GetAbilitySystemComponent();
 }
 
@@ -72,45 +70,57 @@ void AAIAnimalController::BeginPlay()
 {
     Super::BeginPlay();
     PerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &AAIAnimalController::OnTargetPerceptionUpdated);
-    InitBlackboard();
 }
 
 void AAIAnimalController::InitBlackboard()
 {
-    BlackboardComponent->SetValueAsBool("IsRest", true);
-    BlackboardComponent->SetValueAsFloat("SleepTime", fSleepTime);
-    BlackboardComponent->SetValueAsBool("IsShouldSleep",bIsShouldSleep);
-    BlackboardComponent->SetValueAsEnum("CurrentState",
+    GetBlackboardComponent()->SetValueAsBool("NIsNeedToGeneratePP", true);
+    GetBlackboardComponent()->SetValueAsBool("IsRest", true);
+    GetBlackboardComponent()->SetValueAsFloat("SleepTime", fSleepTime);
+    GetBlackboardComponent()->SetValueAsBool("IsShouldSleep",bIsShouldSleep);
+    GetBlackboardComponent()->SetValueAsEnum("CurrentState",
                                             static_cast<uint8>(Cast<ABaseAIAnimal>(GetPawn())->GetCurrentState()) );
-    BlackboardComponent->SetValueAsEnum("Personality",
+    GetBlackboardComponent()->SetValueAsEnum("Personality",
                                             static_cast<uint8>(Cast<ABaseAIAnimal>(GetPawn())->GetPersonality()) );
-    BlackboardComponent->SetValueAsFloat("WanderRange",500.0f);
+    GetBlackboardComponent()->SetValueAsFloat("WanderRange",500.0f);
 }
 
 void AAIAnimalController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
-    //시각 청각적으로 감지됐을 때
+    //시각 청각적으로 감지됐을 때 -> 뒤에서 접근하면 감지 못하는 문제 있을 듯 ,근데 동물은 그게 맞아
     FindTargetPlayer(Actor, Stimulus);
     FindTargetAnimal(Actor, Stimulus);
 }
 
 void AAIAnimalController::FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus)
 {
-    // 월드에 플레이어가 없다면 터진다 ->당연
-    ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(),0);
-    if (!PlayerCharacter)
-    {
-        return;
-    }
     if (BlackboardComponent)
     {
         // 감지된게 플레이어면
-        if ( Actor == Cast<AActor>(PlayerCharacter))
+        // 월드에 플레이어가 없다면 터진다 ->당연
+        ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(),0);
+        if (!PlayerCharacter)
         {
-            BlackboardComponent->SetValueAsBool("IsRest", false);
-            BlackboardComponent->SetValueAsEnum("CurrentState", static_cast<uint8>(EAnimalAIState::Warning));
+            return;
+        }
+        if (BlackboardComponent)
+        {
+            // 감지된게 플레이어면
+            BlackboardComponent->SetValueAsName("NEnemyTag", "Player");
+            BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Warning");
             BlackboardComponent->SetValueAsObject("TargetActor", Actor);
-            
+
+            // if (const IGameplayTagAssetInterface* AITagInterface = Cast<IGameplayTagAssetInterface>(GetPawn()))
+            // {
+            //     FGameplayTagContainer AITagContainer;
+            //     AITagInterface->GetOwnedGameplayTags(AITagContainer);
+            //
+            //     if (AITagContainer.HasTag(FGameplayTag::RequestGameplayTag("Animal.Group.Leader")) || AITagContainer.HasTag(FGameplayTag::RequestGameplayTag("Animal.Group.Patrol")))
+            //     {
+            //         SetFocus(Actor,EAIFocusPriority::Gameplay);
+            //         GetWorldTimerManager().SetTimer(FocusTimerHandle, this, &AAIAnimalController::TimeOutClearFocus, 3.0f, false, 0.f);
+            //     }
+            // }
         }
     }
 }
@@ -127,21 +137,37 @@ void AAIAnimalController::FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus)
             const UEmberAnimalAttributeSet* TargetAttribute = TargetAsc->GetSet<UEmberAnimalAttributeSet>();
             const UEmberAnimalAttributeSet* SourceAttribute = SourceAsc->GetSet<UEmberAnimalAttributeSet>();
             
+        // if (const IGameplayTagAssetInterface* AITagInterface = Cast<IGameplayTagAssetInterface>(GetPawn()))
+        // {
+        //     FGameplayTagContainer AITagContainer;
+        //     AITagInterface->GetOwnedGameplayTags(AITagContainer);
+        //
+        //     if (AITagContainer.HasTag(FGameplayTag::RequestGameplayTag("Animal.Group.Leader")) || AITagContainer.HasTag(FGameplayTag::RequestGameplayTag("Animal.Group.Patrol")))
+        //     {
+        //         SetFocus(Actor,EAIFocusPriority::Gameplay);
+        //         GetWorldTimerManager().SetTimer(FocusTimerHandle, this, &AAIAnimalController::TimeOutClearFocus, 3.0f, false, 0.f);
+        //     }
+        // }
+            
             //파워 우선순위 판단
             const float PawnWildPower = SourceAttribute->GetWildPower();
             const float TargetWildPower = TargetAttribute->GetWildPower();
             
             if (PawnWildPower <= TargetWildPower) //우선순위가 높거나 같으면
             {
-                BlackboardComponent->SetValueAsBool("IsRest", true);
+                //성격이 용감하다면 Attack 확률 좀 더 증가
+                //절반의 확률로
+                BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
+                //또는 낮은 쪽을 공격 NStateTag
+               // BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Attack");
             }
             else
             {
+                BlackboardComponent->SetValueAsName("NEnemyTag", "Animal");
                 //여기서 인식되면 타겟, 거리 등록
-                BlackboardComponent->SetValueAsBool("IsRest", false);
-                BlackboardComponent->SetValueAsEnum("CurrentState", static_cast<uint8>(EAnimalAIState::Warning));
+                //BlackboardComponent->SetValueAsBool("IsRest", false);
+                BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Warning");
                 BlackboardComponent->SetValueAsObject("TargetActor", Actor);
-            
             }
         }
     }
@@ -161,3 +187,20 @@ void AAIAnimalController::SenseInteractionWithUI(const FAIStimulus& Stimulus)
     }
 }
 
+void AAIAnimalController::TimeOutClearFocus()
+{
+    ClearFocus(EAIFocusPriority::Gameplay);
+    BlackboardComponent->SetValueAsObject("TargetActor", nullptr);
+    BlackboardComponent->SetValueAsName("NEnemyTag", "None");
+    BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
+}
+
+/*
+ *타겟엑터 & 박스 콜라이더 -> 안에 동물이나 플레이어있으면 스폰불가, 다른 타겟엑터 탐색
+ *스포너 : 사라질때 이벤트바인딩, 한번 만들고 지우지 않고 비져블 설정만 
+ *Tarray<TSubObject<베이스애니멀>> -> 에서 해당 볼륨에 서 스폰할 동물 들  등록
+ *구조체 -> 스폰할 동물, 총 몇마리, 리더 몇마리, 경비원 몇마리, 팔로워는 나머지
+ *
+ *
+ * 
+ */

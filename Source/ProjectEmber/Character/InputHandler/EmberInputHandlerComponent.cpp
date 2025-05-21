@@ -47,8 +47,8 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
         Bind(AimAction,           ETriggerEvent::Canceled,   &AEmberCharacter::Input_OnAim);
         Bind(RagdollAction,       ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnRagdoll);
         Bind(RollAction,          ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnRoll);
-        Bind(RotationModeAction,  ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnRotationMode);
-        Bind(ViewModeAction,      ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnViewMode);
+        //Bind(RotationModeAction,  ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnRotationMode);
+        //Bind(ViewModeAction,      ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnViewMode);
         Bind(SwitchShoulderAction,ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnSwitchShoulder);
 
         UInteractionComponent* Comp = Character->InteractionComponent.Get();
@@ -64,6 +64,14 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
         }
     }
 
+    int32 Index = 0;
+    for (auto Action : QuickSlotActions)
+    {
+        if (IsValid(Action))
+        {
+            InputComponent->BindAction(Action, ETriggerEvent::Started, Character, &AEmberCharacter::Input_OnQuickSlot,Index++);
+        }
+    }
     // Ability input
     InputComponent->BindAction(AttackAction, ETriggerEvent::Started, Character, &AEmberCharacter::AbilityInputPressed, 0);
 }
