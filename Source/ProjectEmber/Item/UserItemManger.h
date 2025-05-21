@@ -48,6 +48,10 @@ public:
 	const class UQuickSlotManagerComponent* GetQuickSlotManagerComponent() const;
 
 	UQuickSlotManagerComponent* GetQuickSlotManagerComponent();
+
+public: /* Quick Slot Interaction */
+	FName SelectQuickSlot(int32 InIndex) const;
+	
 public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager Component")
