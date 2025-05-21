@@ -3,35 +3,46 @@
 #include "AIController.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/InputComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/Actor.h"
 
 UQuestGiverComponent::UQuestGiverComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
+
+    ExclamationMarkComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ExclamationMarkComponent"));
+    QuestionMarkComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("QuestionMarkComponent"));
 }
 
 void UQuestGiverComponent::BeginPlay()
 {
     Super::BeginPlay();
 
-    APawn* OwnerPawn = Cast<APawn>(GetOwner());
-    if (OwnerPawn)
-    {
-        CachedAIController = Cast<AAIController>(OwnerPawn->GetController());
+    AActor* Owner = GetOwner();
+    if (!Owner || !Owner->GetRootComponent()) return;
 
-        if (QuestWidgetClass)
+    auto CreateMarker = [&](UStaticMesh* Mesh, UStaticMeshComponent*& OutComponent)
         {
-            QuestWidget = CreateWidget<UUserWidget>(GetWorld(), QuestWidgetClass);
-            if (QuestWidget)
-            {
-                QuestWidget->AddToViewport();
-                QuestWidget->SetVisibility(ESlateVisibility::Hidden);
-            }
-        }
-    }
+            if (!Mesh) return;
+
+            OutComponent = NewObject<UStaticMeshComponent>(Owner);
+            OutComponent->RegisterComponent();
+            OutComponent->SetStaticMesh(Mesh);
+            OutComponent->AttachToComponent(Owner->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+            OutComponent->SetRelativeLocation(FVector(0.f, 0.f, 200.f));
+            OutComponent->SetVisibility(false);
+
+        
+            OutComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            OutComponent->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+        };
+
+    CreateMarker(ExclamationMarkMesh, ExclamationMarkComponent);
+    CreateMarker(QuestionMarkMesh, QuestionMarkComponent);
 
     SetupDebugBindings();
-    UpdateQuestMarker(); // 마커 초기화용 호출 추가
+    UpdateQuestMarker();
 }
 
 void UQuestGiverComponent::SetupComponentDispatchers(AActor* NPCRef, UQuestReceiverComponent* QuestReceiver)
@@ -45,35 +56,32 @@ void UQuestGiverComponent::SetupComponentDispatchers(AActor* NPCRef, UQuestRecei
     QuestReceiver->OnQuestCompleted.AddDynamic(this, &UQuestGiverComponent::OnQuestCompleted);
     QuestReceiver->OnQuestUpdated.AddDynamic(this, &UQuestGiverComponent::OnQuestUpdated);
 
-    UpdateQuestMarker(); // 연결 후 마커 상태 즉시 갱신
+    UpdateQuestMarker();
 }
 
 void UQuestGiverComponent::UpdateQuestMarker()
 {
-    if (!CachedReceiver)
-    {
-        if (ExclamationMarkSM) ExclamationMarkSM->SetVisibility(false);
-        if (QuestionMarkSM) QuestionMarkSM->SetVisibility(true);
-        return;
-    }
+    if (!CachedReceiver) return;
 
-    int32 ActiveQuests = 0;
+    if (ExclamationMarkComponent) ExclamationMarkComponent->SetVisibility(false);
+    if (QuestionMarkComponent) QuestionMarkComponent->SetVisibility(false);
+
+    int32 IncompleteCount = 0;
+    int32 CompleteCount = 0;
+
     for (const FQuestStorageInfo& Quest : CachedReceiver->GetQuestLog())
     {
-        if (!Quest.bIsComplete)
-        {
-            ActiveQuests++;
-        }
+        if (Quest.bIsComplete) CompleteCount++;
+        else IncompleteCount++;
     }
 
-    if (ExclamationMarkSM)
+    if (CompleteCount > 0 && QuestionMarkComponent)
     {
-        ExclamationMarkSM->SetVisibility(ActiveQuests > 0);
+        QuestionMarkComponent->SetVisibility(true);
     }
-
-    if (QuestionMarkSM)
+    else if (IncompleteCount == 0 && ExclamationMarkComponent)
     {
-        QuestionMarkSM->SetVisibility(ActiveQuests == 0);
+        ExclamationMarkComponent->SetVisibility(true);
     }
 }
 

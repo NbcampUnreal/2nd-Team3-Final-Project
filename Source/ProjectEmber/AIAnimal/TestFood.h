@@ -4,12 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "GameplayTagAssetInterface.h"
 #include "GameplayTagContainer.h"
 #include "Interactables/BaseInteractableActor.h"
 #include "TestFood.generated.h"
 
 UCLASS()
-class PROJECTEMBER_API ATestFood : public ABaseInteractableActor
+class PROJECTEMBER_API ATestFood : public ABaseInteractableActor, public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
 
@@ -22,7 +23,7 @@ protected:
 public:
 	virtual void Interact_Implementation(AActor* Caller) override;
 	virtual float GetGatherTime_Implementation() override; 
-
+	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
 	
 	UFUNCTION(BlueprintCallable)
 	bool GetSelected();

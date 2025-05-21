@@ -5,11 +5,11 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Core/EmberItemStruct.h"
+#include "Craft/EmberResourceProvider.h"
 #include "UserItemManger.generated.h"
 
-
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class PROJECTEMBER_API UUserItemManger : public UActorComponent
+class PROJECTEMBER_API UUserItemManger : public UActorComponent, public IEmberResourceProvider
 {
 	GENERATED_BODY()
 
@@ -37,23 +37,61 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void UseInventorySlotInfo(int32 InIndex);
-	
-	UFUNCTION(BlueprintCallable)
-	void AddItem(FName ItemID, int32 Quantity);
-	
-	const class UInventoryManagerComponent* GetInventoryManager() const;
-	
-	UInventoryManagerComponent* GetInventoryManager();
-	
-	const class UQuickSlotManagerComponent* GetQuickSlotManagerComponent() const;
 
-	UQuickSlotManagerComponent* GetQuickSlotManagerComponent();
+	/**
+	 * 
+	 * @param ItemID 넣을 아이템의 ID
+	 * @param Quantity 넣을 수량
+	 * @param InSlotIndex 넣을 슬롯을 지정합니다 범위가 벗어난경우 있는아이템이후 빈공간에 넣습니다
+	 */
+	UFUNCTION(BlueprintCallable)
+	void AddItem(FName ItemID, int32 Quantity, int32 InSlotIndex = -1);
+	
+	const class UInventoryManager* GetInventoryManager() const;
+	
+	UInventoryManager* GetInventoryManager();
+	
+	const class UQuickSlotManager* GetQuickSlotManager() const;
+
+	UQuickSlotManager* GetQuickSlotManager();
+	
+	const class UEmberEquipmentManager* GetEquipmentManager() const;
+
+	UEmberEquipmentManager* GetEquipmentManager();
+	
+	const class UEmberDropItemManager* GetEmberDropItemManager() const;
+
+	UEmberDropItemManager* GetEmberDropItemManager();
+
+	// --- IEmberResourceProvider ---
+	
+	TArray<FItemPair> GetItems_Implementation();
+
+	bool bTryConsumeResource_Implementation(const TArray<FItemPair>& RequireItems);
+
+public: /* Quick Slot Interaction */
+	FName SelectQuickSlot(int32 InIndex) const;
+	
 public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
+	int32 InventoryMaxSlot = 30;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
+	int32 InventoryMaxSlotRow = 10;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager Component")
-	TObjectPtr<UInventoryManagerComponent> InventoryManager;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager Component")
-	TObjectPtr<UQuickSlotManagerComponent> QuickSlotManager;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
+	int32 QuickMaxSlot = 10;	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
+	int32 QuickMaxSlotRow = 10;	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
+	int32 DropItemMaxSlot = 30;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
+	int32 DropItemMaxSlotRow = 10;
+
+	TObjectPtr<UInventoryManager> InventoryManager;
+	TObjectPtr<UQuickSlotManager> QuickSlotManager;
+	TObjectPtr<UEmberEquipmentManager> EquipmentManager;
+	TObjectPtr<UEmberDropItemManager> DropItemManager;
 	
 };

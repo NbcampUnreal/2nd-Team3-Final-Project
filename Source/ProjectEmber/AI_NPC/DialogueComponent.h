@@ -11,6 +11,7 @@
 class UNPCSphereComponent;
 class UNPCTalkWidgetComponent;
 class ADialogueCameraActor;
+class UInputMappingContext;
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -30,9 +31,15 @@ public:
     UFUNCTION()
     void PositionDetachedCamera();
 
-
+    void AdvanceDialogue();
     void Interact();
+    void ShowQuestUI();
+    void LoadDialogueFromDataTable(bool bResetDialogueIndex = true);
+    void SetInputMappingContext(UInputMappingContext* MappingContext, bool bClearExisting = true);
 
+    UPROPERTY()
+    bool bDialogueFinished = false;
+    bool IsDialogueActive() const;
 protected:
     virtual void BeginPlay() override;
 
@@ -45,7 +52,6 @@ protected:
     void OnPlayerExitRadius(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-protected:
     UPROPERTY()
     bool bPlayerInRange = false;
 
@@ -67,5 +73,35 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Dialogue|Camera")
     ADialogueCameraActor* DialogueCameraActor;
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest")
+    UDataTable* QuestDataTable;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest")
+    FName QuestRowName = FName("MainQuest01");
+
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<FString> LinesOfDialogue;
+
+    UPROPERTY(VisibleAnywhere, Category = "Dialogue")
+    int32 CurrentDialogueIndex = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
+    TSubclassOf<UUserWidget> QuestWidgetClass;
+
+    UPROPERTY(EditAnywhere, Category = "Dialogue")
+    UDataTable* DialogueDataTable;
+
+    UPROPERTY(EditAnywhere, Category = "Dialogue")
+    FName DialogueRowName;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Input")
+    UInputMappingContext* UIInputMappingContext;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Input")
+    UInputMappingContext* GameplayInputMappingContext;
+
+
+  
 
 };

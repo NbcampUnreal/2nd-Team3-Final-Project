@@ -7,13 +7,14 @@
 #include "QuestReceiverComponent.generated.h"
 
 USTRUCT(BlueprintType)
-struct FQuestStorageInfo
+struct FQuestStorageInfo : public FTableRowBase
 {
     GENERATED_BODY()
 
+
     FQuestStorageInfo()
-        : QuestNumber(0)
-        , QuestName(TEXT(""))
+        : QuestID(0)
+        , QuestName(TEXT("Unnamed Quest"))
         , ObjectiveNames()
         , ObjectiveProgress()
         , bIsTracking(false)
@@ -22,7 +23,7 @@ struct FQuestStorageInfo
     }
 
     UPROPERTY(BlueprintReadWrite)
-    int32 QuestNumber;
+    int32 QuestID;
 
     UPROPERTY(BlueprintReadWrite)
     FString QuestName;
@@ -39,7 +40,6 @@ struct FQuestStorageInfo
     UPROPERTY(BlueprintReadWrite)
     bool bIsComplete;
 };
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestEventSignature, const FQuestStorageInfo&, QuestInfo);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -50,7 +50,12 @@ class PROJECTEMBER_API UQuestReceiverComponent : public UActorComponent
 public:
     UQuestReceiverComponent();
 
-    // Quest Management
+    UFUNCTION(BlueprintCallable)
+    void NotifyTalkObjectiveCompleted(FName ObjectiveName);
+ 
+    UFUNCTION(BlueprintCallable)
+    void AcceptQuest(UDataTable* QuestDataTable, FName RowName);
+
     UFUNCTION(BlueprintCallable)
     void AddTrackedQuest(const FQuestStorageInfo& Quest);
 
@@ -63,7 +68,6 @@ public:
     UFUNCTION(BlueprintCallable)
     void AbandonQuest(int32 QuestID);
 
-    // Objective Management
     UFUNCTION(BlueprintCallable)
     void UpdateQuestObjective(int32 QuestID, const FString& ObjectiveName, int32 QuantityIncrease);
 

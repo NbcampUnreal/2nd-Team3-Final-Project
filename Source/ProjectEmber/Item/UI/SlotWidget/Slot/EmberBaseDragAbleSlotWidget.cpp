@@ -4,6 +4,7 @@
 #include "EmberBaseDragAbleSlotWidget.h"
 
 #include "Blueprint/WidgetBlueprintLibrary.h"
+#include "EmberLog/EmberLog.h"
 #include "Item/UI/DragDropOperation/EmberItemSlotDragDropOperation.h"
 #include "Item/UI/SlotWidget/DragSlotImage.h"
 
@@ -16,8 +17,11 @@ void UEmberBaseDragAbleSlotWidget::CreateDragDropOperation_Implementation(const 
 		SlotOperation->SlotType = SlotType;
 		SlotOperation->Pivot = EDragPivot::MouseDown;
 		SlotOperation->DraggedQuantity = SlotData.Quantity;
-		SlotOperation->Provider = DataProvider.GetObject();
-		
+		SlotOperation->Provider = DataProvider;
+		if (!SlotOperation->Provider)
+		{
+			EMBER_LOG(LogTemp, Warning, TEXT("SlotOperationProvider Is Null"));
+		}
 		if (DragSlotImageClass)
 		{
 			if (TObjectPtr<UDragSlotImage> CopySlotImage = CreateWidget<UDragSlotImage>(this, DragSlotImageClass))
@@ -27,6 +31,10 @@ void UEmberBaseDragAbleSlotWidget::CreateDragDropOperation_Implementation(const 
 			}
 		}
 		
+#if UE_BUILD_DEVELOPMENT
+		EMBER_LOG(LogEmberItem, Display, TEXT("StartDrag : SlotType : %s, Quantity: %d"),*SlotType.ToString(), SlotIndex);
+#endif
+    
 		OutOperation = SlotOperation;
 	}
 }
@@ -49,7 +57,12 @@ bool UEmberBaseDragAbleSlotWidget::DropAction_Implementation(const FGeometry& In
 {
 	if (TObjectPtr<const UEmberItemSlotDragDropOperation> EmberDropOperation = Cast<UEmberItemSlotDragDropOperation>(InOperation))
 	{
-		IEmberSlotDataProviderInterface::Execute_MoveItemBySlot(DataProvider.GetObject(), EmberDropOperation->SlotType, EmberDropOperation->SlotIndex, EmberDropOperation->Provider, SlotIndex, EmberDropOperation->DraggedQuantity);
+		if (!EmberDropOperation->Provider)
+		{
+			return false;
+		}
+
+		IEmberSlotDataProviderInterface::Execute_MoveItemByWidget(DataProvider.GetObject(), EmberDropOperation->SlotType, SlotIndex, EmberDropOperation->Provider.GetObject(), EmberDropOperation->SlotIndex, EmberDropOperation->DraggedQuantity);
 	}
 	return true;
 }
