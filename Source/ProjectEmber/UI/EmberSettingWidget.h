@@ -18,10 +18,16 @@ protected:
     void OnVideoButtonClicked();
 
     UFUNCTION()
+    void OnAudioButtonClicked();
+
+    UFUNCTION()
     void OnBackButtonClicked();
 
     UPROPERTY(meta = (BindWidget)) 
     UButton* VideoButton;
+
+    UPROPERTY(meta = (BindWidget))
+    UButton* AudioButton;
 
     UPROPERTY(meta = (BindWidget))
     UButton* BackButton;

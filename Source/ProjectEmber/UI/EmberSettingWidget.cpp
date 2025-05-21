@@ -24,6 +24,11 @@ void UEmberSettingWidget::NativeConstruct()
     {
         BackButton->OnClicked.AddDynamic(this, &UEmberSettingWidget::OnBackButtonClicked);
     }
+
+    if (AudioButton)
+    {
+        AudioButton->OnClicked.AddDynamic(this, &UEmberSettingWidget::OnAudioButtonClicked);
+    }
 }
 
 void UEmberSettingWidget::OnVideoButtonClicked()
@@ -31,6 +36,14 @@ void UEmberSettingWidget::OnVideoButtonClicked()
     if (SettingsContentSwitcher)
     {
         SettingsContentSwitcher->SetActiveWidgetIndex(0);
+    }
+}
+
+void UEmberSettingWidget::OnAudioButtonClicked()
+{
+    if (SettingsContentSwitcher)
+    {
+        SettingsContentSwitcher->SetActiveWidgetIndex(1);
     }
 }
 
