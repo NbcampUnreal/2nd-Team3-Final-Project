@@ -76,7 +76,8 @@ public: /* Base Input */
 	UPROPERTY(EditAnywhere, Category="Input") 
 	TObjectPtr<UInputAction> InteractAction;
 
-	
+	UPROPERTY(EditAnywhere, Category="Input") 
+	TArray<TObjectPtr<UInputAction>> QuickSlotActions;
 
 public: /* UI Input */
 	/* Comment : UI does not always run when you press it */

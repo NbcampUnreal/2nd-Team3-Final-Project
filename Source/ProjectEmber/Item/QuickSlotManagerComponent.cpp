@@ -1,21 +1,27 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "QuickSlotManagerComponent.h"
-#include "InventoryManagerComponent.h"
 
-
-// Sets default values for this component's properties
 UQuickSlotManagerComponent::UQuickSlotManagerComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
-
-	// ...
 }
 
 void UQuickSlotManagerComponent::BeginPlay()
 {
 	Super::BeginPlay();
 }
+
+FName UQuickSlotManagerComponent::SelectQuickSlot(const int32 InIndex)
+{
+	if (CurrentQuickSlotIndex == InIndex)
+	{
+		CurrentQuickSlotIndex = -1;
+		return FName();
+	}
+	else
+	{
+		CurrentQuickSlotIndex = InIndex;
+		return GetSlotItemID_Implementation(CurrentQuickSlotIndex);
+	}
+}
+
+
