@@ -2,6 +2,7 @@
 #include "Character/EmberCharacter.h"
 #include "Interactables/BaseInteractableActor.h"
 #include "Interactables/BasePickupActor.h"
+#include "AI_NPC/DialogueComponent.h"
 #include "AI_NPC/NPCInterface.h"
 #include "Components/BoxComponent.h"
 #include "EmberLog/EmberLog.h"
@@ -168,11 +169,22 @@ void UInteractionComponent::OnTalkOverlapEnd(UPrimitiveComponent* OverlappedComp
 	}
 }
 
+void UInteractionComponent::TriggerAdvanceDialogue()
+{
+	UObject* RawObj = CurrentInteractable.GetObject();
+	if (RawObj && RawObj->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
+	{
+		if (UDialogueComponent* Dialogue = Cast<UDialogueComponent>(CurrentInteractable.GetObject()))
+		{
+			Dialogue->AdvanceDialogue();
+		}
+	}
+}
 void UInteractionComponent::SetCurrentInteractable(UObject* NewInteractable)
 {
 	if (bIsLocked)
 	{
-		EMBER_LOG(LogTemp, Warning, TEXT("Current Interactable is locked"));
+		UE_LOG(LogTemp, Warning, TEXT("Current Interactable is locked"));
 		return;
 	}
 
@@ -180,37 +192,55 @@ void UInteractionComponent::SetCurrentInteractable(UObject* NewInteractable)
 	{
 		CurrentInteractable.SetObject(NewInteractable);
 		CurrentInteractable.SetInterface(Cast<IInteractable>(NewInteractable));
-		UE_LOG(LogTemp, Warning, TEXT(" SetCurrentInteractable with %s"), *NewInteractable->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("SetCurrentInteractable: %s"), *NewInteractable->GetName());
 	}
 	else
 	{
+		if (UDialogueComponent* Dialogue = Cast<UDialogueComponent>(CurrentInteractable.GetObject()))
+		{
+			if (Dialogue->IsDialogueActive())
+			{
+				return;
+			}
+		}
 		CurrentInteractable = nullptr;
-		UE_LOG(LogTemp, Error, TEXT(" Comp is null or doesn't implement interface"));
 	}
 }
 
 void UInteractionComponent::Interact()
 {
-	if (CurrentInteractable)
+	if (!CurrentInteractable)
 	{
-	
+		UE_LOG(LogTemp, Warning, TEXT("Interact called with no interactable."));
+		return;
+	}
 
-		GatherTime = IInteractable::Execute_GetGatherTime(CurrentInteractable.GetObject());
+	UObject* RawObj = CurrentInteractable.GetObject();
 
-		EMBER_LOG(LogTemp, Warning, TEXT("Interact,  GatherTime: %f"), GatherTime);
-		if (GatherTime <= 0.0f)
+	if (!RawObj || !RawObj->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Interact target does not implement IInteractable."));
+		return;
+	}
+
+	if (UDialogueComponent* Dialogue = Cast<UDialogueComponent>(RawObj))
+	{
+		if (Dialogue->IsDialogueActive())
 		{
-			IInteractable::Execute_Interact(CurrentInteractable.GetObject(), GetOwner());
-			PickupTrigger->UpdateOverlaps();
+			return;
 		}
-		else
-		{
-			StartGather();
-		}
+	}
+
+	GatherTime = IInteractable::Execute_GetGatherTime(RawObj);
+
+	if (GatherTime <= 0.0f)
+	{
+		IInteractable::Execute_Interact(RawObj, GetOwner());
+		PickupTrigger->UpdateOverlaps();
 	}
 	else
 	{
-		UE_LOG(LogTemp, Error, TEXT(" CurrentInteractable is null"));
+		StartGather();
 	}
 }
 

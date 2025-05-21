@@ -16,7 +16,7 @@ void AAINPCController::BeginPlay()
         if (UseBlackboard(BehaviorTreeAsset->BlackboardAsset, BlackboardComp))
         {
             RunBehaviorTree(BehaviorTreeAsset);
-            UE_LOG(LogTemp, Warning, TEXT(" Behavior Tree Start"));
+         
         }
         else
         {
