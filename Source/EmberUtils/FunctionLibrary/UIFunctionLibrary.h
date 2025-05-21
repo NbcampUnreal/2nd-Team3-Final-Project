@@ -31,4 +31,18 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "UIFunctionLibrary")
 	static void FocusGame(APlayerController* OwningPlayer);
+
+	UFUNCTION(BlueprintCallable, Category = "UIFunctionLibrary")
+	static void FocusUI(APlayerController* OwningPlayer, UUserWidget* WidgetToFocus,bool ShowMouseCursor, bool bIgnoreMovement = false, bool bGameLeftMouseInputLock = false);
+
+	UFUNCTION(BlueprintCallable, Category = "UIFunctionLibrary")
+	static bool GetIsAbilityInputLock(APlayerController* OwningPlayer);
+
+	UFUNCTION(BlueprintCallable, Category = "UIFunctionLibrary")
+	static bool GetIsGameMovementInputLock(APlayerController* OwningPlayer);
+
+private:
+	static FVector2D MousePos;
 };
+
+

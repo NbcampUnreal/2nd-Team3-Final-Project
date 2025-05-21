@@ -61,6 +61,7 @@ void UUserItemManger::UseInventorySlotInfo(int32 InIndex)
 void UUserItemManger::AddItem(FName ItemID, int32 Quantity)
 {
 	InventoryManager->AddItemAndHandleOverflow_Implementation(ItemID, Quantity, GetOwner()->GetActorLocation(), FRotator::ZeroRotator);
+	QuickSlotManager->AddItemAndHandleOverflow_Implementation(ItemID, Quantity, GetOwner()->GetActorLocation(), FRotator::ZeroRotator);
 }
 
 const class UInventoryManagerComponent* UUserItemManger::GetInventoryManager() const
