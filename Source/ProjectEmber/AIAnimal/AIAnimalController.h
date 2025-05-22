@@ -62,7 +62,6 @@ protected:
 	void FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus);
 	void FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus);
 	void SenseInteractionWithUI(const FAIStimulus& Stimulus);
-	void TimeOutClearFocus();
 
 	//이 변수는 동물이 생성될 때, 밤이 남은 시간을 받와와서 초기화, 고정시간 박으면 안됨, 생성됐는데 밤 1초 남을 수 있음
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
@@ -88,7 +87,6 @@ protected:
 
 	//SearchTarget 노드 관련
 	static const FName SafeLocation;
-	static const FName IsRest;
 	static const FName IsHit;
 	
 };
