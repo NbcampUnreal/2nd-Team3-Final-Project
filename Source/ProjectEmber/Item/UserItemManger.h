@@ -64,10 +64,14 @@ public:
 	UEmberDropItemManager* GetEmberDropItemManager();
 
 	// --- IEmberResourceProvider ---
+	virtual TMap<FName, int32> GetAllItemInfos_Implementation() override;
 	
-	TArray<FItemPair> GetItems_Implementation();
+	virtual void TryConsumeResource_Implementation(const TArray<FItemPair>& InRequireItems) override;
 
-	bool bTryConsumeResource_Implementation(const TArray<FItemPair>& RequireItems);
+	virtual TArray<FItemPair> RemoveResourceUntilAble_Implementation(const TArray<FItemPair>& InRequireItems) override;
+
+	virtual bool bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems) override;
+
 
 public: /* Quick Slot Interaction */
 	FName SelectQuickSlot(int32 InIndex) const;

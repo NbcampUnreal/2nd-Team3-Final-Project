@@ -123,11 +123,14 @@ struct FItemPair
 {
     GENERATED_BODY()
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item struct")
-    FName ItemID;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item struct")
+    FName ItemID = NAME_None;
     
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item struct")
-    int32 Quantity;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item struct")
+    int32 Quantity = 0;
+
+    FItemPair() = default;
+    FItemPair(const FName& InItemID, const int32 InQuantity) : ItemID(InItemID), Quantity(InQuantity) {};
 };
 
 
@@ -143,3 +146,6 @@ struct FCraftInfoRow : public FTableRowBase
     TArray<FItemPair> RequiredItem;
 
 };
+
+
+
