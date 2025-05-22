@@ -9,6 +9,8 @@
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "EmberLog/EmberLog.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Utility/AlsVector.h"
 
 UBaseOverlayAbility::UBaseOverlayAbility()
 {
@@ -33,10 +35,25 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
 	{
 		Character->SetForceGameplayTags(ForceGameplayTags);
+		PreLocomotionState = Character->GetLocomotionState();
+		/*const auto Value = UAlsVector::ClampMagnitude012D(FVector2D(1.f,1.f));
+		const auto ForwardDir = UAlsVector::AngleToDirectionXY(UE_REAL_TO_FLOAT(Character->GetViewState().Rotation.Yaw));
+		const auto RightDir   = UAlsVector::PerpendicularCounterClockwiseXY(ForwardDir);
+		PreDirection = ForwardDir * Value.Y + RightDir * Value.X;*/
+
+		Character->GetWorld()->GetTimerManager().SetTimer(
+				MontageTickHandle,
+				FTimerDelegate::CreateUObject(this, &UBaseOverlayAbility::OnMontageTick),
+				0.033f,
+				true
+			  );
+		/*EMBER_LOG(LogEmber, Warning, TEXT("Start VelocityYawAngle : %f"), Character->GetLocomotionState().VelocityYawAngle);
+		EMBER_LOG(LogEmber, Warning, TEXT("Start TargetYawAngle : %f"), Character->GetLocomotionState().TargetYawAngle);
+		EMBER_LOG(LogEmber, Warning, TEXT("Start InputYawAngle : %f"), Character->GetLocomotionState().InputYawAngle);*/
 	}
 	
 	AbilitySystemComponent = GetAbilitySystemComponentFromActorInfo();
-
+	
 	UAbilityTask_PlayMontageAndWait* PlayMontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 			this, NAME_None, MontageToPlay);
 
@@ -44,7 +61,7 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	PlayMontageTask->OnInterrupted.AddDynamic(this, &UBaseOverlayAbility::OnMontageInterrupted);
 	PlayMontageTask->OnCancelled.AddDynamic(this, &UBaseOverlayAbility::OnMontageInterrupted);
 	PlayMontageTask->ReadyForActivation();
-
+	
 	if (!bLoopingMontage && bCanCombo)
 	{
 		static const FGameplayTag ComboTag = FGameplayTag::RequestGameplayTag(TEXT("Combat.Combo.Next"));
@@ -54,8 +71,6 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 		ComboTask->EventReceived.AddDynamic(this, &UBaseOverlayAbility::OnComboNotify);
 		ComboTask->ReadyForActivation();
 	}
-
-	
 }
 
 void UBaseOverlayAbility::CancelAbility(const FGameplayAbilitySpecHandle Handle,
@@ -92,6 +107,7 @@ void UBaseOverlayAbility::InputReleased(const FGameplayAbilitySpecHandle Handle,
 	EndAbility(Handle, ActorInfo, ActivationInfo,true, true);
 }
 
+
 void UBaseOverlayAbility::OnMontageCompleted()
 {
 	if (bCanCombo && NextComboAbility && bComboInputReceived && !bLoopingMontage)
@@ -99,6 +115,37 @@ void UBaseOverlayAbility::OnMontageCompleted()
 		AbilitySystemComponent->TryActivateAbilityByClass(NextComboAbility,true);
 	}
 
+	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
+	{
+		Character->GetWorld()->GetTimerManager().ClearTimer(MontageTickHandle);
+		/*
+		UCharacterMovementComponent* MoveComp = Character->GetCharacterMovement();
+		
+		const FVector OrigDir = FRotationMatrix(
+				FRotator(0.f, StartMontageActorYaw, 0.f)
+			).GetUnitAxis(EAxis::X);
+
+		EMBER_LOG(LogEmber, Warning, TEXT("OrigDir : %s"), *OrigDir.ToString());
+		EMBER_LOG(LogEmber, Warning, TEXT("Before Velocity : %s"), *MoveComp->Velocity.ToString());
+		MoveComp->Velocity = OrigDir.GetSafeNormal() * 200.f;
+		EMBER_LOG(LogEmber, Warning, TEXT("After Velocity : %s"), *MoveComp->Velocity.ToString());
+		*/
+		//Character->GetLocomotionState()
+		/*EMBER_LOG(LogEmber, Warning, TEXT("End VelocityYawAngle : %f"), Character->GetLocomotionState().VelocityYawAngle);
+		EMBER_LOG(LogEmber, Warning, TEXT("End TargetYawAngle : %f"), Character->GetLocomotionState().TargetYawAngle);
+		EMBER_LOG(LogEmber, Warning, TEXT("End InputYawAngle : %f"), Character->GetLocomotionState().InputYawAngle);*/
+		
+		/* 결국 끝났을때 돌려봤자 의미가 없음
+		 * 
+		*/
+		//Character->AddMovementInput(PreDirection);
+		
+		/*EMBER_LOG(LogEmber, Warning, TEXT("Changed VelocityYawAngle : %f"), Character->GetLocomotionState().VelocityYawAngle);
+		EMBER_LOG(LogEmber, Warning, TEXT("Changed TargetYawAngle : %f"), Character->GetLocomotionState().TargetYawAngle);
+		EMBER_LOG(LogEmber, Warning, TEXT("Changed InputYawAngle : %f"), Character->GetLocomotionState().InputYawAngle);*/
+		//Character->SetRotationInstant(StartMontageActorYaw, ETeleportType::None);
+	}
+	
 	bool bReplicatedEndAbility = true;
 	bool bWasCancelled = false;
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);	
@@ -134,4 +181,10 @@ void UBaseOverlayAbility::LaunchCharacterForward(const FGameplayAbilityActorInfo
 			Character->LaunchCharacter(Forward * Speed, true, true);
 		}
 	}
+}
+
+void UBaseOverlayAbility::OnMontageTick() const
+{
+	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
+		Character->ForceVelocityYawAngle(PreLocomotionState);
 }
