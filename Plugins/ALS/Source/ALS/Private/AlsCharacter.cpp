@@ -75,6 +75,11 @@ void AAlsCharacter::RemoveGameplayTagFromAsc(const FGameplayTag Tag) const
 	}
 }
 
+void AAlsCharacter::ForceVelocityYawAngle(const FAlsLocomotionState& NewLocomotionState)
+{
+	LocomotionState = NewLocomotionState;
+}
+
 AAlsCharacter::AAlsCharacter(const FObjectInitializer& ObjectInitializer) : Super{
 	ObjectInitializer.SetDefaultSubobjectClass<UAlsCharacterMovementComponent>(CharacterMovementComponentName)
 }
@@ -1637,7 +1642,7 @@ void AAlsCharacter::RefreshGroundedRotation(const float DeltaTime)
 
 	if (HasAnyRootMotion())
 	{
-		RefreshTargetYawAngleUsingActorRotation();
+		//RefreshTargetYawAngleUsingActorRotation();
 		return;
 	}
 
