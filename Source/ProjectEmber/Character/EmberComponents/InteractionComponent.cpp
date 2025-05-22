@@ -16,13 +16,9 @@ UInteractionComponent::UInteractionComponent()
 	GatherTrigger->InitBoxExtent(FVector(100.f));
 	GatherTrigger->SetCollisionProfileName(TEXT("Trigger"));
 	
-	PickupTrigger = CreateDefaultSubobject<UBoxComponent>(TEXT("PickupTrigger"));
-	PickupTrigger->InitBoxExtent(FVector(100.f));
-	PickupTrigger->SetCollisionProfileName(TEXT("Trigger"));
-
-	TalkTrigger = CreateDefaultSubobject<UBoxComponent>(TEXT("TalkTrigger"));
-	TalkTrigger->InitBoxExtent(FVector(100.f));
-	TalkTrigger->SetCollisionProfileName(TEXT("Trigger"));
+	OnInteractOverTrigger = CreateDefaultSubobject<UBoxComponent>(TEXT("OnInteractOverTrigger"));
+	OnInteractOverTrigger->InitBoxExtent(FVector(100.f));
+	OnInteractOverTrigger->SetCollisionProfileName(TEXT("Trigger"));
 }
 
 
@@ -46,7 +42,7 @@ void UInteractionComponent::OnRegister()
 	if (GetOwner()->GetRootComponent())
 	{
 		GatherTrigger->SetupAttachment(GetOwner()->GetRootComponent());
-		PickupTrigger->SetupAttachment(GetOwner()->GetRootComponent());
+		OnInteractOverTrigger->SetupAttachment(GetOwner()->GetRootComponent());
 	}
 
 	FVector GatherTriggerLocation(50.0f, 0.0f, 0.0f);
@@ -55,25 +51,18 @@ void UInteractionComponent::OnRegister()
 	GatherTrigger->SetGenerateOverlapEvents(true);
 	GatherTrigger->RegisterComponent();
 
-	PickupTrigger->SetRelativeLocation(FVector::ZeroVector);
-	PickupTrigger->SetCollisionResponseToAllChannels(ECR_Overlap);
-	PickupTrigger->SetGenerateOverlapEvents(true);
-	PickupTrigger->RegisterComponent();
-
-	TalkTrigger->SetupAttachment(GetOwner()->GetRootComponent());
-	TalkTrigger->SetRelativeLocation(FVector(100.f, 0.f, 0.f));
-	TalkTrigger->SetCollisionResponseToAllChannels(ECR_Overlap);
-	TalkTrigger->SetGenerateOverlapEvents(true);
-	TalkTrigger->RegisterComponent();
+	OnInteractOverTrigger->SetupAttachment(GetOwner()->GetRootComponent());
+	OnInteractOverTrigger->SetRelativeLocation(FVector(100.f, 0.f, 0.f));
+	OnInteractOverTrigger->SetCollisionResponseToAllChannels(ECR_Overlap);
+	OnInteractOverTrigger->SetGenerateOverlapEvents(true);
+	OnInteractOverTrigger->RegisterComponent();
 
 	GatherTrigger->OnComponentBeginOverlap.AddDynamic(this, &UInteractionComponent::OnGatherOverlapBegin);
 	GatherTrigger->OnComponentEndOverlap.AddDynamic(this, &UInteractionComponent::OnGatherOverlapEnd);
 
-	PickupTrigger->OnComponentBeginOverlap.AddDynamic(this, &UInteractionComponent::OnPickupOverlapBegin);
-	PickupTrigger->OnComponentEndOverlap.AddDynamic(this, &UInteractionComponent::OnPickupOverlapEnd);
+	OnInteractOverTrigger->OnComponentBeginOverlap.AddDynamic(this, &UInteractionComponent::OnInteractOverlapBegin);
+	OnInteractOverTrigger->OnComponentEndOverlap.AddDynamic(this, &UInteractionComponent::OnInteractOverlapEnd);
 
-	TalkTrigger->OnComponentBeginOverlap.AddDynamic(this, &UInteractionComponent::OnTalkOverlapBegin);
-	TalkTrigger->OnComponentEndOverlap.AddDynamic(this, &UInteractionComponent::OnTalkOverlapEnd);
 }
 
 void UInteractionComponent::OnUnregister()
@@ -83,11 +72,10 @@ void UInteractionComponent::OnUnregister()
 	GatherTrigger->OnComponentBeginOverlap.RemoveDynamic(this, &UInteractionComponent::OnGatherOverlapBegin);
 	GatherTrigger->OnComponentEndOverlap.RemoveDynamic(this, &UInteractionComponent::OnGatherOverlapEnd);
 	
-	PickupTrigger->OnComponentBeginOverlap.RemoveDynamic(this, &UInteractionComponent::OnPickupOverlapBegin);
-	PickupTrigger->OnComponentEndOverlap.RemoveDynamic(this, &UInteractionComponent::OnPickupOverlapEnd);
+	OnInteractOverTrigger->OnComponentBeginOverlap.RemoveDynamic(this, &UInteractionComponent::OnInteractOverlapBegin);
+	OnInteractOverTrigger->OnComponentEndOverlap.RemoveDynamic(this, &UInteractionComponent::OnInteractOverlapEnd);
 
-	TalkTrigger->OnComponentBeginOverlap.RemoveDynamic(this, &UInteractionComponent::OnTalkOverlapBegin);
-	TalkTrigger->OnComponentEndOverlap.RemoveDynamic(this, &UInteractionComponent::OnTalkOverlapEnd);	
+
 }
 
 void UInteractionComponent::OnGatherOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
@@ -112,59 +100,44 @@ void UInteractionComponent::OnGatherOverlapEnd(UPrimitiveComponent* OverlappedCo
 	}
 }
 
-void UInteractionComponent::OnPickupOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+void UInteractionComponent::OnInteractOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (ABasePickupActor* Actor = Cast<ABasePickupActor>(OtherActor))
+	if (!OtherActor || OtherActor == GetOwner()) return;
+
+	if (ABasePickupActor* PickupActor = Cast<ABasePickupActor>(OtherActor))
 	{
-		EMBER_LOG(LogTemp, Warning, TEXT("Pickup Event Activate"));
-		SetCurrentInteractable(Actor);
+		EMBER_LOG(LogTemp, Warning, TEXT("[OverlapBegin] PickupActor detected"));
+		SetCurrentInteractable(PickupActor);
+		return;
+	}
+	for (UActorComponent* Comp : OtherActor->GetComponents())
+	{
+		if (Comp->Implements<UInteractable>())
+		{
+			EMBER_LOG(LogTemp, Warning, TEXT("[OverlapBegin] Talk component detected"));
+			SetCurrentInteractable(Comp);
+			return;
+		}
 	}
 }
-
-void UInteractionComponent::OnPickupOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
+void UInteractionComponent::OnInteractOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (ABaseInteractableActor* Actor = Cast<ABaseInteractableActor>(OtherActor))
+	if (!OtherActor) return;
+	if (Cast<ABasePickupActor>(OtherActor))
 	{
-		if (ABasePickupActor* DetailActor = Cast<ABasePickupActor>(OtherActor))
+		EMBER_LOG(LogTemp, Warning, TEXT("[OverlapEnd] PickupActor exited"));
+		SetCurrentInteractable(nullptr);
+		return;
+	}
+	for (UActorComponent* Comp : OtherActor->GetComponents())
+	{
+		if (Comp->Implements<UInteractable>())
 		{
-			EMBER_LOG(LogTemp, Warning, TEXT("Pickup Event Deactivate"));
+			EMBER_LOG(LogTemp, Warning, TEXT("[OverlapEnd] Talk component exited"));
 			SetCurrentInteractable(nullptr);
-		}
-	}
-}
-
-void UInteractionComponent::OnTalkOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (OtherActor && OtherActor != GetOwner())
-	{
-		for (UActorComponent* Comp : OtherActor->GetComponents())
-		{
-			if (Comp->Implements<UInteractable>())
-			{
-				EMBER_LOG(LogTemp, Warning, TEXT("TaklOver Event Activate"));
-				SetCurrentInteractable(Comp);
-				return;
-			}
-		}
-	}
-}
-
-void UInteractionComponent::OnTalkOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	if (OtherActor)
-	{
-		for (UActorComponent* Comp : OtherActor->GetComponents())
-		{
-			if (Comp->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
-			{
-				EMBER_LOG(LogTemp, Warning, TEXT("TaklOver Event Deactivate"));
-				SetCurrentInteractable(nullptr);
-				return;
-			}
+			return;
 		}
 	}
 }
@@ -236,7 +209,7 @@ void UInteractionComponent::Interact()
 	if (GatherTime <= 0.0f)
 	{
 		IInteractable::Execute_Interact(RawObj, GetOwner());
-		PickupTrigger->UpdateOverlaps();
+		OnInteractOverTrigger->UpdateOverlaps();
 	}
 	else
 	{
@@ -290,8 +263,8 @@ void UInteractionComponent::StopGather()
 	bIsLocked = false;
 	SetCurrentInteractable(nullptr);
 	
-	PickupTrigger->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	PickupTrigger->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	OnInteractOverTrigger->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	OnInteractOverTrigger->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
 	GatherTrigger->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GatherTrigger->SetCollisionEnabled(ECollisionEnabled::QueryOnly);

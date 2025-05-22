@@ -4,6 +4,9 @@
 #include "EnhancedInputComponent.h"
 #include "AI_NPC/DialogueComponent.h"
 #include "Character/EmberComponents/InteractionComponent.h"
+#include "UI/BaseWidget/GameMenuWidget.h"
+#include "UI/HUD/EmberMainHUD.h"
+#include "UI/Layer/EmberLayerBase.h"
 
 UEmberInputHandlerComponent::UEmberInputHandlerComponent()
 {
@@ -16,7 +19,7 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
     {
         return;
     }
-
+    InputComp = InputComponent;
     AEmberCharacter* Character = Cast<AEmberCharacter>(GetOwner());
     if (Character)
     {
@@ -56,11 +59,7 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
         {
             InputComponent->BindAction(InteractAction, ETriggerEvent::Started, Comp, &UInteractionComponent::Interact);
             InputComponent->BindAction(InteractAction, ETriggerEvent::Completed, Comp, &UInteractionComponent::StopGather);
-        }
-
-        if (IsValid(NextDialogueAction) && Comp)
-        {
-            InputComponent->BindAction(NextDialogueAction, ETriggerEvent::Started, Comp, &UInteractionComponent::TriggerAdvanceDialogue);
+            InputComponent->BindAction(InteractAction, ETriggerEvent::Started, Comp, &UInteractionComponent::TriggerAdvanceDialogue);
         }
     }
 
@@ -74,6 +73,8 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
     }
     // Ability input
     InputComponent->BindAction(AttackAction, ETriggerEvent::Started, Character, &AEmberCharacter::AbilityInputPressed, 0);
+
+
 }
 
 void UEmberInputHandlerComponent::RegisterMapping(APlayerController* PC, int32 Priority, const FModifyContextOptions& Options)
@@ -93,5 +94,17 @@ void UEmberInputHandlerComponent::UnregisterMapping(APlayerController* PC)
     {
         Subsystem->RemoveMappingContext(InputMappingContext);
         Subsystem->RemoveMappingContext(UIInputMappingContext);
+    }
+}
+
+void UEmberInputHandlerComponent::BindUIInput(UGameMenuWidget* Layer)
+{
+    /* 임시 결국 옮겨야됨
+     */
+    AEmberCharacter* Character = Cast<AEmberCharacter>(GetOwner());
+    if (APlayerController* PlayerController = Cast<APlayerController>(Character->GetController()))
+    {
+        InputComp->BindAction(UIInventoryAction, ETriggerEvent::Started, Layer, &UGameMenuWidget::Input_ToggleInventory);
+        InputComp->BindAction(UIQuestAction, ETriggerEvent::Started, Layer, &UGameMenuWidget::Input_ToggleQuest);
     }
 }

@@ -311,6 +311,11 @@ void AEmberCharacter::SetupEmberInputComponent() const
     }
 }
 
+void AEmberCharacter::BindUIInput(UGameMenuWidget* Layer)
+{
+    InputHandler->BindUIInput(Layer);
+}
+
 void AEmberCharacter::Input_OnLookMouse(const FInputActionValue& ActionValue)
 {
     const FVector2f Value{ActionValue.Get<FVector2D>()};
