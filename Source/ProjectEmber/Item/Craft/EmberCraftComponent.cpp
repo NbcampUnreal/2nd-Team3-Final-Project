@@ -28,8 +28,9 @@ FItemPair UEmberCraftComponent::CraftItem(const FName& InItemID)
 {
 	if (const FCraftInfoRow* CraftInfoRow = CraftDataTable->FindRow<FCraftInfoRow>(InItemID, TEXT("CraftInfo")))
 	{
-		if (IEmberResourceProvider::Execute_bTryConsumeResource(ResourceProvider.GetObject(), CraftInfoRow->RequiredItem))
+		if (IEmberResourceProvider::Execute_bConsumeAbleResource(ResourceProvider.GetObject(), CraftInfoRow->RequiredItem))
 		{
+			IEmberResourceProvider::Execute_TryConsumeResource(ResourceProvider.GetObject(), CraftInfoRow->RequiredItem);
 			return CraftInfoRow->ResultItem;
 		}
 	}
