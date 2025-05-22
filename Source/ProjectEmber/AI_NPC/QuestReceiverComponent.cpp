@@ -126,18 +126,21 @@ const TArray<FQuestStorageInfo>& UQuestReceiverComponent::GetQuestLog() const
 {
     return QuestLog;
 }
-void UQuestReceiverComponent::NotifyTalkObjectiveCompleted(FName ObjectiveName)
+void UQuestReceiverComponent::NotifyTalkObjectiveCompleted(AActor* TalkedNPC)
 {
-    FString ObjectiveNameStr = ObjectiveName.ToString();
+    if (!TalkedNPC) return;
 
     for (int32 i = 0; i < QuestLog.Num(); ++i)
     {
         FQuestStorageInfo& Quest = QuestLog[i];
+
         for (int32 j = 0; j < Quest.ObjectiveNames.Num(); ++j)
         {
-            if (Quest.ObjectiveNames[j] == ObjectiveNameStr)
+            FName RequiredTag(*Quest.ObjectiveNames[j]);
+
+            if (TalkedNPC->ActorHasTag(RequiredTag))
             {
-                Quest.ObjectiveProgress[j] = FMath::Clamp(Quest.ObjectiveProgress[j] + 1, 0, 1);
+                Quest.ObjectiveProgress[j] = FMath::Clamp(Quest.ObjectiveProgress[j] + 1, 0, Quest.ObjectiveGoals.IsValidIndex(j) ? Quest.ObjectiveGoals[j] : 1);
                 OnQuestUpdated.Broadcast(Quest);
                 return;
             }
