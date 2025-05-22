@@ -74,4 +74,6 @@ namespace AlsInputActionTags
 	UE_DEFINE_GAMEPLAY_TAG(LockJumping, FName{TEXTVIEW("Character.State.LockJumping")})
 	UE_DEFINE_GAMEPLAY_TAG(LockRolling, FName{TEXTVIEW("Character.State.LockRolling")})
 	UE_DEFINE_GAMEPLAY_TAG(OverlayAction, FName{TEXTVIEW("Character.State.OverlayAction")})
+	UE_DEFINE_GAMEPLAY_TAG(LockMoveInput, FName{TEXTVIEW("Character.State.LockMoveInput")})
 }
+
