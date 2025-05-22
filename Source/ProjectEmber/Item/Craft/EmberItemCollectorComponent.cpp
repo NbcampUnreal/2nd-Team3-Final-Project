@@ -3,7 +3,7 @@
 
 #include "EmberItemCollectorComponent.h"
 
-#include "MovieSceneTracksComponentTypes.h"
+#include "EmberCraftComponent.h"
 #include "Components/BoxComponent.h"
 
 
@@ -53,7 +53,6 @@ void UEmberItemCollectorComponent::FindOverlappingResourceComponent()
 
 	CollectRangeBox->GetOverlappingActors(OverlappingActors);
 
-	UE_LOG(LogTemp, Display, TEXT("OverlappingActors %d"), OverlappingActors.Num());
 	ResourceProviders.Empty();
 	for (TObjectPtr<AActor> Actor : OverlappingActors)
 	{
@@ -61,6 +60,7 @@ void UEmberItemCollectorComponent::FindOverlappingResourceComponent()
 		{
 			for (TObjectPtr<UActorComponent> Component : Actor->GetComponentsByInterface(UEmberResourceProvider::StaticClass()))
 			{
+				if (!Component.IsA(UEmberCraftComponent::StaticClass()))
 				ResourceProviders.Add(Component);
 			}
 		}
@@ -90,11 +90,8 @@ TMap<FName, int32> UEmberItemCollectorComponent::GetAllItemInfos_Implementation(
 		if (ResourceProvider.Get())
 		{
 			TMap<FName, int32> ProviderItems = IEmberResourceProvider::Execute_GetAllItemInfos(ResourceProvider.Get());
-			UE_LOG(LogTemp, Display, TEXT("All Item Infos %d"), ProviderItems.Num());
 			for (const auto& Item : ProviderItems)
 			{
-				UE_LOG(LogTemp, Display, TEXT("All Item Infos %s, %d"),*Item.Key.ToString(), Item.Value);
-
 				if (int32* ItemPtr = AllItemInfos.Find(Item.Key))
 				{
 					*ItemPtr += Item.Value;
