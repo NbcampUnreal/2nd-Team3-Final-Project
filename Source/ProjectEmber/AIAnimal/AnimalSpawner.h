@@ -35,10 +35,13 @@ struct FAnimalSpawnInfo
 	// 팔로워 수는 TotalCount - LeaderCount - PatrolCount
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSet<TSoftObjectPtr<ABaseAIAnimal>> SpawnAnimals;
+	TSet<TSoftObjectPtr<ABaseAIAnimal>> SpawnAnimals; 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSet<TSoftObjectPtr<ABaseAIAnimal>> HiddenAnimals;
+	//HiddenAnimals는 특정 하나를 키로 삼아 꺼내는 용도가 아니라,
+	//동물 객체가 이 집합에 포함되어 있는지만 빠르게 검사하면 되기 때문에,
+	//중복 없이 빠른 검색/삽입/삭제가 가능한 TSet을 사용했습니다, 삽입삭제O(1)
 };
 
 UCLASS()

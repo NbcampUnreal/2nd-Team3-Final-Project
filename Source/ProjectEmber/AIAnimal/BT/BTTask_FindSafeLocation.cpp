@@ -34,27 +34,19 @@ EBTNodeResult::Type UBTTask_FindSafeLocation::ExecuteTask(UBehaviorTreeComponent
 	}
 	
 	FVector ActorLocation = AIPawn->GetActorLocation();
-	//const EAnimalAIState State = static_cast<EAnimalAIState>(BlackboardComp->GetValueAsEnum("CurrentState"));
-	const float WanderRange = BlackboardComp->GetValueAsFloat("WanderRange");
 	
-	//여기 더 자연스럽게 수정하기
-	{
-		//FRotator Rotator = AIPawn->GetActorRotation();
-		//Rotator.Yaw *= -1.0f;
-		//AIPawn->SetActorRotation(Rotator);
-		
-		UObject* TargetObject = BlackboardComp->GetValueAsObject("TargetActor");
-		AActor* TargetActor = Cast<AActor>(TargetObject);
-		FVector TargetActorLocation = TargetActor->GetActorLocation();
-		
-		ActorLocation = GenerateRandomLocation(TargetActorLocation, ActorLocation);
-	}
+	const float WanderRange = BlackboardComp->GetValueAsFloat("WanderRange"); //임시수정 -> 이동 가능 범위, 무리 구역 범위, 인식 범위 실제 월드에 배치해보고 디테일하게 정해서 수정해야함
+	
+	UObject* TargetObject = BlackboardComp->GetValueAsObject("TargetActor");
+	AActor* TargetActor = Cast<AActor>(TargetObject);
+	FVector TargetActorLocation = TargetActor->GetActorLocation();
+	
+	ActorLocation = GenerateRandomLocation(TargetActorLocation, ActorLocation);
+	
 	
 	if (BlackboardComp)
 	{
 		BlackboardComp->SetValueAsVector("SafeLocation", ActorLocation);
-		//BlackboardComp->SetValueAsEnum("CurrentState", static_cast<uint8>(EAnimalAIState::Warning));
-		//UE_LOG(LogTemp, Warning, TEXT("UBTTask_FindSafeLocation::SafeLocation 업데이트 성공. %f, %f, %f"), ActorLocation.X, ActorLocation.Y, ActorLocation.Z );
 	}
 	return Super::ExecuteTask(OwnerComp, NodeMemory);
 }
@@ -64,7 +56,7 @@ FVector UBTTask_FindSafeLocation::GenerateRandomLocation(const FVector& TargetAc
 
 	FVector DirToThreat = (TargetActorLocation - ActorLocation).GetSafeNormal() * -1.0f; // 타겟 반대로 향하는방향
 	FVector RightVector = FVector::CrossProduct(DirToThreat, FVector::UpVector);
-	FVector Offset = RightVector * FMath::RandRange(-150.f, 150.f) + DirToThreat * FMath::RandRange(1000.f, 3000.f); // 좌우랜덤, 거리랜덤
+	FVector Offset = RightVector * FMath::RandRange(-150.f, 150.f) + DirToThreat * FMath::RandRange(1000.f, 3000.f); // 좌우랜덤, 거리랜덤, 임시수정
 	
 	return ActorLocation + Offset;
 }
