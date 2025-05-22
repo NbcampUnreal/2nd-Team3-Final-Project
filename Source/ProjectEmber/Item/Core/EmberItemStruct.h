@@ -134,18 +134,5 @@ struct FItemPair
 };
 
 
-USTRUCT(BlueprintType)
-struct FCraftInfoRow : public FTableRowBase
-{
-    GENERATED_BODY()
- 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment Component")
-    FItemPair ResultItem;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment Component")
-    TArray<FItemPair> RequiredItem;
-
-};
-
 
 

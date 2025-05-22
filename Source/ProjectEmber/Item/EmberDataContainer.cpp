@@ -571,8 +571,6 @@ TMap<FName, int32> UEmberDataContainer::GetAllItemInfos_Implementation()
     for (auto& TotalItemInfo : TotalData)
     {
         Items.FindOrAdd(TotalItemInfo.Key) += TotalItemInfo.Value.TotalQuantity;
-        UE_LOG(LogTemp, Display, TEXT("All Item Infos2 %d"), TotalItemInfo.Value.TotalQuantity);
-
     }
     return Items;
 }
