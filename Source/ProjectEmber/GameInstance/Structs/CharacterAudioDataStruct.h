@@ -10,8 +10,6 @@ struct PROJECTEMBER_API FCharacterAudioDataStruct : public FTableRowBase
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	ECharacterSoundType CharacterSoundType = ECharacterSoundType::None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSoftObjectPtr<USoundBase> Sound = nullptr;
