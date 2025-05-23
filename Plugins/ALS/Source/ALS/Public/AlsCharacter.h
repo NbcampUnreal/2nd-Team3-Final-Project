@@ -37,6 +37,8 @@ public:/* My Custom Function & Variable */
 
 	UFUNCTION(BlueprintCallable, Category="ALS|Tags")
 	void RemoveGameplayTagFromAsc(const FGameplayTag Tag) const;
+
+	void ForceVelocityYawAngle(const FAlsLocomotionState& NewLocomotionState);
 	
 private:
 	TObjectPtr<UAbilitySystemComponent> AscInstance;
@@ -475,9 +477,9 @@ protected:
 	void SetRotationSmooth(float TargetYawAngle, float DeltaTime, float InterpolationSpeed);
 
 	void SetRotationExtraSmooth(float TargetYawAngle, float DeltaTime, float InterpolationSpeed, float TargetYawAngleRotationSpeed);
-
+public: // Test
 	void SetRotationInstant(float TargetYawAngle, ETeleportType Teleport = ETeleportType::None);
-
+protected:
 	void RefreshTargetYawAngleUsingActorRotation();
 
 	void SetTargetYawAngle(float TargetYawAngle);

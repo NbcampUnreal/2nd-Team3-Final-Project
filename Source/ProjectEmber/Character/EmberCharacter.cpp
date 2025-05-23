@@ -172,7 +172,7 @@ void AEmberCharacter::AbilityInputPressed(int32 InputID)
         }
     }
 
-    /* 콤보 공격을 이어주기 위함 기존 Input Ability 들은 인식되지만
+    /* 콤보 공격을 이어주기 위함. 기존 Input Ability 들은 인식되지만
      * 콤보 공격은 Input으로 이어지는게 아니다 보니 찾아서 호출시켜줘야됨
      */
     if (bActive == false)
