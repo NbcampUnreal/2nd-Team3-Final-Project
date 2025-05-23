@@ -13,9 +13,12 @@ void UDragSlotImage::InitImage(const UImage* InImage) const
 	{
 		SlotImage->SetBrush(InImage->GetBrush());
 
-		FDeprecateSlateVector2D SlotImageSize = InImage->GetCachedGeometry().GetLocalSize();
-		SlotSizeBox->SetWidthOverride(SlotImageSize.X);
-		SlotSizeBox->SetHeightOverride(SlotImageSize.Y);
+		FDeprecateSlateVector2D SlotImageSize = InImage->GetCachedGeometry().ToPaintGeometry().GetLocalSize();
+		float Scale = InImage->GetCachedGeometry().GetAccumulatedLayoutTransform().GetScale();
+		FVector2f FinalSize = SlotImageSize * Scale;
+		SlotSizeBox->SetWidthOverride(FinalSize.X);
+		SlotSizeBox->SetHeightOverride(FinalSize.Y);
+
 	}
 }
 
