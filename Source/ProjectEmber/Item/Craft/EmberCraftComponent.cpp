@@ -3,10 +3,8 @@
 
 #include "EmberCraftComponent.h"
 
-#include "GameFramework/Character.h"
 #include "Item/UserItemManger.h"
-#include "Kismet/KismetStringLibrary.h"
-#include "Kismet/KismetSystemLibrary.h"
+#include "Item/Core/ItemCraftType.h"
 
 
 // Sets default values for this component's properties
@@ -15,39 +13,36 @@ UEmberCraftComponent::UEmberCraftComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
-
 	// ...
-}
-
-void UEmberCraftComponent::InitResourceProvider(const TScriptInterface<IEmberResourceProvider> InResourceProvider)
-{
-	ResourceProvider = InResourceProvider;
 }
 
 FItemPair UEmberCraftComponent::CraftItem(const FName& InItemID)
 {
+	FItemPair ReturnItem;
 	if (const FCraftInfoRow* CraftInfoRow = CraftDataTable->FindRow<FCraftInfoRow>(InItemID, TEXT("CraftInfo")))
 	{
-		if (IEmberResourceProvider::Execute_bTryConsumeResource(ResourceProvider.GetObject(), CraftInfoRow->RequiredItem))
+		TArray<FItemPair> RequireItems;
+		FItemPair RequestItem;
+
+		if (!CraftInfoRow->RequestItem.ItemData.IsNull())
 		{
-			return CraftInfoRow->ResultItem;
+			RequestItem = FItemPair(CraftInfoRow->RequestItem.ItemData.RowName, CraftInfoRow->RequestItem.Quantity);
+		}
+		for (const FCraftPair& RequireItem : CraftInfoRow->RequireItems)
+		{
+			if (!RequireItem.ItemData.IsNull())
+			{
+				RequireItems.Add(FItemPair(RequireItem.ItemData.RowName, RequireItem.Quantity));
+			}
+		}
+		
+		if (IEmberResourceProvider::Execute_bConsumeAbleResource(this, RequireItems))
+		{
+			IEmberResourceProvider::Execute_TryConsumeResource(this, RequireItems);
+			ReturnItem = RequestItem;
 		}
 	}
 	
-	return FItemPair();
-}
-
-
-// Called when the game starts
-void UEmberCraftComponent::BeginPlay()
-{
-	Super::BeginPlay();
-
-	if (TObjectPtr<UUserItemManger> ItemManager = GetWorld()->GetFirstPlayerController()->GetCharacter()->GetComponentByClass<UUserItemManger>())
-	{
-		InitResourceProvider(ItemManager);
-	}
-	// ...
-	
+	return ReturnItem;
 }
 
