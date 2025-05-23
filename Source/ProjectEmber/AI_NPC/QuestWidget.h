@@ -4,14 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "QuestDataRow.h"
 #include "QuestWidget.generated.h"
 
 
 class UButton;
 class UDataTable;
+class UTextBlock;
 
-DECLARE_DELEGATE(FOnQuestAccepted)
-DECLARE_DELEGATE(FOnQuestRefused)
+DECLARE_DELEGATE(FOnQuestAccepted);
+DECLARE_DELEGATE(FOnQuestRefused);
+DECLARE_DELEGATE(FOnQuestCompleted);
 
 UCLASS()
 class PROJECTEMBER_API UQuestWidget : public UUserWidget
@@ -19,25 +22,39 @@ class PROJECTEMBER_API UQuestWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-    UPROPERTY(meta = (BindWidget))
-    UButton* AcceptButton;
+    virtual void NativeConstruct() override;
+    void SetQuestInfoFromDataRow(const FQuestDataRow& Data);
 
-    UPROPERTY(meta = (BindWidget))
-    UButton* RefuseButton;
-
-    // 외부에서 설정해줄 퀘스트 데이터
-    UPROPERTY(BlueprintReadWrite, EditAnywhere)
-    UDataTable* QuestDataTable;
-
-    UPROPERTY(BlueprintReadWrite, EditAnywhere)
-    FName QuestRowName;
-
-    // 델리게이트 바인딩
     FOnQuestAccepted OnQuestAccepted;
     FOnQuestRefused OnQuestRefused;
+    FOnQuestCompleted OnQuestCompleted;
 
-protected:
-    virtual void NativeConstruct() override;
+    UPROPERTY(meta = (BindWidgetOptional))
+    class UButton* AcceptButton;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    class UButton* RefuseButton;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    class UButton* CompleteButton;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    class UTextBlock* QuestNameText;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    class UTextBlock* QuestDescriptionText;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    class UTextBlock* LocationText;
+
+    UPROPERTY(meta = (BindWidgetOptional))
+    class UTextBlock* RewardText;
+
+    UPROPERTY(BlueprintReadWrite, Category = "Quest")
+    UDataTable* QuestDataTable;
+
+    UPROPERTY(BlueprintReadWrite, Category = "Quest")
+    FName QuestRowName;
 
 private:
     UFUNCTION()
@@ -45,4 +62,7 @@ private:
 
     UFUNCTION()
     void HandleRefuseClicked();
+
+    UFUNCTION()
+    void HandleCompleteClicked();
 };

@@ -172,7 +172,7 @@ void AEmberCharacter::AbilityInputPressed(int32 InputID)
         }
     }
 
-    /* 콤보 공격을 이어주기 위함 기존 Input Ability 들은 인식되지만
+    /* 콤보 공격을 이어주기 위함. 기존 Input Ability 들은 인식되지만
      * 콤보 공격은 Input으로 이어지는게 아니다 보니 찾아서 호출시켜줘야됨
      */
     if (bActive == false)
@@ -311,6 +311,11 @@ void AEmberCharacter::SetupEmberInputComponent() const
     }
 }
 
+void AEmberCharacter::BindUIInput(UGameMenuWidget* Layer)
+{
+    InputHandler->BindUIInput(Layer);
+}
+
 void AEmberCharacter::Input_OnLookMouse(const FInputActionValue& ActionValue)
 {
     const FVector2f Value{ActionValue.Get<FVector2D>()};
@@ -327,7 +332,8 @@ void AEmberCharacter::Input_OnLook(const FInputActionValue& ActionValue)
 
 void AEmberCharacter::Input_OnMove(const FInputActionValue& ActionValue)
 {
-    if (UUIFunctionLibrary::GetIsGameMovementInputLock(Cast<APlayerController>(GetController())))
+    if (AbilitySystemComponent->HasMatchingGameplayTag(AlsInputActionTags::LockMoveInput) ||
+        UUIFunctionLibrary::GetIsGameMovementInputLock(Cast<APlayerController>(GetController())))
     {
         return;
     }
