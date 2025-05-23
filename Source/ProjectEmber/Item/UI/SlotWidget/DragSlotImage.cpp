@@ -18,3 +18,4 @@ void UDragSlotImage::InitImage(const UImage* InImage) const
 		SlotSizeBox->SetHeightOverride(SlotImageSize.Y);
 	}
 }
+
