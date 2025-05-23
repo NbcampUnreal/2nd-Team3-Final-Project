@@ -10,10 +10,18 @@
 
 UEmberEquipmentManager::UEmberEquipmentManager()
 {
-	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Head);
-	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Body);
-	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Arm);
-	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Leg);
+	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Helmet);
+	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Necklace);
+	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Chest);
+	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Legs);
+	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Boots);
+	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Weapon);
+	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Cape);
+	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Bracelet);
+	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Gloves);
+	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Belt);
+	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Ring);
+	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Shield);
 }
 
 int32 UEmberEquipmentManager::GetSlotCount_Implementation() const

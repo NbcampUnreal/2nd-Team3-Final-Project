@@ -332,7 +332,8 @@ void AEmberCharacter::Input_OnLook(const FInputActionValue& ActionValue)
 
 void AEmberCharacter::Input_OnMove(const FInputActionValue& ActionValue)
 {
-    if (UUIFunctionLibrary::GetIsGameMovementInputLock(Cast<APlayerController>(GetController())))
+    if (AbilitySystemComponent->HasMatchingGameplayTag(AlsInputActionTags::LockMoveInput) ||
+        UUIFunctionLibrary::GetIsGameMovementInputLock(Cast<APlayerController>(GetController())))
     {
         return;
     }

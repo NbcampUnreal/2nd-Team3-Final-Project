@@ -140,32 +140,102 @@ UEmberDropItemManager* UUserItemManger::GetEmberDropItemManager()
 {
 	return DropItemManager;
 }
-
-TArray<FItemPair> UUserItemManger::GetItems_Implementation()
+TMap<FName, int32> UUserItemManger::GetAllItemInfos_Implementation()
 {
-	TArray<FItemPair> Items;
-	for (const FInstancedStruct& SlotInstance : InventoryManager->GetInventorySlots())
-	{
-		if (const FEmberSlotData* SlotData = SlotInstance.GetPtr<FEmberSlotData>())
-		{
-			if (!SlotData->bIsEmpty())
-			{
-				FItemPair Item;
-		
-				Item.ItemID = SlotData->ItemID;
-				Item.Quantity = SlotData->Quantity;
+	TMap<FName, int32> Items;
 
-				Items.Add(Item);
+	if (InventoryManager)
+	{
+		Items = IEmberResourceProvider::Execute_GetAllItemInfos(InventoryManager);
+	}
+	if (QuickSlotManager)
+	{
+		TMap<FName, int32> ProviderItems = IEmberResourceProvider::Execute_GetAllItemInfos(QuickSlotManager);
+		for (auto& ProviderItem : ProviderItems)
+		{
+			if (int32* ItemQuantity = Items.Find(ProviderItem.Key))
+			{
+				*ItemQuantity += ProviderItem.Value;
+			}
+			else
+			{
+				Items.Emplace(ProviderItem.Key, ProviderItem.Value);
 			}
 		}
 	}
-
+	if (EquipmentManager)
+	{
+		TMap<FName, int32> ProviderItems = EquipmentManager->IEmberResourceProvider::Execute_GetAllItemInfos(EquipmentManager);
+		for (auto& ProviderItem : ProviderItems)
+		{
+			if (int32* ItemQuantity = Items.Find(ProviderItem.Key))
+			{
+				*ItemQuantity += ProviderItem.Value;
+			}
+			else
+			{
+				Items.Emplace(ProviderItem.Key, ProviderItem.Value);
+			}
+		}
+	}
 	return Items;
 }
 
-bool UUserItemManger::bTryConsumeResource_Implementation(const TArray<FItemPair>& RequireItems)
+void UUserItemManger::TryConsumeResource_Implementation(const TArray<FItemPair>& InRequireItems)
 {
+
+	if (bConsumeAbleResource_Implementation(InRequireItems))
+	{
+		TArray<FItemPair> RequireItems = InRequireItems;
+		if (InventoryManager)
+		{
+			RequireItems = InventoryManager->RemoveResourceUntilAble(RequireItems);
+		}
+		if (QuickSlotManager)
+		{
+			RequireItems = QuickSlotManager->RemoveResourceUntilAble(RequireItems);
+		}
+		if (EquipmentManager)
+		{
+			RequireItems = EquipmentManager->RemoveResourceUntilAble(RequireItems);
+		}
+	}
+}
+
+bool UUserItemManger::bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems)
+{
+	TMap<FName, int32> Items = GetAllItemInfos();
+	for (const FItemPair& RequireItem : InRequireItems)
+	{
+		if (RequireItem.ItemID.IsValid() && RequireItem.Quantity > 0)
+		{
+			int32* HasQuantity = Items.Find(RequireItem.ItemID);
+			if (!HasQuantity || *HasQuantity < RequireItem.Quantity)
+			{
+				return false;
+			}
+		}
+	}
+    
 	return true;
+}
+
+TArray<FItemPair> UUserItemManger::RemoveResourceUntilAble_Implementation(const TArray<FItemPair>& InRequireItems)
+{
+	TArray<FItemPair> RequireItems = InRequireItems;
+	if (InventoryManager)
+	{
+		RequireItems = IEmberResourceProvider::Execute_RemoveResourceUntilAble(InventoryManager, RequireItems);
+	}
+	if (QuickSlotManager)
+	{
+		RequireItems = IEmberResourceProvider::Execute_RemoveResourceUntilAble(QuickSlotManager, RequireItems);
+	}
+	if (EquipmentManager)
+	{
+		RequireItems = IEmberResourceProvider::Execute_RemoveResourceUntilAble(EquipmentManager, RequireItems);
+	}
+	return RequireItems;
 }
 
 FName UUserItemManger::SelectQuickSlot(const int32 InIndex) const

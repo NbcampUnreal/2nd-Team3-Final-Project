@@ -21,7 +21,6 @@ const FName AAIAnimalController::TargetLocation = "TargetLocation";
 const FName AAIAnimalController::FleeRange = "FleeRange";
 const FName AAIAnimalController::WanderRange = "WanderRange"; 
 const FName AAIAnimalController::SafeLocation = "SafeLocation"; 
-const FName AAIAnimalController::IsRest = "IsRest";
 const FName AAIAnimalController::IsHit = "IsHit";
 
 AAIAnimalController::AAIAnimalController()
@@ -35,13 +34,13 @@ AAIAnimalController::AAIAnimalController()
     SightConfig->PeripheralVisionAngleDegrees = 120.0f;
     SightConfig->SetMaxAge(3.0f);
     SightConfig->DetectionByAffiliation.bDetectEnemies = true;
-    SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
-    SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+    SightConfig->DetectionByAffiliation.bDetectFriendlies = false;
+    SightConfig->DetectionByAffiliation.bDetectNeutrals = false;
     
     HearingConfig->HearingRange = 1000.0f;
     HearingConfig->SetMaxAge(3.0f);
     HearingConfig->DetectionByAffiliation.bDetectEnemies = true;
-    HearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
+    HearingConfig->DetectionByAffiliation.bDetectFriendlies = false;
     HearingConfig->DetectionByAffiliation.bDetectNeutrals = false;
 
     PerceptionComp->ConfigureSense(*SightConfig);
@@ -74,12 +73,10 @@ void AAIAnimalController::BeginPlay()
 
 void AAIAnimalController::InitBlackboard()
 {
+    GetBlackboardComponent()->SetValueAsName("NStateTag", "Animal.State.Idle");
     GetBlackboardComponent()->SetValueAsBool("NIsNeedToGeneratePP", true);
-    GetBlackboardComponent()->SetValueAsBool("IsRest", true);
     GetBlackboardComponent()->SetValueAsFloat("SleepTime", fSleepTime);
     GetBlackboardComponent()->SetValueAsBool("IsShouldSleep",bIsShouldSleep);
-    GetBlackboardComponent()->SetValueAsEnum("CurrentState",
-                                            static_cast<uint8>(Cast<ABaseAIAnimal>(GetPawn())->GetCurrentState()) );
     GetBlackboardComponent()->SetValueAsEnum("Personality",
                                             static_cast<uint8>(Cast<ABaseAIAnimal>(GetPawn())->GetPersonality()) );
     GetBlackboardComponent()->SetValueAsFloat("WanderRange",500.0f);
@@ -87,6 +84,14 @@ void AAIAnimalController::InitBlackboard()
 
 void AAIAnimalController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
+    if (BlackboardComponent) //임시수정
+    {
+        FName State = BlackboardComponent->GetValueAsName("NStateTag");
+        if (State == "Animal.State.Attack")
+        {
+            return;
+        }
+    }
     //시각 청각적으로 감지됐을 때 -> 뒤에서 접근하면 감지 못하는 문제 있을 듯 ,근데 동물은 그게 맞아
     FindTargetPlayer(Actor, Stimulus);
     FindTargetAnimal(Actor, Stimulus);
@@ -109,18 +114,6 @@ void AAIAnimalController::FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus)
             BlackboardComponent->SetValueAsName("NEnemyTag", "Player");
             BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Warning");
             BlackboardComponent->SetValueAsObject("TargetActor", Actor);
-
-            // if (const IGameplayTagAssetInterface* AITagInterface = Cast<IGameplayTagAssetInterface>(GetPawn()))
-            // {
-            //     FGameplayTagContainer AITagContainer;
-            //     AITagInterface->GetOwnedGameplayTags(AITagContainer);
-            //
-            //     if (AITagContainer.HasTag(FGameplayTag::RequestGameplayTag("Animal.Group.Leader")) || AITagContainer.HasTag(FGameplayTag::RequestGameplayTag("Animal.Group.Patrol")))
-            //     {
-            //         SetFocus(Actor,EAIFocusPriority::Gameplay);
-            //         GetWorldTimerManager().SetTimer(FocusTimerHandle, this, &AAIAnimalController::TimeOutClearFocus, 3.0f, false, 0.f);
-            //     }
-            // }
         }
     }
 }
@@ -136,19 +129,7 @@ void AAIAnimalController::FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus)
             const UAbilitySystemComponent* SourceAsc = Cast<ABaseAIAnimal>(GetPawn())->GetAbilitySystemComponent();
             const UEmberAnimalAttributeSet* TargetAttribute = TargetAsc->GetSet<UEmberAnimalAttributeSet>();
             const UEmberAnimalAttributeSet* SourceAttribute = SourceAsc->GetSet<UEmberAnimalAttributeSet>();
-            
-        // if (const IGameplayTagAssetInterface* AITagInterface = Cast<IGameplayTagAssetInterface>(GetPawn()))
-        // {
-        //     FGameplayTagContainer AITagContainer;
-        //     AITagInterface->GetOwnedGameplayTags(AITagContainer);
-        //
-        //     if (AITagContainer.HasTag(FGameplayTag::RequestGameplayTag("Animal.Group.Leader")) || AITagContainer.HasTag(FGameplayTag::RequestGameplayTag("Animal.Group.Patrol")))
-        //     {
-        //         SetFocus(Actor,EAIFocusPriority::Gameplay);
-        //         GetWorldTimerManager().SetTimer(FocusTimerHandle, this, &AAIAnimalController::TimeOutClearFocus, 3.0f, false, 0.f);
-        //     }
-        // }
-            
+
             //파워 우선순위 판단
             const float PawnWildPower = SourceAttribute->GetWildPower();
             const float TargetWildPower = TargetAttribute->GetWildPower();
@@ -165,7 +146,6 @@ void AAIAnimalController::FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus)
             {
                 BlackboardComponent->SetValueAsName("NEnemyTag", "Animal");
                 //여기서 인식되면 타겟, 거리 등록
-                //BlackboardComponent->SetValueAsBool("IsRest", false);
                 BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Warning");
                 BlackboardComponent->SetValueAsObject("TargetActor", Actor);
             }
@@ -186,21 +166,3 @@ void AAIAnimalController::SenseInteractionWithUI(const FAIStimulus& Stimulus)
         //청각적으로 알아챈 ui를 넣는다던가
     }
 }
-
-void AAIAnimalController::TimeOutClearFocus()
-{
-    ClearFocus(EAIFocusPriority::Gameplay);
-    BlackboardComponent->SetValueAsObject("TargetActor", nullptr);
-    BlackboardComponent->SetValueAsName("NEnemyTag", "None");
-    BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
-}
-
-/*
- *타겟엑터 & 박스 콜라이더 -> 안에 동물이나 플레이어있으면 스폰불가, 다른 타겟엑터 탐색
- *스포너 : 사라질때 이벤트바인딩, 한번 만들고 지우지 않고 비져블 설정만 
- *Tarray<TSubObject<베이스애니멀>> -> 에서 해당 볼륨에 서 스폰할 동물 들  등록
- *구조체 -> 스폰할 동물, 총 몇마리, 리더 몇마리, 경비원 몇마리, 팔로워는 나머지
- *
- *
- * 
- */
