@@ -17,4 +17,7 @@ public:
 	virtual void BP_CreateSlots_Implementation() override;
 	virtual void BP_SetProvider_Implementation() override;
 
+protected:
+	UPROPERTY(BlueprintReadOnly, Category = "Slot|EquipmentSlot")
+	TArray<TObjectPtr<UUserWidget>> EquipmentSlots;
 };
