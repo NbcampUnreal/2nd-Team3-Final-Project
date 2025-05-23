@@ -16,26 +16,10 @@ class UAISenseConfig_Hearing;
 class UAISenseConfig_Sight;
 class UAIPerceptionComponent;
 enum class EAnimalAIPersonality : uint8;
-enum class EAnimalAIState : uint8;
 class UBlackboardComponent;
 class AAIAnimalController;
 class UNavigationInvokerComponent;
 class AAIController;
-
-
-UENUM(BlueprintType)
-enum class EAnimalAIState : uint8
-{
-	Idle			UMETA(DisplayName = "Idle"),
-	Wander			UMETA(DisplayName = "Wander"),
-	Attack			UMETA(DisplayName = "Attack"),
-	Hit				UMETA(DisplayName = "Hit"),
-	Warning			UMETA(DisplayName = "Warning"),
-	Rest			UMETA(DisplayName = "Rest"),
-	Flee			UMETA(DisplayName = "Flee"),
-	Dead			UMETA(DisplayName = "Dead"),
-	StateEnd		UMETA(DisplayName = "StateEnd")
-};
 
 UENUM(BlueprintType)
 enum class EAnimalAIPersonality : uint8
@@ -72,21 +56,23 @@ public:
 	void OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnFullnessChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	
-	UFUNCTION(BlueprintCallable, Category = AI)
-	void PlayInteractMontage(uint8 InState);
-
-	EAnimalAIState GetCurrentState();
 	EAnimalAIPersonality GetPersonality();
 	float GetWildPower() const;
 	float GetWanderRange() const;
-	const UAnimMontage* GetMontage();
+	UAnimMontage* GetMontage(FGameplayTag MontageTag);
 	TArray<FVector>& GetPatrolPoints();
-	FGameplayTagContainer& GetGameplayTagContainer();
-	
-	void SetCurrentState(EAnimalAIState NewState);
 	
 	void GenerateRandom();
 	void DecreaseFullness();
+
+	UFUNCTION(BlueprintCallable)
+	FGameplayTagContainer& GetGameplayTagContainer();
+
+	UFUNCTION(BlueprintCallable, Category = AI)
+	FGameplayTag GetIdentityTag() const;
+	
+	UFUNCTION(BlueprintCallable, Category = AI)
+	void SetIdentityTag(const FGameplayTag InIdentityTag);
 	
 	UFUNCTION()
 	void SetHiddenInGame();
@@ -107,13 +93,12 @@ public:
 	void OnHit(AActor* InstigatorActor);
 	
 protected:
+	UFUNCTION(BlueprintCallable, Category = AI)
+	void SetDetails();
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UMeleeTraceComponent* MeleeTraceComponent;
 	
-	//DT 생성 전까지 쓸 Test함수
-	UFUNCTION(BlueprintCallable, Category = AI)
-	void SetDetails();
-
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem", SaveGame)
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 	
@@ -147,14 +132,11 @@ protected:
 	UBlackboardComponent* BlackboardComponent;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Montage)
-	UAnimMontage* Montage;
+	TMap<FGameplayTag, UAnimMontage*> MontageMap; //키로 태그 넘겨주면 몽타주 가져옴 -> TSet이나 TMap 으로 바꿀 것 
 	
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
 	TArray<TSubclassOf<class UGameplayAbility>> StartAbilities;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AnimalEnum)
-	EAnimalAIState	CurrentState;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AnimalEnum)
 	EAnimalAIPersonality Personality;
 	
@@ -181,9 +163,21 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	FGameplayTagContainer AnimalTagContainer;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGameplayTag IdentityTag;
 	
 	FTimerHandle TimerHandle;
 	TArray<FVector> PatrolPoints;
 };
-//스포너 : 태그컨테이너 -> 스폰할 종류의 동물, 구조체 정의: 동물종류 , 몇마리, 리더 1 ,경비 4,팔로워  
+
+/*
+ *제일 시급한거 EQS로 수정하기 -> 장소, 타겟 찾을 때 뚝딱거림
+ *동물 태어났을 때 블랙보드 정지, 죽었을 때 숨김처리, 블랙보드 리셋
+ *
+ *스포너 버그 수정 및 기능 추가 
+ *이동 가능 범위, 무리 구역 범위, 인식 범위 실제 월드에 배치해보고 디테일하게 정해서 수정해야함
+ *
+ *공격 동물들 각자 공격패턴 구현
+ */
 
