@@ -11,12 +11,12 @@ struct FQuestStorageInfo : public FTableRowBase
 {
     GENERATED_BODY()
 
-
     FQuestStorageInfo()
         : QuestID(0)
         , QuestName(TEXT("Unnamed Quest"))
         , ObjectiveNames()
         , ObjectiveProgress()
+        , ObjectiveGoals()
         , bIsTracking(false)
         , bIsComplete(false)
     {
@@ -29,17 +29,21 @@ struct FQuestStorageInfo : public FTableRowBase
     FString QuestName;
 
     UPROPERTY(BlueprintReadWrite)
-    TArray<FString> ObjectiveNames;
+    TArray<FString> ObjectiveNames; 
 
     UPROPERTY(BlueprintReadWrite)
-    TArray<int32> ObjectiveProgress;
+    TArray<int32> ObjectiveProgress; 
+
+    UPROPERTY(BlueprintReadWrite)
+    TArray<int32> ObjectiveGoals;    
 
     UPROPERTY(BlueprintReadWrite)
     bool bIsTracking;
 
     UPROPERTY(BlueprintReadWrite)
     bool bIsComplete;
-};
+}; 
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestEventSignature, const FQuestStorageInfo&, QuestInfo);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -50,9 +54,6 @@ class PROJECTEMBER_API UQuestReceiverComponent : public UActorComponent
 public:
     UQuestReceiverComponent();
 
-    UFUNCTION(BlueprintCallable)
-    void NotifyTalkObjectiveCompleted(FName ObjectiveName);
- 
     UFUNCTION(BlueprintCallable)
     void AcceptQuest(UDataTable* QuestDataTable, FName RowName);
 
@@ -77,6 +78,9 @@ public:
     UFUNCTION(BlueprintCallable)
     const TArray<FQuestStorageInfo>& GetQuestLog() const;
 
+    UFUNCTION(BlueprintCallable)
+    void NotifyTalkObjectiveCompleted(AActor* TalkedNPC);
+
     UPROPERTY(BlueprintAssignable)
     FQuestEventSignature OnQuestAccepted;
 
@@ -89,6 +93,7 @@ public:
     UPROPERTY(BlueprintAssignable)
     FQuestEventSignature OnQuestUpdated;
 
+    bool IsQuestComplete(int32 QuestID) const;
 
 private:
     UPROPERTY()

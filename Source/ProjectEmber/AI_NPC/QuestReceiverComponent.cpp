@@ -19,6 +19,7 @@ void UQuestReceiverComponent::AcceptQuest(UDataTable* QuestDataTable, FName RowN
     NewQuest.QuestID = QuestRow->QuestID;
     NewQuest.QuestName = QuestRow->QuestName;
     NewQuest.ObjectiveNames = QuestRow->ObjectiveNames;
+    NewQuest.ObjectiveGoals = QuestRow->ObjectiveGoals;
     NewQuest.ObjectiveProgress.Init(0, QuestRow->ObjectiveGoals.Num());
     NewQuest.bIsTracking = true;
     NewQuest.bIsComplete = false;
@@ -62,6 +63,16 @@ void UQuestReceiverComponent::CompleteQuest(int32 QuestID)
     }
 }
 
+bool UQuestReceiverComponent::IsQuestComplete(int32 QuestID) const
+{
+    int32 Index = FindQuestIndex(QuestID);
+    if (Index != INDEX_NONE)
+    {
+        return QuestLog[Index].bIsComplete;
+    }
+    return false;
+}
+
 void UQuestReceiverComponent::AbandonQuest(int32 QuestID)
 {
     int32 Index = FindQuestIndex(QuestID);
@@ -90,7 +101,6 @@ void UQuestReceiverComponent::UpdateQuestObjective(int32 QuestID, const FString&
         OnQuestUpdated.Broadcast(Quest);
     }
 }
-
 
 void UQuestReceiverComponent::RemoveTrackingObjective(int32 QuestID, const FString& ObjectiveName)
 {
@@ -126,19 +136,39 @@ const TArray<FQuestStorageInfo>& UQuestReceiverComponent::GetQuestLog() const
 {
     return QuestLog;
 }
-void UQuestReceiverComponent::NotifyTalkObjectiveCompleted(FName ObjectiveName)
+
+void UQuestReceiverComponent::NotifyTalkObjectiveCompleted(AActor* TalkedNPC)
 {
-    FString ObjectiveNameStr = ObjectiveName.ToString();
+    if (!TalkedNPC) return;
 
     for (int32 i = 0; i < QuestLog.Num(); ++i)
     {
         FQuestStorageInfo& Quest = QuestLog[i];
+
         for (int32 j = 0; j < Quest.ObjectiveNames.Num(); ++j)
         {
-            if (Quest.ObjectiveNames[j] == ObjectiveNameStr)
+            FName RequiredTag(*Quest.ObjectiveNames[j]);
+
+            if (TalkedNPC->ActorHasTag(RequiredTag))
             {
-                Quest.ObjectiveProgress[j] = FMath::Clamp(Quest.ObjectiveProgress[j] + 1, 0, 1);
+                Quest.ObjectiveProgress[j] = FMath::Clamp(Quest.ObjectiveProgress[j] + 1, 0, Quest.ObjectiveGoals.IsValidIndex(j) ? Quest.ObjectiveGoals[j] : 1);
                 OnQuestUpdated.Broadcast(Quest);
+
+                bool bAllObjectivesComplete = true;
+                for (int32 k = 0; k < Quest.ObjectiveProgress.Num(); ++k)
+                {
+                    if (Quest.ObjectiveProgress[k] < Quest.ObjectiveGoals[k])
+                    {
+                        bAllObjectivesComplete = false;
+                        break;
+                    }
+                }
+
+                if (bAllObjectivesComplete && !Quest.bIsComplete)
+                {
+                    CompleteQuest(Quest.QuestID);
+                }
+
                 return;
             }
         }

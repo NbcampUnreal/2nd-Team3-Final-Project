@@ -26,5 +26,6 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slot")
 	TSubclassOf<UDragSlotImage> DragSlotImageClass = nullptr;
+
 	
 };

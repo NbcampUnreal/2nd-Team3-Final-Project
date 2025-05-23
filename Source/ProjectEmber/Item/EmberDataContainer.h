@@ -4,19 +4,25 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Craft/EmberResourceProvider.h"
 #include "StructUtils/InstancedStruct.h"
 #include "UI/SlotWidget/EmberSlotDataProviderInterface.h"
+#include "Containers/Map.h"
+#include "Containers/Queue.h"
+#include "Item/Core/EmberCraftStruct.h"
 #include "EmberDataContainer.generated.h"
 
 struct FConsumableInfoRow;
 struct FInventorySlotData;
 class UAbilitySystemComponent;
 class UItemSubsystem;
+
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDataChangedDelegate, int32, SlotIndex, const FInstancedStruct&,
                                              SlotData);
 
 UCLASS(ClassGroup=(Custom))
-class PROJECTEMBER_API UEmberDataContainer : public UObject, public IEmberSlotDataProviderInterface
+class PROJECTEMBER_API UEmberDataContainer : public UObject, public IEmberSlotDataProviderInterface, public IEmberResourceProvider
 {
 	GENERATED_BODY()
 
@@ -33,51 +39,57 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Inventory")
 	FInstancedStruct GetSlotDataByIndex(int32 SlotIndex) const;
-	
+
+	// --- 크래프트 관련 함수 ---
+	virtual TMap<FName, int32> GetAllItemInfos_Implementation() override;
+	virtual bool bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems) override;
+
+	void TryConsumeResource_Implementation(TArray<FItemPair>& InRequireItems);
+	virtual TArray<FItemPair> RemoveResourceUntilAble_Implementation(const TArray<FItemPair>& InRequireItems) override;
 	// --- 아이템 정리 관련 함수들 ---
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	virtual void MoveItemByIndex(int32 IndexTo, int32 IndexForm, int32 InQuantity);
 
 	// --- 정보 전달체 관련 인터페이스 구현 ---
-	virtual int32 AddItem_Implementation(const FItemPair& InItem, int32 InSlotIndex = -1);
+	virtual int32 AddItem_Implementation(const FItemPair& InItem, int32 InSlotIndex = -1) override;
 
-	virtual TArray<FItemPair> AddItems_Implementation(const TArray<FItemPair>& Items);
+	virtual TArray<FItemPair> AddItems_Implementation(const TArray<FItemPair>& Items) override;
 	
-    virtual int32 RemoveItemFromSlot_Implementation(int32 SlotIndex, int32 QuantityToRemove = 0);
+	virtual int32 RemoveItemFromSlot_Implementation(int32 SlotIndex, int32 QuantityToRemove = 0) override;
 
-    virtual void UseItemInSlot_Implementation(int32 SlotIndex);
+	virtual void UseItemInSlot_Implementation(int32 SlotIndex) override;
 
-	virtual int32 GetSlotMaxRow_Implementation() const;
+	virtual int32 GetSlotMaxRow_Implementation() const override;
 	
-	virtual FName GetSlotItemID_Implementation(int32 InIndex) const;
+	virtual FName GetSlotItemID_Implementation(int32 InIndex) const override;
 	
-	virtual void MoveItemByWidget_Implementation(const FGameplayTag& SlotTag, int32 IndexTo, const TScriptInterface<UEmberSlotDataProviderInterface>& AnotherProvider, int32 IndexFrom, int32 Quantity);
+	virtual void MoveItemByWidget_Implementation(const FGameplayTag& SlotTag, int32 IndexTo, const TScriptInterface<UEmberSlotDataProviderInterface>& AnotherProvider, int32 IndexFrom, int32 Quantity) override;
 	
-	virtual int32 GetSlotCount_Implementation() const;
+	virtual int32 GetSlotCount_Implementation() const override;
 
-	virtual FGameplayTag GetSlotType_Implementation() const;
+	virtual FGameplayTag GetSlotType_Implementation() const override;
 	
-
+	int32 RemoveItemAutomatic(const FItemPair& InItem);
 
 	/*
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void SortItem();*/
 	
 protected:
-   /**
-    * 
-    * @param FItemPair 넣을 아이템ID , 수량
-    * @param InSlotIndex -1인경우 있는곳에 넣고 못채운 나머지는 빈공간에 할당, 0 이상인경우 그 공간에 시도한다
-    * @return 
-    */
-    virtual int32 TryAddItemsToSlots(const FItemPair& InItem, int32 InSlotIndex = -1);
+	/**
+	 * 
+	 * @param FItemPair 넣을 아이템ID , 수량
+	 * @param InSlotIndex -1인경우 있는곳에 넣고 못채운 나머지는 빈공간에 할당, 0 이상인경우 그 공간에 시도한다
+	 * @return 
+	 */
+	virtual int32 TryAddItemsToSlots(const FItemPair& InItem, int32 InSlotIndex = -1);
 
 	/**
 	 * 보관하는 FStruct를 저장, 반드시 FEmberSlotData를 상속받은 FStruct로 저장할것
 	 */
 	virtual void InitializeInventorySlots();
 
-    void HandleItemConsumption(const FConsumableInfoRow* ConsumeData);
+	void HandleItemConsumption(const FConsumableInfoRow* ConsumeData);
 
 	void SpawnDroppedItem(FName ItemIDToDrop, int32 QuantityToDrop, FVector SpawnLocation, FRotator SpawnRotation);
 
@@ -109,7 +121,7 @@ protected:
 
 public:
 
-   UPROPERTY(BlueprintAssignable, Category = "Inventory")
+	UPROPERTY(BlueprintAssignable, Category = "Inventory")
 	FOnDataChangedDelegate OnDataChangedDelegate;
 
 protected:
@@ -118,6 +130,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Slot", SaveGame) // SaveGame 필요시 추가
 	TArray<FInstancedStruct> DataSlots;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Slot", SaveGame) // SaveGame 필요시 추가
+	TMap<FName, FTotalItemInfo> TotalData;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Slot", meta = (ClampMin = "1"))
 	int32 SlotCapacity = 30;
@@ -126,8 +141,11 @@ protected:
 	int32 SlotMaxRow = 10;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Slot", meta = (ClampMin = "1"))
-	FGameplayTag SlotTag;
+	int32 ProviderOrder = 0;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Slot")
+	FGameplayTag SlotTag = FGameplayTag::EmptyTag;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<AActor> Owner;
+	TObjectPtr<AActor> Owner = nullptr;
 };
