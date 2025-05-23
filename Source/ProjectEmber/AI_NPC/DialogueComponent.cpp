@@ -34,7 +34,6 @@ UDialogueComponent::UDialogueComponent()
 void UDialogueComponent::BeginPlay()
 {
     Super::BeginPlay();
-
     AActor* Owner = GetOwner();
     if (!Owner) return;
 
@@ -98,7 +97,7 @@ void UDialogueComponent::SetInputMappingContext(UInputMappingContext* MappingCon
         }
         Subsystem->AddMappingContext(MappingContext, 0);
 
-        
+
     }
 }
 
@@ -179,8 +178,8 @@ void UDialogueComponent::Interact()
     DialogueWidget = CreateWidget<UUserWidget>(PC, DialogueWidgetClass);
     if (DialogueWidget)
     {
-        const int32 HighZOrder = 999;  
-        DialogueWidget->AddToViewport(HighZOrder); 
+        const int32 HighZOrder = 999;
+        DialogueWidget->AddToViewport(HighZOrder);
 
         FInputModeGameAndUI InputMode;
         InputMode.SetWidgetToFocus(DialogueWidget->TakeWidget());
@@ -214,11 +213,13 @@ void UDialogueComponent::AdvanceDialogue()
         UE_LOG(LogTemp, Warning, TEXT("[AdvanceDialogue] No dialogue to advance."));
         return;
     }
+
     APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
     if (PC)
     {
-        PC->bShowMouseCursor = false; 
+        PC->bShowMouseCursor = false;
     }
+
     if (CurrentDialogueIndex < LinesOfDialogue.Num())
     {
         if (UTextBlock* ChatBox = Cast<UTextBlock>(DialogueWidget->GetWidgetFromName("NPC_ChatBox")))
@@ -243,116 +244,149 @@ void UDialogueComponent::AdvanceDialogue()
                 UE_LOG(LogTemp, Warning, TEXT("[AdvanceDialogue] Interactable cleared after full dialogue."));
             }
         }
+        ACharacter* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+        if (Player)
+        {
+            if (UQuestReceiverComponent* QuestReceiver = Player->FindComponentByClass<UQuestReceiverComponent>())
+            {
+                QuestReceiver->NotifyTalkObjectiveCompleted(GetOwner());
+
+                const FQuestDataRow* Row = QuestDataTable->FindRow<FQuestDataRow>(QuestRowName, TEXT("QuestCheck"));
+                if (Row && QuestReceiver->IsQuestComplete(Row->QuestID))
+                {
+                    UE_LOG(LogTemp, Warning, TEXT("[AdvanceDialogue] Quest already completed. Showing complete widget."));
+                    ShowQuestCompleteWidget(Row->QuestID);
+                    return;
+                }
+            }
+        }
+
+        // 기존 퀘스트 UI 호출
         FTimerHandle DummyHandle;
         GetWorld()->GetTimerManager().SetTimer(DummyHandle, [this]()
             {
-                ShowQuestUI(); 
+                ShowQuestUI();
             }, 0.01f, false);
+    }
+}
+void UDialogueComponent::InitializeAndDisplayWidget(UUserWidget* Widget)
+{
+    if (!Widget) return;
+    Widget->AddToViewport(999);
+
+    APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+    if (!PC) return;
+
+    PC->bShowMouseCursor = true;
+    FInputModeGameAndUI InputMode;
+    InputMode.SetWidgetToFocus(Widget->TakeWidget());
+    InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+    PC->SetInputMode(InputMode);
+
+    SetDialogueVisualState(true);
+}
+void UDialogueComponent::SetDialogueVisualState(bool bShowUI)
+{
+    APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+    ACharacter* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+    if (!PC || !Player) return;
+
+    PC->bShowMouseCursor = bShowUI;
+
+    if (bShowUI)
+    {
+        if (Player->GetMesh()) Player->GetMesh()->SetVisibility(false, true);
+        FInputModeGameAndUI InputMode;
+        InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+        PC->SetInputMode(InputMode);
+    }
+    else
+    {
+        if (Player->GetMesh()) Player->GetMesh()->SetVisibility(true, true);
+        PC->SetInputMode(FInputModeGameOnly());
+        PC->SetViewTargetWithBlend(PC->GetPawn(), 0.5f);
     }
 }
 
 void UDialogueComponent::ShowQuestUI()
 {
-    APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-    if (!PC) return;
+    auto* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+    auto* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+    if (!PC || !Player || !QuestWidgetClass || !QuestDataTable || QuestRowName.IsNone()) return;
 
-    ACharacter* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-    if (!Player) return;
+    if (DialogueWidget) { DialogueWidget->RemoveFromParent(); DialogueWidget = nullptr; }
 
-    if (DialogueWidget)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[ShowQuestUI] Removing lingering DialogueWidget."));
-        DialogueWidget->RemoveFromParent();
-        DialogueWidget = nullptr;
-    }
+    auto* QuestReceiver = Player->FindComponentByClass<UQuestReceiverComponent>();
+    if (!QuestReceiver) return;
 
-    UQuestReceiverComponent* QuestReceiver = Player->FindComponentByClass<UQuestReceiverComponent>();
-    if (!QuestReceiver)
-    {
-        UE_LOG(LogTemp, Error, TEXT("[ShowQuestUI] QuestReceiverComponent not found on player."));
-        return;
-    }
-
-    if (!QuestWidgetClass)
-    {
-        UE_LOG(LogTemp, Error, TEXT("[ShowQuestUI] QuestWidgetClass is NULL."));
-        return;
-    }
-
-    UQuestWidget* QuestUI = CreateWidget<UQuestWidget>(PC, QuestWidgetClass);
-    if (!QuestUI)
-    {
-        UE_LOG(LogTemp, Error, TEXT("[ShowQuestUI] QuestUI is NULL - CreateWidget failed."));
-        return;
-    }
-
-    const int32 QuestZOrder = 999;
-    QuestUI->AddToViewport(QuestZOrder);
-    PC->bShowMouseCursor = true;
-
-    FInputModeGameAndUI InputMode;
-    InputMode.SetWidgetToFocus(QuestUI->TakeWidget());
-    InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-    PC->SetInputMode(InputMode);
+    auto* QuestUI = CreateWidget<UQuestWidget>(PC, QuestWidgetClass);
+    if (!QuestUI) return;
 
     QuestUI->QuestDataTable = QuestDataTable;
     QuestUI->QuestRowName = QuestRowName;
 
-    const FQuestDataRow* Row = QuestDataTable->FindRow<FQuestDataRow>(QuestRowName, TEXT("QuestWidget"));
-    if (Row)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("[ShowQuestUI] Setting quest info to widget: %s"), *Row->QuestName);
-        QuestUI->SetQuestInfoFromDataRow(*Row); 
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("[ShowQuestUI] Cannot find quest row: %s"), *QuestRowName.ToString());
-    }
+    if (const auto* Row = QuestDataTable->FindRow<FQuestDataRow>(QuestRowName, TEXT("QuestWidget")))
+        QuestUI->SetQuestInfoFromDataRow(*Row);
 
     QuestUI->OnQuestAccepted.BindLambda([this, PC, QuestReceiver]() {
-        UE_LOG(LogTemp, Warning, TEXT("[QuestWidget] Accept clicked."));
         QuestReceiver->AcceptQuest(this->QuestDataTable, this->QuestRowName);
+        SetDialogueVisualState(false);
+        SetInputMappingContext(GameplayInputMappingContext);
+        });
 
-        ACharacter* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-        if (Player && Player->GetMesh())
+    QuestUI->OnQuestRefused.BindLambda([this, PC, QuestUI]() {
+        QuestUI->RemoveFromParent();
+        SetDialogueVisualState(false);
+        SetInputMappingContext(GameplayInputMappingContext);
+        bDialogueFinished = false;
+
+        if (auto* Interact = GetOwner()->FindComponentByClass<UInteractionComponent>())
+            Interact->SetCurrentInteractable(GetOwner());
+        });
+
+    InitializeAndDisplayWidget(QuestUI);
+}
+
+void UDialogueComponent::ShowQuestCompleteWidget(int32 QuestID)
+{
+    auto* PC = UGameplayStatics::GetPlayerController(this, 0);
+    auto* Pawn = PC ? PC->GetPawn() : nullptr;
+    if (!PC || !Pawn || !QuestCompleteWidgetClass) return;
+
+    auto* CompleteWidget = CreateWidget<UQuestWidget>(PC, QuestCompleteWidgetClass);
+    if (!CompleteWidget) return;
+
+    if (QuestDataTable && !QuestRowName.IsNone())
+    {
+        if (const auto* Row = QuestDataTable->FindRow<FQuestDataRow>(QuestRowName, TEXT("QuestComplete")))
         {
-            Player->GetMesh()->SetVisibility(true, true);
+            CompleteWidget->SetQuestInfoFromDataRow(*Row);
+        }
+    }
+
+    CompleteWidget->OnQuestCompleted.BindLambda([this, PC, Pawn, QuestID]() {
+        if (Pawn)
+        {
+            if (UQuestReceiverComponent* QuestComp = Pawn->FindComponentByClass<UQuestReceiverComponent>())
+            {
+                QuestComp->CompleteQuest(QuestID);
+            }
         }
 
-        SetInputMappingContext(GameplayInputMappingContext);
+        SetDialogueVisualState(false);
+
         PC->SetInputMode(FInputModeGameOnly());
         PC->bShowMouseCursor = false;
         PC->SetViewTargetWithBlend(PC->GetPawn(), 0.5f);
+        SetInputMappingContext(GameplayInputMappingContext);
         });
 
-    QuestUI->OnQuestRefused.BindLambda([this, PC, QuestUI]()
-        {
-            UE_LOG(LogTemp, Warning, TEXT("[QuestWidget] Refuse clicked. Return to original state."));
-            QuestUI->RemoveFromParent();
-
-            PC->SetInputMode(FInputModeGameOnly());
-            PC->bShowMouseCursor = false;
-            PC->SetViewTargetWithBlend(PC->GetPawn(), 0.5f);
-
-            ACharacter* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-            if (Player && Player->GetMesh())
-            {
-                Player->GetMesh()->SetVisibility(true, true);
-            }
-
-            SetInputMappingContext(GameplayInputMappingContext);
-            bDialogueFinished = false;
-
-            if (AActor* Owner = GetOwner())
-            {
-                if (UInteractionComponent* Interact = Owner->FindComponentByClass<UInteractionComponent>())
-                {
-                    Interact->SetCurrentInteractable(Owner);
-                    UE_LOG(LogTemp, Warning, TEXT("[Refuse] Interactable reset."));
-                }
-            }
-        });
+    if (DialogueWidget) { DialogueWidget->RemoveFromParent(); DialogueWidget = nullptr; }
+    InitializeAndDisplayWidget(CompleteWidget);
 }
+
+
+
 
 void UDialogueComponent::RepositionNPCForDialogue()
 {
@@ -405,7 +439,7 @@ void UDialogueComponent::PositionDetachedCamera()
 
 bool UDialogueComponent::IsDialogueActive() const
 {
-    return DialogueWidget != nullptr;  
+    return DialogueWidget != nullptr;
 }
 void UDialogueComponent::Interact_Implementation(AActor* Caller)
 {
