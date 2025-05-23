@@ -12,8 +12,16 @@ namespace EmberItemGameplayTags
 
 namespace EmberEquipmentGameplayTags
 {
-	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Head, "Item.Equipment.Head");
-	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Body, "Item.Equipment.Body");
-	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Arm, "Item.Equipment.Arm");
-	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Leg, "Item.Equipment.Leg");
+	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Helmet, "Item.Equipment.Helmet");
+	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Necklace, "Item.Equipment.Necklace");
+	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Chest, "Item.Equipment.Chest");
+	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Legs, "Item.Equipment.Legs");
+	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Boots, "Item.Equipment.Boots");
+	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Weapon, "Item.Equipment.Weapon");
+	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Cape, "Item.Equipment.Cape");
+	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Bracelet, "Item.Equipment.Bracelet");
+	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Gloves, "Item.Equipment.Gloves");
+	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Belt, "Item.Equipment.Belt");
+	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Ring, "Item.Equipment.Ring");
+	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Shield, "Item.Equipment.Shield");
 }
