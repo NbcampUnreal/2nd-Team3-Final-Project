@@ -14,6 +14,7 @@ struct FQuestDataRow : public FTableRowBase
         : QuestID(0)
         , QuestName(TEXT("Unnamed Quest"))
         , Description(TEXT("No description"))
+        , TargetLocation(TEXT("Location"))
         , ObjectiveNames()
         , ObjectiveGoals()
         , RewardGold(0)
@@ -29,6 +30,9 @@ struct FQuestDataRow : public FTableRowBase
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString Description;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FString TargetLocation;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<FString> ObjectiveNames;

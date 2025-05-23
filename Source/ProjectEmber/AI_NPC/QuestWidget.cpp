@@ -1,7 +1,6 @@
 #include "QuestWidget.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
-#include "QuestDataRow.h"
 
 void UQuestWidget::NativeConstruct()
 {
@@ -16,12 +15,16 @@ void UQuestWidget::NativeConstruct()
     {
         RefuseButton->OnClicked.AddDynamic(this, &UQuestWidget::HandleRefuseClicked);
     }
+
+    if (CompleteButton)
+    {
+        CompleteButton->OnClicked.AddDynamic(this, &UQuestWidget::HandleCompleteClicked);
+    }
 }
 
 void UQuestWidget::HandleAcceptClicked()
 {
-    RemoveFromParent(); // Äù½ºÆ® UI ´Ý±â
-
+    RemoveFromParent();
     if (OnQuestAccepted.IsBound())
     {
         OnQuestAccepted.Execute();
@@ -30,11 +33,19 @@ void UQuestWidget::HandleAcceptClicked()
 
 void UQuestWidget::HandleRefuseClicked()
 {
-    RemoveFromParent(); // Äù½ºÆ® UI ´Ý±â
-
+    RemoveFromParent();
     if (OnQuestRefused.IsBound())
     {
         OnQuestRefused.Execute();
+    }
+}
+
+void UQuestWidget::HandleCompleteClicked()
+{
+    RemoveFromParent();
+    if (OnQuestCompleted.IsBound())
+    {
+        OnQuestCompleted.Execute();
     }
 }
 
@@ -50,14 +61,10 @@ void UQuestWidget::SetQuestInfoFromDataRow(const FQuestDataRow& Data)
         QuestDescriptionText->SetText(FText::FromString(Data.Description));
     }
 
-    if (ObjectiveText)
+    if (LocationText)
     {
-        FString ObjectiveSummary;
-        for (const FString& Obj : Data.ObjectiveNames)
-        {
-            ObjectiveSummary += Obj + TEXT("\n");
-        }
-        ObjectiveText->SetText(FText::FromString(ObjectiveSummary));
+        FString LocationInfo = Data.TargetLocation.IsEmpty() ? TEXT("¾Ë ¼ö ¾øÀ½") : Data.TargetLocation;
+        LocationText->SetText(FText::FromString(LocationInfo));
     }
 
     if (RewardText)
