@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "State/AlsLocomotionState.h"
 #include "BaseOverlayAbility.generated.h"
 
 /**
@@ -20,7 +21,7 @@ public:
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 	virtual void InputPressed(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) override;
 	virtual void InputReleased(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) override;
-	
+
 protected:
 	/* Montage */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Base", Meta = (AllowPrivateAccess = "true"))
@@ -61,10 +62,18 @@ protected:
 
 	UFUNCTION()
 	void OnComboNotify(const FGameplayEventData Payload);
-	
+
+	UFUNCTION()
+	void OnMontageTick() const;
 private:
 	void LaunchCharacterForward(const FGameplayAbilityActorInfo* ActorInfo) const;
 	
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+	
 	bool bComboInputReceived = false;
+
+	float StartMontageActorYaw = 0.0f;
+	FAlsLocomotionState PreLocomotionState;
+	FVector PreDirection;
+	FTimerHandle MontageTickHandle;
 };
