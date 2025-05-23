@@ -31,6 +31,8 @@ public:
     UFUNCTION()
     void PositionDetachedCamera();
 
+
+    void ShowQuestCompleteWidget(int32 QuestID);
     void AdvanceDialogue();
     void Interact();
     void ShowQuestUI();
@@ -79,6 +81,8 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest")
     FName QuestRowName = FName("MainQuest01");
 
+    UPROPERTY(EditDefaultsOnly, Category = "Quest")
+    TSubclassOf<class UQuestWidget> QuestCompleteWidgetClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<FString> LinesOfDialogue;
@@ -101,7 +105,18 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category = "Input")
     UInputMappingContext* GameplayInputMappingContext;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<FName> DialogueRowNames;
 
+    UFUNCTION()
+    void SetDialogueVisualState(bool bShowUI);
   
+    UFUNCTION()
+    void InitializeAndDisplayWidget(UUserWidget* Widget);
 
+    UPROPERTY(EditAnywhere, Category = "UI")
+    TSubclassOf<UUserWidget> PlayerHUDClass;
+
+    UPROPERTY()
+    UUserWidget* PlayerHUD;
 };

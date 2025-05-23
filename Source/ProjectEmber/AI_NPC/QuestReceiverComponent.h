@@ -93,6 +93,8 @@ public:
     UPROPERTY(BlueprintAssignable)
     FQuestEventSignature OnQuestUpdated;
 
+    bool IsQuestComplete(int32 QuestID) const;
+
 private:
     UPROPERTY()
     TArray<FQuestStorageInfo> QuestLog;
