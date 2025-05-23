@@ -14,8 +14,16 @@ namespace EmberItemGameplayTags
 
 namespace EmberEquipmentGameplayTags
 {
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Head);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Body);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Arm);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Leg);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Helmet);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Necklace);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Chest);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Legs);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Boots);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Weapon);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Cape);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Bracelet);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Gloves);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Belt);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Ring);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Shield);
 }

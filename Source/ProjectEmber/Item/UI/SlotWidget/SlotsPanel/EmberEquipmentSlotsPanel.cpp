@@ -4,12 +4,11 @@
 #include "EmberEquipmentSlotsPanel.h"
 
 #include "GameplayTagsManager.h"
-#include "Components/GridPanel.h"
+#include "Blueprint/WidgetTree.h"
 #include "EmberLog/EmberLog.h"
 #include "GameFramework/Character.h"
 #include "Item/UserItemManger.h"
 #include "Item/EmberEquipmentManager.h"
-#include "Item/Core/ItemGamePlayTags.h"
 #include "Item/UI/SlotWidget/Slot/EmberEquipmentSlotWidget.h"
 
 void UEmberEquipmentSlotsPanel::BP_CreateSlots_Implementation()
@@ -21,16 +20,19 @@ void UEmberEquipmentSlotsPanel::BP_CreateSlots_Implementation()
 	TObjectPtr<UEmberEquipmentManager> EquipmentManager = Cast<UEmberEquipmentManager>(DataProvider.GetObject());
 	if (!EquipmentManager)
 	{
-		EMBER_LOG(LogTemp, Error, TEXT("DataProvider is Null!"));
+		EMBER_LOG(LogEmberItem, Error, TEXT("DataProvider is Null!"));
 
 		return;
 	}
-
-	for (TObjectPtr<UWidget> Widget : SlotsPanel->GetAllChildren())
+	
+	if (WidgetTree)
 	{
-		if (TObjectPtr<UEmberEquipmentSlotWidget> EquipmentSlot = Cast<UEmberEquipmentSlotWidget>(Widget))
+		TArray<UWidget*> Widgets;
+		WidgetTree->GetAllWidgets(Widgets);
+		
+		for (TObjectPtr<UWidget> Widget : Widgets)
 		{
-			if (EquipmentManager->bIsEquipmentTag(EquipmentSlot->EquipmentTypeTag))
+			if (TObjectPtr<UEmberEquipmentSlotWidget> EquipmentSlot = Cast<UEmberEquipmentSlotWidget>(Widget))
 			{
 				int32 Index = EquipmentManager->GetSlotIndex(EquipmentSlot->EquipmentTypeTag);
 				if (Index < 0)
