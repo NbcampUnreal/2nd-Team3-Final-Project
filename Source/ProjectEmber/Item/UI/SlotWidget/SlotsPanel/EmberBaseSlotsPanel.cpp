@@ -3,8 +3,10 @@
 
 #include "EmberBaseSlotsPanel.h"
 
+#include "Blueprint/WidgetTree.h"
 #include "Components/GridPanel.h"
 #include "Components/PanelWidget.h"
+#include "Components/SizeBox.h"
 #include "EmberLog/EmberLog.h"
 #include "Item/EmberDataContainer.h"
 #include "Item/UI/SlotWidget/Slot/EmberBaseSlotWidget.h"
