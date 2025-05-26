@@ -9,8 +9,10 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "DrawDebugHelpers.h"
 #include "EMSCompSaveInterface.h"
+#include "TestFood.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
+#include "EnvironmentQuery/EnvQueryManager.h"
 
 const FName AAIAnimalController::SleepTime = "SleepTime";
 const FName AAIAnimalController::IsShouldSleep = "IsShouldSleep";
@@ -62,6 +64,7 @@ void AAIAnimalController::OnPossess(APawn* InPawn)
         RunBehaviorTree(BehaviorTree);
     }
     InitBlackboard();
+    //AnimalBindingEQS(InPawn);
     AbilitySystemComponent = CastChecked<ABaseAIAnimal>(InPawn)->GetAbilitySystemComponent();
 }
 
@@ -69,7 +72,67 @@ void AAIAnimalController::BeginPlay()
 {
     Super::BeginPlay();
     PerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &AAIAnimalController::OnTargetPerceptionUpdated);
+
 }
+
+// void AAIAnimalController::AnimalBindingEQS(APawn* InPawn)
+// {
+//     
+//
+//     
+//     QueryInstance = UEnvQueryManager::RunEQSQuery(
+//      GetWorld(),
+//     RandomQuery,
+//      InPawn,
+//      EEnvQueryRunMode::SingleResult,
+//      nullptr);
+//     
+//     if (QueryInstance)
+//     {
+//         QueryInstance->GetOnQueryFinishedEvent().AddDynamic(this, &AAIAnimalController::OnFindRandomPointQueryFinished);
+//     }
+//     
+//     //
+//     QueryInstance = UEnvQueryManager::RunEQSQuery(
+//      GetWorld(),
+//     SafePointQuery,
+//      InPawn,
+//      EEnvQueryRunMode::SingleResult,
+//      nullptr);
+//     
+//     if (QueryInstance)
+//     {
+//         QueryInstance->GetOnQueryFinishedEvent().AddDynamic(this, &AAIAnimalController::OnFindSafePointQueryFinished);
+//     }
+// }
+
+// void AAIAnimalController::OnFindFoodQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance,
+//     EEnvQueryStatus::Type QueryStatus)
+// {
+//     //성공하지 않았으면 리턴
+//     if (EEnvQueryStatus::Success != QueryStatus)
+//     {
+//         return;
+//     }
+//     
+//     if (BlackboardComponent)
+//     {
+//         AActor* TargetItem = QueryInstance->GetQueryResult()->GetItemAsActor(0);
+//         BlackboardComponent->SetValueAsObject("NTargetFood", TargetItem);
+//         BlackboardComponent->SetValueAsVector("NTargetFoodLocation", TargetItem->GetActorLocation());
+//         Cast<ATestFood>(TargetItem)->SetSelected(true);
+//     }
+// }
+
+// void AAIAnimalController::OnFindRandomPointQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance,
+//     EEnvQueryStatus::Type QueryStatus)
+// {
+// }
+//
+// void AAIAnimalController::OnFindSafePointQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance,
+//     EEnvQueryStatus::Type QueryStatus)
+// {
+// }
 
 void AAIAnimalController::InitBlackboard()
 {

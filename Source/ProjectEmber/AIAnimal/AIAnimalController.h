@@ -12,6 +12,13 @@
 #include "Perception/AISenseConfig_Hearing.h"
 #include "AIAnimalController.generated.h"
 
+namespace EEnvQueryStatus
+{
+	enum Type : int;
+}
+
+class UEnvQueryInstanceBlueprintWrapper;
+class UEnvQuery;
 enum class EAnimalAIPersonality : uint8;
 class UBehaviorTreeComponent;
 class UAISenseConfig_Sight;
@@ -58,6 +65,21 @@ protected:
 	UFUNCTION()
 	void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 
+	//EQS 쿼리들 종료시 호출될 함수들 바인딩
+	//UFUNCTION(BlueprintCallable, Category = "EQS")
+	//void AnimalBindingEQS(APawn* InPawn);
+	
+	//EQS 쿼리들 종료시 호출될 함수들
+	// UFUNCTION(BlueprintCallable, Category = "EQS")
+	// void OnFindFoodQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);
+	//
+	// UFUNCTION(BlueprintCallable, Category = "EQS")
+	// void OnFindRandomPointQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);
+	//
+	// UFUNCTION(BlueprintCallable, Category = "EQS")
+	// void OnFindSafePointQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);
+
+	
 	void InitBlackboard();
 	void FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus);
 	void FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus);
@@ -70,8 +92,19 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	bool bIsShouldSleep = false;
 
-	FTimerHandle FocusTimerHandle;
 
+	// //EQS
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EQS")
+	// TObjectPtr<UEnvQuery> FoodQuery;
+	//
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EQS")
+	// TObjectPtr<UEnvQuery> RandomQuery;
+	//
+	// UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EQS")
+	// TObjectPtr<UEnvQuery> SafePointQuery;
+
+
+	
 	//sleep 노드 관련
 	static const FName SleepTime;
 	static const FName IsShouldSleep;
