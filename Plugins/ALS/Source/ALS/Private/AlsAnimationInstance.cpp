@@ -275,7 +275,7 @@ void UAlsAnimationInstance::RefreshLayering()
 			return Value != nullptr ? *Value : 0.0f;
 		}
 	};
-
+	
 	LayeringState.HeadBlendAmount = GetCurveValue(Curves, UAlsConstants::LayerHeadCurveName());
 	LayeringState.HeadAdditiveBlendAmount = GetCurveValue(Curves, UAlsConstants::LayerHeadAdditiveCurveName());
 	LayeringState.HeadSlotBlendAmount = GetCurveValue(Curves, UAlsConstants::LayerHeadSlotCurveName());
