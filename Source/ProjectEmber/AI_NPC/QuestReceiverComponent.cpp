@@ -1,11 +1,22 @@
 #include "QuestReceiverComponent.h"
 #include "TimerManager.h"
 #include "QuestDataRow.h" 
+#include "PlayerQuestWidget.h"
+#include "Kismet/GameplayStatics.h"
+#include "UI/HUD/EmberMainHUD.h"
 #include "Engine/DataTable.h"
 
 UQuestReceiverComponent::UQuestReceiverComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
+    QuestLogWidget = nullptr;
+    PlayerQuestWidget = nullptr;
+}
+
+void UQuestReceiverComponent::SetQuestLogWidget(UPlayerQuestWidget* InWidget)
+{
+    QuestLogWidget = InWidget;
+    PlayerQuestWidget = InWidget;
 }
 
 void UQuestReceiverComponent::AcceptQuest(UDataTable* QuestDataTable, FName RowName)
@@ -25,6 +36,32 @@ void UQuestReceiverComponent::AcceptQuest(UDataTable* QuestDataTable, FName RowN
     NewQuest.bIsComplete = false;
 
     AddTrackedQuest(NewQuest);
+
+    if (QuestLogWidget)
+    {
+        QuestLogWidget->SetQuestInfoFromDataRow(*QuestRow);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT(">> QuestLogWidget이 연결되지 않음"));
+    }
+
+    LastAcceptedQuestData = *QuestRow;
+}
+
+void UQuestReceiverComponent::CompleteQuest(int32 QuestID)
+{
+    int32 Index = FindQuestIndex(QuestID);
+    if (Index == INDEX_NONE || QuestLog[Index].bIsComplete)
+    {
+        return; // 이미 완료된 퀘스트면 처리 안 함
+    }
+        FQuestStorageInfo& CompletedQuest = QuestLog[Index];
+        CompletedQuest.bIsComplete = true;
+        CompletedQuest.bIsTracking = false;
+
+        OnQuestCompleted.Broadcast(CompletedQuest);
+    
 }
 
 void UQuestReceiverComponent::AddTrackedQuest(const FQuestStorageInfo& Quest)
@@ -52,73 +89,12 @@ void UQuestReceiverComponent::RemoveTrackedQuest(const FQuestStorageInfo& Quest)
     }
 }
 
-void UQuestReceiverComponent::CompleteQuest(int32 QuestID)
-{
-    int32 Index = FindQuestIndex(QuestID);
-    if (Index != INDEX_NONE)
-    {
-        QuestLog[Index].bIsComplete = true;
-        QuestLog[Index].bIsTracking = false;
-        OnQuestCompleted.Broadcast(QuestLog[Index]);
-    }
-}
-
 bool UQuestReceiverComponent::IsQuestComplete(int32 QuestID) const
 {
     int32 Index = FindQuestIndex(QuestID);
-    if (Index != INDEX_NONE)
-    {
-        return QuestLog[Index].bIsComplete;
-    }
-    return false;
+    return (Index != INDEX_NONE) ? QuestLog[Index].bIsComplete : false;
 }
 
-void UQuestReceiverComponent::AbandonQuest(int32 QuestID)
-{
-    int32 Index = FindQuestIndex(QuestID);
-    if (Index != INDEX_NONE)
-    {
-        FQuestStorageInfo AbandonedQuest = QuestLog[Index];
-        QuestLog.RemoveAt(Index);
-        OnQuestAbandoned.Broadcast(AbandonedQuest);
-    }
-}
-
-void UQuestReceiverComponent::UpdateQuestObjective(int32 QuestID, const FString& ObjectiveName, int32 QuantityIncrease)
-{
-    int32 Index = FindQuestIndex(QuestID);
-    if (Index != INDEX_NONE)
-    {
-        FQuestStorageInfo& Quest = QuestLog[Index];
-        for (int32 i = 0; i < Quest.ObjectiveNames.Num(); ++i)
-        {
-            if (Quest.ObjectiveNames[i] == ObjectiveName)
-            {
-                Quest.ObjectiveProgress[i] += QuantityIncrease;
-                break;
-            }
-        }
-        OnQuestUpdated.Broadcast(Quest);
-    }
-}
-
-void UQuestReceiverComponent::RemoveTrackingObjective(int32 QuestID, const FString& ObjectiveName)
-{
-    int32 Index = FindQuestIndex(QuestID);
-    if (Index != INDEX_NONE)
-    {
-        FQuestStorageInfo& Quest = QuestLog[Index];
-        for (int32 i = 0; i < Quest.ObjectiveNames.Num(); ++i)
-        {
-            if (Quest.ObjectiveNames[i] == ObjectiveName)
-            {
-                Quest.ObjectiveProgress[i] = 0;
-                break;
-            }
-        }
-        OnQuestUpdated.Broadcast(Quest);
-    }
-}
 
 int32 UQuestReceiverComponent::FindQuestIndex(int32 QuestID) const
 {
@@ -136,7 +112,7 @@ const TArray<FQuestStorageInfo>& UQuestReceiverComponent::GetQuestLog() const
 {
     return QuestLog;
 }
-
+//대화 목표 퀘스트
 void UQuestReceiverComponent::NotifyTalkObjectiveCompleted(AActor* TalkedNPC)
 {
     if (!TalkedNPC) return;
@@ -163,7 +139,6 @@ void UQuestReceiverComponent::NotifyTalkObjectiveCompleted(AActor* TalkedNPC)
                         break;
                     }
                 }
-
                 if (bAllObjectivesComplete && !Quest.bIsComplete)
                 {
                     CompleteQuest(Quest.QuestID);
@@ -173,4 +148,38 @@ void UQuestReceiverComponent::NotifyTalkObjectiveCompleted(AActor* TalkedNPC)
             }
         }
     }
+}
+EDialogueStage UQuestReceiverComponent::GetDialogueStageForQuest(FName QuestRowName, UDataTable* QuestDataTable)
+{
+    if (!QuestDataTable || QuestRowName.IsNone())
+        return EDialogueStage::BeforeAccept;
+
+    const FQuestDataRow* Row = QuestDataTable->FindRow<FQuestDataRow>(QuestRowName, TEXT("StageCheck"));
+    if (!Row) return EDialogueStage::BeforeAccept;
+
+    int32 QuestID = Row->QuestID;
+
+    if (IsQuestComplete(QuestID))
+        return EDialogueStage::AfterComplete;
+
+    const FQuestStorageInfo* Found = QuestLog.FindByPredicate([&](const FQuestStorageInfo& Q)
+        {
+            return Q.QuestID == QuestID;
+        });
+
+    if (Found)
+    {
+        bool bAllObjectivesMet = true;
+        for (int32 i = 0; i < Found->ObjectiveGoals.Num(); ++i)
+        {
+            if (Found->ObjectiveProgress[i] < Found->ObjectiveGoals[i])
+            {
+                bAllObjectivesMet = false;
+                break;
+            }
+        }
+        return bAllObjectivesMet ? EDialogueStage::BeforeComplete : EDialogueStage::InProgress;
+    }
+
+    return EDialogueStage::BeforeAccept;
 }

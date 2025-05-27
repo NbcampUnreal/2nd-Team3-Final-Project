@@ -13,9 +13,11 @@
 #include "AttatchAIDialogueCamera.h"
 #include "QuestReceiverComponent.h"
 #include "QuestDataRow.h"
+#include "PlayerQuestWidget.h"
 #include "Components/TextBlock.h"
 #include "DialogueDataRow.h"
 #include "EnhancedInputSubsystems.h"
+#include "UI/HUD/EmberMainHUD.h"
 #include "Character/EmberComponents/InteractionComponent.h"
 #include "EngineUtils.h"
 #include "QuestWidget.h"
@@ -31,12 +33,13 @@ UDialogueComponent::UDialogueComponent()
     CurrentDialogueIndex = 0;
     bDialogueFinished = false;
 }
+//트리거 설정 위젯 설정
 void UDialogueComponent::BeginPlay()
 {
     Super::BeginPlay();
     AActor* Owner = GetOwner();
     if (!Owner) return;
-
+    
     InteractionTrigger = Owner->FindComponentByClass<UNPCSphereComponent>();
     TalkPromptWidget = Owner->FindComponentByClass<UNPCTalkWidgetComponent>();
 
@@ -44,7 +47,7 @@ void UDialogueComponent::BeginPlay()
     {
         TalkPromptWidget->SetWidgetClass(TalkPromptWidgetClass);
         TalkPromptWidget->SetVisibility(false);
-
+        // 상호작용 위젯
         FTimerHandle TimerHandle;
         GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]() {
             if (TalkPromptWidget)
@@ -56,7 +59,6 @@ void UDialogueComponent::BeginPlay()
             }
             }, 0.01f, false);
     }
-
     if (InteractionTrigger)
     {
         InteractionTrigger->OnComponentBeginOverlap.AddDynamic(this, &UDialogueComponent::OnPlayerEnterRadius);
@@ -65,26 +67,41 @@ void UDialogueComponent::BeginPlay()
 
     LoadDialogueFromDataTable(true);
 }
-
-void UDialogueComponent::LoadDialogueFromDataTable(bool bResetDialogueIndex)
+//지정된 RowName에 해당하는 대화 데이터를 데이터 테이블에서 찾아서, 대사들을 메모리에 로드하고, 필요하면 대화 인덱스를 0으로 초기화함.
+void UDialogueComponent::LoadDialogueFromDataTable(bool bResetDialogueIndex, FName InObjectiveTag)
 {
     if (!DialogueDataTable || DialogueRowName.IsNone()) return;
 
-    const FDialogueDataRow* Row = DialogueDataTable->FindRow<FDialogueDataRow>(DialogueRowName, TEXT("LoadDialogue"));
-    if (Row)
+    ACharacter* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+    if (!Player) return;
+
+    UQuestReceiverComponent* QuestReceiver = Player->FindComponentByClass<UQuestReceiverComponent>();
+    if (!QuestReceiver) return;
+
+    EDialogueStage CurrentStage = QuestReceiver->GetDialogueStageForQuest(QuestRowName, QuestDataTable);
+    for (const FName& RowName : DialogueDataTable->GetRowNames())
     {
-        LinesOfDialogue = Row->DialogueLines;
-        if (bResetDialogueIndex)
+        FDialogueDataRow* Row = DialogueDataTable->FindRow<FDialogueDataRow>(RowName, TEXT("LoadDialogue"));
+        if (!Row) continue;
+
+        if (Row->RelatedQuestID == 1 && Row->ObjectiveTag == InObjectiveTag && Row->DialogueStage == CurrentStage)
         {
-            CurrentDialogueIndex = 0;
+            LinesOfDialogue = Row->DialogueLines;
+            if (bResetDialogueIndex)
+            {
+                CurrentDialogueIndex = 0;
+            }
+            UE_LOG(LogTemp, Warning, TEXT(" Dialogue Loaded (Stage: %d, LineCount: %d)"), (int32)CurrentStage, LinesOfDialogue.Num());
+            return;
         }
-        UE_LOG(LogTemp, Warning, TEXT("Dialogue Loaded. Total Lines: %d"), LinesOfDialogue.Num());
     }
+    UE_LOG(LogTemp, Warning, TEXT(" 조건에 맞는 대사 Row를 찾지 못했습니다."));
 }
-void UDialogueComponent::SetInputMappingContext(UInputMappingContext* MappingContext, bool bClearExisting)
+
+void UDialogueComponent::SetInputMappingContexts(TArray<UInputMappingContext*> MappingContexts, bool bClearExisting)
 {
     APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-    if (!PC || !MappingContext) return;
+    if (!PC) return;
 
     ULocalPlayer* LocalPlayer = PC->GetLocalPlayer();
     if (!LocalPlayer) return;
@@ -95,9 +112,14 @@ void UDialogueComponent::SetInputMappingContext(UInputMappingContext* MappingCon
         {
             Subsystem->ClearAllMappings();
         }
-        Subsystem->AddMappingContext(MappingContext, 0);
 
-
+        for (int32 i = 0; i < MappingContexts.Num(); ++i)
+        {
+            if (MappingContexts[i])
+            {
+                Subsystem->AddMappingContext(MappingContexts[i], i); 
+            }
+        }
     }
 }
 
@@ -181,13 +203,15 @@ void UDialogueComponent::Interact()
         const int32 HighZOrder = 999;
         DialogueWidget->AddToViewport(HighZOrder);
 
+        //게임 입력 + UI 입력을 동시에 허용하는 모드
         FInputModeGameAndUI InputMode;
         InputMode.SetWidgetToFocus(DialogueWidget->TakeWidget());
         InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
         PC->SetInputMode(InputMode);
         PC->bShowMouseCursor = true;
 
-        SetInputMappingContext(UIInputMappingContext);
+        
+        SetInputMappingContexts({ UIInputMappingContext }, true);
 
         if (TalkPromptWidget)
         {
@@ -254,13 +278,11 @@ void UDialogueComponent::AdvanceDialogue()
                 const FQuestDataRow* Row = QuestDataTable->FindRow<FQuestDataRow>(QuestRowName, TEXT("QuestCheck"));
                 if (Row && QuestReceiver->IsQuestComplete(Row->QuestID))
                 {
-                    UE_LOG(LogTemp, Warning, TEXT("[AdvanceDialogue] Quest already completed. Showing complete widget."));
                     ShowQuestCompleteWidget(Row->QuestID);
                     return;
                 }
             }
         }
-
         // 기존 퀘스트 UI 호출
         FTimerHandle DummyHandle;
         GetWorld()->GetTimerManager().SetTimer(DummyHandle, [this]()
@@ -331,13 +353,17 @@ void UDialogueComponent::ShowQuestUI()
     QuestUI->OnQuestAccepted.BindLambda([this, PC, QuestReceiver]() {
         QuestReceiver->AcceptQuest(this->QuestDataTable, this->QuestRowName);
         SetDialogueVisualState(false);
-        SetInputMappingContext(GameplayInputMappingContext);
+        SetInputMappingContexts({ GameplayInputMappingContext, GameplayUIInputMappingContext }, true);
         });
+    if (const FQuestDataRow* Row = QuestDataTable->FindRow<FQuestDataRow>(QuestRowName, TEXT("QuestLog")))
+    {
+        UpdateQuestLogWidget(*Row);
+    }
 
     QuestUI->OnQuestRefused.BindLambda([this, PC, QuestUI]() {
         QuestUI->RemoveFromParent();
         SetDialogueVisualState(false);
-        SetInputMappingContext(GameplayInputMappingContext);
+        SetInputMappingContexts({ GameplayInputMappingContext, GameplayUIInputMappingContext }, true);
         bDialogueFinished = false;
 
         if (auto* Interact = GetOwner()->FindComponentByClass<UInteractionComponent>())
@@ -349,39 +375,58 @@ void UDialogueComponent::ShowQuestUI()
 
 void UDialogueComponent::ShowQuestCompleteWidget(int32 QuestID)
 {
-    auto* PC = UGameplayStatics::GetPlayerController(this, 0);
-    auto* Pawn = PC ? PC->GetPawn() : nullptr;
+    APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+    APawn* Pawn = PC ? PC->GetPawn() : nullptr;
     if (!PC || !Pawn || !QuestCompleteWidgetClass) return;
 
-    auto* CompleteWidget = CreateWidget<UQuestWidget>(PC, QuestCompleteWidgetClass);
+    UQuestWidget* CompleteWidget = CreateWidget<UQuestWidget>(PC, QuestCompleteWidgetClass);
     if (!CompleteWidget) return;
-
     if (QuestDataTable && !QuestRowName.IsNone())
     {
-        if (const auto* Row = QuestDataTable->FindRow<FQuestDataRow>(QuestRowName, TEXT("QuestComplete")))
+        //퀘스트 데이터 테이블을 위젯에 보이게 추가
+        if (const FQuestDataRow* Row = QuestDataTable->FindRow<FQuestDataRow>(QuestRowName, TEXT("QuestComplete")))
         {
             CompleteWidget->SetQuestInfoFromDataRow(*Row);
         }
     }
-
-    CompleteWidget->OnQuestCompleted.BindLambda([this, PC, Pawn, QuestID]() {
-        if (Pawn)
+    CompleteWidget->OnQuestCompleted.BindLambda([this, PC, Pawn, QuestID, CompleteWidget]()
         {
-            if (UQuestReceiverComponent* QuestComp = Pawn->FindComponentByClass<UQuestReceiverComponent>())
+            if (Pawn)
             {
-                QuestComp->CompleteQuest(QuestID);
+                if (UQuestReceiverComponent* QuestComp = Pawn->FindComponentByClass<UQuestReceiverComponent>())
+                {
+                    QuestComp->CompleteQuest(QuestID);
+                    if (QuestDataTable && !QuestRowName.IsNone())
+                    {
+                        if (const FQuestDataRow* Row = QuestDataTable->FindRow<FQuestDataRow>(QuestRowName, TEXT("QuestLog")))
+                        {
+                            UpdateQuestLogWidget(*Row);
+                            UE_LOG(LogTemp, Warning, TEXT(">> 퀘스트 완료 후 UI 갱신: %s"), *Row->QuestName);
+                        }
+                    }
+                }
             }
-        }
-
-        SetDialogueVisualState(false);
-
-        PC->SetInputMode(FInputModeGameOnly());
-        PC->bShowMouseCursor = false;
-        PC->SetViewTargetWithBlend(PC->GetPawn(), 0.5f);
-        SetInputMappingContext(GameplayInputMappingContext);
+            if (QuestWidgetInstance && QuestWidgetInstance->IsInViewport())
+            {
+                QuestWidgetInstance->RemoveFromParent();
+                QuestWidgetInstance = nullptr;
+            }
+            if (CompleteWidget && CompleteWidget->IsInViewport())
+            {
+                CompleteWidget->RemoveFromParent();
+            }
+            SetDialogueVisualState(false);
+            PC->SetInputMode(FInputModeGameOnly());
+            PC->bShowMouseCursor = false;
+            PC->SetViewTargetWithBlend(PC->GetPawn(), 0.5f);
+            SetInputMappingContexts({ GameplayInputMappingContext, GameplayUIInputMappingContext }, true);
         });
+    if (DialogueWidget)
+    {
+        DialogueWidget->RemoveFromParent();
+        DialogueWidget = nullptr;
+    }
 
-    if (DialogueWidget) { DialogueWidget->RemoveFromParent(); DialogueWidget = nullptr; }
     InitializeAndDisplayWidget(CompleteWidget);
 }
 
@@ -436,7 +481,33 @@ void UDialogueComponent::PositionDetachedCamera()
         }
     }
 }
+void UDialogueComponent::UpdateQuestLogWidget(const FQuestDataRow& QuestRow)
+{
+    if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
+    {
+        if (AEmberMainHUD* HUD = Cast<AEmberMainHUD>(PC->GetHUD()))
+        {
+            if (UPlayerQuestWidget* QuestLogWidget = HUD->GetQuestLogWidget())
+            {
+                bool bIsComplete = false;
+                if (ACharacter* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0))
+                {
+                    if (UQuestReceiverComponent* QuestReceiver = Player->FindComponentByClass<UQuestReceiverComponent>())
+                    {
+                        bIsComplete = QuestReceiver->IsQuestComplete(QuestRow.QuestID);
+                    }
+                }
+                QuestLogWidget->SetQuestInfoFromDataRow(QuestRow, bIsComplete);
 
+                UE_LOG(LogTemp, Warning, TEXT(">> 퀘스트 정보 전달 성공: %s (완료 여부: %s)"), *QuestRow.QuestName, bIsComplete ? TEXT("완료") : TEXT("미완료"));
+            }
+            else
+            {
+                UE_LOG(LogTemp, Error, TEXT(">> 여전히 QuestLogWidget nullptr 상태입니다."));
+            }
+        }
+    }
+}
 bool UDialogueComponent::IsDialogueActive() const
 {
     return DialogueWidget != nullptr;
