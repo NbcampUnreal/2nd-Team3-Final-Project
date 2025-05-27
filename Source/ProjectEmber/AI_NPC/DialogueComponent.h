@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Blueprint/UserWidget.h"
+#include "QuestDataRow.h"
 #include "Interactables/Interactable.h"
 #include "DialogueComponent.generated.h"
 
@@ -27,22 +28,26 @@ public:
     UFUNCTION()
     void RepositionNPCForDialogue();
 
+    UFUNCTION(BlueprintCallable)
+    void UpdateQuestLogWidget(const FQuestDataRow& QuestRow);
 
     UFUNCTION()
     void PositionDetachedCamera();
-
+    void ShowQuestCompleteWidget(int32 QuestID);
     void AdvanceDialogue();
     void Interact();
     void ShowQuestUI();
-    void LoadDialogueFromDataTable(bool bResetDialogueIndex = true);
-    void SetInputMappingContext(UInputMappingContext* MappingContext, bool bClearExisting = true);
+    void LoadDialogueFromDataTable(bool bResetDialogueIndex, FName InObjectiveTag = NAME_None);
+    UFUNCTION(BlueprintCallable, Category = "Input")
+    void SetInputMappingContexts(TArray<UInputMappingContext*> MappingContexts, bool bClearExisting = true);
 
     UPROPERTY()
     bool bDialogueFinished = false;
     bool IsDialogueActive() const;
+
+
 protected:
     virtual void BeginPlay() override;
-
     UFUNCTION()
     void OnPlayerEnterRadius(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
@@ -79,6 +84,8 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest")
     FName QuestRowName = FName("MainQuest01");
 
+    UPROPERTY(EditDefaultsOnly, Category = "Quest")
+    TSubclassOf<class UQuestWidget> QuestCompleteWidgetClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<FString> LinesOfDialogue;
@@ -101,7 +108,27 @@ protected:
     UPROPERTY(EditDefaultsOnly, Category = "Input")
     UInputMappingContext* GameplayInputMappingContext;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    UInputMappingContext* GameplayUIInputMappingContext;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<FName> DialogueRowNames;
+
+    UFUNCTION()
+    void SetDialogueVisualState(bool bShowUI);
   
+    UFUNCTION()
+    void InitializeAndDisplayWidget(UUserWidget* Widget);
+
+    UPROPERTY(EditAnywhere, Category = "UI")
+    TSubclassOf<UUserWidget> PlayerHUDClass;
+
+    UPROPERTY()
+    UUserWidget* PlayerHUD;
+
+    UPROPERTY()
+    UQuestWidget* QuestWidgetInstance;
+
+
 
 };

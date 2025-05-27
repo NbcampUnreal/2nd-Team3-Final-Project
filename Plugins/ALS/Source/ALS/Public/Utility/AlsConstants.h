@@ -9,6 +9,10 @@ class ALS_API UAlsConstants : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
+	// Test
+	UFUNCTION(BlueprintPure, Category = "ALS|Constants|Bones", Meta = (ReturnDisplayName = "Bone Name"))
+	static const FName& TestName();
+	
 	// Bones
 
 	UFUNCTION(BlueprintPure, Category = "ALS|Constants|Bones", Meta = (ReturnDisplayName = "Bone Name"))
@@ -213,6 +217,12 @@ public:
 	static const FName& MantlingDebugDisplayName();
 };
 
+inline const FName& UAlsConstants::TestName()
+{
+	static const FName Name{TEXTVIEW("AlsTestSlot")};
+	return Name;
+}
+
 inline const FName& UAlsConstants::RootBoneName()
 {
 	static const FName Name{TEXTVIEW("root")};
@@ -317,7 +327,7 @@ inline const FName& UAlsConstants::LayerHeadAdditiveCurveName()
 
 inline const FName& UAlsConstants::LayerHeadSlotCurveName()
 {
-	static const FName Name{TEXTVIEW("LayerHeadSlot")};
+	static const FName Name{TEXTVIEW("LayerHeadSlotCustom")};
 	return Name;
 }
 
@@ -341,7 +351,7 @@ inline const FName& UAlsConstants::LayerArmLeftLocalSpaceCurveName()
 
 inline const FName& UAlsConstants::LayerArmLeftSlotCurveName()
 {
-	static const FName Name{TEXTVIEW("LayerArmLeftSlot")};
+	static const FName Name{TEXTVIEW("LayerArmLeftSlotCustom")};
 	return Name;
 }
 
@@ -365,7 +375,7 @@ inline const FName& UAlsConstants::LayerArmRightLocalSpaceCurveName()
 
 inline const FName& UAlsConstants::LayerArmRightSlotCurveName()
 {
-	static const FName Name{TEXTVIEW("LayerArmRightSlot")};
+	static const FName Name{TEXTVIEW("LayerArmRightSlotCustom")};
 	return Name;
 }
 
@@ -395,7 +405,7 @@ inline const FName& UAlsConstants::LayerSpineAdditiveCurveName()
 
 inline const FName& UAlsConstants::LayerSpineSlotCurveName()
 {
-	static const FName Name{TEXTVIEW("LayerSpineSlot")};
+	static const FName Name{TEXTVIEW("LayerSpineSlotCustom")};
 	return Name;
 }
 
@@ -407,7 +417,7 @@ inline const FName& UAlsConstants::LayerPelvisCurveName()
 
 inline const FName& UAlsConstants::LayerPelvisSlotCurveName()
 {
-	static const FName Name{TEXTVIEW("LayerPelvisSlot")};
+	static const FName Name{TEXTVIEW("LayerPelvisSlotCustom")};
 	return Name;
 }
 
@@ -419,7 +429,7 @@ inline const FName& UAlsConstants::LayerLegsCurveName()
 
 inline const FName& UAlsConstants::LayerLegsSlotCurveName()
 {
-	static const FName Name{TEXTVIEW("LayerLegsSlot")};
+	static const FName Name{TEXTVIEW("LayerLegsSlotCustom")};
 	return Name;
 }
 

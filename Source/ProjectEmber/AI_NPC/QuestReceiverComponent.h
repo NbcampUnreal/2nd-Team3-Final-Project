@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "QuestDataRow.h"
+#include "DialogueDataRow.h"
 #include "QuestReceiverComponent.generated.h"
 
 USTRUCT(BlueprintType)
@@ -11,12 +13,12 @@ struct FQuestStorageInfo : public FTableRowBase
 {
     GENERATED_BODY()
 
-
     FQuestStorageInfo()
         : QuestID(0)
         , QuestName(TEXT("Unnamed Quest"))
         , ObjectiveNames()
         , ObjectiveProgress()
+        , ObjectiveGoals()
         , bIsTracking(false)
         , bIsComplete(false)
     {
@@ -29,17 +31,21 @@ struct FQuestStorageInfo : public FTableRowBase
     FString QuestName;
 
     UPROPERTY(BlueprintReadWrite)
-    TArray<FString> ObjectiveNames;
+    TArray<FString> ObjectiveNames; 
 
     UPROPERTY(BlueprintReadWrite)
-    TArray<int32> ObjectiveProgress;
+    TArray<int32> ObjectiveProgress; 
+
+    UPROPERTY(BlueprintReadWrite)
+    TArray<int32> ObjectiveGoals;    
 
     UPROPERTY(BlueprintReadWrite)
     bool bIsTracking;
 
     UPROPERTY(BlueprintReadWrite)
     bool bIsComplete;
-};
+}; 
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestEventSignature, const FQuestStorageInfo&, QuestInfo);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -50,9 +56,6 @@ class PROJECTEMBER_API UQuestReceiverComponent : public UActorComponent
 public:
     UQuestReceiverComponent();
 
-    UFUNCTION(BlueprintCallable)
-    void NotifyTalkObjectiveCompleted(FName ObjectiveName);
- 
     UFUNCTION(BlueprintCallable)
     void AcceptQuest(UDataTable* QuestDataTable, FName RowName);
 
@@ -66,16 +69,10 @@ public:
     void CompleteQuest(int32 QuestID);
 
     UFUNCTION(BlueprintCallable)
-    void AbandonQuest(int32 QuestID);
-
-    UFUNCTION(BlueprintCallable)
-    void UpdateQuestObjective(int32 QuestID, const FString& ObjectiveName, int32 QuantityIncrease);
-
-    UFUNCTION(BlueprintCallable)
-    void RemoveTrackingObjective(int32 QuestID, const FString& ObjectiveName);
-
-    UFUNCTION(BlueprintCallable)
     const TArray<FQuestStorageInfo>& GetQuestLog() const;
+
+    UFUNCTION(BlueprintCallable)
+    void NotifyTalkObjectiveCompleted(AActor* TalkedNPC);
 
     UPROPERTY(BlueprintAssignable)
     FQuestEventSignature OnQuestAccepted;
@@ -89,6 +86,25 @@ public:
     UPROPERTY(BlueprintAssignable)
     FQuestEventSignature OnQuestUpdated;
 
+    bool IsQuestComplete(int32 QuestID) const;
+
+    UPROPERTY()
+    class UPlayerQuestWidget* QuestLogWidget;
+
+    UFUNCTION(BlueprintCallable)
+    void SetQuestLogWidget(UPlayerQuestWidget* InWidget);
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Quest")
+    FQuestDataRow LastAcceptedQuestData;
+
+    UFUNCTION(BlueprintCallable, Category = "Quest")
+    const FQuestDataRow& GetLastAcceptedQuest() const { return LastAcceptedQuestData; }
+
+    UFUNCTION(BlueprintCallable, Category = "Quest")
+    EDialogueStage GetDialogueStageForQuest(FName QuestRowName, UDataTable* QuestDataTable);
+
+    UPROPERTY()
+    UPlayerQuestWidget* PlayerQuestWidget;
 
 private:
     UPROPERTY()

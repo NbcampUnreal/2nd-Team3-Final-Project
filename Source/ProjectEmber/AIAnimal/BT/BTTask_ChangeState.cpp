@@ -31,10 +31,9 @@ EBTNodeResult::Type UBTTask_ChangeState::ExecuteTask(UBehaviorTreeComponent& Own
 	{
 		return EBTNodeResult::Failed;
 	}
-
-	Cast<ABaseAIAnimal>(AIPawn)->SetCurrentState(EAnimalAIState::Idle);
-	BlackboardComp->SetValueAsBool("IsHit", false);
-	BlackboardComp->SetValueAsBool("IsRest", true);
+	
+	BlackboardComp->SetValueAsName("NStateTag", "Animal.State.Idle");
+	BlackboardComp->SetValueAsObject("TargetObject", nullptr);
 	
 	return Super::ExecuteTask(OwnerComp, NodeMemory);
 }
