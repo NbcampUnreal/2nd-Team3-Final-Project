@@ -5,7 +5,10 @@
 
 #include "AIController.h"
 #include "AIAnimal/BaseAIAnimal.h"
+#include "AIAnimal/TestFood.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "EnvironmentQuery/EnvQueryInstanceBlueprintWrapper.h"
+#include "EnvironmentQuery/EnvQueryManager.h"
 
 UBTTask_GeneratePatrolArea::UBTTask_GeneratePatrolArea()
 {
@@ -26,22 +29,67 @@ EBTNodeResult::Type UBTTask_GeneratePatrolArea::ExecuteTask(UBehaviorTreeCompone
 		return EBTNodeResult::Failed;
 	}
 
-	UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
+	BlackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!BlackboardComp)
 	{
 		return EBTNodeResult::Failed;
 	}
-	FVector ActorLocation = AIPawn->GetActorLocation();
-	TArray<FVector>& PatrolPoints = Cast<ABaseAIAnimal>(AIPawn)->GetPatrolPoints();
-	float WanderRange = BlackboardComp->GetValueAsFloat("WanderRange");
 	
-	for (auto& PatrolPoint : PatrolPoints)
+	//EQS
+	BTComp = &OwnerComp;
+	UEnvQueryInstanceBlueprintWrapper* QueryInstance = UEnvQueryManager::RunEQSQuery(
+	 GetWorld(),
+	RandomPointQuery,
+	AIPawn,
+	 EEnvQueryRunMode::RandomBest5Pct,
+	 nullptr);
+    
+	if (QueryInstance)
 	{
-		PatrolPoint = GenerateRandomLocation(ActorLocation,WanderRange);
+		QueryInstance->GetOnQueryFinishedEvent().AddDynamic(this, &UBTTask_GeneratePatrolArea::OnFindRandomPointQueryFinished);
+		return EBTNodeResult::InProgress;
+	}
+	return EBTNodeResult::Failed;
+
+	
+	// float WanderRange = BlackboardComp->GetValueAsFloat("WanderRange");
+	//
+	// for (auto& PatrolPoint : PatrolPoints)
+	// {
+	// 	PatrolPoint = GenerateRandomLocation(ActorLocation,WanderRange);
+	// }
+	//
+	// BlackboardComp->SetValueAsBool("NIsNeedToGeneratePP", false);
+	// return Super::ExecuteTask(OwnerComp, NodeMemory);
+}
+
+
+
+
+void UBTTask_GeneratePatrolArea::OnFindRandomPointQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance,
+	EEnvQueryStatus::Type QueryStatus)
+{
+	//성공하지 않았으면 리턴
+	if (EEnvQueryStatus::Success != QueryStatus)
+	{
+		FinishLatentTask(*BTComp, EBTNodeResult::Failed);
+		return;
+	}
+	AAIController* AIController = BTComp->GetAIOwner();
+	TArray<FVector>& PatrolPoints = Cast<ABaseAIAnimal>(AIController->GetPawn())->GetPatrolPoints();
+
+	for (int i=0; i < PatrolPoints.Num(); i++)
+	{
+		PatrolPoints[i] = QueryInstance->GetQueryResult()->GetItemAsLocation(i);
 	}
 	
-	BlackboardComp->SetValueAsBool("NIsNeedToGeneratePP", false);
-	return Super::ExecuteTask(OwnerComp, NodeMemory);
+	if (BlackboardComp)
+	{
+		BlackboardComp->SetValueAsBool("NIsNeedToGeneratePP", false);
+		FinishLatentTask(*BTComp, EBTNodeResult::Succeeded);
+	}
+	
+	FinishLatentTask(*BTComp, EBTNodeResult::Failed);
 }
 
 

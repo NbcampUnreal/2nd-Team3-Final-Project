@@ -6,6 +6,14 @@
 #include "BehaviorTree/Tasks/BTTask_BlackboardBase.h"
 #include "BTTask_FindSafeLocation.generated.h"
 
+class UEnvQuery;
+class UEnvQueryInstanceBlueprintWrapper;
+
+namespace EEnvQueryStatus
+{
+	enum Type : int;
+}
+
 /**
  * 
  */
@@ -18,4 +26,15 @@ public:
 	UBTTask_FindSafeLocation();
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 	FVector GenerateRandomLocation(const FVector& TargetActorLocation, const FVector& ActorLocation);
+
+	UFUNCTION(BlueprintCallable)
+	void OnFindSafeLocationQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance,
+										EEnvQueryStatus::Type QueryStatus);
+	
+	//EQS
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EQS")
+	TObjectPtr<UEnvQuery> SafeLocationQuery;
+
+	UBlackboardComponent* BlackboardComp;
+	UBehaviorTreeComponent* BTComp;
 };
