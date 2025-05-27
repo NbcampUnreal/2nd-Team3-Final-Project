@@ -106,8 +106,4 @@ public: /* UI Input */
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> NextDialogueAction;
 
-
-
-
-
 };
