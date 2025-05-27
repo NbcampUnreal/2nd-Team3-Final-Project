@@ -9,7 +9,7 @@ USTRUCT(BlueprintType)
 struct FQuestSaveData
 {
 	GENERATED_BODY()
-	
+
 	UPROPERTY()
 	FName QuestID;
 	
@@ -40,10 +40,10 @@ public:
 	 */
 	UPROPERTY()
 	TArray<FQuestSaveData> ActiveQuests;
-	// virtual void CaptureSaveData(FEmberSaveData& OutSaveData) override
-	// {
-	// 	OutSaveData.QuestData = ActiveQuests;
-	// }
+	//  virtual void CaptureSaveData(FEmberSaveData& OutSaveData) override
+	//  {
+	//  	OutSaveData.QuestData = ActiveQuests;
+	//  }
 	// virtual void ApplyLoadData(const FEmberSaveData& InSaveData) override
 	// {
 	// 	ActiveQuests = InSaveData.QuestData;
