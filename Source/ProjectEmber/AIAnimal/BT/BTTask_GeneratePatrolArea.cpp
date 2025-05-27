@@ -37,7 +37,7 @@ EBTNodeResult::Type UBTTask_GeneratePatrolArea::ExecuteTask(UBehaviorTreeCompone
 	
 	for (auto& PatrolPoint : PatrolPoints)
 	{
-		PatrolPoint = GenerateRandomLocation(ActorLocation,WanderRange * 3.f);
+		PatrolPoint = GenerateRandomLocation(ActorLocation,WanderRange);
 	}
 	
 	BlackboardComp->SetValueAsBool("NIsNeedToGeneratePP", false);

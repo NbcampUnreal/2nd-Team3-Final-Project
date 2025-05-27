@@ -6,16 +6,6 @@ UGA_InteractHarvest::UGA_InteractHarvest()
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 }
 
-/* 어빌리티 호출 예시
-Harvest.OnDestroyed.AddDynamic(this, 동물::다먹었다);
-
-FGameplayEventData Payload;
-Payload.EventTag = 먹기태그;
-Payload.OptionalObject = HarvestActor;
-
-AbilitySystemComponent->HandleGameplayEvent(먹기태그, Payload);
-*/
-
 void UGA_InteractHarvest::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
                                           const FGameplayAbilityActorInfo* OwnerInfo, const FGameplayAbilityActivationInfo ActivationInfo,
                                           const FGameplayEventData* TriggerEventData)
