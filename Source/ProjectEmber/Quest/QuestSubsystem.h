@@ -5,13 +5,14 @@
 #include "Engine/DataTable.h"
 #include "GameplayTagContainer.h"
 #include "Abilities/GameplayAbilityTypes.h"
+#include "Setting/QuestDataSetting.h"
 #include "QuestSubsystem.generated.h"
 
 class UQuestDataAsset;
 /**
  * 
  */
-UCLASS()
+UCLASS(BlueprintType)
 class PROJECTEMBER_API UQuestSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
@@ -20,24 +21,28 @@ public:
 	virtual void Deinitialize() override;
 
 public:
-	
+	// NPC에게 F눌러서 통과 받을때 호출될 함수
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	bool TryStartQuest(FName QuestID);
 
+	// 특정 행동 (동물죽엇다, 뭐 파밍햇다, 공격햇다)에 대한 이벤트 호출 함수
 	UFUNCTION()
 	void OnGameEvent(const FGameplayTag& EventTag, const FGameplayEventData& EventData);
-	
+
+	/* 연계퀘스트에 다음 퀘스트로 넘어가는 함수 
+	 * (다음 퀘스트는 실제로 퀘스트를 받는게 아닌 NPC의 느낌표를 활성화 해주는 식으로 접근 하면 됨)
+	 */
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	bool AdvanceQuestStep(FName QuestID);
-	
+
+	// 하나의 연계퀘스트가 완료되면 호출될 함수 ( 수정 필요 )
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	bool CompleteQuest(FName QuestID);
 
+	// 단순 완료된 퀘스트인지 검사하는 함수
+	UFUNCTION(BlueprintCallable, Category = "Quest")
+	bool IsQuestCompleted(FName QuestID) const;
 private:
-	// 퀘스트 데이터 에셋 목록
-	UPROPERTY(EditDefaultsOnly, Category = "Quest|Config")
-	TArray<TSoftObjectPtr<UQuestDataAsset>> QuestAssets;
-
 	// 로드된 퀘스트 목록
 	TMap<FName, UQuestDataAsset*> LoadedQuests;
 
@@ -46,8 +51,15 @@ private:
 
 	// 완료된 퀘스트 목록
 	TSet<FName> CompletedQuests;
-	
-	void LoadAllQuests();
 
-	void CheckQuestStepCompletion(UQuestDataAsset* QuestAsset, const FGameplayTag& EventTag, const FGameplayEventData& EventData);
+	// 초기화 단계에서 데이터불러오는 함수
+	void LoadAllQuests();
+		
+	// OnGameEvent가 호출되면 QuestProgress를 순회하면서 이 함수를 호출
+	void CheckQuestStepCompletion(const UQuestDataAsset* QuestAsset, const FGameplayTag& EventTag, const FGameplayEventData& EventData);
 };
+
+inline bool UQuestSubsystem::IsQuestCompleted(FName QuestID) const
+{
+	return CompletedQuests.Contains(QuestID);
+}

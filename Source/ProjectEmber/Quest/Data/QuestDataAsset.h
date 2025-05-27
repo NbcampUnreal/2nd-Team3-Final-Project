@@ -41,18 +41,26 @@ struct FQuestStep
     // 대화 텍스트
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
     FText Dialogue;
-
+    
     // 진행 조건들
     UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Quest|Step")
     TArray<UQuestCondition*> Conditions;
 
+    // 완료시 보고할 NPC
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
+    TSoftObjectPtr<AActor> CompletionGiver;
+
+    // 완료시 출력할 대화 텍스트
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
+    FText CompletionDialogue;
+    
     // 완료 시 수여할 보상 목록
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
     TArray<FQuestRewardData> Rewards;
 
-    // 이 단계 시작 전에 완료되어야 하는 선행 퀘스트 ID들
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
-    TArray<FName> PrerequisiteQuestIDs;
+    // 해금 조건들
+    UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Quest|Step")
+    TArray<UQuestCondition*> UnlockConditions;
 };
 
 /**
