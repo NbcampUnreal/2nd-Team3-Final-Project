@@ -55,4 +55,5 @@ const FGameplayTagContainer& ATestFood::GetGameplayTagContainer()
 
 void ATestFood::SetSelected(const bool InIsSelected)
 {
+	bIsSelected = InIsSelected;
 }
