@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
 #include "GameplayTagContainer.h"
+#include "AI_NPC/PlayerQuestWidget.h"
 #include "EmberMainHUD.generated.h"
 
 class ULayerDebugger;
@@ -42,6 +43,21 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
 	bool GetGameMovementInputLock();
+
+	UEmberLayerBase* GetLayer(FGameplayTag LayerTag) const;
+
+
+	UFUNCTION(BlueprintCallable)
+	UPlayerQuestWidget* GetQuestLogWidget() const;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<UPlayerQuestWidget> PlayerQuestWidgetClass;
+
+	UPROPERTY()
+	UPlayerQuestWidget* PlayerQuestWidgetInstance;
+
+	void UpdateQuestLogWidget(const FQuestDataRow& QuestRow);
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI|HUD")
 	TSubclassOf<UUserWidget> PrimaryLayoutClass;
@@ -51,6 +67,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI|HUD")
 	TMap<FGameplayTag, TSubclassOf<UUserWidget>> InitWidgetClasses;
+
+
+
 
 private:
 	bool bIsGameLeftMouseInputLock{false};

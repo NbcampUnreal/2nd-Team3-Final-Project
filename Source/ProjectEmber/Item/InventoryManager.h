@@ -5,9 +5,6 @@
 #include "CoreMinimal.h"
 #include "EmberDataContainer.h"
 #include "Components/ActorComponent.h"
-#include "Core/EmberItemStruct.h"
-#include "Core/ItemTypes.h"
-#include "UI/SlotWidget/EmberSlotDataProviderInterface.h"
 #include "InventoryManager.generated.h"
 
 UCLASS(ClassGroup=(Custom))

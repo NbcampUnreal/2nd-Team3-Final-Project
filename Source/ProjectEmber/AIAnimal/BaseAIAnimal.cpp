@@ -17,21 +17,16 @@ ABaseAIAnimal::ABaseAIAnimal()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
-
 	bIsShouldSwim = false;
-	CurrentState = EAnimalAIState::Idle;
-	
-	
 	NavGenerationRadius = 4000.0f; //시각,청각 인지 버뮈보다 인보커 생성 범위가 커야함
 	NavRemovalRadius = 4300.0f;
 	NavInvokerComponent = CreateDefaultSubobject<UNavigationInvokerComponent>("NavInvokerComponent");
-
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	CharacterAttributeSet = CreateDefaultSubobject<UEmberCharacterAttributeSet>(TEXT("CharacterAttributeSet"));
 	AnimalAttributeSet = CreateDefaultSubobject<UEmberAnimalAttributeSet>(TEXT("AnimalAttributeSet"));
 
-	FEmberAnimalAttributeData AttributeData;
 	GenerateRandom();
+	FEmberAnimalAttributeData AttributeData;
 	AttributeData.Fullness = Fullness;
 	AttributeData.WalkSpeed = WalkSpeed;
 	AttributeData.WanderRange = WanderRange;
@@ -141,7 +136,6 @@ void ABaseAIAnimal::BeginPlay()
 void ABaseAIAnimal::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	UE_LOG(LogTemp, Warning, TEXT("SetFullness :: Fullness , IsHungry %f, %d"), Fullness, bIsHungry);
 }
 
 void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
@@ -149,7 +143,7 @@ void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 	//현재 InstigatorActor = 플레이어스테이트 , 동물이 때린다면?
 	//-> 만약 터지면 동물도 스테이트 쓸건지 체크하는 ai 설정 있음, 그걸 쓸건지 아니며 다른방법 찾던지, 일단 보류
 	EMBER_LOG(LogTemp, Warning, TEXT("%s"), *InstigatorActor->GetName());
-	//속도 빨라졌다 서서히 감소 추가해야함->이팩트로 적용예정
+	//도망가는 상황에서만 속도 빨라졌다 서서히 감소 추가해야함->이팩트로 적용예정
 	
 	if (BlackboardComponent)
 	{
@@ -219,7 +213,8 @@ void ABaseAIAnimal::OnFullnessChanged(const FOnAttributeChangeData& OnAttributeC
 
 void ABaseAIAnimal::GenerateRandom()
 {
-	int32 RandomPersonality = FMath::RandRange(0, static_cast<int32>(EAnimalAIPersonality::End) - 1);
+	//int32 RandomPersonality = FMath::RandRange(0, static_cast<int32>(EAnimalAIPersonality::End) - 1);
+	int32 RandomPersonality =3; //임시수정
 	Personality = static_cast<EAnimalAIPersonality>(RandomPersonality);
 	SetDetails();
 	Fullness = FMath::FRandRange(50.f, 100.f);
@@ -233,7 +228,6 @@ void ABaseAIAnimal::DecreaseFullness()
 	if (bIsHungry == false && Fullness <= 50.0f)
 	{
 		bIsHungry = true;
-		BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
 		BlackboardComponent->SetValueAsBool("IsHungry", bIsHungry);
 	}
 }
@@ -251,14 +245,14 @@ float ABaseAIAnimal::GetWildPower() const
 	return WildPower;
 }
 
-float ABaseAIAnimal::GetWanderRange() const
+float ABaseAIAnimal::GetWanderRange() const //아무데서도 안 쓰임
 {
 	return WanderRange;
 }
 
-const UAnimMontage* ABaseAIAnimal::GetMontage()
+UAnimMontage* ABaseAIAnimal::GetMontage(FGameplayTag MontageTag)
 {
-	return Montage;
+	return MontageMap[MontageTag];
 }
 
 TArray<FVector>& ABaseAIAnimal::GetPatrolPoints()
@@ -271,10 +265,9 @@ FGameplayTagContainer& ABaseAIAnimal::GetGameplayTagContainer()
 	return AnimalTagContainer;
 }
 
-void ABaseAIAnimal::SetCurrentState(EAnimalAIState NewState)
+FGameplayTag ABaseAIAnimal::GetIdentityTag() const
 {
-	CurrentState = NewState; //객체값 변경
-	BlackboardComponent->SetValueAsEnum("CurrentState", static_cast<uint8>(CurrentState)); //블랙보드 갱신
+	return IdentityTag;
 }
 
 UAbilitySystemComponent* ABaseAIAnimal::GetAbilitySystemComponent() const
@@ -290,19 +283,6 @@ const class UEmberCharacterAttributeSet* ABaseAIAnimal::GetCharacterAttributeSet
 const class UEmberAnimalAttributeSet* ABaseAIAnimal::GetAnimalAttributeSet() const
 {
 	return AbilitySystemComponent->GetSet<UEmberAnimalAttributeSet>();
-}
-
-void ABaseAIAnimal::PlayInteractMontage(uint8 InState)
-{
-	if (Montage)
-	{
-		PlayAnimMontage(Montage, 1.0f);
-	}
-}
-
-EAnimalAIState ABaseAIAnimal::GetCurrentState()
-{
-	return CurrentState;
 }
 
 EAnimalAIPersonality ABaseAIAnimal::GetPersonality()
@@ -341,4 +321,9 @@ void ABaseAIAnimal::SetDetails()
 		}
 		break;
 	}
+}
+
+void ABaseAIAnimal::SetIdentityTag(const FGameplayTag InIdentityTag)
+{
+	IdentityTag= InIdentityTag;
 }

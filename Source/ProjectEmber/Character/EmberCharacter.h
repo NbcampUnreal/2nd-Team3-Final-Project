@@ -4,8 +4,11 @@
 #include "AlsCharacter.h"
 #include "AbilitySystemInterface.h"
 #include "EMSActorSaveInterface.h"
+#include "AI_NPC/QuestReceiverComponent.h"
 #include "EmberCharacter.generated.h"
 
+class UGameMenuWidget;
+class UEmberLayerBase;
 struct FInputActionInstance;
 struct FGameplayAbilitySpec;
 class UAlsCameraComponent;
@@ -34,6 +37,18 @@ public: /* Character */
 
 public:
 	virtual UMeleeTraceComponent* GetMeleeTraceComponent() const;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Quest")
+	UQuestReceiverComponent* QuestReceiverComponent;
+
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void ToggleQuestUI();
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UPlayerQuestWidget> QuestWidgetClass;
+
+	UPROPERTY()
+	UPlayerQuestWidget* QuestWidgetInstance;
 
 protected:
 	void SetupEmberInputComponent() const;
@@ -94,7 +109,9 @@ protected: /* Camera */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EmberCharacter|Input")
 	float LookRightRate{240.0f};
 
-protected: /* Input */
+public: /* Input */
+	void BindUIInput(UGameMenuWidget* Layer);
+protected:
 	virtual void Input_OnLookMouse(const FInputActionValue& ActionValue);
 	virtual void Input_OnLook(const FInputActionValue& ActionValue);
 	virtual void Input_OnMove(const FInputActionValue& ActionValue);

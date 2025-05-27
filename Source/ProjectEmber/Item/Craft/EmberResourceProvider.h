@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Item/Core/EmberCraftStruct.h"
 #include "UObject/Interface.h"
 #include "Item/Core/EmberItemStruct.h"
 #include "EmberResourceProvider.generated.h"
@@ -25,8 +26,15 @@ class PROJECTEMBER_API IEmberResourceProvider
 public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	TArray<FItemPair> GetItems();
+	TMap<FName, int32> GetAllItemInfos();
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	bool bTryConsumeResource(const TArray<FItemPair>& RequireItems);
+	void TryConsumeResource(const TArray<FItemPair>& InRequireItems);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	TArray<FItemPair> RemoveResourceUntilAble(const TArray<FItemPair>& InRequireItems);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	bool bConsumeAbleResource(const TArray<FItemPair>& InRequireItems);
+
 };

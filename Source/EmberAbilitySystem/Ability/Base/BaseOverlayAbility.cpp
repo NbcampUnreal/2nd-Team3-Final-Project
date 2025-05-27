@@ -1,6 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-
+﻿
 #include "BaseOverlayAbility.h"
 
 #include "AbilitySystemComponent.h"
@@ -33,18 +31,28 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
 	{
 		Character->SetForceGameplayTags(ForceGameplayTags);
+		PreLocomotionState = Character->GetLocomotionState();
+
+		Character->GetWorld()->GetTimerManager().SetTimer(
+				MontageTickHandle,
+				FTimerDelegate::CreateUObject(this, &UBaseOverlayAbility::OnMontageTick),
+				0.033f,
+				true
+			  );
 	}
 	
 	AbilitySystemComponent = GetAbilitySystemComponentFromActorInfo();
-
+	
 	UAbilityTask_PlayMontageAndWait* PlayMontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 			this, NAME_None, MontageToPlay);
 
 	PlayMontageTask->OnCompleted.AddDynamic(this, &UBaseOverlayAbility::OnMontageCompleted);
 	PlayMontageTask->OnInterrupted.AddDynamic(this, &UBaseOverlayAbility::OnMontageInterrupted);
 	PlayMontageTask->OnCancelled.AddDynamic(this, &UBaseOverlayAbility::OnMontageInterrupted);
+	//PlayMontageTask->OnBlendOut.AddDynamic(this, &UBaseOverlayAbility::OnMontageCompleted);
+	//PlayMontageTask->OnBlendOut
 	PlayMontageTask->ReadyForActivation();
-
+	
 	if (!bLoopingMontage && bCanCombo)
 	{
 		static const FGameplayTag ComboTag = FGameplayTag::RequestGameplayTag(TEXT("Combat.Combo.Next"));
@@ -54,8 +62,6 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 		ComboTask->EventReceived.AddDynamic(this, &UBaseOverlayAbility::OnComboNotify);
 		ComboTask->ReadyForActivation();
 	}
-
-	
 }
 
 void UBaseOverlayAbility::CancelAbility(const FGameplayAbilitySpecHandle Handle,
@@ -92,13 +98,19 @@ void UBaseOverlayAbility::InputReleased(const FGameplayAbilitySpecHandle Handle,
 	EndAbility(Handle, ActorInfo, ActivationInfo,true, true);
 }
 
+
 void UBaseOverlayAbility::OnMontageCompleted()
 {
-	if (bCanCombo && NextComboAbility && bComboInputReceived && !bLoopingMontage)
+	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
 	{
-		AbilitySystemComponent->TryActivateAbilityByClass(NextComboAbility,true);
-	}
+		Character->GetWorld()->GetTimerManager().ClearTimer(MontageTickHandle);
 
+		/*EMBER_LOG(LogEmber, Warning, TEXT("Changed VelocityYawAngle : %f"), Character->GetLocomotionState().VelocityYawAngle);
+		EMBER_LOG(LogEmber, Warning, TEXT("Changed TargetYawAngle : %f"), Character->GetLocomotionState().TargetYawAngle);
+		EMBER_LOG(LogEmber, Warning, TEXT("Changed InputYawAngle : %f"), Character->GetLocomotionState().InputYawAngle);*/
+		//Character->SetRotationInstant(StartMontageActorYaw, ETeleportType::None);
+	}
+	
 	bool bReplicatedEndAbility = true;
 	bool bWasCancelled = false;
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);	
@@ -133,5 +145,16 @@ void UBaseOverlayAbility::LaunchCharacterForward(const FGameplayAbilityActorInfo
 			const float Speed = ForwardMovementDistance / ForwardMovementDuration;
 			Character->LaunchCharacter(Forward * Speed, true, true);
 		}
+	}
+}
+
+void UBaseOverlayAbility::OnMontageTick() const
+{
+	if (!bLoopingMontage)
+	{
+		if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
+		{
+			Character->ForceVelocityYawAngle(PreLocomotionState);
+		}	
 	}
 }

@@ -12,6 +12,8 @@
 #include "EmberInputHandlerComponent.generated.h"
 
 
+class UGameMenuWidget;
+class UEmberLayerBase;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class PROJECTEMBER_API UEmberInputHandlerComponent : public UActorComponent
@@ -27,6 +29,7 @@ public:
 	void RegisterMapping(APlayerController* PC, int32 Priority = 0, const FModifyContextOptions& Options = FModifyContextOptions());
 	void UnregisterMapping(APlayerController* PC);
 
+	void BindUIInput(UGameMenuWidget* Layer);
 public: /* Base Input */
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<UInputMappingContext> InputMappingContext;
@@ -103,7 +106,10 @@ public: /* UI Input */
 	UPROPERTY(EditAnywhere, Category="Input|UI") 
 	TObjectPtr<UInputAction> UIPauseAction;
 
-	UPROPERTY(EditAnywhere, Category = "Input")
-	TObjectPtr<UInputAction> NextDialogueAction;
 
+private:
+	UPROPERTY()
+	TObjectPtr<UEnhancedInputComponent> InputComp;
 };
+
+ 
