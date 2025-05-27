@@ -1,7 +1,13 @@
 ﻿#include "QuestSubsystem.h"
+
+#include "AbilitySystemComponent.h"
+#include "AI_NPC/QuestGiverComponent.h"
+#include "Attribute/Character/EmberCharacterAttributeSet.h"
+#include "Character/EmberCharacter.h"
 #include "Data/QuestDataAsset.h"
 #include "EmberLog/EmberLog.h"
 #include "GameInstance/GameplayEventSubsystem.h"
+#include "Item/UserItemManger.h"
 
 void UQuestSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -21,7 +27,8 @@ void UQuestSubsystem::Deinitialize()
 
 void UQuestSubsystem::LoadAllQuests()
 {
-    for (auto& SoftAsset : QuestAssets)
+    const UQuestDataSetting* QuestDataSetting = GetDefault<UQuestDataSetting>();
+    for (auto& SoftAsset : QuestDataSetting->QuestAssets)
     {
         if (UQuestDataAsset* Asset = SoftAsset.IsValid() ? SoftAsset.Get() : SoftAsset.LoadSynchronous())
         {
@@ -38,6 +45,7 @@ bool UQuestSubsystem::TryStartQuest(FName QuestID)
         EMBER_LOG(LogEmber, Log, TEXT("Quest %s started."), *QuestID.ToString());
         return true;
     }
+    
     return false;
 }
 
@@ -52,7 +60,7 @@ void UQuestSubsystem::OnGameEvent(const FGameplayTag& EventTag, const FGameplayE
     }
 }
 
-void UQuestSubsystem::CheckQuestStepCompletion(UQuestDataAsset* QuestAsset, const FGameplayTag& EventTag, const FGameplayEventData& EventData)
+void UQuestSubsystem::CheckQuestStepCompletion(const UQuestDataAsset* QuestAsset, const FGameplayTag& EventTag, const FGameplayEventData& EventData)
 {
     int32& StepIndex = QuestProgress.FindChecked(QuestAsset->QuestID);
     const TArray<FQuestStep>& Steps = QuestAsset->Steps;
@@ -60,7 +68,7 @@ void UQuestSubsystem::CheckQuestStepCompletion(UQuestDataAsset* QuestAsset, cons
     {
         return;
     }
-
+    
     const FQuestStep& CurrentStep = Steps[StepIndex];
 
     // 이벤트 발생 시 각 UQuestCondition에 전달하여 카운트 업데이트
@@ -82,7 +90,7 @@ void UQuestSubsystem::CheckQuestStepCompletion(UQuestDataAsset* QuestAsset, cons
             break;
         }
     }
-
+    
     if (bAllConditionsMet)
     {
         AdvanceQuestStep(QuestAsset->QuestID);
@@ -103,12 +111,42 @@ bool UQuestSubsystem::AdvanceQuestStep(FName QuestID)
         return false;
     }
 
+    if (QuestAsset->Steps.IsValidIndex(Index))
+    {
+        const FQuestStep& CompletedStep = QuestAsset->Steps[Index];
+        for (const FQuestRewardData& Reward : CompletedStep.Rewards)
+        {
+            /**
+             * 각 리워드 보상타입에 맞춰서 함수 호출해주면 될듯
+             * AddItem이라던가 경험치면 GameplayEffect를 호출한다던가
+             */
+        }
+    }
+    
     Index++;
     int32 NumSteps = QuestAsset->Steps.Num();
     if (Index >= NumSteps)
     {
         return CompleteQuest(QuestID);
     }
+    
+    const FQuestStep& NextStep = QuestAsset->Steps[Index];
+    if (AActor* GiverActor = NextStep.QuestGiver.Get())
+    {
+        if (UQuestGiverComponent* GiverComp = GiverActor->FindComponentByClass<UQuestGiverComponent>())
+        {
+            // 여기서 npc 상호작용 가능하게 키기
+            /*if (!GiverComp->ExclamationMarkComponent)
+            {
+                GiverComp->ExclamationMarkComponent = NewObject<UStaticMeshComponent>(GiverActor);
+                GiverComp->ExclamationMarkComponent->SetupAttachment(GiverComp->GetRootComponent());
+                GiverComp->ExclamationMarkComponent->SetStaticMesh(GiverComp->ExclamationMarkMesh);
+                GiverComp->ExclamationMarkComponent->RegisterComponent();
+            }
+            GiverComp->ExclamationMarkComponent->SetVisibility(true);*/
+        }
+    }
+    
     EMBER_LOG(LogEmber, Log, TEXT("Quest %s advanced to step %d."), *QuestID.ToString(), Index);
     return true;
 }
@@ -137,5 +175,7 @@ bool UQuestSubsystem::CompleteQuest(FName QuestID)
     QuestProgress.Remove(QuestID);
     CompletedQuests.Add(QuestID);
     EMBER_LOG(LogEmber, Log, TEXT("Quest %s completed."), *QuestID.ToString());
+
+    
     return true;
 }
