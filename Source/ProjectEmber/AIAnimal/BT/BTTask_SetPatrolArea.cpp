@@ -40,7 +40,7 @@ EBTNodeResult::Type UBTTask_SetPatrolArea::ExecuteTask(UBehaviorTreeComponent& O
 		if (!PatrolPoints.IsValidIndex(Index))
 		{
 			BlackboardComp->SetValueAsInt("NPatrolIndex", 0);
-			return EBTNodeResult::Failed;
+			return Super::ExecuteTask(OwnerComp, NodeMemory);
 		}
 
 		BlackboardComp->SetValueAsVector("NPatrolPoint", PatrolPoints[Index]);

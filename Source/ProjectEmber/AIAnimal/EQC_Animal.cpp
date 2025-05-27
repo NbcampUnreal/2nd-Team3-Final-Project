@@ -3,19 +3,47 @@
 
 #include "AIAnimal/EQC_Animal.h"
 
+#include "AIController.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "EnvironmentQuery/EnvQueryTypes.h"
+#include "EnvironmentQuery/Items/EnvQueryItemType_Actor.h"
+
 void UEQC_Animal::ProvideContext(FEnvQueryInstance& QueryInstance, FEnvQueryContextData& ContextData) const
 {
 	Super::ProvideContext(QueryInstance, ContextData);
 
-	// 예시: 월드에서 "타겟이 될 수 있는 액터들"을 찾는다 (ex: 플레이어)
-	// UWorld* World = QueryInstance.World;
-	// if (!World) return;
-	//
-	// TArray<AActor*> OutActors;
-	// UGameplayStatics::GetAllActorsOfClass(World, AYourTargetActorClass::StaticClass(), OutActors); //실제 게임에서 타겟이 될 수 있는 액터 클래스 (예: ACharacter, AAnimalBase 등)로 바꿔주세요.
-	//
-	// if (OutActors.Num() > 0)
-	// {
-	// 	UEnvQueryItemType_Actor::SetContextHelper(ContextData, OutActors);
-	// }
+	 UObject* QueryOwner = QueryInstance.Owner.Get();
+	if (!IsValid(QueryOwner))
+	{
+		return;
+	}
+	AActor* OwnerActor = Cast<AActor>(QueryOwner);
+	APawn* OwnerPawn = Cast<APawn>(OwnerActor);
+	AAIController* AIController = nullptr;
+
+	if (OwnerPawn)
+	{
+		AIController = Cast<AAIController>(OwnerPawn->GetController());
+	}
+
+	if (!AIController)
+	{
+		return;
+	}
+
+	UBlackboardComponent* BlackboardComp = AIController->GetBlackboardComponent();
+
+	if (!BlackboardComp)
+	{
+		return;
+	}
+
+	UObject* TargetObject = BlackboardComp->GetValueAsObject("TargetObject");
+
+	AActor* TargetActor = Cast<AActor>(TargetObject);
+	if (TargetActor)
+	{
+		// 컨텍스트에 대상 액터 추가
+		UEnvQueryItemType_Actor::SetContextHelper(ContextData, TargetActor);
+	}
 }

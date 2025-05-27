@@ -20,7 +20,6 @@ UBTTask_FindFood::UBTTask_FindFood()
 
 EBTNodeResult::Type UBTTask_FindFood::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
-	BTComp = &OwnerComp;
 	AAIController* AIController = OwnerComp.GetAIOwner();
 	if (!AIController)
 	{
@@ -38,7 +37,9 @@ EBTNodeResult::Type UBTTask_FindFood::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	{
 		return EBTNodeResult::Failed;
 	}
-	
+
+	//EQS
+	BTComp = &OwnerComp;
 	UEnvQueryInstanceBlueprintWrapper* QueryInstance = UEnvQueryManager::RunEQSQuery(
 	 GetWorld(),
 	FoodQuery,
