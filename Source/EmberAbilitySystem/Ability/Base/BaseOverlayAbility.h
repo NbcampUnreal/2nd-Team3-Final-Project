@@ -61,6 +61,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability|Movement", meta = (EditCondition = "bEnableForwardMovementDuringMontage"))
 	float ForwardMovementDuration;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability|Movement")
+	bool bMontageTickEnable{false};
+	
 	/**
 	 * 나중에 태그 기반 여러 어빌리티를 호출하고 싶어지면 키자
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Base", Meta = (AllowPrivateAccess = "true"))

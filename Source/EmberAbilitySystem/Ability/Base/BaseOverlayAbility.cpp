@@ -33,12 +33,15 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 		Character->SetForceGameplayTags(ForceGameplayTags);
 		PreLocomotionState = Character->GetLocomotionState();
 
-		Character->GetWorld()->GetTimerManager().SetTimer(
-				MontageTickHandle,
-				FTimerDelegate::CreateUObject(this, &UBaseOverlayAbility::OnMontageTick),
-				0.033f,
-				true
-			  );
+		if (bMontageTickEnable)
+		{
+			Character->GetWorld()->GetTimerManager().SetTimer(
+					MontageTickHandle,
+					FTimerDelegate::CreateUObject(this, &UBaseOverlayAbility::OnMontageTick),
+					0.033f,
+					true
+				  );	
+		}
 	}
 	
 	AbilitySystemComponent = GetAbilitySystemComponentFromActorInfo();
@@ -150,7 +153,7 @@ void UBaseOverlayAbility::LaunchCharacterForward(const FGameplayAbilityActorInfo
 
 void UBaseOverlayAbility::OnMontageTick() const
 {
-	if (!bLoopingMontage)
+	if (bMontageTickEnable)
 	{
 		if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
 		{

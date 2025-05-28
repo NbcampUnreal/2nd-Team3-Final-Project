@@ -78,7 +78,7 @@ public:
 	UFUNCTION()
 	void SetHiddenInGame();
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void SetVisibleInGame();
 	
  /* AbilitySystem */
