@@ -411,7 +411,7 @@ void AEmberCharacter::Input_OnAim(const FInputActionValue& ActionValue)
     {
         
     }
-    else
+    else if (OverlayMode == AlsOverlayModeTags::Bow)
     {
         SetDesiredAiming(ActionValue.Get<bool>());    
     }
