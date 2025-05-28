@@ -131,6 +131,17 @@ void ABaseAIAnimal::BeginPlay()
 	GetCharacterMovement()->bUseRVOAvoidance = true;
 	GetCharacterMovement()->AvoidanceConsiderationRadius = 800.0f; // AI가 다른 에이전트를 감지할 반경
 	GetCharacterMovement()->AvoidanceWeight = 0.5f;
+
+	/* 메세지버스 사용 예시 */
+
+	// 함수 바인딩
+	MessageDelegateHandle = FMessageDelegate::CreateUObject(this, &ThisClass::ReceiveMessage);
+
+	// FName으로 키값(메세지) 지정하고 델리게이트 전달
+	UMessageBus::GetInstance()->Subscribe(TEXT("HideAnimal"), MessageDelegateHandle);
+
+	// 호출할 곳에서 
+	// UMessageBus::GetInstance()->BroadcastMessage(TEXT("HideAnimal"), this);
 }
 
 void ABaseAIAnimal::Tick(float DeltaTime)
@@ -234,10 +245,12 @@ void ABaseAIAnimal::DecreaseFullness()
 
 void ABaseAIAnimal::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	Super::EndPlay(EndPlayReason);
-
 	// 타이머 해제
 	GetWorldTimerManager().ClearTimer(TimerHandle);
+	
+	UMessageBus::GetInstance()->Unsubscribe(TEXT("HideAnimal"), MessageDelegateHandle);
+	
+	Super::EndPlay(EndPlayReason);
 }
 
 float ABaseAIAnimal::GetWildPower() const
@@ -320,6 +333,14 @@ void ABaseAIAnimal::SetDetails()
 			WanderRange = 500.0f;
 		}
 		break;
+	}
+}
+
+void ABaseAIAnimal::ReceiveMessage(const FName MessageType, UObject* Payload)
+{
+	if (TEXT("HideAnimal") == MessageType)
+	{
+		SetHiddenInGame();
 	}
 }
 
