@@ -59,9 +59,4 @@ void UGA_AnimalDeath::OnCompleteCallback()
 	}
 	UMessageBus::GetInstance()->BroadcastMessage(TEXT("HideAnimal"), this);
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
-
-	
-	//펑션라이브러리 함수 부르면서 	다시 Instigator 넘겨주기
-	//AActor* InstigatorActor = const_cast<AActor*>(Instigator.Get());
-	//UGAFunctionLibrary::HandleAnimalDeath(InstigatorActor);
 }
