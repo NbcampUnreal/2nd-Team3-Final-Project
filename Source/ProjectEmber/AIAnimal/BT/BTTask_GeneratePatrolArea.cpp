@@ -34,6 +34,10 @@ EBTNodeResult::Type UBTTask_GeneratePatrolArea::ExecuteTask(UBehaviorTreeCompone
 	{
 		return EBTNodeResult::Failed;
 	}
+	if (!BlackboardComp->GetValueAsBool("NIsNeedToGeneratePP"))
+	{
+		return EBTNodeResult::Failed;
+	}
 	
 	//EQS
 	BTComp = &OwnerComp;
@@ -41,7 +45,7 @@ EBTNodeResult::Type UBTTask_GeneratePatrolArea::ExecuteTask(UBehaviorTreeCompone
 	 GetWorld(),
 	RandomPointQuery,
 	AIPawn,
-	 EEnvQueryRunMode::RandomBest5Pct,
+	 EEnvQueryRunMode::RandomBest25Pct,
 	 nullptr);
     
 	if (QueryInstance)
@@ -50,21 +54,7 @@ EBTNodeResult::Type UBTTask_GeneratePatrolArea::ExecuteTask(UBehaviorTreeCompone
 		return EBTNodeResult::InProgress;
 	}
 	return EBTNodeResult::Failed;
-
-	
-	// float WanderRange = BlackboardComp->GetValueAsFloat("WanderRange");
-	//
-	// for (auto& PatrolPoint : PatrolPoints)
-	// {
-	// 	PatrolPoint = GenerateRandomLocation(ActorLocation,WanderRange);
-	// }
-	//
-	// BlackboardComp->SetValueAsBool("NIsNeedToGeneratePP", false);
-	// return Super::ExecuteTask(OwnerComp, NodeMemory);
 }
-
-
-
 
 void UBTTask_GeneratePatrolArea::OnFindRandomPointQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance,
 	EEnvQueryStatus::Type QueryStatus)
@@ -75,18 +65,34 @@ void UBTTask_GeneratePatrolArea::OnFindRandomPointQueryFinished(UEnvQueryInstanc
 		FinishLatentTask(*BTComp, EBTNodeResult::Failed);
 		return;
 	}
+	
 	AAIController* AIController = BTComp->GetAIOwner();
-	TArray<FVector>& PatrolPoints = Cast<ABaseAIAnimal>(AIController->GetPawn())->GetPatrolPoints();
+	TArray<FVector> AllLocations;
+	QueryInstance->GetQueryResult()->GetAllAsLocations(AllLocations);
 
+	if (AllLocations.Num() == 0)
+	{
+		FinishLatentTask(*BTComp, EBTNodeResult::Failed);
+		return;
+	}
+	
+	TArray<FVector>& PatrolPoints = Cast<ABaseAIAnimal>(AIController->GetPawn())->GetPatrolPoints();
 	for (int i=0; i < PatrolPoints.Num(); i++)
 	{
-		PatrolPoints[i] = QueryInstance->GetQueryResult()->GetItemAsLocation(i);
+		PatrolPoints[i] = AllLocations[i];
 	}
 	
 	if (BlackboardComp)
 	{
+		int32 Index = BlackboardComp->GetValueAsInt("NPatrolIndex");
+		if (!PatrolPoints.IsValidIndex(Index))
+		{
+			BlackboardComp->SetValueAsInt("NPatrolIndex", 0);
+		}
+		BlackboardComp->SetValueAsVector("NPatrolPoint", PatrolPoints[Index]);
 		BlackboardComp->SetValueAsBool("NIsNeedToGeneratePP", false);
 		FinishLatentTask(*BTComp, EBTNodeResult::Succeeded);
+		return;
 	}
 	
 	FinishLatentTask(*BTComp, EBTNodeResult::Failed);
@@ -101,3 +107,12 @@ FVector UBTTask_GeneratePatrolArea::GenerateRandomLocation(const FVector& BaseLo
 	const float RandomY = RandomSign * FMath::RandRange(0.1f, 1.0f) * Range;
 	return BaseLocation + FVector(RandomX, RandomY, 0.f);
 }
+// float WanderRange = BlackboardComp->GetValueAsFloat("WanderRange");
+ 	//
+ 	// for (auto& PatrolPoint : PatrolPoints)
+ 	// {
+ 	// 	PatrolPoint = GenerateRandomLocation(ActorLocation,WanderRange);
+ 	// }
+ 	//
+ 	// BlackboardComp->SetValueAsBool("NIsNeedToGeneratePP", false);
+ 	// return Super::ExecuteTask(OwnerComp, NodeMemory);

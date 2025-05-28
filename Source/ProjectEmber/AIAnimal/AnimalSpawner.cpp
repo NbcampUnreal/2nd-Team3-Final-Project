@@ -66,23 +66,6 @@ void AAnimalSpawner::BeginPlay()
 					Alones--;
 					
 				}
-				
-				// // 역할 지정
-				// if (i < Leaders)
-				// {
-				// 	SpawnedAnimal->GetGameplayTagContainer().AddTag(FGameplayTag::RequestGameplayTag("Animal.Group.Leader"));
-				// 	Cast<AAIController>(SpawnedAnimal->GetController())->GetBlackboardComponent()->SetValueAsName("NGroupTag", "Animal.Group.Patrol");
-				// }
-				// else if (i < Leaders + Patrols)
-				// {
-				// 	SpawnedAnimal->GetGameplayTagContainer().AddTag(FGameplayTag::RequestGameplayTag("Animal.Group.Patrol"));
-				// 	Cast<AAIController>(SpawnedAnimal->GetController())->GetBlackboardComponent()->SetValueAsName("NGroupTag", "Animal.Group.Patrol");
-				// }
-				// else
-				// {
-				// 	SpawnedAnimal->GetGameplayTagContainer().AddTag(FGameplayTag::RequestGameplayTag("Animal.Group.Follower"));
-				// 	Cast<AAIController>(SpawnedAnimal->GetController())->GetBlackboardComponent()->SetValueAsName("NGroupTag", "Animal.Group.Patrol");
-				// }
 			}
 		}
 	}
