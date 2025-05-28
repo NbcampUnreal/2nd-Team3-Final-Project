@@ -84,9 +84,6 @@ public:
 	UFUNCTION()
 	void OnBeginDeath();
 	
-	UFUNCTION()
-	void OnDeath(UAnimMontage* Montage, bool bInterrupted);
-	
  /* AbilitySystem */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
