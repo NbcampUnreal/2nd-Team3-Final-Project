@@ -1,5 +1,6 @@
 #include "GA_AnimalDeath.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "MessageBus/MessageBus.h"
 
 UGA_AnimalDeath::UGA_AnimalDeath()
 {
@@ -56,7 +57,7 @@ void UGA_AnimalDeath::OnCompleteCallback()
 			ApplyGameplayEffectSpecToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, SpecHandle);
 		}
 	}
-	
+	UMessageBus::GetInstance()->BroadcastMessage(TEXT("HideAnimal"), this);
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
 
 	
