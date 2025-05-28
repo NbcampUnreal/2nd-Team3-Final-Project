@@ -8,6 +8,7 @@
 #include "GameplayEffectTypes.h"
 #include "EMSActorSaveInterface.h"
 #include "GameplayTagAssetInterface.h"
+#include "MessageBus/MessageBus.h"
 #include "BaseAIAnimal.generated.h"
 
 class UMeleeTraceComponent;
@@ -169,6 +170,11 @@ protected:
 	
 	FTimerHandle TimerHandle;
 	TArray<FVector> PatrolPoints;
+
+private:
+	void ReceiveMessage(const FName MessageType, UObject* Payload);
+	
+	FMessageDelegate MessageDelegateHandle;
 };
 
 /*
