@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "EnvironmentQuery/EnvQueryContext.h"
-#include "EQC_Animal.generated.h"
+#include "EQC_TargetActor.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class PROJECTEMBER_API UEQC_Animal : public UEnvQueryContext
+class PROJECTEMBER_API UEQC_TargetActor : public UEnvQueryContext
 {
 	GENERATED_BODY()
 	

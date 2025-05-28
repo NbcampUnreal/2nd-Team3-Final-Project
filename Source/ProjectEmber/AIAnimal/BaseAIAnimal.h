@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
+#include "GameFramework/Character.h"
 #include "GameplayEffectTypes.h"
 #include "EMSActorSaveInterface.h"
 #include "GameplayTagAssetInterface.h"
@@ -50,7 +50,6 @@ public:
 	
 	virtual void ActorPreSave_Implementation() override;
 	virtual void ActorLoaded_Implementation() override;
-	virtual void PostInitializeComponents() override;
 	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
 	
 	void OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
@@ -74,12 +73,16 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void SetIdentityTag(const FGameplayTag InIdentityTag);
-	
+
+  /* Spawn */
 	UFUNCTION()
 	void SetHiddenInGame();
 
 	UFUNCTION(BlueprintCallable)
 	void SetVisibleInGame();
+
+	UFUNCTION()
+	void OnBeginDeath();
 	
  /* AbilitySystem */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
@@ -92,7 +95,7 @@ public:
 
 	UFUNCTION()
 	void OnHit(AActor* InstigatorActor);
-	
+
 protected:
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void SetDetails();
@@ -167,7 +170,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTag IdentityTag;
-	
+
 	FTimerHandle TimerHandle;
 	TArray<FVector> PatrolPoints;
 
@@ -177,13 +180,4 @@ private:
 	FMessageDelegate MessageDelegateHandle;
 };
 
-/*
- *제일 시급한거 EQS로 수정하기 -> 장소, 타겟 찾을 때 뚝딱거림
- *동물 태어났을 때 블랙보드 정지, 죽었을 때 숨김처리, 블랙보드 리셋
- *
- *스포너 버그 수정 및 기능 추가 
- *이동 가능 범위, 무리 구역 범위, 인식 범위 실제 월드에 배치해보고 디테일하게 정해서 수정해야함
- *
- *공격 동물들 각자 공격패턴 구현
- */
 
