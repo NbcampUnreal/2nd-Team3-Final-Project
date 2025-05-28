@@ -1,5 +1,7 @@
 ﻿#include "EmberMainHUD.h"
-
+#include "AI_NPC/PlayerQuestWidget.h"
+#include "AI_NPC/QuestReceiverComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Character/EmberCharacter.h"
 #include "EmberLog/EmberLog.h"
 #include "UI/BaseWidget/GameMenuWidget.h"
@@ -25,6 +27,20 @@ void AEmberMainHUD::BeginPlay()
 	else
 	{
 		EMBER_LOG(LogTemp, Error, TEXT("Failed to create primary layout widget."));
+	}
+	if (PlayerQuestWidgetClass)
+	{
+		PlayerQuestWidgetInstance = CreateWidget<UPlayerQuestWidget>(GetOwningPlayerController(), PlayerQuestWidgetClass);
+		if (PlayerQuestWidgetInstance)
+		{
+			if (AEmberCharacter* EmberCharacter = Cast<AEmberCharacter>(GetOwningPlayerController()->GetPawn()))
+			{
+				if (EmberCharacter->QuestReceiverComponent)
+				{
+					EmberCharacter->QuestReceiverComponent->SetQuestLogWidget(PlayerQuestWidgetInstance);
+				}
+			}
+		}
 	}
 }
 
@@ -118,4 +134,26 @@ void AEmberMainHUD::ToggleDebugLayer()
 		PrimaryDebugLayer->SetVisibility(bDebugLayerVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 	}
 }
+UPlayerQuestWidget* AEmberMainHUD::GetQuestLogWidget() const
+{
+	return PlayerQuestWidgetInstance;
+}
 //#endif
+void AEmberMainHUD::UpdateQuestLogWidget(const FQuestDataRow& QuestRow)
+{
+	if (PlayerQuestWidgetInstance)
+	{
+		bool bIsComplete = false;
+
+		// 현재 캐릭터가 해당 퀘스트를 완료했는지 판단
+		if (AEmberCharacter* EmberCharacter = Cast<AEmberCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
+		{
+			if (UQuestReceiverComponent* QuestReceiver = EmberCharacter->FindComponentByClass<UQuestReceiverComponent>())
+			{
+				bIsComplete = QuestReceiver->IsQuestComplete(QuestRow.QuestID);
+			}
+		}
+
+		PlayerQuestWidgetInstance->SetQuestInfoFromDataRow(QuestRow, bIsComplete);
+	}
+}
