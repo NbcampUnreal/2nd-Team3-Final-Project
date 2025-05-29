@@ -219,6 +219,10 @@ FGameplayAbilitySpec* AEmberCharacter::GetSpecFromOverlayMode(const bool IsRight
     {
         InputID = static_cast<int32>(EInputID::SwordTwoHanded);
     }
+    else if (OverlayMode == AlsOverlayModeTags::Throw) 
+    {
+        InputID = static_cast<int32>(EInputID::Throw);
+    }
     
     if (IsRightInput)
     {
@@ -411,7 +415,8 @@ void AEmberCharacter::Input_OnAim(const FInputActionValue& ActionValue)
     {
         
     }
-    else if (OverlayMode == AlsOverlayModeTags::Bow)
+    else if (OverlayMode == AlsOverlayModeTags::Bow ||
+        OverlayMode == AlsOverlayModeTags::Throw)
     {
         SetDesiredAiming(ActionValue.Get<bool>());    
     }
