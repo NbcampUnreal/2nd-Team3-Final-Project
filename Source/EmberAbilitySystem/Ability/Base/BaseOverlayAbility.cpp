@@ -45,13 +45,22 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	}
 	
 	AbilitySystemComponent = GetAbilitySystemComponentFromActorInfo();
-	
-	UAbilityTask_PlayMontageAndWait* PlayMontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
-			this, NAME_None, MontageToPlay);
+
+	UAnimMontage* SelectedMontage = ChooseMontageByState();
+	if (!SelectedMontage)
+	{
+		SelectedMontage = DefaultMontage;
+	}
+
+	UAbilityTask_PlayMontageAndWait* PlayMontageTask =
+		UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
+			this, NAME_None, SelectedMontage);
 
 	PlayMontageTask->OnCompleted.AddDynamic(this, &UBaseOverlayAbility::OnMontageCompleted);
 	PlayMontageTask->OnInterrupted.AddDynamic(this, &UBaseOverlayAbility::OnMontageInterrupted);
 	PlayMontageTask->OnCancelled.AddDynamic(this, &UBaseOverlayAbility::OnMontageInterrupted);
+	PlayMontageTask->OnBlendOut.AddDynamic(this, &UBaseOverlayAbility::OnMontageCompleted);
+	
 	//PlayMontageTask->OnBlendOut.AddDynamic(this, &UBaseOverlayAbility::OnMontageCompleted);
 	//PlayMontageTask->OnBlendOut
 	PlayMontageTask->ReadyForActivation();
@@ -84,6 +93,15 @@ void UBaseOverlayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
 	{
 		Character->ResetForceGameplayTags();
+		if (!bLoopingMontage)
+		{
+			Character->SetDesiredGait(AlsGaitTags::Running);	
+		}
+	}
+
+	if (auto AbilityClass = ChooseAbilityByState())
+	{
+		AbilitySystemComponent->TryActivateAbilityByClass(AbilityClass,false);
 	}
 }
 
@@ -130,7 +148,10 @@ void UBaseOverlayAbility::OnComboNotify(const FGameplayEventData Payload)
 {
 	if (bCanCombo && bComboInputReceived)
 	{
-		AbilitySystemComponent->TryActivateAbilityByClass(NextComboAbility,false);
+		if (!AbilitySystemComponent->TryActivateAbilityByClass(NextComboAbility,false))
+		{
+			EMBER_LOG(LogEmber,Warning, TEXT("Failed to activate next combo ability: %s"), *NextComboAbility->GetName());
+		}
 		
 		bool bReplicatedEndAbility = true;
 		bool bWasCancelled = false;
@@ -160,4 +181,65 @@ void UBaseOverlayAbility::OnMontageTick() const
 			Character->ForceVelocityYawAngle(PreLocomotionState);
 		}	
 	}
+}
+
+void UBaseOverlayAbility::OnBlendOut()
+{
+}
+
+UAnimMontage* UBaseOverlayAbility::ChooseMontageByState()
+{
+	if (!AbilitySystemComponent)
+	{
+		AbilitySystemComponent = GetAbilitySystemComponentFromActorInfo();
+	}
+	
+	if (!AbilitySystemComponent || StateMontageMappings.Num() == 0)
+	{
+		return nullptr;
+	}
+	
+	TArray<FStateMontageMapping> Sorted = StateMontageMappings;
+	Sorted.Sort([](const FStateMontageMapping& A, const FStateMontageMapping& B)
+	{
+		return A.Priority > B.Priority;
+	});
+
+	for (const FStateMontageMapping& Mapping : Sorted)
+	{
+		if (AbilitySystemComponent->HasMatchingGameplayTag(Mapping.StateTag) && Mapping.Montage)
+		{
+			return Mapping.Montage;
+		}
+	}
+	return nullptr;
+}
+
+TSubclassOf<UGameplayAbility> UBaseOverlayAbility::ChooseAbilityByState()
+{
+	if (!AbilitySystemComponent)
+	{
+		AbilitySystemComponent = GetAbilitySystemComponentFromActorInfo();
+	}
+	
+	if (!AbilitySystemComponent || StateAbilityMappings.Num() == 0)
+	{
+		return nullptr;
+	}
+	
+	TArray<FStateAbilityMapping> Sorted = StateAbilityMappings;
+	Sorted.Sort([](const FStateAbilityMapping& A, const FStateAbilityMapping& B)
+	{
+		return A.Priority > B.Priority;
+	});
+
+	for (const FStateAbilityMapping& Mapping : Sorted)
+	{
+		if (AbilitySystemComponent->HasMatchingGameplayTag(Mapping.StateTag) && Mapping.Ability)
+		{
+			return Mapping.Ability;
+		}
+	}
+	
+	return nullptr;
 }
