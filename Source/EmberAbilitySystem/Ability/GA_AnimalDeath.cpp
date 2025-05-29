@@ -57,6 +57,7 @@ void UGA_AnimalDeath::OnCompleteCallback()
 			ApplyGameplayEffectSpecToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, SpecHandle);
 		}
 	}
-	UMessageBus::GetInstance()->BroadcastMessage(TEXT("HideAnimal"), this);
+	UObject* HideAnimal = const_cast<UObject*>(Cast<const UObject>(Instigator.Get()));
+	UMessageBus::GetInstance()->BroadcastMessage(TEXT("HideAnimal"),HideAnimal);
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
 }
