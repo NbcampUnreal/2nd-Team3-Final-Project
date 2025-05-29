@@ -54,6 +54,7 @@ namespace AlsOverlayModeTags
 	UE_DEFINE_GAMEPLAY_TAG(Spear, FName{TEXTVIEW("Als.OverlayMode.Spear")})
 	UE_DEFINE_GAMEPLAY_TAG(Dagger, FName{TEXTVIEW("Als.OverlayMode.Dagger")})
 	UE_DEFINE_GAMEPLAY_TAG(SwordTwoHanded, FName{TEXTVIEW("Als.OverlayMode.SwordTwoHanded")})
+	UE_DEFINE_GAMEPLAY_TAG(Throw, FName{TEXTVIEW("Als.OverlayMode.Throw")})
 }
 
 namespace AlsLocomotionActionTags
