@@ -61,6 +61,11 @@ void ABaseAIAnimal::BeginPlay()
 	SetHiddenInGame(); //생성시 숨김처리
 	NavInvokerComponent->SetGenerationRadii(NavGenerationRadius, NavRemovalRadius);
 
+	if (AIController)
+	{
+		BlackboardComponent = AIController->GetBlackboardComponent();
+	}
+	
 	if (HpBarWidgetClass)
 	{
 		HpBarWidget->SetWidgetClass(HpBarWidgetClass);

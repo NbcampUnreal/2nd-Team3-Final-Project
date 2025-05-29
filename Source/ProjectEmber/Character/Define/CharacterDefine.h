@@ -10,7 +10,8 @@ enum class EInputID : int32
 	PickAxe	= 5,
 	Spear	= 6,
 	Dagger	= 7,
-	SwordTwoHanded	= 8
+	SwordTwoHanded	= 8,
+	Throw	= 9
 };
 
 enum class EAimInputID : int32
@@ -23,5 +24,6 @@ enum class EAimInputID : int32
 	PickAxe	= 1005,
 	Spear	= 1006,
 	Dagger	= 1007,
-	SwordTwoHanded	= 1008
+	SwordTwoHanded	= 1008,
+	Throw	= 1009
 };
