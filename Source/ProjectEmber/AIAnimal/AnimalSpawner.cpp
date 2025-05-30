@@ -522,16 +522,26 @@ void AAnimalSpawner::TryReleaseEntire()
 	//타이머 일시정지-> 남은 시간부터 재시작
 	GetWorld()->GetTimerManager().PauseTimer(DistanceTimerHandle);
 	
-	
+
+	//인포 돌면서 생성한 동물들 해제
 	for (FAnimalSpawnInfo& Info : AnimalsInfo)
 	{
+		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.SpawnAnimals)
+		{
+			if (!Animal.IsValid())
+			{
+				continue;
+			}
+			
+		}
+		
 		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.HiddenAnimals)
 		{
 			if (!Animal.IsValid())
 			{
 				continue;
 			}
+			
 		}
-		
 	}
 }
