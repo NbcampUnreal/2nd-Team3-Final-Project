@@ -4,17 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "QuestDataRow.h"
+#include "Quest/Data/QuestDataAsset.h"
 #include "QuestWidget.generated.h"
 
+DECLARE_MULTICAST_DELEGATE(FOnQuestAccepted);
+DECLARE_MULTICAST_DELEGATE(FOnQuestRefused);
+DECLARE_MULTICAST_DELEGATE(FOnQuestCompleted);
 
 class UButton;
 class UDataTable;
 class UTextBlock;
 
-DECLARE_DELEGATE(FOnQuestAccepted);
-DECLARE_DELEGATE(FOnQuestRefused);
-DECLARE_DELEGATE(FOnQuestCompleted);
 
 UCLASS()
 class PROJECTEMBER_API UQuestWidget : public UUserWidget
@@ -22,12 +22,14 @@ class PROJECTEMBER_API UQuestWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-    virtual void NativeConstruct() override;
-    void SetQuestInfoFromDataRow(const FQuestDataRow& Data);
+    UFUNCTION(BlueprintCallable)
+    void SetQuestInfoFromDataAsset(const UQuestDataAsset* QuestAsset, bool bIsComplete, bool bIsAccepted);
 
     FOnQuestAccepted OnQuestAccepted;
     FOnQuestRefused OnQuestRefused;
     FOnQuestCompleted OnQuestCompleted;
+
+    const UQuestDataAsset* CurrentQuestAsset = nullptr;
 
     UPROPERTY(meta = (BindWidgetOptional))
     class UButton* AcceptButton;
@@ -55,6 +57,9 @@ public:
 
     UPROPERTY(BlueprintReadWrite, Category = "Quest")
     FName QuestRowName;
+
+protected:
+    virtual void NativeConstruct() override;
 
 private:
     UFUNCTION()

@@ -20,6 +20,7 @@
 #include "Item/UserItemManger.h"
 #include "UI/EmberWidgetComponent.h"
 #include "MeleeTrace/Public/MeleeTraceComponent.h"
+#include "Quest/QuestSubsystem.h"
 #include "UI/HUD/EmberMainHUD.h"
 #include "Utility/AlsVector.h"
 
@@ -43,7 +44,7 @@ AEmberCharacter::AEmberCharacter()
     HpBarWidget->SetupAttachment(GetMesh());
     HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
     
-    QuestReceiverComponent = CreateDefaultSubobject<UQuestReceiverComponent>(TEXT("QuestReceiverComponent"));
+   
 }
 
 void AEmberCharacter::BeginPlay()
@@ -519,19 +520,35 @@ void AEmberCharacter::ToggleQuestUI()
     if (QuestWidgetInstance->IsInViewport())
     {
         QuestWidgetInstance->RemoveFromParent();
+        return;
     }
-    else
-    {
-        QuestWidgetInstance->AddToViewport(100);
-        UE_LOG(LogTemp, Warning, TEXT(">>> Q 키 눌림 - 위젯 열기"));
 
-        if (QuestReceiverComponent)
+    QuestWidgetInstance->AddToViewport(100);
+    UE_LOG(LogTemp, Warning, TEXT(">>> Q key pressed - opening quest UI"));
+
+    if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
+    {
+        FName LastQuestID;
+        if (QuestSubsystem->GetLastActiveQuestID(LastQuestID))
         {
-            const FQuestDataRow& LastQuest = QuestReceiverComponent->GetLastAcceptedQuest();
-            UE_LOG(LogTemp, Warning, TEXT(">>> 불러온 퀘스트 이름: %s"), *LastQuest.QuestName);
-            bool bIsComplete = QuestReceiverComponent->IsQuestComplete(LastQuest.QuestID);
-            QuestWidgetInstance->SetQuestInfoFromDataRow(LastQuest, bIsComplete);
+            // 퀘스트 상태 판별
+            const bool bIsAccepted = QuestSubsystem->IsQuestAccepted(LastQuestID);
+            const bool bIsComplete = QuestSubsystem->IsQuestCompleted(LastQuestID);
+
+            if (UQuestDataAsset* QuestAsset = QuestSubsystem->GetAllLoadedQuests().FindRef(LastQuestID))
+            {
+                // 위젯에 전달 (수락 전/후 모두 처리 가능)
+                QuestWidgetInstance->SetQuestInfoFromDataAsset(QuestAsset, bIsComplete, bIsAccepted);
+
+                UE_LOG(LogTemp, Warning, TEXT(">>> Quest UI 업데이트: %s (Accepted: %s, Complete: %s)"),
+                    *QuestAsset->QuestName.ToString(),
+                    bIsAccepted ? TEXT("true") : TEXT("false"),
+                    bIsComplete ? TEXT("true") : TEXT("false"));
+            }
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT(">>> No accepted quest found — player must accept a quest first"));
         }
     }
 }
-
