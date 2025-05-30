@@ -204,7 +204,7 @@ protected:
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning")
 	//FAnimalQueueInfo PerAnimalQueueInfo; //지역변수로 변경, 테스트 필요
 
-	TQueue<FAnimalQueueInfo> CreateInfoQueue; //매 tick 생성될, 큐에 담길 동물객체 하나마다의 정보를 담는 구조체
+	TQueue<FAnimalQueueInfo>			  CreateInfoQueue;  //매 tick 생성될, 큐에 담길 동물객체 하나마다의 정보를 담는 구조체
 	TQueue<TSoftObjectPtr<ABaseAIAnimal>> SpawnQueue;
 	TQueue<TSoftObjectPtr<ABaseAIAnimal>> DespawnQueue;
 	
