@@ -26,7 +26,6 @@ Saved/
 # Jetbrain Rider
 Plugins/**/RiderLink/*
 *.DotSettings.user
-.idea/
 
 Content/FreeSampleAnimationSet/*
 Plugins/SteamIntegrationKit/*

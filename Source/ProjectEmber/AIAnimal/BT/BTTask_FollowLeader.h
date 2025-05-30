@@ -6,6 +6,13 @@
 #include "BehaviorTree/Tasks/BTTask_BlackboardBase.h"
 #include "BTTask_FollowLeader.generated.h"
 
+namespace EEnvQueryStatus
+{
+	enum Type : int;
+}
+
+class UEnvQueryInstanceBlueprintWrapper;
+class UEnvQuery;
 /**
  * 
  */
@@ -20,7 +27,19 @@ public:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 	FVector GenerateRandomLocation(const FVector& BaseLocation, float Range);
 
+	UFUNCTION(BlueprintCallable)
+	void OnFindLeaderOrPatrolQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance,
+										EEnvQueryStatus::Type QueryStatus);
+
+	
 protected:
 	UPROPERTY(EditAnywhere, Category = "Search", meta = (AllowPrivateAccess = "true"))
 	FGameplayTag LeaderTag;
+
+	//EQS
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EQS")
+	TObjectPtr<UEnvQuery> LeaderOrPatrolQuery;
+
+	UBlackboardComponent* BlackboardComp;
+	UBehaviorTreeComponent* BTComp;
 };

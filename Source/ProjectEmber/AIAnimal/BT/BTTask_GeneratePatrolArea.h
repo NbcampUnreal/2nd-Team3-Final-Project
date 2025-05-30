@@ -3,7 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AIAnimal/AIAnimalController.h"
 #include "BehaviorTree/Tasks/BTTask_BlackboardBase.h"
+#include "EnvironmentQuery/EnvQueryInstanceBlueprintWrapper.h"
 #include "BTTask_GeneratePatrolArea.generated.h"
 
 /**
@@ -18,5 +20,17 @@ public:
 	UBTTask_GeneratePatrolArea();
 	
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+
 	FVector GenerateRandomLocation(const FVector& BaseLocation, float Range);
+	
+	UFUNCTION(BlueprintCallable)
+	void OnFindRandomPointQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance,
+	                                    EEnvQueryStatus::Type QueryStatus);
+	
+	//EQS
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EQS")
+	TObjectPtr<UEnvQuery> RandomPointQuery;
+
+	UBlackboardComponent* BlackboardComp;
+	UBehaviorTreeComponent* BTComp;
 };
