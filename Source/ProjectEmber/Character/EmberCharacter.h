@@ -4,6 +4,7 @@
 #include "AlsCharacter.h"
 #include "AbilitySystemInterface.h"
 #include "EMSActorSaveInterface.h"
+#include "AI_NPC/PlayerQuestWidget.h"
 #include "EmberCharacter.generated.h"
 
 class UGameMenuWidget;
@@ -36,6 +37,17 @@ public: /* Character */
 
 public:
 	virtual UMeleeTraceComponent* GetMeleeTraceComponent() const;
+
+
+
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void ToggleQuestUI();
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UPlayerQuestWidget> QuestWidgetClass;
+
+	UPROPERTY()
+	UPlayerQuestWidget* QuestWidgetInstance;
 
 protected:
 	void SetupEmberInputComponent() const;
