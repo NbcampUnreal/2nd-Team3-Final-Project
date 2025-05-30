@@ -9,6 +9,9 @@
 #include "Framework/EmberPlayerState.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "GameInstance/EmberGameInstance.h"
+#include "InputMappingContext.h"
+#include "InputAction.h"
 #include "WaterBodyActor.h"
 #include "Animation/AnimInstance.h"
 #include "Components/CapsuleComponent.h"
@@ -48,6 +51,25 @@ AEmberCharacter::AEmberCharacter()
 void AEmberCharacter::BeginPlay()
 {
     Super::BeginPlay();
+
+    if (UEmberGameInstance* GI = GetGameInstance<UEmberGameInstance>())
+    {
+        // 이 함수에서 Unmap/MapKey로 Modifier별로 키 반영!
+        GI->ApplySavedMoveBindingsToUserSettings();
+
+        // 2. 입력 서브시스템에 Context 등록 (항상 최신값 반영)
+        APlayerController* PC = Cast<APlayerController>(GetController());
+        if (PC && PC->IsLocalController())
+        {
+            if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+                ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+            {
+                Subsystem->ClearAllMappings();
+                Subsystem->AddMappingContext(GI->PlayerMappingContext, 0);
+                UE_LOG(LogTemp, Warning, TEXT("[Character::BeginPlay] MappingContext applied!"));
+            }
+        }
+    }
     
     if (GetController()->IsLocalController())
     {
