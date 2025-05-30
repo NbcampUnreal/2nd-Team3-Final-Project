@@ -4,28 +4,24 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
-#include "GA_AnimalDeath.generated.h"
+#include "GA_AnimalAttack.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class EMBERABILITYSYSTEM_API UGA_AnimalDeath : public UGameplayAbility
+class EMBERABILITYSYSTEM_API UGA_AnimalAttack : public UGameplayAbility
 {
 	GENERATED_BODY()
-	
-public:
-	UGA_AnimalDeath();
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="AnimalDeath")
+public:
+	UGA_AnimalAttack();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="AnimalAttack")
 	UAnimMontage* Montage;
 
 protected:
-	/**
-	* ActivateAbility은 "Triggers"에 등록된 Gameplay Event Tag로만 호출
-	* TriggerEventData->OptionalObject에 HarvestTarget을 받아와 몽타주를 재생
-	* 완료시 Target 액터 삭제
-	 */
+
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo* OwnerInfo,
