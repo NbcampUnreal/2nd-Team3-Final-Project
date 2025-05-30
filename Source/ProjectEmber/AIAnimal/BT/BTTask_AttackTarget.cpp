@@ -71,10 +71,23 @@ EBTNodeResult::Type UBTTask_AttackTarget::ExecuteTask(UBehaviorTreeComponent& Ow
 				return EBTNodeResult::Failed;
 			}
 		}
-		UAnimMontage* Montage =  AICharacter->GetMontage(FGameplayTag::RequestGameplayTag("Animal.Montage.Attack"));
-		AICharacter->PlayAnimMontage(Montage);
+
+		//아직 어빌리티가 실행중이면 어택노드가 진행중이라고 처리 -> 노드 들어올때마다 몽타주 재생 방지
+		if (AICharacter->GetAbilitySystemComponent()->IsActive())
+		{
+			return EBTNodeResult::Failed;
+		}
+		
+		FGameplayEventData Payload;
+		Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.Attack");
+		Payload.Instigator = AICharacter;
+		Payload.OptionalObject = AICharacter->GetMontage(FGameplayTag::RequestGameplayTag("Animal.Montage.Attack"));
+		AICharacter->GetAbilitySystemComponent()->HandleGameplayEvent(Payload.EventTag, &Payload);
+		
 		return Super::ExecuteTask(OwnerComp, NodeMemory);
 
 	}
 	return EBTNodeResult::Failed;
 }
+
+//어빌리티 사용 이유 -> 몽타주 재생중인지 완료인지 판단할 수 있음
