@@ -1,5 +1,4 @@
 ﻿#include "QuestSubsystem.h"
-
 #include "AbilitySystemComponent.h"
 #include "AI_NPC/QuestGiverComponent.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
@@ -19,7 +18,7 @@ void UQuestSubsystem::Initialize(FSubsystemCollectionBase& Collection)
         EventSubsystem->OnGameEvent.AddDynamic(this, &UQuestSubsystem::OnGameEvent);
     }
 }
-
+//서브시스템 종료시 씀
 void UQuestSubsystem::Deinitialize()
 {
     Super::Deinitialize();
@@ -36,24 +35,41 @@ void UQuestSubsystem::LoadAllQuests()
         }
     }
 }
-
-bool UQuestSubsystem::TryStartQuest(FName QuestID)
+//퀘스트 시작 등록
+bool UQuestSubsystem::TryStartQuest(FName QuestID, bool bPlayerAccepted)
 {
-    if (LoadedQuests.Contains(QuestID) && !QuestProgress.Contains(QuestID) && !CompletedQuests.Contains(QuestID))
+    if (LoadedQuests.Contains(QuestID) && !CompletedQuests.Contains(QuestID))
     {
-        QuestProgress.Add(QuestID, 0);
-        EMBER_LOG(LogEmber, Log, TEXT("Quest %s started."), *QuestID.ToString());
+        // bPlayerAccepted가 true일때만
+        if (!bPlayerAccepted)
+        {
+            return false;
+        }
+
+        if (!QuestProgress.Contains(QuestID))
+        {
+            QuestProgress.Add(QuestID, 0);
+        }
+
+        if (bPlayerAccepted)
+        {
+            LastAcceptedQuestID = QuestID;
+        }
+
         return true;
     }
-    
+
     return false;
 }
-
+//설정된 퀘스트 Tag로 조건검사
 void UQuestSubsystem::OnGameEvent(const FGameplayTag& EventTag, const FGameplayEventData& EventData)
 {
-    for (const auto& Pair : QuestProgress)
+    TArray<FName> KeysToCheck;
+    QuestProgress.GenerateKeyArray(KeysToCheck);
+
+    for (FName QuestID : KeysToCheck)
     {
-        if (UQuestDataAsset* QuestAsset = LoadedQuests.FindRef(Pair.Key))
+        if (UQuestDataAsset* QuestAsset = LoadedQuests.FindRef(QuestID))
         {
             CheckQuestStepCompletion(QuestAsset, EventTag, EventData);
         }
@@ -103,7 +119,7 @@ bool UQuestSubsystem::AdvanceQuestStep(FName QuestID)
     {
         return false;
     }
-
+    //퀘스트 진행도가져옴
     int32& Index = QuestProgress.FindChecked(QuestID);
     UQuestDataAsset* QuestAsset = LoadedQuests.FindRef(QuestID);
     if (!QuestAsset)
@@ -151,6 +167,22 @@ bool UQuestSubsystem::AdvanceQuestStep(FName QuestID)
     return true;
 }
 
+int32 UQuestSubsystem::GetCurrentStepIndexForQuest(FName QuestID, bool bAutoStartIfNotExists /* = false */)
+{
+    if (const int32* FoundStep = QuestProgress.Find(QuestID))
+    {
+        return *FoundStep;
+    }
+    if (bAutoStartIfNotExists)
+    {
+        if (TryStartQuest(QuestID))
+        {
+            return 0;
+        }
+    }
+    return INDEX_NONE;
+}
+
 bool UQuestSubsystem::CompleteQuest(FName QuestID)
 {
     if (!QuestProgress.Contains(QuestID))
@@ -178,4 +210,22 @@ bool UQuestSubsystem::CompleteQuest(FName QuestID)
 
     
     return true;
+}
+bool UQuestSubsystem::GetLastActiveQuestID(FName& OutQuestID) const
+{
+    if (LastAcceptedQuestID.IsNone())
+    {
+        return false;
+    }
+
+    OutQuestID = LastAcceptedQuestID;
+    return true;
+}
+const TMap<FName, UQuestDataAsset*>& UQuestSubsystem::GetAllLoadedQuests() const 
+{
+    return LoadedQuests;
+}
+bool UQuestSubsystem::IsQuestAccepted(FName QuestID) const
+{
+    return QuestProgress.Contains(QuestID);
 }
