@@ -14,7 +14,8 @@
 				"UMG",
 				"DeveloperSettings",
 				"GameplayAbilities",
-				"UMGEditor"
+				"UMGEditor",
+				"EnhancedInput"
 			]
 		},
 		{
