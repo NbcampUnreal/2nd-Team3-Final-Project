@@ -12,15 +12,13 @@ struct FQuestDataRow : public FTableRowBase
 
     FQuestDataRow()
         : QuestID(0)
-        , QuestName(TEXT("Unnamed Quest"))
-        , Description(TEXT("No description"))
-        , TargetLocation(TEXT("Location"))
+        , QuestName(TEXT("Quest"))
+        , Description(TEXT(""))
+        , TargetLocation(TEXT(""))
         , ObjectiveNames()
         , ObjectiveGoals()
         , RewardGold(0)
         , RewardExp(0)
-        , RelatedQuestID(NAME_None)
-        , bIsQuestCompletionDialogue(false)
         , QuestType(TEXT("Main"))          
         , bHiddenInLog(false)               
     {
@@ -50,12 +48,6 @@ struct FQuestDataRow : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 RewardExp;
 
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    FName RelatedQuestID;  
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    bool bIsQuestCompletionDialogue;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FString QuestType;

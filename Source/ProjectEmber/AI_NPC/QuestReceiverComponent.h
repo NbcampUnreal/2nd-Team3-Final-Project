@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "QuestDataRow.h"
+#include "DialogueDataRow.h"
 #include "QuestReceiverComponent.generated.h"
 
 USTRUCT(BlueprintType)
@@ -67,15 +69,6 @@ public:
     void CompleteQuest(int32 QuestID);
 
     UFUNCTION(BlueprintCallable)
-    void AbandonQuest(int32 QuestID);
-
-    UFUNCTION(BlueprintCallable)
-    void UpdateQuestObjective(int32 QuestID, const FString& ObjectiveName, int32 QuantityIncrease);
-
-    UFUNCTION(BlueprintCallable)
-    void RemoveTrackingObjective(int32 QuestID, const FString& ObjectiveName);
-
-    UFUNCTION(BlueprintCallable)
     const TArray<FQuestStorageInfo>& GetQuestLog() const;
 
     UFUNCTION(BlueprintCallable)
@@ -94,6 +87,24 @@ public:
     FQuestEventSignature OnQuestUpdated;
 
     bool IsQuestComplete(int32 QuestID) const;
+
+    UPROPERTY()
+    class UPlayerQuestWidget* QuestLogWidget;
+
+    UFUNCTION(BlueprintCallable)
+    void SetQuestLogWidget(UPlayerQuestWidget* InWidget);
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Quest")
+    FQuestDataRow LastAcceptedQuestData;
+
+    UFUNCTION(BlueprintCallable, Category = "Quest")
+    const FQuestDataRow& GetLastAcceptedQuest() const { return LastAcceptedQuestData; }
+
+    UFUNCTION(BlueprintCallable, Category = "Quest")
+    EDialogueStage GetDialogueStageForQuest(FName QuestRowName, UDataTable* QuestDataTable);
+
+    UPROPERTY()
+    UPlayerQuestWidget* PlayerQuestWidget;
 
 private:
     UPROPERTY()

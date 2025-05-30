@@ -43,6 +43,7 @@ AEmberCharacter::AEmberCharacter()
     HpBarWidget->SetupAttachment(GetMesh());
     HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
     
+    QuestReceiverComponent = CreateDefaultSubobject<UQuestReceiverComponent>(TEXT("QuestReceiverComponent"));
 }
 
 void AEmberCharacter::BeginPlay()
@@ -217,6 +218,10 @@ FGameplayAbilitySpec* AEmberCharacter::GetSpecFromOverlayMode(const bool IsRight
     else if (OverlayMode == AlsOverlayModeTags::SwordTwoHanded) 
     {
         InputID = static_cast<int32>(EInputID::SwordTwoHanded);
+    }
+    else if (OverlayMode == AlsOverlayModeTags::Throw) 
+    {
+        InputID = static_cast<int32>(EInputID::Throw);
     }
     
     if (IsRightInput)
@@ -410,7 +415,8 @@ void AEmberCharacter::Input_OnAim(const FInputActionValue& ActionValue)
     {
         
     }
-    else
+    else if (OverlayMode == AlsOverlayModeTags::Bow ||
+        OverlayMode == AlsOverlayModeTags::Throw)
     {
         SetDesiredAiming(ActionValue.Get<bool>());    
     }
@@ -502,5 +508,30 @@ void AEmberCharacter::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& Dis
 bool AEmberCharacter::StartMantlingInAir()
 {
     return false;
+}
+void AEmberCharacter::ToggleQuestUI()
+{
+    if (!QuestWidgetInstance)
+    {
+        QuestWidgetInstance = CreateWidget<UPlayerQuestWidget>(GetWorld(), QuestWidgetClass);
+    }
+
+    if (QuestWidgetInstance->IsInViewport())
+    {
+        QuestWidgetInstance->RemoveFromParent();
+    }
+    else
+    {
+        QuestWidgetInstance->AddToViewport(100);
+        UE_LOG(LogTemp, Warning, TEXT(">>> Q 키 눌림 - 위젯 열기"));
+
+        if (QuestReceiverComponent)
+        {
+            const FQuestDataRow& LastQuest = QuestReceiverComponent->GetLastAcceptedQuest();
+            UE_LOG(LogTemp, Warning, TEXT(">>> 불러온 퀘스트 이름: %s"), *LastQuest.QuestName);
+            bool bIsComplete = QuestReceiverComponent->IsQuestComplete(LastQuest.QuestID);
+            QuestWidgetInstance->SetQuestInfoFromDataRow(LastQuest, bIsComplete);
+        }
+    }
 }
 
