@@ -51,6 +51,12 @@ public:
 	TObjectPtr<UInputMappingContext> PlayerMappingContext;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input")
+	TObjectPtr<UInputMappingContext> UI_ALS_MappingContext;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input")
+	TObjectPtr<UInputMappingContext> UIMappingContext;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input")
 	TObjectPtr<UInputAction> MoveAction;
 
 	// 현재 지역 확인용
