@@ -135,18 +135,19 @@ protected:
 	void TryCreateEntire(TArray<TSoftObjectPtr<AAnimalSpawnPoint>>& InSpawnPoints);
 
 	UFUNCTION(BlueprintCallable)
-	void CreateQueueAnimals(FAnimalSpawnInfo& Info, TSoftObjectPtr<AAnimalSpawnPoint>& InSpawnPoint);
+	void CreateAnimalsQueue(FAnimalSpawnInfo& Info, TSoftObjectPtr<AAnimalSpawnPoint>& InSpawnPoint);
 
 	UFUNCTION(BlueprintCallable)
 	void TryCreateQueue(TArray<TSoftObjectPtr<AAnimalSpawnPoint>>& InSpawnPoints);
 
 	UFUNCTION(BlueprintCallable)
-	void AddSpawnQueue(FAnimalSpawnInfo& Info, TSoftObjectPtr<AAnimalSpawnPoint>& SpawnPoint, FName RoleTag,
+	void AddCreateQueue(FAnimalSpawnInfo& Info, TSoftObjectPtr<AAnimalSpawnPoint>& SpawnPoint, FName RoleTag,
 	                   int32 Count);
 
 	UFUNCTION(BlueprintCallable)
-	void TickSpawnQueue();
+	void TickCreateQueue();
 
+	//일괄
 	UFUNCTION(BlueprintCallable)
 	void CreateAnimals(FAnimalSpawnInfo& Info,TSoftObjectPtr<AAnimalSpawnPoint>& InSpawnPoint);
 
@@ -156,11 +157,16 @@ protected:
 
 	//Spawn
 	UFUNCTION(BlueprintCallable)  //전체 스폰
-	void TrySpawnEntire(); 
+	void TrySpawnEntire();
 
-	UFUNCTION(BlueprintCallable)  //일부 스폰
-	void TrySpawnPart(); 
+	UFUNCTION(BlueprintCallable) //살아있는 애들만 스폰
+	void TrySpawnAlive(TArray<FAnimalSpawnInfo>& InfoArray);
+	
+	UFUNCTION(BlueprintCallable) //죽은 애들만 스폰
+	void TrySpawnDead(TArray<FAnimalSpawnInfo>& InfoArray);
 
+	UFUNCTION(BlueprintCallable)
+	void TickSpawnQueue();
 
 	//Despawn
 	UFUNCTION(BlueprintCallable)
@@ -195,10 +201,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning")
 	float ReleaseDistance = 14000.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning")
-	FAnimalQueueInfo PerAnimalQueueInfo;
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning")
+	//FAnimalQueueInfo PerAnimalQueueInfo; //지역변수로 변경, 테스트 필요
 
-	TQueue<FAnimalQueueInfo> AnimalInfoQueue; //매 tick 생성될, 큐에 담길 동물객체 하나마다의 정보를 담는 구조체
+	TQueue<FAnimalQueueInfo> CreateInfoQueue; //매 tick 생성될, 큐에 담길 동물객체 하나마다의 정보를 담는 구조체
+	TQueue<TSoftObjectPtr<ABaseAIAnimal>> SpawnQueue;
 	TQueue<TSoftObjectPtr<ABaseAIAnimal>> DespawnQueue;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning") //매 tick 생성될 동물 수
