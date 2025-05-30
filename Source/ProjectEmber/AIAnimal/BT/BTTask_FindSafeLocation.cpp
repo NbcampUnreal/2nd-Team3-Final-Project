@@ -6,6 +6,7 @@
 #include "AIController.h"
 #include "AIAnimal/BaseAIAnimal.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "EnvironmentQuery/EnvQueryManager.h"
 
 
 UBTTask_FindSafeLocation::UBTTask_FindSafeLocation()
@@ -27,36 +28,59 @@ EBTNodeResult::Type UBTTask_FindSafeLocation::ExecuteTask(UBehaviorTreeComponent
 		return EBTNodeResult::Failed;
 	}
 
-	UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
+	BlackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!BlackboardComp)
 	{
 		return EBTNodeResult::Failed;
 	}
 	
-	FVector ActorLocation = AIPawn->GetActorLocation();
-	//const EAnimalAIState State = static_cast<EAnimalAIState>(BlackboardComp->GetValueAsEnum("CurrentState"));
-	const float WanderRange = BlackboardComp->GetValueAsFloat("WanderRange");
+
 	
-	//여기 더 자연스럽게 수정하기
+	//EQS
+	BTComp = &OwnerComp;
+	UEnvQueryInstanceBlueprintWrapper* QueryInstance = UEnvQueryManager::RunEQSQuery(
+	 GetWorld(),
+	SafeLocationQuery,
+	AIPawn,
+	 EEnvQueryRunMode::RandomBest5Pct,
+	 nullptr);
+    
+	if (QueryInstance)
 	{
-		//FRotator Rotator = AIPawn->GetActorRotation();
-		//Rotator.Yaw *= -1.0f;
-		//AIPawn->SetActorRotation(Rotator);
-		
-		UObject* TargetObject = BlackboardComp->GetValueAsObject("TargetActor");
-		AActor* TargetActor = Cast<AActor>(TargetObject);
-		FVector TargetActorLocation = TargetActor->GetActorLocation();
-		
-		ActorLocation = GenerateRandomLocation(TargetActorLocation, ActorLocation);
+		QueryInstance->GetOnQueryFinishedEvent().AddDynamic(this, &UBTTask_FindSafeLocation::OnFindSafeLocationQueryFinished);
+		return EBTNodeResult::InProgress;
+	}
+	return EBTNodeResult::Failed;
+	
+}
+
+void UBTTask_FindSafeLocation::OnFindSafeLocationQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance,
+	EEnvQueryStatus::Type QueryStatus)
+{
+	//성공하지 않았으면 리턴
+	if (EEnvQueryStatus::Success != QueryStatus)
+	{
+		FinishLatentTask(*BTComp, EBTNodeResult::Failed);
+		return;
+	}
+
+	TArray<FVector> AllLocations;
+	QueryInstance->GetQueryResult()->GetAllAsLocations(AllLocations);
+	if (AllLocations.Num() == 0)
+	{
+		FinishLatentTask(*BTComp, EBTNodeResult::Failed);
+		return;
 	}
 	
 	if (BlackboardComp)
 	{
-		BlackboardComp->SetValueAsVector("SafeLocation", ActorLocation);
-		//BlackboardComp->SetValueAsEnum("CurrentState", static_cast<uint8>(EAnimalAIState::Warning));
-		//UE_LOG(LogTemp, Warning, TEXT("UBTTask_FindSafeLocation::SafeLocation 업데이트 성공. %f, %f, %f"), ActorLocation.X, ActorLocation.Y, ActorLocation.Z );
+		int Index = FMath::RandRange(0, AllLocations.Num()-1);
+		BlackboardComp->SetValueAsVector("SafeLocation", AllLocations[Index]);
+		FinishLatentTask(*BTComp, EBTNodeResult::Succeeded);
+		return;
 	}
-	return Super::ExecuteTask(OwnerComp, NodeMemory);
+	
+	FinishLatentTask(*BTComp, EBTNodeResult::Failed);
 }
 
 FVector UBTTask_FindSafeLocation::GenerateRandomLocation(const FVector& TargetActorLocation, const FVector& ActorLocation)
@@ -64,7 +88,24 @@ FVector UBTTask_FindSafeLocation::GenerateRandomLocation(const FVector& TargetAc
 
 	FVector DirToThreat = (TargetActorLocation - ActorLocation).GetSafeNormal() * -1.0f; // 타겟 반대로 향하는방향
 	FVector RightVector = FVector::CrossProduct(DirToThreat, FVector::UpVector);
-	FVector Offset = RightVector * FMath::RandRange(-150.f, 150.f) + DirToThreat * FMath::RandRange(1000.f, 3000.f); // 좌우랜덤, 거리랜덤
+	FVector Offset = RightVector * FMath::RandRange(-150.f, 150.f) + DirToThreat * FMath::RandRange(1000.f, 3000.f); // 좌우랜덤, 거리랜덤, 임시수정
 	
 	return ActorLocation + Offset;
 }
+	// FVector ActorLocation = AIPawn->GetActorLocation();
+	//
+	// //const float WanderRange = BlackboardComp->GetValueAsFloat("WanderRange"); //임시수정 -> 이동 가능 범위, 무리 구역 범위, 인식 범위 실제 월드에 배치해보고 디테일하게 정해서 수정해야함
+	//
+	// UObject* TargetObject = BlackboardComp->GetValueAsObject("TargetActor");
+	// AActor* TargetActor = Cast<AActor>(TargetObject);
+	// FVector TargetActorLocation = TargetActor->GetActorLocation();
+	//
+	// ActorLocation = GenerateRandomLocation(TargetActorLocation, ActorLocation);
+	//
+	//
+	// if (BlackboardComp)
+	// {
+	// 	BlackboardComp->SetValueAsVector("SafeLocation", ActorLocation);
+	// }
+	// return Super::ExecuteTask(OwnerComp, NodeMemory);
+//}

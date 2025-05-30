@@ -1,5 +1,7 @@
 ﻿#include "EmberMainHUD.h"
-
+#include "AI_NPC/PlayerQuestWidget.h"
+#include "Quest/QuestSubsystem.h"
+#include "Kismet/GameplayStatics.h"
 #include "Character/EmberCharacter.h"
 #include "EmberLog/EmberLog.h"
 #include "UI/BaseWidget/GameMenuWidget.h"
@@ -9,22 +11,42 @@
 void AEmberMainHUD::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	if (UUserWidget* Widget = CreateWidget<UUserWidget>(GetOwningPlayerController(), PrimaryLayoutClass))
 	{
 		Widget->AddToViewport();
 		PushInitialWidget();
 
-//#if !UE_BUILD_SHIPPING
+		//#if !UE_BUILD_SHIPPING
 		if (UWidget* DebugLayer = Widget->GetWidgetFromName(TEXT("LayerDebugger")))
 		{
 			PrimaryDebugLayer = Cast<ULayerDebugger>(DebugLayer);
 		}
-//#endif
+		//#endif
 	}
 	else
 	{
 		EMBER_LOG(LogTemp, Error, TEXT("Failed to create primary layout widget."));
+	}
+	if (PlayerQuestWidgetClass)
+	{
+		PlayerQuestWidgetInstance = CreateWidget<UPlayerQuestWidget>(GetOwningPlayerController(), PlayerQuestWidgetClass);
+		if (PlayerQuestWidgetInstance)
+		{
+			if (UQuestSubsystem* QuestSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UQuestSubsystem>())
+			{
+				FName CurrentQuestID;
+				if (QuestSubsystem->GetLastActiveQuestID(CurrentQuestID))
+				{
+					if (UQuestDataAsset* QuestAsset = QuestSubsystem->GetAllLoadedQuests().FindRef(CurrentQuestID))
+					{
+						bool bIsComplete = QuestSubsystem->IsQuestCompleted(CurrentQuestID);
+						bool bIsAccepted = QuestSubsystem->IsQuestAccepted(CurrentQuestID); // 수락 여부 추가
+						PlayerQuestWidgetInstance->SetQuestInfoFromDataAsset(QuestAsset, bIsComplete, bIsAccepted);
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -118,4 +140,23 @@ void AEmberMainHUD::ToggleDebugLayer()
 		PrimaryDebugLayer->SetVisibility(bDebugLayerVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 	}
 }
+UPlayerQuestWidget* AEmberMainHUD::GetQuestLogWidget() const
+{
+	return PlayerQuestWidgetInstance;
+}
 //#endif
+void AEmberMainHUD::UpdateQuestLogWidget(const UQuestDataAsset* QuestAsset)
+{
+	if (!PlayerQuestWidgetInstance || !QuestAsset) return;
+
+	bool bIsComplete = false;
+	bool bIsAccepted = false;
+
+	if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
+	{
+		bIsComplete = QuestSubsystem->IsQuestCompleted(QuestAsset->QuestID);
+		bIsAccepted = QuestSubsystem->IsQuestAccepted(QuestAsset->QuestID); // 수락 여부 추가
+	}
+
+	PlayerQuestWidgetInstance->SetQuestInfoFromDataAsset(QuestAsset, bIsComplete, bIsAccepted);
+}

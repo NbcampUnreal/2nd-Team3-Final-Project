@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Blueprint/UserWidget.h"
+#include "Quest/Data/QuestDataAsset.h"
 #include "Interactables/Interactable.h"
 #include "DialogueComponent.generated.h"
 
@@ -27,22 +28,28 @@ public:
     UFUNCTION()
     void RepositionNPCForDialogue();
 
+    UFUNCTION(BlueprintCallable, Category = "Quest")
+    void UpdateQuestLogWidgetFromAsset(const UQuestDataAsset* InQuestAsset);
 
     UFUNCTION()
     void PositionDetachedCamera();
-
+    void ShowQuestCompleteWidget(const UQuestDataAsset* InQuestAsset);
     void AdvanceDialogue();
     void Interact();
     void ShowQuestUI();
-    void LoadDialogueFromDataTable(bool bResetDialogueIndex = true);
-    void SetInputMappingContext(UInputMappingContext* MappingContext, bool bClearExisting = true);
+    void LoadDialogueFromDataTable(bool bResetDialogueIndex, FName InObjectiveTag = NAME_None);
+    UFUNCTION(BlueprintCallable, Category = "Input")
+    void SetInputMappingContexts(TArray<UInputMappingContext*> MappingContexts, bool bClearExisting = true);
 
     UPROPERTY()
     bool bDialogueFinished = false;
     bool IsDialogueActive() const;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest")
+    UQuestDataAsset* QuestAsset;
+
 protected:
     virtual void BeginPlay() override;
-
     UFUNCTION()
     void OnPlayerEnterRadius(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
         UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
@@ -73,15 +80,12 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Dialogue|Camera")
     ADialogueCameraActor* DialogueCameraActor;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest")
-    UDataTable* QuestDataTable;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest")
-    FName QuestRowName = FName("MainQuest01");
-
+    UPROPERTY(EditDefaultsOnly, Category = "Quest")
+    TSubclassOf<class UQuestWidget> QuestCompleteWidgetClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TArray<FString> LinesOfDialogue;
+    TArray<FText> LinesOfDialogue;
 
     UPROPERTY(VisibleAnywhere, Category = "Dialogue")
     int32 CurrentDialogueIndex = 0;
@@ -89,19 +93,33 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
     TSubclassOf<UUserWidget> QuestWidgetClass;
 
-    UPROPERTY(EditAnywhere, Category = "Dialogue")
-    UDataTable* DialogueDataTable;
-
-    UPROPERTY(EditAnywhere, Category = "Dialogue")
-    FName DialogueRowName;
-
     UPROPERTY(EditDefaultsOnly, Category = "Input")
     UInputMappingContext* UIInputMappingContext;
 
     UPROPERTY(EditDefaultsOnly, Category = "Input")
     UInputMappingContext* GameplayInputMappingContext;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    UInputMappingContext* GameplayUIInputMappingContext;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<FName> DialogueRowNames;
+
+    UFUNCTION()
+    void SetDialogueVisualState(bool bShowUI);
   
+    UFUNCTION()
+    void InitializeAndDisplayWidget(UUserWidget* Widget);
+
+    UPROPERTY(EditAnywhere, Category = "UI")
+    TSubclassOf<UUserWidget> PlayerHUDClass;
+
+    UPROPERTY()
+    UUserWidget* PlayerHUD;
+
+    UPROPERTY()
+    UQuestWidget* QuestWidgetInstance;
+
+
 
 };

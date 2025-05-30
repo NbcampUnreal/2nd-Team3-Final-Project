@@ -9,6 +9,9 @@
 #include "Framework/EmberPlayerState.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "GameInstance/EmberGameInstance.h"
+#include "InputMappingContext.h"
+#include "InputAction.h"
 #include "WaterBodyActor.h"
 #include "Animation/AnimInstance.h"
 #include "Components/CapsuleComponent.h"
@@ -20,6 +23,7 @@
 #include "Item/UserItemManger.h"
 #include "UI/EmberWidgetComponent.h"
 #include "MeleeTrace/Public/MeleeTraceComponent.h"
+#include "Quest/QuestSubsystem.h"
 #include "UI/HUD/EmberMainHUD.h"
 #include "Utility/AlsVector.h"
 
@@ -43,11 +47,31 @@ AEmberCharacter::AEmberCharacter()
     HpBarWidget->SetupAttachment(GetMesh());
     HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
     
+   
 }
 
 void AEmberCharacter::BeginPlay()
 {
     Super::BeginPlay();
+
+    if (UEmberGameInstance* GI = GetGameInstance<UEmberGameInstance>())
+    {
+        // 이 함수에서 Unmap/MapKey로 Modifier별로 키 반영!
+        GI->ApplySavedMoveBindingsToUserSettings();
+
+        // 2. 입력 서브시스템에 Context 등록 (항상 최신값 반영)
+        APlayerController* PC = Cast<APlayerController>(GetController());
+        if (PC && PC->IsLocalController())
+        {
+            if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+                ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+            {
+                Subsystem->ClearAllMappings();
+                Subsystem->AddMappingContext(GI->PlayerMappingContext, 0);
+                UE_LOG(LogTemp, Warning, TEXT("[Character::BeginPlay] MappingContext applied!"));
+            }
+        }
+    }
     
     if (GetController()->IsLocalController())
     {
@@ -217,6 +241,10 @@ FGameplayAbilitySpec* AEmberCharacter::GetSpecFromOverlayMode(const bool IsRight
     else if (OverlayMode == AlsOverlayModeTags::SwordTwoHanded) 
     {
         InputID = static_cast<int32>(EInputID::SwordTwoHanded);
+    }
+    else if (OverlayMode == AlsOverlayModeTags::Throw) 
+    {
+        InputID = static_cast<int32>(EInputID::Throw);
     }
     
     if (IsRightInput)
@@ -410,7 +438,8 @@ void AEmberCharacter::Input_OnAim(const FInputActionValue& ActionValue)
     {
         
     }
-    else
+    else if (OverlayMode == AlsOverlayModeTags::Bow ||
+        OverlayMode == AlsOverlayModeTags::Throw)
     {
         SetDesiredAiming(ActionValue.Get<bool>());    
     }
@@ -503,4 +532,45 @@ bool AEmberCharacter::StartMantlingInAir()
 {
     return false;
 }
+void AEmberCharacter::ToggleQuestUI()
+{
+    if (!QuestWidgetInstance)
+    {
+        QuestWidgetInstance = CreateWidget<UPlayerQuestWidget>(GetWorld(), QuestWidgetClass);
+    }
 
+    if (QuestWidgetInstance->IsInViewport())
+    {
+        QuestWidgetInstance->RemoveFromParent();
+        return;
+    }
+
+    QuestWidgetInstance->AddToViewport(100);
+    UE_LOG(LogTemp, Warning, TEXT(">>> Q key pressed - opening quest UI"));
+
+    if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
+    {
+        FName LastQuestID;
+        if (QuestSubsystem->GetLastActiveQuestID(LastQuestID))
+        {
+            // 퀘스트 상태 판별
+            const bool bIsAccepted = QuestSubsystem->IsQuestAccepted(LastQuestID);
+            const bool bIsComplete = QuestSubsystem->IsQuestCompleted(LastQuestID);
+
+            if (UQuestDataAsset* QuestAsset = QuestSubsystem->GetAllLoadedQuests().FindRef(LastQuestID))
+            {
+                // 위젯에 전달 (수락 전/후 모두 처리 가능)
+                QuestWidgetInstance->SetQuestInfoFromDataAsset(QuestAsset, bIsComplete, bIsAccepted);
+
+                UE_LOG(LogTemp, Warning, TEXT(">>> Quest UI 업데이트: %s (Accepted: %s, Complete: %s)"),
+                    *QuestAsset->QuestName.ToString(),
+                    bIsAccepted ? TEXT("true") : TEXT("false"),
+                    bIsComplete ? TEXT("true") : TEXT("false"));
+            }
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT(">>> No accepted quest found — player must accept a quest first"));
+        }
+    }
+}
