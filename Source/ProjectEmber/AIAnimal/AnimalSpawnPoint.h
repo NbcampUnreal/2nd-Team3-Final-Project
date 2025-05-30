@@ -22,6 +22,7 @@ public:
 	bool GetIsInHere() const;
 	int32 GetAliveAnimalsInBox() const;
 	
+	//float Distance;
 protected:
 	virtual void BeginPlay() override;
 
@@ -44,6 +45,7 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning")
 	bool bIsInHere = false;
+
 };
 
 

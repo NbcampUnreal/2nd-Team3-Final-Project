@@ -15,7 +15,7 @@
 
 ABaseAIAnimal::ABaseAIAnimal()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	bIsShouldSwim = false;
 	NavGenerationRadius = 4000.0f; //시각,청각 인지 버뮈보다 인보커 생성 범위가 커야함
@@ -48,19 +48,15 @@ void ABaseAIAnimal::PossessedBy(AController* NewController)
 	AbilitySystemComponent->InitStats(UEmberAnimalAttributeSet::StaticClass(), nullptr);
 }
 
-void ABaseAIAnimal::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
-{
-	TagContainer = AnimalTagContainer;
-}
 
 void ABaseAIAnimal::BeginPlay()
 {
 	Super::BeginPlay();
 
 	AIController = Cast<AAIAnimalController>(GetController());
-	SetHiddenInGame(); //생성시 숨김처리
+	//SetHiddenInGame(); //생성시 숨김처리
 	NavInvokerComponent->SetGenerationRadii(NavGenerationRadius, NavRemovalRadius);
-
+	
 	if (AIController)
 	{
 		BlackboardComponent = AIController->GetBlackboardComponent();
@@ -150,6 +146,11 @@ void ABaseAIAnimal::SetHiddenInGame()
 
 void ABaseAIAnimal::SetVisibleInGame()
 {
+	CharacterAttributeSet->SetHealth(CharacterAttributeSet->GetMaxHealth());
+	FOnAttributeChangeData ChangeData;
+	ChangeData.NewValue = CharacterAttributeSet->GetHealth();
+	Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(ChangeData);
+	
 	SetActorHiddenInGame(false);
 	SetActorEnableCollision(true);
 	SetActorTickEnabled(true);
@@ -160,9 +161,6 @@ void ABaseAIAnimal::SetVisibleInGame()
 		BlackboardComponent->SetValueAsName("NStateTag","Animal.State.Idle");
 		AIController->BrainComponent->StartLogic();
 	}
-	FOnAttributeChangeData ChangeData;
-	ChangeData.NewValue = CharacterAttributeSet->GetHealth();
-	Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(ChangeData);
 }
 
 void ABaseAIAnimal::ReceiveMessage(const FName MessageType, UObject* Payload)
@@ -170,7 +168,6 @@ void ABaseAIAnimal::ReceiveMessage(const FName MessageType, UObject* Payload)
 	if (TEXT("HideAnimal") == MessageType)
 	{
 		SetHiddenInGame();
-		CharacterAttributeSet->SetHealth(CharacterAttributeSet->GetMaxHealth());
 	}
 }
 
@@ -284,6 +281,11 @@ void ABaseAIAnimal::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	UMessageBus::GetInstance()->Unsubscribe(TEXT("HideAnimal"), MessageDelegateHandle);
 	
 	Super::EndPlay(EndPlayReason);
+}
+
+void ABaseAIAnimal::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
+{
+	TagContainer = AnimalTagContainer;
 }
 
 float ABaseAIAnimal::GetWildPower() const
