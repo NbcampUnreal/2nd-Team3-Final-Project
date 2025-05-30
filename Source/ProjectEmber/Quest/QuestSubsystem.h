@@ -19,11 +19,19 @@ class PROJECTEMBER_API UQuestSubsystem : public UGameInstanceSubsystem
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
+	int32 GetCurrentStepIndexForQuest(FName QuestID, bool bAutoStartIfNotExists = false);
 
 public:
 	// NPC에게 F눌러서 통과 받을때 호출될 함수
 	UFUNCTION(BlueprintCallable, Category = "Quest")
-	bool TryStartQuest(FName QuestID);
+	bool TryStartQuest(FName QuestID, bool bPlayerAccepted = false);
+
+	UFUNCTION(BlueprintCallable, Category = "Quest")
+	bool IsQuestAccepted(FName QuestID) const;
+
+	//마지막으로 수락한 퀘스트
+	UPROPERTY()
+	FName LastAcceptedQuestID = NAME_None;
 
 	// 특정 행동 (동물죽엇다, 뭐 파밍햇다, 공격햇다)에 대한 이벤트 호출 함수
 	UFUNCTION()
@@ -42,6 +50,12 @@ public:
 	// 단순 완료된 퀘스트인지 검사하는 함수
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	bool IsQuestCompleted(FName QuestID) const;
+
+	const TMap<FName, UQuestDataAsset*>& GetAllLoadedQuests() const;
+
+	bool GetLastActiveQuestID(FName& OutQuestID) const;
+
+
 private:
 	// 로드된 퀘스트 목록
 	TMap<FName, UQuestDataAsset*> LoadedQuests;

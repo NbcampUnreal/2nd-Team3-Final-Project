@@ -3,7 +3,6 @@
 #include "Interactables/BaseInteractableActor.h"
 #include "Interactables/BasePickupActor.h"
 #include "AI_NPC/DialogueComponent.h"
-#include "AI_NPC/NPCInterface.h"
 #include "Components/BoxComponent.h"
 #include "EmberLog/EmberLog.h"
 #include "GameFramework/CharacterMovementComponent.h"
