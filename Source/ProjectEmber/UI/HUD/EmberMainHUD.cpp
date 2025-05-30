@@ -1,6 +1,6 @@
 ﻿#include "EmberMainHUD.h"
 #include "AI_NPC/PlayerQuestWidget.h"
-#include "AI_NPC/QuestReceiverComponent.h"
+#include "Quest/QuestSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Character/EmberCharacter.h"
 #include "EmberLog/EmberLog.h"
@@ -11,18 +11,18 @@
 void AEmberMainHUD::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	if (UUserWidget* Widget = CreateWidget<UUserWidget>(GetOwningPlayerController(), PrimaryLayoutClass))
 	{
 		Widget->AddToViewport();
 		PushInitialWidget();
 
-//#if !UE_BUILD_SHIPPING
+		//#if !UE_BUILD_SHIPPING
 		if (UWidget* DebugLayer = Widget->GetWidgetFromName(TEXT("LayerDebugger")))
 		{
 			PrimaryDebugLayer = Cast<ULayerDebugger>(DebugLayer);
 		}
-//#endif
+		//#endif
 	}
 	else
 	{
@@ -33,11 +33,17 @@ void AEmberMainHUD::BeginPlay()
 		PlayerQuestWidgetInstance = CreateWidget<UPlayerQuestWidget>(GetOwningPlayerController(), PlayerQuestWidgetClass);
 		if (PlayerQuestWidgetInstance)
 		{
-			if (AEmberCharacter* EmberCharacter = Cast<AEmberCharacter>(GetOwningPlayerController()->GetPawn()))
+			if (UQuestSubsystem* QuestSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UQuestSubsystem>())
 			{
-				if (EmberCharacter->QuestReceiverComponent)
+				FName CurrentQuestID;
+				if (QuestSubsystem->GetLastActiveQuestID(CurrentQuestID))
 				{
-					EmberCharacter->QuestReceiverComponent->SetQuestLogWidget(PlayerQuestWidgetInstance);
+					if (UQuestDataAsset* QuestAsset = QuestSubsystem->GetAllLoadedQuests().FindRef(CurrentQuestID))
+					{
+						bool bIsComplete = QuestSubsystem->IsQuestCompleted(CurrentQuestID);
+						bool bIsAccepted = QuestSubsystem->IsQuestAccepted(CurrentQuestID); // 수락 여부 추가
+						PlayerQuestWidgetInstance->SetQuestInfoFromDataAsset(QuestAsset, bIsComplete, bIsAccepted);
+					}
 				}
 			}
 		}
@@ -139,21 +145,18 @@ UPlayerQuestWidget* AEmberMainHUD::GetQuestLogWidget() const
 	return PlayerQuestWidgetInstance;
 }
 //#endif
-void AEmberMainHUD::UpdateQuestLogWidget(const FQuestDataRow& QuestRow)
+void AEmberMainHUD::UpdateQuestLogWidget(const UQuestDataAsset* QuestAsset)
 {
-	if (PlayerQuestWidgetInstance)
+	if (!PlayerQuestWidgetInstance || !QuestAsset) return;
+
+	bool bIsComplete = false;
+	bool bIsAccepted = false;
+
+	if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
 	{
-		bool bIsComplete = false;
-
-		// 현재 캐릭터가 해당 퀘스트를 완료했는지 판단
-		if (AEmberCharacter* EmberCharacter = Cast<AEmberCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
-		{
-			if (UQuestReceiverComponent* QuestReceiver = EmberCharacter->FindComponentByClass<UQuestReceiverComponent>())
-			{
-				bIsComplete = QuestReceiver->IsQuestComplete(QuestRow.QuestID);
-			}
-		}
-
-		PlayerQuestWidgetInstance->SetQuestInfoFromDataRow(QuestRow, bIsComplete);
+		bIsComplete = QuestSubsystem->IsQuestCompleted(QuestAsset->QuestID);
+		bIsAccepted = QuestSubsystem->IsQuestAccepted(QuestAsset->QuestID); // 수락 여부 추가
 	}
+
+	PlayerQuestWidgetInstance->SetQuestInfoFromDataAsset(QuestAsset, bIsComplete, bIsAccepted);
 }
