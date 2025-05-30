@@ -56,10 +56,8 @@ void AEmberCharacter::BeginPlay()
 
     if (UEmberGameInstance* GI = GetGameInstance<UEmberGameInstance>())
     {
-        // 이 함수에서 Unmap/MapKey로 Modifier별로 키 반영!
         GI->ApplySavedMoveBindingsToUserSettings();
 
-        // 2. 입력 서브시스템에 Context 등록 (항상 최신값 반영)
         APlayerController* PC = Cast<APlayerController>(GetController());
         if (PC && PC->IsLocalController())
         {
@@ -68,6 +66,8 @@ void AEmberCharacter::BeginPlay()
             {
                 Subsystem->ClearAllMappings();
                 Subsystem->AddMappingContext(GI->PlayerMappingContext, 0);
+                Subsystem->AddMappingContext(GI->UI_ALS_MappingContext, 1);
+                Subsystem->AddMappingContext(GI->UIMappingContext, 2);
                 UE_LOG(LogTemp, Warning, TEXT("[Character::BeginPlay] MappingContext applied!"));
             }
         }
