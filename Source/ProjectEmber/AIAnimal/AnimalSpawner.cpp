@@ -21,11 +21,17 @@ void AAnimalSpawner::BeginPlay()
 
 	//타이머 1초마다 플레이어와 거리 체크
 	GetWorldTimerManager().SetTimer(DistanceTimerHandle, this, &AAnimalSpawner::DistanceCheck, 1.0f, true);
+	//GetWorld()->GetTimerManager().PauseTimer(DistanceTimerHandle);
+
+	//스포너 엑티베이트 함수 따로 만들면 들어갈 애들
+	{
+		//GetWorld()->GetTimerManager().UnPauseTimer(DistanceTimerHandle);
 	// 함수 바인딩
 	MessageDelegateHandle = FMessageDelegate::CreateUObject(this, &ThisClass::ReceiveMessage);
 
 	// FName으로 키값(메세지) 지정하고 델리게이트 전달, 구독했으면 EndPlay에서 해제까지 꼭 하기
 	UMessageBus::GetInstance()->Subscribe(TEXT("HideAnimal"), MessageDelegateHandle);
+	}
 }
 
 void AAnimalSpawner::ReceiveMessage(const FName MessageType, UObject* Payload)
@@ -273,14 +279,14 @@ void AAnimalSpawner::TryCreateQueue(TArray<TSoftObjectPtr<AAnimalSpawnPoint>>& I
 {
 	for (TSoftObjectPtr<AAnimalSpawnPoint>& SpawnPoint : InSpawnPoints)
 	{
-		if (SpawnPoint->GetAliveAnimalsInBox() <= PermittedToSpawnLimit) //포인트 영역에 PermittedToSpawnLimit 이하로 나와있다면 스폰
+		if (SpawnPoint->GetAliveAnimalsInBox() <= PermittedToSpawnLimit)  //포인트 영역에 PermittedToSpawnLimit 이하로 나와있다면 스폰 -> 이 부분이 이미 create가 된 포인트인지로 바뀌여야 함
 		{
 			for (FAnimalSpawnInfo& Info : AnimalsInfo)
 			{
 				CreateAnimalsQueue(Info,SpawnPoint);
 			}
 		}
-		else
+		else//이미 create됐던 지역이라면 숨겨진 애들만 다시 보이게 처리로 바뀌어야함
 		{
 			TrySpawnEntire();
 		}
@@ -503,4 +509,29 @@ void AAnimalSpawner::TickSpawnQueue()
 void AAnimalSpawner::TryReleaseEntire()
 {
 	//전체 메모리 해제
+
+	//큐 정리
+	CreateInfoQueue.Empty();
+	SpawnQueue.Empty();
+	DespawnQueue.Empty();
+
+	//상태 정리
+	PreDistResult = EAnimalSpawnerType::None;
+	CurDistResult = EAnimalSpawnerType::None;
+
+	//타이머 일시정지-> 남은 시간부터 재시작
+	GetWorld()->GetTimerManager().PauseTimer(DistanceTimerHandle);
+	
+	
+	for (FAnimalSpawnInfo& Info : AnimalsInfo)
+	{
+		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.HiddenAnimals)
+		{
+			if (!Animal.IsValid())
+			{
+				continue;
+			}
+		}
+		
+	}
 }
