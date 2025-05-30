@@ -1,0 +1,30 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.1.6",
+	"FriendlyName": "AdvancedFadeObjects",
+	"Description": "Advanced Fade Objects",
+	"Category": "BitProtectStudio",
+	"CreatedBy": "Taueron",
+	"CreatedByURL": "https://www.fab.com/sellers/BitProtectStudio",
+	"DocsURL": "https://docs.google.com/document/d/1YrvrrlPn7OQwpw0QvqI1In5xGugykT2s8XKz2i3plAM/edit?usp=sharing",
+	"MarketplaceURL": "",
+	"SupportURL": "https://discord.gg/DN4PhbmShg",
+	"EngineVersion": "5.5.0",
+	"CanContainContent": true,
+	"Installed": true,
+	"Modules": [
+		{
+			"Name": "AdvancedFadeObjects",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"PlatformAllowList": [
+				"Win64",
+				"Android",
+				"Mac",
+				"IOS",
+				"Linux"
+			]
+		}
+	]
+}
