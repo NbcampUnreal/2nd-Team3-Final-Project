@@ -54,13 +54,8 @@ void UBTService_UpdateDistanceToTarget::TickNode(UBehaviorTreeComponent& OwnerCo
 		if (AIPawn && Target)
 		{
 			float Distance = FVector::Dist(AIPawn->GetActorLocation(), Target->GetActorLocation());
-			UE_LOG(LogTemp, Warning, TEXT("Distance %f"), Distance);
 			BlackboardComp->SetValueAsFloat("DistanceToTarget", Distance);
 			BlackboardComp->SetValueAsVector("TargetLocation", Target->GetActorLocation());
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("AIPawn or Target is null!"));
 		}
 	}
 }
