@@ -2,7 +2,6 @@
 #include "AI_NPC/PlayerQuestWidget.h"
 #include "Quest/QuestSubsystem.h"
 #include "Kismet/GameplayStatics.h"
-#include "Character/EmberCharacter.h"
 #include "EmberLog/EmberLog.h"
 #include "UI/BaseWidget/GameMenuWidget.h"
 #include "UI/Debug/LayerDebugger.h"
@@ -17,17 +16,18 @@ void AEmberMainHUD::BeginPlay()
 		Widget->AddToViewport();
 		PushInitialWidget();
 
-		//#if !UE_BUILD_SHIPPING
+#if !UE_BUILD_SHIPPING
 		if (UWidget* DebugLayer = Widget->GetWidgetFromName(TEXT("LayerDebugger")))
 		{
 			PrimaryDebugLayer = Cast<ULayerDebugger>(DebugLayer);
 		}
-		//#endif
+#endif
 	}
 	else
 	{
 		EMBER_LOG(LogTemp, Error, TEXT("Failed to create primary layout widget."));
 	}
+
 	if (PlayerQuestWidgetClass)
 	{
 		PlayerQuestWidgetInstance = CreateWidget<UPlayerQuestWidget>(GetOwningPlayerController(), PlayerQuestWidgetClass);
@@ -41,7 +41,7 @@ void AEmberMainHUD::BeginPlay()
 					if (UQuestDataAsset* QuestAsset = QuestSubsystem->GetAllLoadedQuests().FindRef(CurrentQuestID))
 					{
 						bool bIsComplete = QuestSubsystem->IsQuestCompleted(CurrentQuestID);
-						bool bIsAccepted = QuestSubsystem->IsQuestAccepted(CurrentQuestID); // 수락 여부 추가
+						bool bIsAccepted = QuestSubsystem->IsQuestAccepted(CurrentQuestID);
 						PlayerQuestWidgetInstance->SetQuestInfoFromDataAsset(QuestAsset, bIsComplete, bIsAccepted);
 					}
 				}
@@ -50,60 +50,91 @@ void AEmberMainHUD::BeginPlay()
 	}
 }
 
-bool AEmberMainHUD::RegisterLayer(const FGameplayTag LayerTag, UEmberLayerBase* Layer)
+bool AEmberMainHUD::RegisterLayer(const FGameplayTag& LayerTag, UUserWidget* Layer)
 {
-	if (IsValid(Layer))
+	// UEmberLayerBase로 캐스트해야만 유효하므로 체크
+	if (!Layer)
 	{
-		if (!EmberLayers.Contains(LayerTag))
-		{
-			EmberLayers.Add(LayerTag, Layer);
+		EMBER_LOG(LogTemp, Warning, TEXT("RegisterLayer: Layer pointer is null"));
+		return false;
+	}
 
-			//PrimaryDebugLayer->SetChangedLayer();
-			return true;
+	UEmberLayerBase* LayerObj = Cast<UEmberLayerBase>(Layer);
+	if (!IsValid(LayerObj))
+	{
+		EMBER_LOG(LogTemp, Warning, TEXT("RegisterLayer: Passed widget is not a UEmberLayerBase"));
+		return false;
+	}
+
+	if (!EmberLayers.Contains(LayerTag))
+	{
+		EmberLayers.Add(LayerTag, LayerObj);
+
+#if !UE_BUILD_SHIPPING
+		if (PrimaryDebugLayer)
+		{
+			PrimaryDebugLayer->SetChangedLayer();
 		}
+#endif
+
+		return true;
 	}
 
 	EMBER_LOG(LogTemp, Warning, TEXT("Layer already registered: %s"), *LayerTag.ToString());
 	return false;
 }
 
-void AEmberMainHUD::PushInitialWidget()
+UUserWidget* AEmberMainHUD::PushContentToLayer(const FGameplayTag& LayerTag, const TSubclassOf<UUserWidget>& WidgetClass)
 {
-	for (const auto WidgetClass : InitWidgetClasses)
+	if (UEmberLayerBase* FoundLayer = *EmberLayers.Find(LayerTag))
 	{
-		PushContentToLayer(WidgetClass.Key, WidgetClass.Value);
-		//PrimaryDebugLayer->SetChangedLayer();
-	}
-}
+		UUserWidget* PushWidget = FoundLayer->PushWidget(WidgetClass);
 
-void AEmberMainHUD::PopContentToLayer(const FGameplayTag LayerTag)
-{
-	if (UEmberLayerBase* Layer = *EmberLayers.Find(LayerTag))
-	{
-		Layer->PopWidget();
-		//PrimaryDebugLayer->SetChangedLayer();
-	}
-}
+#if !UE_BUILD_SHIPPING
+		if (PrimaryDebugLayer)
+		{
+			PrimaryDebugLayer->SetChangedLayer();
+		}
+#endif
 
-UUserWidget* AEmberMainHUD::PushContentToLayer(const FGameplayTag LayerTag, const TSubclassOf<UUserWidget>& WidgetClass)
-{
-	if (UEmberLayerBase* Layer = *EmberLayers.Find(LayerTag))
-	{
-		UUserWidget* PushWidget = Layer->PushWidget(WidgetClass);
-		//PrimaryDebugLayer->SetChangedLayer();
 		return PushWidget;
 	}
-
 	return nullptr;
 }
 
-void AEmberMainHUD::ClearToLayer(FGameplayTag LayerTag)
+void AEmberMainHUD::PopContentToLayer(const FGameplayTag& LayerTag)
 {
-	if (UEmberLayerBase* Layer = *EmberLayers.Find(LayerTag))
+	if (UEmberLayerBase* FoundLayer = *EmberLayers.Find(LayerTag))
 	{
-		Layer->ClearStack();
-		//PrimaryDebugLayer->SetChangedLayer();
+		FoundLayer->PopWidget();
+
+#if !UE_BUILD_SHIPPING
+		if (PrimaryDebugLayer)
+		{
+			PrimaryDebugLayer->SetChangedLayer();
+		}
+#endif
 	}
+}
+
+void AEmberMainHUD::ClearToLayer(const FGameplayTag& LayerTag)
+{
+	if (UEmberLayerBase* FoundLayer = *EmberLayers.Find(LayerTag))
+	{
+		FoundLayer->ClearStack();
+
+#if !UE_BUILD_SHIPPING
+		if (PrimaryDebugLayer)
+		{
+			PrimaryDebugLayer->SetChangedLayer();
+		}
+#endif
+	}
+}
+
+bool AEmberMainHUD::GetGameLeftMouseInputLock() const
+{
+	return bIsGameLeftMouseInputLock;
 }
 
 void AEmberMainHUD::SetGameLeftMouseInputLock(bool bLock)
@@ -111,9 +142,9 @@ void AEmberMainHUD::SetGameLeftMouseInputLock(bool bLock)
 	bIsGameLeftMouseInputLock = bLock;
 }
 
-bool AEmberMainHUD::GetGameLeftMouseInputLock()
+bool AEmberMainHUD::GetGameMovementInputLock() const
 {
-	return bIsGameLeftMouseInputLock;
+	return bIsGameMovementInputLock;
 }
 
 void AEmberMainHUD::SetGameMovementInputLock(bool bLock)
@@ -121,17 +152,55 @@ void AEmberMainHUD::SetGameMovementInputLock(bool bLock)
 	bIsGameMovementInputLock = bLock;
 }
 
-bool AEmberMainHUD::GetGameMovementInputLock()
+void AEmberMainHUD::PushInitialWidget()
 {
-	return bIsGameMovementInputLock;
+	for (auto& Pair : InitWidgetClasses)
+	{
+		PushContentToLayer(Pair.Key, Pair.Value);
+
+#if !UE_BUILD_SHIPPING
+		if (PrimaryDebugLayer)
+		{
+			PrimaryDebugLayer->SetChangedLayer();
+		}
+#endif
+	}
 }
 
-UEmberLayerBase* AEmberMainHUD::GetLayer(FGameplayTag LayerTag) const
+UEmberLayerBase* AEmberMainHUD::GetLayer(const FGameplayTag& LayerTag) const
 {
-	return *EmberLayers.Find(LayerTag);
+	if (UEmberLayerBase* FoundLayer = *EmberLayers.Find(LayerTag))
+	{
+		return FoundLayer;
+	}
+	return nullptr;
 }
 
-//#if !UE_BUILD_SHIPPING
+UPlayerQuestWidget* AEmberMainHUD::GetQuestLogWidget() const
+{
+	return PlayerQuestWidgetInstance;
+}
+
+void AEmberMainHUD::UpdateQuestLogWidget(const UQuestDataAsset* QuestAsset)
+{
+	if (!PlayerQuestWidgetInstance || !QuestAsset)
+	{
+		return;
+	}
+
+	bool bIsComplete = false;
+	bool bIsAccepted = false;
+
+	if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
+	{
+		bIsComplete = QuestSubsystem->IsQuestCompleted(QuestAsset->QuestID);
+		bIsAccepted = QuestSubsystem->IsQuestAccepted(QuestAsset->QuestID);
+	}
+
+	PlayerQuestWidgetInstance->SetQuestInfoFromDataAsset(QuestAsset, bIsComplete, bIsAccepted);
+}
+
+#if !UE_BUILD_SHIPPING
 void AEmberMainHUD::ToggleDebugLayer()
 {
 	if (PrimaryDebugLayer)
@@ -140,23 +209,4 @@ void AEmberMainHUD::ToggleDebugLayer()
 		PrimaryDebugLayer->SetVisibility(bDebugLayerVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 	}
 }
-UPlayerQuestWidget* AEmberMainHUD::GetQuestLogWidget() const
-{
-	return PlayerQuestWidgetInstance;
-}
-//#endif
-void AEmberMainHUD::UpdateQuestLogWidget(const UQuestDataAsset* QuestAsset)
-{
-	if (!PlayerQuestWidgetInstance || !QuestAsset) return;
-
-	bool bIsComplete = false;
-	bool bIsAccepted = false;
-
-	if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
-	{
-		bIsComplete = QuestSubsystem->IsQuestCompleted(QuestAsset->QuestID);
-		bIsAccepted = QuestSubsystem->IsQuestAccepted(QuestAsset->QuestID); // 수락 여부 추가
-	}
-
-	PlayerQuestWidgetInstance->SetQuestInfoFromDataAsset(QuestAsset, bIsComplete, bIsAccepted);
-}
+#endif

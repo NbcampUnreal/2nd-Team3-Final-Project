@@ -24,14 +24,7 @@ UInteractionComponent::UInteractionComponent()
 void UInteractionComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (AEmberCharacter* Character = Cast<AEmberCharacter>(GetOwner()))
-	{
-		if (Character->InteractMontage)
-		{
-			InteractMontage = Character->InteractMontage;
-		}
-	}
+	
 }
 
 void UInteractionComponent::OnRegister()
