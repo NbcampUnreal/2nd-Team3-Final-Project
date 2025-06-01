@@ -20,7 +20,7 @@ struct EMBERABILITYSYSTEM_API FStateMontageMapping
 	FGameplayTag StateTag;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|StateMapping")
-	UAnimMontage* Montage;
+	UAnimMontage* Montage{nullptr};
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|StateMapping")
 	int32 Priority = 0;

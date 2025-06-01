@@ -12,6 +12,7 @@
 #include "GameInstance/EmberGameInstance.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
+#include "MaterialHLSLTree.h"
 #include "WaterBodyActor.h"
 #include "Animation/AnimInstance.h"
 #include "Components/CapsuleComponent.h"
@@ -31,6 +32,8 @@
 
 AEmberCharacter::AEmberCharacter()
 {
+    PrimaryActorTick.bCanEverTick = true;
+    
     Camera = CreateDefaultSubobject<UAlsCameraComponent>(TEXT("Camera"));
     Camera->SetupAttachment(GetMesh());
     Camera->SetRelativeRotation_Direct(FRotator(0.0f, 90.0f, 0.0f));
@@ -42,12 +45,17 @@ AEmberCharacter::AEmberCharacter()
     MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
     
     EmberItemManager = CreateDefaultSubobject<UUserItemManger>(TEXT("UserItemComponent"));
+
+    VisualCharacterMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SK_LittleBoyRyan"));
+    VisualCharacterMesh->SetupAttachment(GetMesh());
+
+    GliderMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Glide"));
+    GliderMesh->SetupAttachment(GetMesh());
     
+    /* Test */
     HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
     HpBarWidget->SetupAttachment(GetMesh());
     HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
-    
-   
 }
 
 void AEmberCharacter::BeginPlay()
@@ -132,6 +140,47 @@ void AEmberCharacter::BeginPlay()
         HpBarWidget->UpdateAbilitySystemComponent(this);
     }
 }
+
+void AEmberCharacter::Tick(float DeltaSeconds)
+{
+    Super::Tick(DeltaSeconds);
+
+    if (LocomotionMode == AlsLocomotionModeTags::Gliding)
+    {
+        FVector WorldInput = GetLastMovementInputVector();
+        
+        const float DeadZoneSqr = 0.1f * 0.1f;
+        if (WorldInput.SizeSquared() <= DeadZoneSqr)
+        {
+            return; 
+        }
+        
+        WorldInput.Z = 0.0f;
+        
+        FVector LocalInput = GetActorRotation().UnrotateVector(WorldInput);
+        LocalInput = LocalInput.GetSafeNormal2D(); 
+        
+        float InputYawOffset = FMath::RadiansToDegrees(FMath::Atan2(LocalInput.Y, LocalInput.X));
+        
+        FRotator CurrentRot = GetActorRotation();
+        float CurrentYaw   = CurrentRot.Yaw;
+        
+        float DesiredYaw = CurrentYaw + InputYawOffset;
+        
+        const float RotationSpeed = 1.0f;
+        float NewYaw = FMath::FInterpTo(
+            CurrentYaw, 
+            DesiredYaw, 
+            DeltaSeconds, 
+            RotationSpeed
+        );
+        
+        FRotator NewRot(0.0f, NewYaw, 0.0f);
+        
+        SetActorRotation(NewRot);
+    }
+}
+
 
 void AEmberCharacter::PossessedBy(AController* NewController)
 {
@@ -288,6 +337,11 @@ UMeleeTraceComponent* AEmberCharacter::GetMeleeTraceComponent() const
     return MeleeTraceComponent;
 }
 
+USkeletalMeshComponent* AEmberCharacter::GetGliderMesh() const
+{
+    return GliderMesh;
+}
+
 void AEmberCharacter::NotifyControllerChanged()
 {
     // 이전 컨트롤러 매핑 해제
@@ -442,6 +496,61 @@ void AEmberCharacter::Input_OnAim(const FInputActionValue& ActionValue)
         OverlayMode == AlsOverlayModeTags::Throw)
     {
         SetDesiredAiming(ActionValue.Get<bool>());    
+    }
+}
+
+void AEmberCharacter::Input_OnGlide()
+{
+    /*if (GetLocomotionMode() == AlsLocomotionModeTags::InAir)
+        SetLocomotionMode(AlsLocomotionModeTags::Gliding);
+    else if (GetLocomotionMode() ==AlsLocomotionModeTags::Gliding)
+        SetLocomotionMode(AlsLocomotionModeTags::InAir);
+
+    AlsCharacterMovement->Velocity*/
+
+    if (!AlsCharacterMovement)
+    {
+        return;
+    }
+
+    // 현재 모드를 읽어서 토글
+    const FGameplayTag CurrentMode = GetLocomotionMode();
+
+    if (CurrentMode == AlsLocomotionModeTags::InAir)
+    {
+        // 1) 글라이드 시작
+        SetLocomotionMode(AlsLocomotionModeTags::Gliding);
+
+        // 2) 중력을 낮추어 천천히 하강하게 한다
+        AlsCharacterMovement->GravityScale = GlideGravityScale;
+
+        // 3) 전방 벡터를 구해서 앞으로 밀어준다.
+        //    여기서는 캐릭터 컨트롤러가 바라보는 방향(컨트롤 회전Y)으로 계산합니다.
+        const FRotator ControlRot = GetControlRotation();
+        const FVector ForwardDir = FRotationMatrix(ControlRot).GetScaledAxis(EAxis::X);
+
+        // 4) 전방 속도를 설정 (X/Y 축)
+        FVector NewVelocity = ForwardDir.GetSafeNormal() * GlideForwardSpeed;
+
+        // 5) Z축으로는 일정하게 내려오도록 설정
+        NewVelocity.Z = -FMath::Abs(GlideDescendSpeed);
+
+        AlsCharacterMovement->Velocity = NewVelocity;
+    }
+    else if (CurrentMode == AlsLocomotionModeTags::Gliding)
+    {
+        // 1) 글라이드 종료 → 다시 InAir(낙하) 모드로 전환
+        SetLocomotionMode(AlsLocomotionModeTags::InAir);
+
+        // 2) 중력 스케일 원래값으로 되돌리기
+        AlsCharacterMovement->GravityScale = DefaultGravityScale;
+
+        // 3) Velocity Z축은 그대로 두면 낙하가 이어지므로, 
+        //    특별히 변경하지 않아도 자연스럽게 떨어집니다.
+        //    단, 글라이드 시 전방 속도를 줄이거나 제로로 만들고 싶으면:
+        //    AlsCharacterMovement->Velocity.X = 0;
+        //    AlsCharacterMovement->Velocity.Y = 0;
+        //    (원하는 대로 조절)
     }
 }
 
