@@ -28,26 +28,6 @@ void AEmberMainHUD::BeginPlay()
 		EMBER_LOG(LogTemp, Error, TEXT("Failed to create primary layout widget."));
 	}
 
-	if (PlayerQuestWidgetClass)
-	{
-		PlayerQuestWidgetInstance = CreateWidget<UPlayerQuestWidget>(GetOwningPlayerController(), PlayerQuestWidgetClass);
-		if (PlayerQuestWidgetInstance)
-		{
-			if (UQuestSubsystem* QuestSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UQuestSubsystem>())
-			{
-				FName CurrentQuestID;
-				if (QuestSubsystem->GetLastActiveQuestID(CurrentQuestID))
-				{
-					if (UQuestDataAsset* QuestAsset = QuestSubsystem->GetAllLoadedQuests().FindRef(CurrentQuestID))
-					{
-						bool bIsComplete = QuestSubsystem->IsQuestCompleted(CurrentQuestID);
-						bool bIsAccepted = QuestSubsystem->IsQuestAccepted(CurrentQuestID);
-						PlayerQuestWidgetInstance->SetQuestInfoFromDataAsset(QuestAsset, bIsComplete, bIsAccepted);
-					}
-				}
-			}
-		}
-	}
 }
 
 bool AEmberMainHUD::RegisterLayer(const FGameplayTag& LayerTag, UUserWidget* Layer)
@@ -181,32 +161,3 @@ UPlayerQuestWidget* AEmberMainHUD::GetQuestLogWidget() const
 	return PlayerQuestWidgetInstance;
 }
 
-void AEmberMainHUD::UpdateQuestLogWidget(const UQuestDataAsset* QuestAsset)
-{
-	if (!PlayerQuestWidgetInstance || !QuestAsset)
-	{
-		return;
-	}
-
-	bool bIsComplete = false;
-	bool bIsAccepted = false;
-
-	if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
-	{
-		bIsComplete = QuestSubsystem->IsQuestCompleted(QuestAsset->QuestID);
-		bIsAccepted = QuestSubsystem->IsQuestAccepted(QuestAsset->QuestID);
-	}
-
-	PlayerQuestWidgetInstance->SetQuestInfoFromDataAsset(QuestAsset, bIsComplete, bIsAccepted);
-}
-
-#if !UE_BUILD_SHIPPING
-void AEmberMainHUD::ToggleDebugLayer()
-{
-	if (PrimaryDebugLayer)
-	{
-		bDebugLayerVisible = !bDebugLayerVisible;
-		PrimaryDebugLayer->SetVisibility(bDebugLayerVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
-	}
-}
-#endif
