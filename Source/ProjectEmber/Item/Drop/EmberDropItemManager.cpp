@@ -19,9 +19,9 @@ TArray<FItemPair> UEmberDropItemManager::GetDropItemName(const FName& MonsterID)
     return DropItems;
 }
 
-void UEmberDropItemManager::SetDropItem(const FName& ItemID)
+void UEmberDropItemManager::SetDropItem(const FName& MonsterID)
 {
-    TArray<FItemPair> DropItemMap = GetDropItemName(ItemID);
+    TArray<FItemPair> DropItemMap = GetDropItemName(MonsterID);
     for (auto& Item : DropItemMap)
     {
         AddItem_Implementation(Item);

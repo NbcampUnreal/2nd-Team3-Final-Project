@@ -15,5 +15,5 @@ class PROJECTEMBER_API UEmberDropItemManager : public UEmberDataContainer
 public:
 	TArray<FItemPair> GetDropItemName(const FName& MonsterID);
 
-	void SetDropItem(const FName& ItemID);
+	void SetDropItem(const FName& MonsterID);
 };

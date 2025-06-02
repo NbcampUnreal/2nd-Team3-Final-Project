@@ -96,10 +96,16 @@ void UUserItemManger::UseInventorySlotInfo(int32 InIndex)
 	InventoryManager->UseItemInSlot_Implementation(InIndex);
 }
 
-void UUserItemManger::GetMonsterItems(const FName MonsterID)
+void UUserItemManger::SetDropProvider(UEmberDropItemManager* InDropItemProvider)
 {
-	DropItemManager->SetDropItem(MonsterID);
+	DropItemManager = InDropItemProvider;
 }
+
+void UUserItemManger::ClearDropProvider()
+{
+	DropItemManager = nullptr;
+}
+
 
 void UUserItemManger::AddItem(FName ItemID, int32 Quantity, int32 InSlotIndex)
 {
