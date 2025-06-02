@@ -2,6 +2,8 @@
 
 
 #include "GameMenuWidget.h"
+
+#include "AI_NPC/PlayerQuestWidget.h"
 #include "Quest/QuestSubsystem.h"
 #include "Blueprint/WidgetTree.h"
 #include "Character/EmberCharacter.h"

@@ -4,7 +4,6 @@
 #include "AlsCharacter.h"
 #include "AbilitySystemInterface.h"
 #include "EMSActorSaveInterface.h"
-#include "AI_NPC/PlayerQuestWidget.h"
 #include "EmberCharacter.generated.h"
 
 class UGameMenuWidget;
@@ -49,16 +48,6 @@ protected:
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> GliderMesh;
-	
-public: /* Test UI */
-	UFUNCTION(BlueprintCallable, Category = "UI")
-	void ToggleQuestUI();
-
-	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSubclassOf<UPlayerQuestWidget> QuestWidgetClass;
-
-	UPROPERTY()
-	UPlayerQuestWidget* QuestWidgetInstance;
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "HpBar")
@@ -149,11 +138,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Glide")
 	float GlideDescendSpeed = 200.0f;
 
-	/** 글라이드 시 중력 스케일 (낮게 하면 천천히 내려옵니다) */
+	/** 글라이드 시 중력 스케일 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Glide")
 	float GlideGravityScale = 0.f;
 
-	/** 기본 낙하(gravity) 상태일 때의 중력 스케일을 저장해둘 변수 */
+	/** 기본 낙하 */
 	float DefaultGravityScale = 1.0f;
 	
 protected: /* Inventory */
