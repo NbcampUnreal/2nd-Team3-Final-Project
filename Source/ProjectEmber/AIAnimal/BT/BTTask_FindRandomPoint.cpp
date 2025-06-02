@@ -5,9 +5,8 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AIController.h"
 #include "AIAnimal/TestFood.h"
-//#include "Interactables/Interactable.h"
-#include "Kismet/GameplayStatics.h"
-#include "ProjectEmber/AIAnimal/BaseAIAnimal.h"
+#include "EnvironmentQuery/EnvQueryInstanceBlueprintWrapper.h"
+#include "EnvironmentQuery/EnvQueryManager.h"
 
 UBTTask_FindRandomPoint::UBTTask_FindRandomPoint()
 {
@@ -28,23 +27,55 @@ EBTNodeResult::Type UBTTask_FindRandomPoint::ExecuteTask(UBehaviorTreeComponent&
 		return EBTNodeResult::Failed;
 	}
 
-	UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
+	BlackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!BlackboardComp)
 	{
 		return EBTNodeResult::Failed;
 	}
 
-	FVector ActorLocation = AIPawn->GetActorLocation();
-	const float WanderRange = BlackboardComp->GetValueAsFloat("WanderRange");
-	
-	ActorLocation = GenerateRandomLocation(AIPawn, WanderRange);
-	if (BlackboardComp)
+
+
+	//EQS
+	BTComp = &OwnerComp;
+	UEnvQueryInstanceBlueprintWrapper* QueryInstance = UEnvQueryManager::RunEQSQuery(
+	 GetWorld(),
+	RandomPointQuery,
+	AIPawn,
+	 EEnvQueryRunMode::RandomBest5Pct,
+	 nullptr);
+    
+	if (QueryInstance)
 	{
-		BlackboardComp->SetValueAsVector("TargetLocation", ActorLocation);
+		QueryInstance->GetOnQueryFinishedEvent().AddDynamic(this, &UBTTask_FindRandomPoint::OnFindRandomPointQueryFinished);
+		return EBTNodeResult::InProgress;
 	}
-	return Super::ExecuteTask(OwnerComp, NodeMemory);
+	return EBTNodeResult::Failed;
+
 	
 }
+
+void UBTTask_FindRandomPoint::OnFindRandomPointQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance,
+	EEnvQueryStatus::Type QueryStatus)
+{
+	//성공하지 않았으면 리턴
+	if (EEnvQueryStatus::Success != QueryStatus)
+	{
+		FinishLatentTask(*BTComp, EBTNodeResult::Failed);
+		return;
+	}
+	
+	TArray<FVector> Locations;
+	QueryInstance->GetQueryResult()->GetAllAsLocations(Locations);
+	
+	if (BlackboardComp)
+	{
+		int Index = FMath::RandRange(0, Locations.Num()-1);
+		BlackboardComp->SetValueAsVector("TargetLocation", Locations[Index]);
+	}
+	
+	FinishLatentTask(*BTComp, EBTNodeResult::Succeeded);
+}
+
 
 FVector UBTTask_FindRandomPoint::GenerateRandomLocation(APawn* AIPawn, float Range)
 {
@@ -54,3 +85,12 @@ FVector UBTTask_FindRandomPoint::GenerateRandomLocation(APawn* AIPawn, float Ran
 	
 	return AIPawn->GetActorLocation() + Offset;
 }
+// FVector ActorLocation = AIPawn->GetActorLocation();
+ 	// const float WanderRange = BlackboardComp->GetValueAsFloat("WanderRange");
+ 	//
+ 	// ActorLocation = GenerateRandomLocation(AIPawn, WanderRange);
+ 	// if (BlackboardComp)
+ 	// {
+ 	// 	BlackboardComp->SetValueAsVector("TargetLocation", ActorLocation);
+ 	// }
+ 	// return Super::ExecuteTask(OwnerComp, NodeMemory);

@@ -39,7 +39,7 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UButton* QuitButton;
 
-	// ºí·çÇÁ¸°Æ®¿¡¼­ ¼³Á¤ÇÒ ¼ö ÀÖ´Â SettingWidget Å¬·¡½º
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ö´ï¿½ SettingWidget Å¬ï¿½ï¿½ï¿½ï¿½
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI", meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<UEmberSettingWidget> SettingWidgetClass;
 };
