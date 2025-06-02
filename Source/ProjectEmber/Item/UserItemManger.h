@@ -39,7 +39,10 @@ public:
 	void UseInventorySlotInfo(int32 InIndex);
 
 	UFUNCTION(BlueprintCallable)
-	void GetMonsterItems(const FName MonsterID);
+	void SetDropProvider(class UEmberDropItemManager* InDropItemProvider);
+	
+	UFUNCTION(BlueprintCallable)
+	void ClearDropProvider();
 	/**
 	 * 
 	 * @param ItemID 넣을 아이템의 ID
@@ -61,7 +64,7 @@ public:
 
 	UEmberEquipmentManager* GetEquipmentManager();
 	
-	const class UEmberDropItemManager* GetEmberDropItemManager() const;
+	const UEmberDropItemManager* GetEmberDropItemManager() const;
 
 	UEmberDropItemManager* GetEmberDropItemManager();
 
