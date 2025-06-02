@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 #include "AlsCharacter.h"
@@ -24,31 +24,49 @@ class PROJECTEMBER_API AEmberCharacter : public AAlsCharacter, public IAbilitySy
 public:
 	AEmberCharacter();
 
-public: /* Character */
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void PossessedBy(AController* NewController) override;
+private:
+	void SetupEmberInputComponent() const;
+	
+public: /* Character */
+	virtual UMeleeTraceComponent* GetMeleeTraceComponent() const;
 
+	UFUNCTION(BlueprintCallable, Category = "Glider")
+	USkeletalMeshComponent* GetGliderMesh() const;
+	
 	UPROPERTY(EditAnywhere, Category = "InteractionSystem")
 	TObjectPtr<class UInteractionComponent> InteractionComponent;
 
-	UPROPERTY(EditAnywhere, Category="Interaction")
-	UAnimMontage* InteractMontage;
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UMeleeTraceComponent* MeleeTraceComponent;
 
-public:
-	virtual UMeleeTraceComponent* GetMeleeTraceComponent() const;
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<USkeletalMeshComponent> VisualCharacterMesh;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<USkeletalMeshComponent> GliderMesh;
+	
+public: /* Test UI */
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void ToggleQuestUI();
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UPlayerQuestWidget> QuestWidgetClass;
+
+	UPROPERTY()
+	UPlayerQuestWidget* QuestWidgetInstance;
 
 protected:
-	void SetupEmberInputComponent() const;
-
 	UPROPERTY(EditAnywhere, Category = "HpBar")
 	TSubclassOf<class UUserWidget> HpBarWidgetClass;
 	
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class UEmberWidgetComponent> HpBarWidget;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UMeleeTraceComponent* MeleeTraceComponent;
 public: /* AbilitySystem */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
@@ -73,10 +91,11 @@ protected:
 	TMap<int32, TSubclassOf<class UGameplayAbility>> StartRightInputAbilities;
 	
 	bool bClientAbility{false};
+	
 public: /* Als */
 	virtual void NotifyControllerChanged() override; // 컨트롤러 변경 시 매핑 등록/해제
 	virtual void DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DisplayInfo, float& Unused, float& VerticalLocation) override;
-
+	virtual void NotifyLocomotionModeChanged(const FGameplayTag& PreviousLocomotionMode) override;
 protected:
 	virtual bool StartMantlingInAir() override; // 공중 자동 파쿠르막기 (AlsCharacter::Tick 에서 그냥 주석처리하면 될거같은데 수정해도 될지 모르겠음)
 	virtual void CalcCamera(float DeltaTime, FMinimalViewInfo& ViewInfo) override;
@@ -108,6 +127,7 @@ protected:
 	virtual void Input_OnCrouch();
 	virtual void Input_OnJump(const FInputActionValue& ActionValue);
 	virtual void Input_OnAim(const FInputActionValue& ActionValue);
+	virtual void Input_OnGlide();
 	virtual void Input_OnRagdoll();
 	virtual void Input_OnRoll();
 	virtual void Input_OnRotationMode();
@@ -120,6 +140,22 @@ protected:
 
 	friend class UEmberInputHandlerComponent;
 
+protected:
+	/** 글라이드 시 전방(Forward) 속도 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Glide")
+	float GlideForwardSpeed = 800.0f;
+
+	/** 글라이드 시 하강 속도(z축) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Glide")
+	float GlideDescendSpeed = 200.0f;
+
+	/** 글라이드 시 중력 스케일 (낮게 하면 천천히 내려옵니다) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Glide")
+	float GlideGravityScale = 0.f;
+
+	/** 기본 낙하(gravity) 상태일 때의 중력 스케일을 저장해둘 변수 */
+	float DefaultGravityScale = 1.0f;
+	
 protected: /* Inventory */
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "EmberCharacter")
 	TObjectPtr<class UUserItemManger> EmberItemManager;

@@ -20,7 +20,7 @@ struct FQuestRewardData
 
     // 보상 수량
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Reward")
-    int32 RewardCount;
+    int32 RewardCount{1};
 };
 
 /**

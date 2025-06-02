@@ -82,6 +82,9 @@ public: /* Base Input */
 	TObjectPtr<UInputAction> InteractAction;
 
 	UPROPERTY(EditAnywhere, Category="Input") 
+	TObjectPtr<UInputAction> GlideAction;
+	
+	UPROPERTY(EditAnywhere, Category="Input") 
 	TArray<TObjectPtr<UInputAction>> QuickSlotActions;
 
 public: /* UI Input */

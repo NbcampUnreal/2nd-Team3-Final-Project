@@ -32,7 +32,7 @@ void UEmberDataContainer::InitSlot(int32 InSlotMax, int32 InSlotMaxRow, TObjectP
 #if UE_BUILD_DEVELOPMENT
     if (!OwnerAbilitySystemComponent)
     {
-        EMBER_LOG(LogEmberItem, Error, TEXT("OwnerAbilitySystemComponent: Failed to get AbilitySystem!"));
+        EMBER_LOG(LogEmberItem, Warning, TEXT("OwnerAbilitySystemComponent: Failed to get AbilitySystem!"));
     }
 #endif
     
