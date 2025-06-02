@@ -51,10 +51,16 @@ struct FSlotInfoRow : public FTableRowBase
 
 // GAS 효과 적용 정보를 담는 구조체
 USTRUCT(BlueprintType)
-struct FItemEffectApplicationInfo
+struct FItemEffectApplicationInfo : public FTableRowBase
 {
     GENERATED_BODY()
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FName EffectName = FName();
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    FName EffectDetail = FName();
+    
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     TSubclassOf<UGameplayEffect> GameplayEffectClass = nullptr;
 
@@ -92,12 +98,8 @@ struct FEquipmentInfoRow : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment Component")
     FGameplayTag EquipmentTag = FGameplayTag::EmptyTag;
 
-    // 소비 시 적용될 효과 목록 (GAS 연동)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment Component")
-    TArray<FItemEffectApplicationInfo> PassiveEffects;
+    TArray<FDataTableRowHandle> MainEffects;
     
-    // 소비 시 적용될 효과 목록 (GAS 연동)
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment Component")
-    TArray<FItemEffectApplicationInfo> ActiveEffects;
 };
 

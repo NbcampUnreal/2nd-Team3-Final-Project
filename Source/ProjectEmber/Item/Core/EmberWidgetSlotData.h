@@ -9,6 +9,8 @@
  * 
  */
 
+struct FItemEffectApplicationInfo;
+
 USTRUCT(BlueprintType)
 struct FEmberWidgetSlotData
 {
@@ -32,6 +34,9 @@ struct FEmberWidgetSlotData
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ItemMasterInfoRow")
 	TSoftObjectPtr<UTexture2D> ItemIcon = nullptr;
     
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ItemMasterInfoRow")
+	TArray<FItemEffectApplicationInfo> Enchants = TArray<FItemEffectApplicationInfo>();
+    
 	FEmberWidgetSlotData() = default;
 
 	FEmberWidgetSlotData(const FInstancedStruct& InSlotData);
@@ -46,5 +51,6 @@ struct FEmberWidgetSlotData
 		ItemDisplayName = FText();
 		ItemDescription = FText();
 		ItemIcon = nullptr;
+		Enchants.Empty();
 	}
 };

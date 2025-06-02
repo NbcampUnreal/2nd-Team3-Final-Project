@@ -2,7 +2,10 @@
 
 
 #include "ItemSubsystem.h"
+
+#include "Core/EmberDropStruct.h"
 #include "Core/ItemTypes.h"
+#include "EmberLog/EmberLog.h"
 
 void UItemSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -10,9 +13,12 @@ void UItemSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     UE_LOG(LogTemp, Log, TEXT("UMyItemSubsystem Initializing... Loading Data Tables."));
 
     LoadedItemBaseDataTable = LoadDataTable(ItemBaseDataTablePtr, TEXT("ItemBase"));
-    LoadedInventoryComponentDataTable = LoadDataTable(InventoryComponentDataTablePtr, TEXT("InventoryComponent"));
-    LoadedConsumableComponentDataTable = LoadDataTable(ConsumableComponentDataTablePtr, TEXT("ConsumableComponent"));
-    LoadedConsumableEquipmentDataTable = LoadDataTable(EquipmentComponentDataTablePtr, TEXT("EquipmentComponent"));
+    LoadedInventoryComponentDataTable = LoadDataTable(InventoryComponentDataTablePtr, TEXT("InventoryDataTable"));
+    LoadedConsumableComponentDataTable = LoadDataTable(ConsumableComponentDataTablePtr, TEXT("ConsumableDataTable"));
+    LoadedConsumableEquipmentDataTable = LoadDataTable(EquipmentComponentDataTablePtr, TEXT("EquipmentDataTable"));
+    LoadedMonsterLootDataTable = LoadDataTable(MonsterLootDataTablePtr, TEXT("MonsterLootDataTable"));
+    LoadedLootPoolDataTable = LoadDataTable(LootPoolDataTablePtr, TEXT("LootPoolDataTablePtr"));
+    EnchantDataTable = LoadDataTable(EnchantDataTablePtr, TEXT("EnchantDataTablePtr"));
 
 }
 
@@ -63,3 +69,161 @@ const FItemMasterInfoRow* UItemSubsystem::GetItemMasterInfoRow(FName ItemID) con
     return nullptr;
         
 }
+
+TArray<FItemPair> UItemSubsystem::GetDroppedItem(FName MonsterID)
+{
+    TArray<FItemPair> FinalDroppedItems;
+
+    if (!LoadedMonsterLootDataTable || !LoadedLootPoolDataTable || !LoadedItemBaseDataTable)
+    {
+        EMBER_LOG(LogEmberItem, Error, TEXT("CalculateMonsterDrops: Invalid DataTable provided."));
+        return FinalDroppedItems;
+    }
+
+    const FString ContextString(TEXT("LoadedMonsterLootDataTable"));
+    FMonsterLootTableRow* MonsterLootData = LoadedMonsterLootDataTable->FindRow<FMonsterLootTableRow>(MonsterID, ContextString);
+
+    if (!MonsterLootData)
+    {
+        EMBER_LOG(LogEmberItem, Warning, TEXT("CalculateMonsterDrops: MonsterLootRowName '%s' not found in LoadedMonsterLootDataTable."), *MonsterID.ToString());
+        return FinalDroppedItems;
+    }
+
+    for (const FEmberDropEntry& DropEntry : MonsterLootData->EmberDropEntries)
+    {
+        if (FMath::FRand() <= DropEntry.DropChance)
+        {
+            int32 ActualQuantityOrPicks = FMath::RandRange(DropEntry.MinQuantity, DropEntry.MaxQuantity);
+            if (ActualQuantityOrPicks <= 0) continue;
+
+            if (DropEntry.bIsDropPool)
+            {
+                if (!DropEntry.ItemID.DataTable || !DropEntry.ItemID.RowName.IsValid() || DropEntry.ItemID.RowName.IsNone())
+                {
+                     EMBER_LOG(LogEmberItem, Warning, TEXT("CalculateMonsterDrops: Invalid TargetID for Loot Pool in DropEntry."));
+                     continue;
+                }
+                
+                FPoolContents* PoolToProcess = LoadedLootPoolDataTable->FindRow<FPoolContents>(DropEntry.ItemID.RowName, ContextString);
+
+
+                if (!PoolToProcess || PoolToProcess->PossibleItems.IsEmpty())
+                {
+                    EMBER_LOG(LogEmberItem, Warning, TEXT("CalculateMonsterDrops: Loot Pool '%s' not found or empty in LootPoolDataTable."), *DropEntry.ItemID.RowName.ToString());
+                    continue;
+                }
+
+                for (int32 PickCount = 0; PickCount < ActualQuantityOrPicks; ++PickCount)
+                {
+                    FEmberDropItemGroup SelectedPoolItem;
+                    if (SelectWeightedItem(PoolToProcess->PossibleItems, SelectedPoolItem))
+                    {
+                        int32 QuantityOfSelectedItem = FMath::RandRange(SelectedPoolItem.MinQuantityIfPicked, SelectedPoolItem.MaxQuantityIfPicked);
+                        if (QuantityOfSelectedItem > 0)
+                        {
+                            FItemPair Item = FItemPair(SelectedPoolItem.ItemID.RowName, QuantityOfSelectedItem);
+                            if (DropEntry.EnchantTable)
+                            {
+                                Item.Enchants = SetEnchantEquipment(DropEntry.EnchantTable);
+                            }
+                            FinalDroppedItems.Add(Item);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (!DropEntry.ItemID.DataTable || !DropEntry.ItemID.RowName.IsValid() || DropEntry.ItemID.RowName.IsNone())
+                {
+                     EMBER_LOG(LogEmberItem, Warning, TEXT("CalculateMonsterDrops: Invalid TargetID for Direct Item in DropEntry."));
+                     continue;
+                }
+                
+                FItemPair Item = FItemPair(DropEntry.ItemID.RowName, ActualQuantityOrPicks);
+                if (DropEntry.EnchantTable)
+                {
+                    Item.Enchants = SetEnchantEquipment(DropEntry.EnchantTable);
+                }
+                FinalDroppedItems.Add(Item);
+            }
+
+        }
+    }
+
+    return FinalDroppedItems;
+}
+
+bool UItemSubsystem::SelectWeightedItem(const TArray<FEmberDropItemGroup>& ItemsToSelectFrom,
+    FEmberDropItemGroup& OutSelectedItem)
+{
+    if (ItemsToSelectFrom.IsEmpty())
+    {
+        return false;
+    }
+
+    int32 TotalWeight = 0;
+    for (const FEmberDropItemGroup& Item : ItemsToSelectFrom)
+    {
+        if (Item.Weight > 0)
+        {
+            TotalWeight += Item.Weight;
+        }
+    }
+
+    if (TotalWeight <= 0)
+    {
+        return false;
+    }
+
+    int32 RandomWeightValue = FMath::RandRange(0, TotalWeight - 1);
+
+    int32 CurrentWeightSum = 0;
+    for (const FEmberDropItemGroup& Item : ItemsToSelectFrom)
+    {
+        if (Item.Weight <= 0) continue;
+
+        CurrentWeightSum += Item.Weight;
+        if (RandomWeightValue < CurrentWeightSum)
+        {
+            OutSelectedItem = Item;
+            return true;
+        }
+    }
+
+    if (!ItemsToSelectFrom.IsEmpty())
+    {
+        for (int32 Index = ItemsToSelectFrom.Num() - 1; Index >= 0; --Index) {
+            if (ItemsToSelectFrom[Index].Weight > 0) {
+                OutSelectedItem = ItemsToSelectFrom[Index];
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+TArray<FItemEffectApplicationInfo> UItemSubsystem::SetEnchantEquipment(const TObjectPtr<UDataTable>& InEnchantDataTable)
+{
+    if (!InEnchantDataTable)
+    {
+        return TArray<FItemEffectApplicationInfo>();
+    }
+    TArray<FItemEffectApplicationInfo> OutEnchants;
+
+    int32 EnchantCount = FMath::RandRange(0, 2);
+    TArray<FItemEffectApplicationInfo*> Enchants;
+    InEnchantDataTable->GetAllRows<FItemEffectApplicationInfo>(TEXT("Enchant"), Enchants);
+
+    for (int32 Index = 0; Index < EnchantCount; ++Index)
+    {
+        if (Enchants.IsValidIndex(Index))
+        {
+            int32 SwapIndex = FMath::RandRange(Index, Enchants.Num() - 1);
+            Enchants.Swap(Index, SwapIndex);
+            OutEnchants.Add(*Enchants[Index]);
+        }
+    }
+
+    return OutEnchants;
+}
+

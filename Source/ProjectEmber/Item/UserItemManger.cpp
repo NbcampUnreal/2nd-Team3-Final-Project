@@ -5,7 +5,7 @@
 
 #include "InventoryManager.h"
 #include "QuickSlotManager.h"
-#include "EmberDropItemManager.h"
+#include "Item/Drop/EmberDropItemManager.h"
 #include "EmberEquipmentManager.h"
 
 
@@ -94,6 +94,11 @@ FEmberItemInfo UUserItemManger::GetInventorySlotInfo(int32 InIndex)
 void UUserItemManger::UseInventorySlotInfo(int32 InIndex)
 {
 	InventoryManager->UseItemInSlot_Implementation(InIndex);
+}
+
+void UUserItemManger::GetMonsterItems(const FName MonsterID)
+{
+	DropItemManager->SetDropItem(MonsterID);
 }
 
 void UUserItemManger::AddItem(FName ItemID, int32 Quantity, int32 InSlotIndex)

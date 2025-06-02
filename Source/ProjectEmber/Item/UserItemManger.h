@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/ActorComponent.h"
+
 #include "Core/EmberItemStruct.h"
 #include "Craft/EmberResourceProvider.h"
 #include "UserItemManger.generated.h"
@@ -38,6 +38,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UseInventorySlotInfo(int32 InIndex);
 
+	UFUNCTION(BlueprintCallable)
+	void GetMonsterItems(const FName MonsterID);
 	/**
 	 * 
 	 * @param ItemID 넣을 아이템의 ID
@@ -93,6 +95,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
 	int32 DropItemMaxSlotRow = 10;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
 	TObjectPtr<UInventoryManager> InventoryManager;
 	TObjectPtr<UQuickSlotManager> QuickSlotManager;
 	TObjectPtr<UEmberEquipmentManager> EquipmentManager;

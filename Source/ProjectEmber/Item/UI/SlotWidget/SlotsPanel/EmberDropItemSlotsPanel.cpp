@@ -4,7 +4,7 @@
 #include "EmberDropItemSlotsPanel.h"
 
 #include "GameFramework/Character.h"
-#include "Item/EmberDropItemManager.h"
+#include "Item/Drop/EmberDropItemManager.h"
 #include "Item/UserItemManger.h"
 
 void UEmberDropItemSlotsPanel::BP_SetProvider_Implementation()
