@@ -56,7 +56,7 @@ public:
 	UPROPERTY()
 	UPlayerQuestWidget* PlayerQuestWidgetInstance;
 
-	void UpdateQuestLogWidget(const UQuestDataAsset* QuestAsset);
+
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI|HUD")
