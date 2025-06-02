@@ -113,6 +113,9 @@ int32 UEmberDataContainer::AddDataInIndex(const FItemPair& InItem, int32 InSlotI
                 CurrentQuantity = FMath::Max(CurrentQuantity, 0);
 
                 Slot->Quantity += CurrentQuantity;
+
+                
+                Slot->EnchantEffects = InItem.Enchants;
                 
                 FTotalItemInfo& Total = TotalData.FindOrAdd(Slot->ItemID);
                 Total.AddItem(CurrentQuantity, InSlotIndex);
@@ -173,6 +176,11 @@ void UEmberDataContainer::FindEmptySlotIndexes(TQueue<int32>& OutSlotIndexes) co
             if (Slot->bIsEmpty())
             {
                 OutSlotIndexes.Enqueue(Index);
+            }
+            else
+            {
+                EMBER_LOG(LogEmberItem, Display, TEXT("Slot : %s, %d"), *Slot->ItemID.ToString(), Slot->Quantity);
+
             }
         }
     }
@@ -290,6 +298,8 @@ int32 UEmberDataContainer::TryAddItemsToSlots(const FItemPair& InItem, int32 InS
     FindSlotIndexesByItemID(InItem.ItemID, TargetSlotIndexes, InSlotIndex);
     FindEmptySlotIndexes(TargetSlotIndexes);
 
+    
+    EMBER_LOG(LogEmberItem, Display, TEXT("SlotIndex : %d"), *TargetSlotIndexes.Peek());
     if (TargetSlotIndexes.IsEmpty())
     {
         return 0;

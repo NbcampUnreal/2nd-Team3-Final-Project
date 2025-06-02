@@ -7,7 +7,7 @@
 #include "EmberLog/EmberLog.h"
 #include "Item/ItemSubsystem.h"
 
-FEmberSlotData::FEmberSlotData(const FName& InItemID, const int32 InQuantity)
+FEmberSlotData::FEmberSlotData(const FName& InItemID, const int32 InQuantity, const TArray<FItemEffectApplicationInfo>& InEnchantEffects)
 {
 	if (UItemSystemLibrary::GetItemSubsystem())
 	{
@@ -46,6 +46,7 @@ FEmberSlotData::FEmberSlotData(const FName& InItemID, const int32 InQuantity)
 			}
 		}
 	}
+	EnchantEffects = InEnchantEffects;
 }
 
 FEquipmentSlotData::FEquipmentSlotData(const FEmberSlotData& InEmberSlot) : FEmberSlotData(InEmberSlot)
@@ -58,6 +59,7 @@ FEquipmentSlotData::FEquipmentSlotData(const FEmberSlotData& InEmberSlot) : FEmb
 		}
 	}
 }
+
 
 FEquipmentSlotData::FEquipmentSlotData(const FName& InItemID, const int32 InQuantity) : FEmberSlotData(InItemID, InQuantity)
 {
@@ -87,8 +89,14 @@ FEmberItemInfo::FEmberItemInfo(const FEmberSlotData& InItemInventorySlotData)
 	{
 		if (FEquipmentInfoRow* EquipmentInfo = InItemInventorySlotData.EquipmentData->GetRow<FEquipmentInfoRow>(TEXT("ConsumeInfo")))
 		{
-			EMBER_LOG(LogTemp, Warning, TEXT("Item : %d"), EquipmentInfo->ActiveEffects.Num());
-			InActiveEffects.Append(EquipmentInfo->ActiveEffects);
+			EMBER_LOG(LogTemp, Warning, TEXT("Item : %d"), EquipmentInfo->MainEffects.Num());
+			for (FDataTableRowHandle& Handle : EquipmentInfo->MainEffects)
+			{
+				if (!Handle.DataTable ||Handle.IsNull())
+				{
+					InActiveEffects.Add(*Handle.GetRow<FItemEffectApplicationInfo>(TEXT("EquipmentInfo")));
+				}
+			}
 			ItemTags.AddTag(EquipmentInfo->EquipmentTag);
 		}
 	}

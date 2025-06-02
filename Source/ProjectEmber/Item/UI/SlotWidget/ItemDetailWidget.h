@@ -17,6 +17,10 @@ class PROJECTEMBER_API UItemDetailWidget : public UUserWidget
 
 	virtual void NativeConstruct() override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+
+public:
+	UFUNCTION(BlueprintCallable)
+	FString GetEffectsName() const;
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Slot")
 	FEmberWidgetSlotData EmberWidgetSlotData = FEmberWidgetSlotData();

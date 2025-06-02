@@ -4,6 +4,8 @@
 #include "ItemDetailWidget.h"
 
 #include "Blueprint/WidgetLayoutLibrary.h"
+#include "EmberLog/EmberLog.h"
+#include "Item/Core/ItemTypes.h"
 
 
 void UItemDetailWidget::NativeConstruct()
@@ -29,4 +31,14 @@ void UItemDetailWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTim
 		this->SetPositionInViewport(MousePosition, false);
 	
 	}
+}
+
+FString UItemDetailWidget::GetEffectsName() const
+{
+	FString EffectNames = "";
+	for (const FItemEffectApplicationInfo& Effect : EmberWidgetSlotData.Enchants)
+	{
+		EffectNames += Effect.EffectName.ToString() + '\n';
+	}
+	return EffectNames;
 }
