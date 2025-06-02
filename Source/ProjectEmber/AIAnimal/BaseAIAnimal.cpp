@@ -95,8 +95,12 @@ void ABaseAIAnimal::BeginPlay()
 		
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 			UEmberCharacterAttributeSet::GetMaxHealthAttribute()).AddUObject(this, &ThisClass::OnMaxHealthChanged);
-		
-		CharacterAttributeSet->OnOutOfHealth.AddDynamic(this, &ThisClass::OnBeginDeath);
+
+
+		if (const UEmberCharacterAttributeSet* Attribute = AbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>())
+		{
+			Attribute->OnOutOfHealth.AddDynamic(this, &ABaseAIAnimal::OnBeginDeath);
+		}
 		
 		if (const UEmberCharacterAttributeSet* Attribute = AbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>())
 		{
@@ -169,11 +173,13 @@ void ABaseAIAnimal::SetHiddenInGame()
 
 void ABaseAIAnimal::SetVisibleInGame()
 {
-	CharacterAttributeSet->SetHealth(CharacterAttributeSet->GetMaxHealth());
-	FOnAttributeChangeData ChangeData;
-	ChangeData.NewValue = CharacterAttributeSet->GetHealth();
-	Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(ChangeData);
-	
+	if (CharacterAttributeSet)
+	{
+		CharacterAttributeSet->SetHealth(CharacterAttributeSet->GetMaxHealth());
+		FOnAttributeChangeData ChangeData;
+		ChangeData.NewValue = CharacterAttributeSet->GetHealth();
+		Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(ChangeData);
+	}
 	SetActorHiddenInGame(false);
 	SetActorEnableCollision(true);
 	SetActorTickEnabled(true);
