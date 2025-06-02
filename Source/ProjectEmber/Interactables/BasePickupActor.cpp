@@ -10,14 +10,20 @@ ABasePickupActor::ABasePickupActor()
 	// 이동 가능하게 설정
 	MeshComp->SetMobility(EComponentMobility::Movable);
 
-	// 물리 시뮬레이션 활성화
+#if !UE_BUILD_SHIPPING 
+	// 물리 시뮬레이션 활성화 
 	MeshComp->SetSimulatePhysics(true);
 
-	// 중력 사용 여부 (기본값 true)
+	// 중력 사용 여부
 	MeshComp->SetEnableGravity(true);
 
-	// 충돌 프리셋: 물리 바디용으로 설정
+	// 충돌 프리셋: 물리 바디용 프로필
 	MeshComp->SetCollisionProfileName(TEXT("PhysicsActor"));
+#else
+	MeshComp->SetSimulatePhysics(false);
+	MeshComp->SetEnableGravity(false);
+	MeshComp->SetCollisionProfileName(TEXT("BlockAll")); 
+#endif
 }
 
 void ABasePickupActor::BeginPlay()
