@@ -3,11 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
-#include "GameplayEffectTypes.h"
 #include "EMSActorSaveInterface.h"
+#include "GameFramework/Character.h"
+#include "GameplayEffectTypes.h"
 #include "GameplayTagAssetInterface.h"
+#include "MessageBus/MessageBus.h"
 #include "BaseAIAnimal.generated.h"
 
 class UMeleeTraceComponent;
@@ -35,7 +36,7 @@ enum class EAnimalAIPersonality : uint8
 };
 
 UCLASS()
-class PROJECTEMBER_API ABaseAIAnimal : public ACharacter, public IAbilitySystemInterface, public IEMSActorSaveInterface, public IGameplayTagAssetInterface
+class PROJECTEMBER_API ABaseAIAnimal : public ACharacter, public IAbilitySystemInterface, public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
 
@@ -46,11 +47,7 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
-	
-	virtual void ActorPreSave_Implementation() override;
-	virtual void ActorLoaded_Implementation() override;
-	virtual void PostInitializeComponents() override;
-	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
+	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override; //어빌리티시스템 함수 오버라이드
 	
 	void OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
@@ -73,13 +70,26 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void SetIdentityTag(const FGameplayTag InIdentityTag);
+
+	UFUNCTION(BlueprintCallable, Category = AI)
+	FName GetRoleTag() const;
 	
+	UFUNCTION(BlueprintCallable, Category = AI)
+	void SetRoleTag(FName InRoleTag);
+
+	UFUNCTION(BlueprintCallable)
+	void SetIdleState();
+	
+	/* Spawn & Despawn*/
 	UFUNCTION()
 	void SetHiddenInGame();
 
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	void SetVisibleInGame();
-	
+
+	UFUNCTION()
+	void OnBeginDeath();
+
  /* AbilitySystem */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
@@ -91,15 +101,17 @@ public:
 
 	UFUNCTION()
 	void OnHit(AActor* InstigatorActor);
-	
+
 protected:
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void SetDetails();
+
+	
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UMeleeTraceComponent* MeleeTraceComponent;
 	
-	UPROPERTY(EditAnywhere, Category = "AbilitySystem", SaveGame)
+	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 	
 	UPROPERTY(SaveGame)
@@ -111,7 +123,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "HpBar")
 	TSubclassOf<class UUserWidget> HpBarWidgetClass;
 	
-	UPROPERTY(BlueprintReadOnly, SaveGame)
+	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class UEmberWidgetComponent> HpBarWidget;
 	
 	// Invoker 관련 변수
@@ -166,18 +178,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTag IdentityTag;
-	
+
 	FTimerHandle TimerHandle;
 	TArray<FVector> PatrolPoints;
+
+private:
+	void ReceiveMessage(const FName MessageType, UObject* Payload);
+	
+	FMessageDelegate MessageDelegateHandle;
 };
-
-/*
- *제일 시급한거 EQS로 수정하기 -> 장소, 타겟 찾을 때 뚝딱거림
- *동물 태어났을 때 블랙보드 정지, 죽었을 때 숨김처리, 블랙보드 리셋
- *
- *스포너 버그 수정 및 기능 추가 
- *이동 가능 범위, 무리 구역 범위, 인식 범위 실제 월드에 배치해보고 디테일하게 정해서 수정해야함
- *
- *공격 동물들 각자 공격패턴 구현
- */
-

@@ -9,6 +9,10 @@
 #include "Framework/EmberPlayerState.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "GameInstance/EmberGameInstance.h"
+#include "InputMappingContext.h"
+#include "InputAction.h"
+#include "MaterialHLSLTree.h"
 #include "WaterBodyActor.h"
 #include "Animation/AnimInstance.h"
 #include "Components/CapsuleComponent.h"
@@ -20,6 +24,7 @@
 #include "Item/UserItemManger.h"
 #include "UI/EmberWidgetComponent.h"
 #include "MeleeTrace/Public/MeleeTraceComponent.h"
+#include "Quest/QuestSubsystem.h"
 #include "UI/HUD/EmberMainHUD.h"
 #include "Utility/AlsVector.h"
 
@@ -27,6 +32,8 @@
 
 AEmberCharacter::AEmberCharacter()
 {
+    PrimaryActorTick.bCanEverTick = true;
+    
     Camera = CreateDefaultSubobject<UAlsCameraComponent>(TEXT("Camera"));
     Camera->SetupAttachment(GetMesh());
     Camera->SetRelativeRotation_Direct(FRotator(0.0f, 90.0f, 0.0f));
@@ -38,16 +45,41 @@ AEmberCharacter::AEmberCharacter()
     MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
     
     EmberItemManager = CreateDefaultSubobject<UUserItemManger>(TEXT("UserItemComponent"));
+
+    VisualCharacterMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SK_LittleBoyRyan"));
+    VisualCharacterMesh->SetupAttachment(GetMesh());
+
+    GliderMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Glide"));
+    GliderMesh->SetupAttachment(GetMesh());
     
+    /* Test */
     HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
     HpBarWidget->SetupAttachment(GetMesh());
     HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
-    
 }
 
 void AEmberCharacter::BeginPlay()
 {
     Super::BeginPlay();
+
+    if (UEmberGameInstance* GI = GetGameInstance<UEmberGameInstance>())
+    {
+        GI->ApplySavedMoveBindingsToUserSettings();
+
+        APlayerController* PC = Cast<APlayerController>(GetController());
+        if (PC && PC->IsLocalController())
+        {
+            if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+                ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+            {
+                Subsystem->ClearAllMappings();
+                Subsystem->AddMappingContext(GI->PlayerMappingContext, 0);
+                Subsystem->AddMappingContext(GI->UI_ALS_MappingContext, 1);
+                Subsystem->AddMappingContext(GI->UIMappingContext, 2);
+                UE_LOG(LogTemp, Warning, TEXT("[Character::BeginPlay] MappingContext applied!"));
+            }
+        }
+    }
     
     if (GetController()->IsLocalController())
     {
@@ -108,6 +140,47 @@ void AEmberCharacter::BeginPlay()
         HpBarWidget->UpdateAbilitySystemComponent(this);
     }
 }
+
+void AEmberCharacter::Tick(float DeltaSeconds)
+{
+    Super::Tick(DeltaSeconds);
+
+    if (LocomotionMode == AlsLocomotionModeTags::Gliding)
+    {
+        FVector WorldInput = GetLastMovementInputVector();
+        
+        const float DeadZoneSqr = 0.1f * 0.1f;
+        if (WorldInput.SizeSquared() <= DeadZoneSqr)
+        {
+            return; 
+        }
+        
+        WorldInput.Z = 0.0f;
+        
+        FVector LocalInput = GetActorRotation().UnrotateVector(WorldInput);
+        LocalInput = LocalInput.GetSafeNormal2D(); 
+        
+        float InputYawOffset = FMath::RadiansToDegrees(FMath::Atan2(LocalInput.Y, LocalInput.X));
+        
+        FRotator CurrentRot = GetActorRotation();
+        float CurrentYaw   = CurrentRot.Yaw;
+        
+        float DesiredYaw = CurrentYaw + InputYawOffset;
+        
+        const float RotationSpeed = 1.0f;
+        float NewYaw = FMath::FInterpTo(
+            CurrentYaw, 
+            DesiredYaw, 
+            DeltaSeconds, 
+            RotationSpeed
+        );
+        
+        FRotator NewRot(0.0f, NewYaw, 0.0f);
+        
+        SetActorRotation(NewRot);
+    }
+}
+
 
 void AEmberCharacter::PossessedBy(AController* NewController)
 {
@@ -218,6 +291,10 @@ FGameplayAbilitySpec* AEmberCharacter::GetSpecFromOverlayMode(const bool IsRight
     {
         InputID = static_cast<int32>(EInputID::SwordTwoHanded);
     }
+    else if (OverlayMode == AlsOverlayModeTags::Throw) 
+    {
+        InputID = static_cast<int32>(EInputID::Throw);
+    }
     
     if (IsRightInput)
     {
@@ -258,6 +335,11 @@ void AEmberCharacter::TryAbilityFromOnAim(const bool bPressed)
 UMeleeTraceComponent* AEmberCharacter::GetMeleeTraceComponent() const
 {
     return MeleeTraceComponent;
+}
+
+USkeletalMeshComponent* AEmberCharacter::GetGliderMesh() const
+{
+    return GliderMesh;
 }
 
 void AEmberCharacter::NotifyControllerChanged()
@@ -410,9 +492,44 @@ void AEmberCharacter::Input_OnAim(const FInputActionValue& ActionValue)
     {
         
     }
-    else
+    else if (OverlayMode == AlsOverlayModeTags::Bow ||
+        OverlayMode == AlsOverlayModeTags::Throw)
     {
         SetDesiredAiming(ActionValue.Get<bool>());    
+    }
+}
+
+void AEmberCharacter::Input_OnGlide()
+{
+    if (!AlsCharacterMovement)
+    {
+        return;
+    }
+    
+    const FGameplayTag CurrentMode = GetLocomotionMode();
+
+    if (CurrentMode == AlsLocomotionModeTags::InAir)
+    {
+        GliderMesh->SetHiddenInGame(false);
+        
+        SetLocomotionMode(AlsLocomotionModeTags::Gliding);
+
+        AlsCharacterMovement->GravityScale = GlideGravityScale;
+        
+        const FRotator ControlRot = GetControlRotation();
+        const FVector ForwardDir = FRotationMatrix(ControlRot).GetScaledAxis(EAxis::X);
+        
+        FVector NewVelocity = ForwardDir.GetSafeNormal() * GlideForwardSpeed;
+        
+        NewVelocity.Z = -FMath::Abs(GlideDescendSpeed);
+
+        AlsCharacterMovement->Velocity = NewVelocity;
+    }
+    else if (CurrentMode == AlsLocomotionModeTags::Gliding)
+    {
+        SetLocomotionMode(AlsLocomotionModeTags::InAir);
+        
+        AlsCharacterMovement->GravityScale = DefaultGravityScale;
     }
 }
 
@@ -499,8 +616,19 @@ void AEmberCharacter::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& Dis
     Super::DisplayDebug(Canvas, DisplayInfo, Unused, VerticalLocation);
 }
 
+void AEmberCharacter::NotifyLocomotionModeChanged(const FGameplayTag& PreviousLocomotionMode)
+{
+    Super::NotifyLocomotionModeChanged(PreviousLocomotionMode);
+    
+    if (PreviousLocomotionMode == AlsLocomotionModeTags::Gliding)
+    {
+        AlsCharacterMovement->GravityScale = DefaultGravityScale;
+
+        GliderMesh->SetHiddenInGame(true);
+    }
+}
+
 bool AEmberCharacter::StartMantlingInAir()
 {
     return false;
 }
-

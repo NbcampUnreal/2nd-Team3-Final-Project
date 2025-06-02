@@ -6,6 +6,7 @@
 #include "AIController.h"
 #include "AIAnimal/BaseAIAnimal.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "EnvironmentQuery/EnvQueryManager.h"
 
 
 UBTTask_FindSafeLocation::UBTTask_FindSafeLocation()
@@ -27,28 +28,59 @@ EBTNodeResult::Type UBTTask_FindSafeLocation::ExecuteTask(UBehaviorTreeComponent
 		return EBTNodeResult::Failed;
 	}
 
-	UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent();
+	BlackboardComp = OwnerComp.GetBlackboardComponent();
 	if (!BlackboardComp)
 	{
 		return EBTNodeResult::Failed;
 	}
 	
-	FVector ActorLocation = AIPawn->GetActorLocation();
+
 	
-	const float WanderRange = BlackboardComp->GetValueAsFloat("WanderRange"); //임시수정 -> 이동 가능 범위, 무리 구역 범위, 인식 범위 실제 월드에 배치해보고 디테일하게 정해서 수정해야함
+	//EQS
+	BTComp = &OwnerComp;
+	UEnvQueryInstanceBlueprintWrapper* QueryInstance = UEnvQueryManager::RunEQSQuery(
+	 GetWorld(),
+	SafeLocationQuery,
+	AIPawn,
+	 EEnvQueryRunMode::RandomBest5Pct,
+	 nullptr);
+    
+	if (QueryInstance)
+	{
+		QueryInstance->GetOnQueryFinishedEvent().AddDynamic(this, &UBTTask_FindSafeLocation::OnFindSafeLocationQueryFinished);
+		return EBTNodeResult::InProgress;
+	}
+	return EBTNodeResult::Failed;
 	
-	UObject* TargetObject = BlackboardComp->GetValueAsObject("TargetActor");
-	AActor* TargetActor = Cast<AActor>(TargetObject);
-	FVector TargetActorLocation = TargetActor->GetActorLocation();
-	
-	ActorLocation = GenerateRandomLocation(TargetActorLocation, ActorLocation);
-	
+}
+
+void UBTTask_FindSafeLocation::OnFindSafeLocationQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance,
+	EEnvQueryStatus::Type QueryStatus)
+{
+	//성공하지 않았으면 리턴
+	if (EEnvQueryStatus::Success != QueryStatus)
+	{
+		FinishLatentTask(*BTComp, EBTNodeResult::Failed);
+		return;
+	}
+
+	TArray<FVector> AllLocations;
+	QueryInstance->GetQueryResult()->GetAllAsLocations(AllLocations);
+	if (AllLocations.Num() == 0)
+	{
+		FinishLatentTask(*BTComp, EBTNodeResult::Failed);
+		return;
+	}
 	
 	if (BlackboardComp)
 	{
-		BlackboardComp->SetValueAsVector("SafeLocation", ActorLocation);
+		int Index = FMath::RandRange(0, AllLocations.Num()-1);
+		BlackboardComp->SetValueAsVector("SafeLocation", AllLocations[Index]);
+		FinishLatentTask(*BTComp, EBTNodeResult::Succeeded);
+		return;
 	}
-	return Super::ExecuteTask(OwnerComp, NodeMemory);
+	
+	FinishLatentTask(*BTComp, EBTNodeResult::Failed);
 }
 
 FVector UBTTask_FindSafeLocation::GenerateRandomLocation(const FVector& TargetActorLocation, const FVector& ActorLocation)
@@ -60,3 +92,20 @@ FVector UBTTask_FindSafeLocation::GenerateRandomLocation(const FVector& TargetAc
 	
 	return ActorLocation + Offset;
 }
+	// FVector ActorLocation = AIPawn->GetActorLocation();
+	//
+	// //const float WanderRange = BlackboardComp->GetValueAsFloat("WanderRange"); //임시수정 -> 이동 가능 범위, 무리 구역 범위, 인식 범위 실제 월드에 배치해보고 디테일하게 정해서 수정해야함
+	//
+	// UObject* TargetObject = BlackboardComp->GetValueAsObject("TargetActor");
+	// AActor* TargetActor = Cast<AActor>(TargetObject);
+	// FVector TargetActorLocation = TargetActor->GetActorLocation();
+	//
+	// ActorLocation = GenerateRandomLocation(TargetActorLocation, ActorLocation);
+	//
+	//
+	// if (BlackboardComp)
+	// {
+	// 	BlackboardComp->SetValueAsVector("SafeLocation", ActorLocation);
+	// }
+	// return Super::ExecuteTask(OwnerComp, NodeMemory);
+//}

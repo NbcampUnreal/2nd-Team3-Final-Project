@@ -1,122 +1,155 @@
 ﻿#include "UIFunctionLibrary.h"
-#include "GameplayTagContainer.h"
-#include "Blueprint/UserWidget.h"
-#include "Blueprint/WidgetBlueprintLibrary.h"
 #include "EmberLog/EmberLog.h"
-#include "GameFramework/Character.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "ProjectEmber//UI/HUD/EmberMainHUD.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
+#include "Interface/EmberHUDInterface.h"
+#include "GameFramework/HUD.h"
+#include "Blueprint/UserWidget.h"
 
 FVector2D UUIFunctionLibrary::MousePos = FVector2D::ZeroVector;
 
-bool UUIFunctionLibrary::RegisterLayer(APlayerController* OwningPlayer, FGameplayTag LayerTag, UEmberLayerBase* Layer)
+bool UUIFunctionLibrary::RegisterLayer(APlayerController* OwningPlayer, FGameplayTag LayerTag, UUserWidget* Layer)
 {
-	if (OwningPlayer)
-	{
-		if (AEmberMainHUD* MainHUD = Cast<AEmberMainHUD>(OwningPlayer->GetHUD()))
-		{
-			MainHUD->RegisterLayer(LayerTag, Layer);
-		}
-	}
+    if (!OwningPlayer)
+    {
+        return false;
+    }
+    
+    if (IEmberHUDInterface* HUDInterface = Cast<IEmberHUDInterface>(OwningPlayer->GetHUD()))
+    {
+        HUDInterface->RegisterLayer(LayerTag, Layer);
+        return true;
+    }
 
-	return true;
+    return false;
 }
 
 UUserWidget* UUIFunctionLibrary::PushContentToLayer(APlayerController* OwningPlayer, const FGameplayTag LayerTag,
                                                     const TSubclassOf<UUserWidget>& WidgetClass)
 {
-	if (OwningPlayer)
-	{
-		return Cast<AEmberMainHUD>(OwningPlayer->GetHUD())->PushContentToLayer(LayerTag, WidgetClass);
-	}
+    if (!OwningPlayer)
+    {
+        return nullptr;
+    }
 
-	return nullptr;
+    if (IEmberHUDInterface* HUDInterface = Cast<IEmberHUDInterface>(OwningPlayer->GetHUD()))
+    {
+        return HUDInterface->PushContentToLayer(LayerTag, WidgetClass);
+    }
+
+    return nullptr;
 }
 
 void UUIFunctionLibrary::PopContentToLayer(APlayerController* OwningPlayer, const FGameplayTag LayerTag)
 {
-	if (OwningPlayer)
-	{
-		Cast<AEmberMainHUD>(OwningPlayer->GetHUD())->PopContentToLayer(LayerTag);
-	}
+    if (!OwningPlayer)
+    {
+        return;
+    }
+
+    if (IEmberHUDInterface* HUDInterface = Cast<IEmberHUDInterface>(OwningPlayer->GetHUD()))
+    {
+        HUDInterface->PopContentToLayer(LayerTag);
+    }
 }
 
 void UUIFunctionLibrary::ClearToLayer(APlayerController* OwningPlayer, const FGameplayTag LayerTag)
 {
-	if (OwningPlayer)
-	{
-		Cast<AEmberMainHUD>(OwningPlayer->GetHUD())->ClearToLayer(LayerTag);
-	}
+    if (!OwningPlayer)
+    {
+        return;
+    }
+
+    if (IEmberHUDInterface* HUDInterface = Cast<IEmberHUDInterface>(OwningPlayer->GetHUD()))
+    {
+        HUDInterface->ClearToLayer(LayerTag);
+    }
 }
 
 void UUIFunctionLibrary::FocusGame(APlayerController* OwningPlayer)
 {
-	if (OwningPlayer)
-	{
-		OwningPlayer->GetMousePosition(MousePos.X, MousePos.Y);
-		OwningPlayer->SetShowMouseCursor(false);
-		OwningPlayer->SetIgnoreLookInput(false);
-		OwningPlayer->SetInputMode(FInputModeGameOnly());
-		UWidgetBlueprintLibrary::SetFocusToGameViewport();
-		UGameplayStatics::SetGamePaused(OwningPlayer->GetWorld(), false);
+    if (!OwningPlayer)
+    {
+        return;
+    }
 
-		if (AEmberMainHUD* MainHUD = Cast<AEmberMainHUD>(OwningPlayer->GetHUD()))
-		{
-			MainHUD->SetGameLeftMouseInputLock(false);
-			MainHUD->SetGameMovementInputLock(false);
-		}
-	}
+    OwningPlayer->GetMousePosition(MousePos.X, MousePos.Y);
+    OwningPlayer->SetShowMouseCursor(false);
+    OwningPlayer->SetIgnoreLookInput(false);
+    OwningPlayer->SetInputMode(FInputModeGameOnly());
+    UWidgetBlueprintLibrary::SetFocusToGameViewport();
+    UGameplayStatics::SetGamePaused(OwningPlayer->GetWorld(), false);
+
+    // 인터페이스로 좌클릭/이동잠금 호출
+    if (IEmberHUDInterface* HUDInterface = Cast<IEmberHUDInterface>(OwningPlayer->GetHUD()))
+    {
+        HUDInterface->SetGameLeftMouseInputLock(false);
+        HUDInterface->SetGameMovementInputLock(false);
+    }
 }
 
 void UUIFunctionLibrary::FocusUI(APlayerController* OwningPlayer, UUserWidget* WidgetToFocus, bool ShowMouseCursor,
                                  bool bIgnoreMovement, bool bGameLeftMouseInputLock)
 {
-	if (!OwningPlayer || !WidgetToFocus)
-	{
-		EMBER_LOG(LogEmber, Error, TEXT("OwningPlayer or WidgetToFocus is null"));
-		return;
-	}
+    if (!OwningPlayer || !WidgetToFocus)
+    {
+        EMBER_LOG(LogEmber, Error, TEXT("OwningPlayer or WidgetToFocus is null"));
+        return;
+    }
 
-	// True 일때만 캐릭터 이동인풋 막기
-	if (bIgnoreMovement)
-	{
-		Cast<AEmberMainHUD>(OwningPlayer->GetHUD())->SetGameMovementInputLock(true);
-	}
+    if (IEmberHUDInterface* HUDInterface = Cast<IEmberHUDInterface>(OwningPlayer->GetHUD()))
+    {
+        if (bIgnoreMovement)
+        {
+            HUDInterface->SetGameMovementInputLock(true);
+        }
+        if (bGameLeftMouseInputLock)
+        {
+            HUDInterface->SetGameLeftMouseInputLock(true);
+        }
+    }
 
-	// True 일때만 Hud에게 좌클릭 인풋 막기
-	if (bGameLeftMouseInputLock)
-	{
-		Cast<AEmberMainHUD>(OwningPlayer->GetHUD())->SetGameLeftMouseInputLock(true);
-	}
+    if (ShowMouseCursor)
+    {
+        OwningPlayer->SetMouseLocation(MousePos.X, MousePos.Y);
+        OwningPlayer->SetShowMouseCursor(true);
+        OwningPlayer->SetIgnoreLookInput(true);
+    }
 
-	// True 일때만 마우스커서 보이게 하기 ( 마우스 커서 보이게 하면 카메라 회전도 막음 )
-	if (ShowMouseCursor)
-	{
-		OwningPlayer->SetMouseLocation(MousePos.X, MousePos.Y);
-		OwningPlayer->SetShowMouseCursor(true);
-		OwningPlayer->SetIgnoreLookInput(true);
-	}
+    OwningPlayer->bEnableMouseOverEvents = true;
+    OwningPlayer->bEnableClickEvents = true;
+    WidgetToFocus->SetUserFocus(OwningPlayer);
+    WidgetToFocus->SetKeyboardFocus();
 
-	// 위젯에 포커스 주기
-	OwningPlayer->bEnableMouseOverEvents = true;
-	OwningPlayer->bEnableClickEvents = true;
-	WidgetToFocus->SetUserFocus(OwningPlayer);
-	WidgetToFocus->SetKeyboardFocus();
-	
-	FInputModeGameAndUI Mode;
-	Mode.SetWidgetToFocus(WidgetToFocus->TakeWidget());
-	Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-	Mode.SetHideCursorDuringCapture(false);
-	OwningPlayer->SetInputMode(Mode);
+    FInputModeGameAndUI Mode;
+    Mode.SetWidgetToFocus(WidgetToFocus->TakeWidget());
+    Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+    Mode.SetHideCursorDuringCapture(false);
+    OwningPlayer->SetInputMode(Mode);
 }
 
 bool UUIFunctionLibrary::GetIsAbilityInputLock(APlayerController* OwningPlayer)
 {
-	return Cast<AEmberMainHUD>(OwningPlayer->GetHUD())->GetGameLeftMouseInputLock();
+    if (!OwningPlayer)
+    {
+        return false;
+    }
+    if (IEmberHUDInterface* HUDInterface = Cast<IEmberHUDInterface>(OwningPlayer->GetHUD()))
+    {
+        return HUDInterface->GetGameLeftMouseInputLock();
+    }
+    return false;
 }
 
 bool UUIFunctionLibrary::GetIsGameMovementInputLock(APlayerController* OwningPlayer)
 {
-	return Cast<AEmberMainHUD>(OwningPlayer->GetHUD())->GetGameMovementInputLock();
+    if (!OwningPlayer)
+    {
+        return false;
+    }
+    if (IEmberHUDInterface* HUDInterface = Cast<IEmberHUDInterface>(OwningPlayer->GetHUD()))
+    {
+        return HUDInterface->GetGameMovementInputLock();
+    }
+    return false;
 }

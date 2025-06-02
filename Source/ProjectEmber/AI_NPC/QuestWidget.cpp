@@ -1,6 +1,9 @@
 #include "QuestWidget.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
+#include "Quest/Data/QuestDataAsset.h"
+#include "Quest/QuestSubsystem.h"
+#include "Kismet/GameplayStatics.h"
 
 void UQuestWidget::NativeConstruct()
 {
@@ -24,52 +27,98 @@ void UQuestWidget::NativeConstruct()
 
 void UQuestWidget::HandleAcceptClicked()
 {
-    RemoveFromParent();
-    if (OnQuestAccepted.IsBound())
-    {
-        OnQuestAccepted.Execute();
-    }
+    UE_LOG(LogTemp, Warning, TEXT(">>> Click Accept Button"));
+    OnQuestAccepted.Broadcast();
 }
 
 void UQuestWidget::HandleRefuseClicked()
 {
-    RemoveFromParent();
-    if (OnQuestRefused.IsBound())
-    {
-        OnQuestRefused.Execute();
-    }
+    UE_LOG(LogTemp, Warning, TEXT(">>> Click Refused Button"));
+    OnQuestRefused.Broadcast();
 }
 
 void UQuestWidget::HandleCompleteClicked()
 {
-    RemoveFromParent();
-    if (OnQuestCompleted.IsBound())
-    {
-        OnQuestCompleted.Execute();
-    }
+    UE_LOG(LogTemp, Warning, TEXT(">>> Click Quest Complete Button"));
+    OnQuestCompleted.Broadcast();
 }
 
-void UQuestWidget::SetQuestInfoFromDataRow(const FQuestDataRow& Data)
+void UQuestWidget::SetQuestInfoFromDataAsset(const UQuestDataAsset* QuestAsset, bool bIsComplete, bool bIsAccepted)
 {
+    UE_LOG(LogTemp, Warning, TEXT(">> [DEBUG] Accepted: %d / Complete: %d"), bIsAccepted, bIsComplete);
+    CurrentQuestAsset = QuestAsset;
+    if (!QuestAsset) return;
+
+    int32 StepIndexToUse = 0;
+
+    UWorld* World = GetWorld();
+    if (World)
+    {
+        if (UQuestSubsystem* Subsystem = World->GetGameInstance()->GetSubsystem<UQuestSubsystem>())
+        {
+            if (bIsAccepted && !bIsComplete)
+            {
+                int32 CurrentStepIndex = Subsystem->GetCurrentStepIndexForQuest(QuestAsset->QuestID);
+                if (QuestAsset->Steps.IsValidIndex(CurrentStepIndex))
+                {
+                    StepIndexToUse = CurrentStepIndex;
+                }
+            }
+            else if (bIsComplete)
+            {
+                StepIndexToUse = QuestAsset->Steps.Num() - 1;
+            }
+        }
+    }
+
+    if (!QuestAsset->Steps.IsValidIndex(StepIndexToUse)) return;
+    const FQuestStep& Step = QuestAsset->Steps[StepIndexToUse];
+
     if (QuestNameText)
     {
-        QuestNameText->SetText(FText::FromString(Data.QuestName));
+        QuestNameText->SetText(Step.StepName.IsEmpty() ? QuestAsset->QuestName : Step.StepName);
     }
 
     if (QuestDescriptionText)
     {
-        QuestDescriptionText->SetText(FText::FromString(Data.Description));
+        QuestDescriptionText->SetText(Step.StepQuestDescription.IsEmpty() ? QuestAsset->QuestDescription : Step.StepQuestDescription);
     }
 
     if (LocationText)
     {
-        FString LocationInfo = Data.TargetLocation.IsEmpty() ? TEXT("알 수 없음") : Data.TargetLocation;
-        LocationText->SetText(FText::FromString(LocationInfo));
+        LocationText->SetText(Step.StepTargetLocationTag.IsEmpty() ? QuestAsset->TargetLocationTag : Step.StepTargetLocationTag);
     }
 
     if (RewardText)
     {
-        FString RewardSummary = FString::Printf(TEXT("Gold: %d / Exp: %d"), Data.RewardGold, Data.RewardExp);
+        int32 Gold = 0, Exp = 0;
+        for (const FQuestRewardData& Reward : Step.Rewards)
+        {
+            if (Reward.RewardTag == FGameplayTag::RequestGameplayTag("Reward.Gold"))
+                Gold += Reward.RewardCount;
+            else if (Reward.RewardTag == FGameplayTag::RequestGameplayTag("Reward.Exp"))
+                Exp += Reward.RewardCount;
+        }
+
+        FString RewardSummary = FString::Printf(TEXT("Gold: %d / Exp: %d"), Gold, Exp);
         RewardText->SetText(FText::FromString(RewardSummary));
+    }
+
+    // 버튼 가시성 설정
+    if (AcceptButton)
+    {
+        AcceptButton->SetVisibility(bIsAccepted || bIsComplete ? ESlateVisibility::Collapsed: ESlateVisibility::Visible);
+    }
+
+    // 거절 버튼: 퀘스트 수락 전만 보이게
+    if (RefuseButton)
+    {
+        RefuseButton->SetVisibility(bIsAccepted || bIsComplete ? ESlateVisibility::Collapsed: ESlateVisibility::Visible);
+    }
+
+    // 완료 버튼: 퀘스트 완료 상태일 때만 보이게
+    if (CompleteButton)
+    {
+        CompleteButton->SetVisibility(bIsComplete ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     }
 }

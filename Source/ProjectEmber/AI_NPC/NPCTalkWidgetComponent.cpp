@@ -9,12 +9,6 @@ UNPCTalkWidgetComponent::UNPCTalkWidgetComponent()
     SetCollisionEnabled(ECollisionEnabled::NoCollision);
     SetRelativeLocation(FVector(0.f, 0.f, 180.f));
     SetVisibility(false); 
-
-    static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("/Game/_NPCAI/Widgets/BP_NPCTalkWidgetComponent"));
-    if (WidgetClassFinder.Succeeded())
-    {
-        SetWidgetClass(WidgetClassFinder.Class);
-    }
 }
 
 void UNPCTalkWidgetComponent::OnRegister()

@@ -30,6 +30,8 @@ public:
 	void UnregisterMapping(APlayerController* PC);
 
 	void BindUIInput(UGameMenuWidget* Layer);
+
+	UInputMappingContext* GetMappingContext() const { return InputMappingContext; }
 public: /* Base Input */
 	UPROPERTY(EditAnywhere, Category="Input")
 	TObjectPtr<UInputMappingContext> InputMappingContext;
@@ -79,6 +81,9 @@ public: /* Base Input */
 	UPROPERTY(EditAnywhere, Category="Input") 
 	TObjectPtr<UInputAction> InteractAction;
 
+	UPROPERTY(EditAnywhere, Category="Input") 
+	TObjectPtr<UInputAction> GlideAction;
+	
 	UPROPERTY(EditAnywhere, Category="Input") 
 	TArray<TObjectPtr<UInputAction>> QuickSlotActions;
 
