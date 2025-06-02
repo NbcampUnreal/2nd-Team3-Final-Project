@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "EMSActorSaveInterface.h"
 #include "GameFramework/Character.h"
 #include "GameplayEffectTypes.h"
-#include "EMSActorSaveInterface.h"
 #include "GameplayTagAssetInterface.h"
 #include "MessageBus/MessageBus.h"
 #include "BaseAIAnimal.generated.h"
@@ -36,7 +36,7 @@ enum class EAnimalAIPersonality : uint8
 };
 
 UCLASS()
-class PROJECTEMBER_API ABaseAIAnimal : public ACharacter, public IAbilitySystemInterface, public IEMSActorSaveInterface, public IGameplayTagAssetInterface
+class PROJECTEMBER_API ABaseAIAnimal : public ACharacter, public IAbilitySystemInterface, public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
 
@@ -47,10 +47,7 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
-	
-	virtual void ActorPreSave_Implementation() override;
-	virtual void ActorLoaded_Implementation() override;
-	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
+	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override; //어빌리티시스템 함수 오버라이드
 	
 	void OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
@@ -74,7 +71,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void SetIdentityTag(const FGameplayTag InIdentityTag);
 
-  /* Spawn */
+	UFUNCTION(BlueprintCallable, Category = AI)
+	FName GetRoleTag() const;
+	
+	UFUNCTION(BlueprintCallable, Category = AI)
+	void SetRoleTag(FName InRoleTag);
+
+	UFUNCTION(BlueprintCallable)
+	void SetIdleState();
+	
+	/* Spawn & Despawn*/
 	UFUNCTION()
 	void SetHiddenInGame();
 
@@ -83,7 +89,7 @@ public:
 
 	UFUNCTION()
 	void OnBeginDeath();
-	
+
  /* AbilitySystem */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
@@ -99,11 +105,13 @@ public:
 protected:
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void SetDetails();
+
+	
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UMeleeTraceComponent* MeleeTraceComponent;
 	
-	UPROPERTY(EditAnywhere, Category = "AbilitySystem", SaveGame)
+	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 	
 	UPROPERTY(SaveGame)
@@ -115,7 +123,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "HpBar")
 	TSubclassOf<class UUserWidget> HpBarWidgetClass;
 	
-	UPROPERTY(BlueprintReadOnly, SaveGame)
+	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class UEmberWidgetComponent> HpBarWidget;
 	
 	// Invoker 관련 변수
@@ -179,5 +187,3 @@ private:
 	
 	FMessageDelegate MessageDelegateHandle;
 };
-
-

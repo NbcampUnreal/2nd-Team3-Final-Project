@@ -9,6 +9,7 @@
 
 class UTextBlock;
 
+
 UCLASS()
 class PROJECTEMBER_API UPlayerQuestWidget : public UUserWidget
 {
