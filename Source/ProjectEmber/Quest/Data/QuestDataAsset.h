@@ -33,6 +33,21 @@ struct FQuestStep
     
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
     FName StepID;
+    // 퀘스트 이름 (UI 표시용)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
+    FText StepName;
+
+    // 퀘스트 설명 (UI 표시용)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
+    FText StepQuestDescription;
+
+    //퀘스트 위치 설명 (UI 표시용)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
+    FText StepTargetLocationTag;
+
+    //퀘스트 대상 (UI 표시용)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
+    FText ObjectiveName;
 
     // 이 단계에서 상호작용할 퀘스트 NPC (월드 인스턴스)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
@@ -40,7 +55,7 @@ struct FQuestStep
 
     // 대화 텍스트
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
-    FText Dialogue;
+    TArray<FText> GiverDialogueLines;
     
     // 진행 조건들
     UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Quest|Step")
@@ -52,7 +67,7 @@ struct FQuestStep
 
     // 완료시 출력할 대화 텍스트
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
-    FText CompletionDialogue;
+    TArray<FText> CompleteDialogueLines;
     
     // 완료 시 수여할 보상 목록
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
@@ -83,6 +98,10 @@ public:
     // 퀘스트 설명 (UI 표시용)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Config")
     FText QuestDescription;
+
+    //퀘스트 위치 설명 (UI 표시용)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Config")
+    FText TargetLocationTag;
 
     // 퀘스트 단계를 순서대로 나열
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Config")

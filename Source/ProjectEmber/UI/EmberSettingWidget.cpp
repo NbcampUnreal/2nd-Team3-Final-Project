@@ -1,4 +1,6 @@
 #include "EmberSettingWidget.h"
+#include "EmberKeySettingWidget.h"
+#include "GameInstance/EmberGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 //컨트롤러
 #include "Components/Button.h"
@@ -20,14 +22,19 @@ void UEmberSettingWidget::NativeConstruct()
         VideoButton->OnClicked.AddDynamic(this, &UEmberSettingWidget::OnVideoButtonClicked);
     }
 
-    if (BackButton)
-    {
-        BackButton->OnClicked.AddDynamic(this, &UEmberSettingWidget::OnBackButtonClicked);
-    }
-
     if (AudioButton)
     {
         AudioButton->OnClicked.AddDynamic(this, &UEmberSettingWidget::OnAudioButtonClicked);
+    }
+
+    if (ControlButton)
+    {
+        ControlButton->OnClicked.AddDynamic(this, &UEmberSettingWidget::OnControlButtonClicked);
+    }
+
+    if (BackButton)
+    {
+        BackButton->OnClicked.AddDynamic(this, &UEmberSettingWidget::OnBackButtonClicked);
     }
 }
 
@@ -44,6 +51,22 @@ void UEmberSettingWidget::OnAudioButtonClicked()
     if (SettingsContentSwitcher)
     {
         SettingsContentSwitcher->SetActiveWidgetIndex(1);
+    }
+}
+
+void UEmberSettingWidget::OnControlButtonClicked()
+{
+    if (SettingsContentSwitcher)
+    {
+        SettingsContentSwitcher->SetActiveWidgetIndex(2);
+
+        if (UEmberKeySettingWidget* KeyWidget = Cast<UEmberKeySettingWidget>(SettingsContentSwitcher->GetWidgetAtIndex(2)))
+        {
+            if (UEmberGameInstance* GI = GetWorld()->GetGameInstance<UEmberGameInstance>())
+            {
+                KeyWidget->EditableIMC = GI->PlayerMappingContext;
+            }
+        }
     }
 }
 

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "InputMappingContext.h"
 #include "EmberSettingWidget.generated.h"
 
 class UButton;
@@ -11,6 +12,7 @@ UCLASS()
 class PROJECTEMBER_API UEmberSettingWidget : public UUserWidget
 {
     GENERATED_BODY()
+
 protected:
     virtual void NativeConstruct() override;
 
@@ -21,6 +23,9 @@ protected:
     void OnAudioButtonClicked();
 
     UFUNCTION()
+    void OnControlButtonClicked();
+
+    UFUNCTION()
     void OnBackButtonClicked();
 
     UPROPERTY(meta = (BindWidget)) 
@@ -28,6 +33,9 @@ protected:
 
     UPROPERTY(meta = (BindWidget))
     UButton* AudioButton;
+
+    UPROPERTY(meta = (BindWidget))
+    UButton* ControlButton;
 
     UPROPERTY(meta = (BindWidget))
     UButton* BackButton;
