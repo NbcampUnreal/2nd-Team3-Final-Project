@@ -6,6 +6,9 @@
 #include "EMSActorSaveInterface.h"
 #include "EmberCharacter.generated.h"
 
+class UNiagaraSystem;
+struct FMeleeTraceInstanceHandle;
+class UNiagaraComponent;
 class UGameMenuWidget;
 class UEmberLayerBase;
 struct FInputActionInstance;
@@ -32,7 +35,7 @@ private:
 	
 public: /* Character */
 	virtual UMeleeTraceComponent* GetMeleeTraceComponent() const;
-
+	
 	UFUNCTION(BlueprintCallable, Category = "Glider")
 	USkeletalMeshComponent* GetGliderMesh() const;
 	
@@ -49,6 +52,12 @@ protected:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> GliderMesh;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Overlay", meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<UStaticMeshComponent> OverlayStaticMesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Overlay", meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<USkeletalMeshComponent> OverlaySkeletalMesh;
+	
 protected:
 	UPROPERTY(EditAnywhere, Category = "HpBar")
 	TSubclassOf<class UUserWidget> HpBarWidgetClass;
@@ -56,6 +65,32 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class UEmberWidgetComponent> HpBarWidget;
 
+public: /* VFX */
+	UFUNCTION(BlueprintCallable, Category = "Effects")
+	virtual UNiagaraComponent*	  GetWeaponTrailComponent() const;
+	
+	UFUNCTION(BlueprintCallable, Category = "Effects")
+	virtual UNiagaraComponent*	  GetDualWeaponTrailComponent() const;
+	
+	UFUNCTION(BlueprintCallable, Category = "Effects")
+	virtual UNiagaraSystem* GetOverlayHitEffect() const;
+	
+	UFUNCTION(BlueprintCallable, Category = "Effects")
+	void SetOverlayHitEffect(UNiagaraSystem* InHitEffectAsset);
+	
+	UFUNCTION(BlueprintCallable, Category = "Effects")
+	void PlayHitEffectAtLocation(const FVector& Location);
+	
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Effects", meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<UNiagaraComponent> WeaponTrailComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Effects", meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<UNiagaraComponent> DualWeaponTrailComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Effects", meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<UNiagaraSystem> OverlayHitEffect;
+	
 public: /* AbilitySystem */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
@@ -144,6 +179,10 @@ protected:
 
 	/** 기본 낙하 */
 	float DefaultGravityScale = 1.0f;
+
+protected:
+	//UFUNCTION()
+	//void HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, AActor* HitActor, const FVector& HitLocation, const FVector& HitNormal, FName HitBoneName, FMeleeTraceInstanceHandle TraceHandle);
 	
 protected: /* Inventory */
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "EmberCharacter")
