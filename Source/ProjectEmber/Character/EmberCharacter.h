@@ -6,6 +6,7 @@
 #include "EMSActorSaveInterface.h"
 #include "EmberCharacter.generated.h"
 
+class UAC_BuildComponent;
 class UNiagaraSystem;
 struct FMeleeTraceInstanceHandle;
 class UNiagaraComponent;
@@ -64,7 +65,11 @@ protected:
 	
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class UEmberWidgetComponent> HpBarWidget;
-
+	
+public:/* Build System */
+	
+protected:
+	TObjectPtr<UAC_BuildComponent> BuildComponent;
 public: /* VFX */
 	UFUNCTION(BlueprintCallable, Category = "Effects")
 	virtual UNiagaraComponent*	  GetWeaponTrailComponent() const;

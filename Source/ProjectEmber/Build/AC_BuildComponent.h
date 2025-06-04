@@ -9,6 +9,8 @@
 #include "AC_BuildComponent.generated.h"
 
 
+class UAlsCameraComponent;
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTEMBER_API UAC_BuildComponent : public UActorComponent
 {
@@ -27,7 +29,7 @@ protected:
 public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-    //ºí·çÇÁ¸°Æ®¿¡ »ç¿ë
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½
     UFUNCTION(BlueprintCallable, Category = "Build")
     void LaunchBuildMode();
 
@@ -46,11 +48,11 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Build")
     void GiveBuildColor(bool bIsGreen);
 
-    //ºí·çÇÁ¸°Æ®¿¡¼­ »ç¿ë
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
     UFUNCTION(BlueprintCallable, Category = "Build")
     void SpwanBuild();
 
-    //SpwanBuildµµ ºí·çÇÁ¸°Æ®¿¡¼­ »ç¿ë
+    //SpwanBuildï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
     UFUNCTION(BlueprintCallable, Category = "Build")
     void ChangeMesh();
 
@@ -60,7 +62,7 @@ public:
 public:
     // Components
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-    class UCameraComponent* Camera;
+    TObjectPtr<UAlsCameraComponent> Camera;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
     class UStaticMeshComponent* BuildGhost;
@@ -84,14 +86,14 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int32 BuildID;
 
-    // ÇÙ½É: ±¸Á¶Ã¼ ¹è¿­·Î µÈ Buildables
+    // ï¿½Ù½ï¿½: ï¿½ï¿½ï¿½ï¿½Ã¼ ï¿½è¿­ï¿½ï¿½ ï¿½ï¿½ Buildables
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<FBuildableData> Buildables;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     AActor* HitActor;
 
-    // °ÇÃà¹° datatable
+    // ï¿½ï¿½ï¿½à¹° datatable
     UPROPERTY(EditAnywhere, Category = "Build")
     UDataTable* BuildData;
 
