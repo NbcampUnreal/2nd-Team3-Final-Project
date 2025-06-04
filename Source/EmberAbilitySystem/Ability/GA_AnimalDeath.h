@@ -16,32 +16,29 @@ class EMBERABILITYSYSTEM_API UGA_AnimalDeath : public UGameplayAbility
 	
 public:
 	UGA_AnimalDeath();
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="AnimalDeath")
 	UAnimMontage* Montage;
 
+	
+	
 protected:
-	/**
-	* ActivateAbility은 "Triggers"에 등록된 Gameplay Event Tag로만 호출
-	* TriggerEventData->OptionalObject에 HarvestTarget을 받아와 몽타주를 재생
-	* 완료시 Target 액터 삭제
-	 */
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo* OwnerInfo,
 		const FGameplayAbilityActivationInfo ActivationInfo,
 		const FGameplayEventData* TriggerEventData) override;
 	void EndFarmingTime();
+	void CallEndAbility(const FGameplayTag Tag, int32 NewCount);
 	void EndAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	                FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled);
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability")
-	TSubclassOf<UGameplayEffect> EffectToApply;
-	
+	TSubclassOf<UGameplayEffect> DeathEffectToApply;
+
 private:
 	FTimerHandle WaitFarmingTimerHandle;
 	TWeakObjectPtr<const AActor> Instigator;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Sound")
-	USoundBase* DeathSound;
+	
+	FDelegateHandle EndCueDelegateHandle;
 };

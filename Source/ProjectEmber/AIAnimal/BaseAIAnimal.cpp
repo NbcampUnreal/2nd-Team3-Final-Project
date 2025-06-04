@@ -386,3 +386,8 @@ void ABaseAIAnimal::SetIsDead(const bool InIsDead)
 {
 	bIsDead = InIsDead;
 }
+
+float ABaseAIAnimal::GetSoundPitch() const
+{
+	return SoundPitch;
+}
