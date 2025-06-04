@@ -90,18 +90,6 @@ static FString MoveDirectionToString(EMoveDirection Dir)
     }
 }
 
-static FString GetMoveDirectionMappingName(EMoveDirection Dir)
-{
-    switch (Dir)
-    {
-    case EMoveDirection::Forward:  return TEXT("MoveForward");
-    case EMoveDirection::Backward: return TEXT("MoveBackward");
-    case EMoveDirection::Left:     return TEXT("MoveLeft");
-    case EMoveDirection::Right:    return TEXT("MoveRight");
-    default:                       return TEXT("");
-    }
-}
-
 void UEmberKeySettingWidget::RefreshKeyList()
 {
     KeyListContainer->ClearChildren();
@@ -171,6 +159,18 @@ void UEmberKeySettingWidget::OnKeyButtonClicked(int32 MappingIndex)
     {
         CaptureWidget->OnKeyCaptured.AddDynamic(this, &UEmberKeySettingWidget::OnKeyCaptured);
         CaptureWidget->AddToViewport();
+    }
+}
+
+FString UEmberKeySettingWidget::GetMoveDirectionMappingName(EMoveDirection Dir)
+{
+    switch (Dir)
+    {
+    case EMoveDirection::Forward:  return TEXT("MoveForward");
+    case EMoveDirection::Backward: return TEXT("MoveBackward");
+    case EMoveDirection::Left:     return TEXT("MoveLeft");
+    case EMoveDirection::Right:    return TEXT("MoveRight");
+    default:                       return TEXT("");
     }
 }
 
