@@ -77,9 +77,6 @@ protected:
     UPROPERTY()
     UUserWidget* DialogueWidget;
 
-    UPROPERTY(EditAnywhere, Category = "Dialogue|Camera")
-    ADialogueCameraActor* DialogueCameraActor;
-
 
     UPROPERTY(EditDefaultsOnly, Category = "Quest")
     TSubclassOf<class UQuestWidget> QuestCompleteWidgetClass;
