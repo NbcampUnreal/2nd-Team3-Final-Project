@@ -18,6 +18,7 @@
 #include "MaterialHLSLTree.h"
 #include "WaterBodyActor.h"
 #include "Animation/AnimInstance.h"
+#include "Build/AC_BuildComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Define/CharacterDefine.h"
 #include "EmberLog/EmberLog.h"
@@ -78,6 +79,8 @@ AEmberCharacter::AEmberCharacter()
 
     GliderMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Glide"));
     GliderMesh->SetupAttachment(GetMesh());
+
+    BuildComponent = CreateDefaultSubobject<UAC_BuildComponent>(TEXT("BuildComponent"));
     
     /* Test */
     HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
@@ -89,6 +92,10 @@ void AEmberCharacter::BeginPlay()
 {
     Super::BeginPlay();
 
+    if (BuildComponent)
+    {
+        BuildComponent->Camera = Camera;
+    }
     if (UEmberGameInstance* GI = GetGameInstance<UEmberGameInstance>())
     {
         GI->ApplySavedMoveBindingsToUserSettings();

@@ -46,7 +46,7 @@ protected:
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UButton> ResetButton;
 
-    // Å° ÀÔ·Â Ä¸Ã³ À§Á¬ Å¬·¡½º
+    // Å° ï¿½Ô·ï¿½ Ä¸Ã³ ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ï¿½ï¿½
     UPROPERTY(EditDefaultsOnly, Category = "Input")
     TSubclassOf<UEmberKeyCaptureWidget> KeyCaptureWidgetClass;
 
@@ -75,4 +75,6 @@ protected:
     void OnKeyCaptured(FKey NewKey);
 
     void OnKeyButtonClicked(int32 MappingIndex);
+
+	FString GetMoveDirectionMappingName(EMoveDirection Dir);
 };

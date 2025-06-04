@@ -4,6 +4,8 @@
 #include "Build/AC_BuildComponent.h"
 #include "BuildInterface.h"
 #include "Character/EmberCharacter.h"
+#include "ALSCamera/Public/AlsCameraComponent.h"
+#include "Components/BoxComponent.h"
 
 // Sets default values for this component's properties
 UAC_BuildComponent::UAC_BuildComponent()
@@ -32,7 +34,7 @@ void UAC_BuildComponent::BeginPlay()
 	TArray<FName> RowNames = BuildData->GetRowNames();
 	for (const FName& RowName : RowNames)
 	{
-		static const FString ContextString(TEXT("BuildDataContext")); //È¤½Ã ¸ð¸¦ ¿À·ù °ËÃâ
+		static const FString ContextString(TEXT("BuildDataContext")); //È¤ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 		FBuildableData* Row = BuildData->FindRow<FBuildableData>(RowName, ContextString);
 
 		if (Row)
@@ -59,7 +61,7 @@ void UAC_BuildComponent::SpawnBuildGoust()
 		return;
 	}
 
-	// BuildGhost ÄÄÆ÷³ÍÆ® »ý¼º
+	// BuildGhost ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½
 	BuildGhost = NewObject<UStaticMeshComponent>(PlayerReference);
 	if (!BuildGhost)
 	{
@@ -67,15 +69,15 @@ void UAC_BuildComponent::SpawnBuildGoust()
 		return;
 	}
 
-	BuildGhost->RegisterComponent(); // ¿ùµå¿¡ µî·Ï
+	BuildGhost->RegisterComponent(); // ï¿½ï¿½ï¿½å¿¡ ï¿½ï¿½ï¿½
 	BuildGhost->AttachToComponent(PlayerReference->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
 	BuildGhost->SetRelativeTransform(BuildTransform);
 
-	// Static Mesh ¼³Á¤
+	// Static Mesh ï¿½ï¿½ï¿½ï¿½
 	const FBuildableData& Data = Buildables[BuildID];
 	BuildGhost->SetStaticMesh(Data.Mesh);
 
-	// Ãæµ¹ ºñÈ°¼ºÈ­
+	// ï¿½æµ¹ ï¿½ï¿½È°ï¿½ï¿½È­
 	BuildGhost->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
@@ -101,7 +103,7 @@ void UAC_BuildComponent::BuildDelay()
 		return;
 	}
 
-	// 0.01ÃÊ ÈÄ BuildCycle È£Ãâ
+	// 0.01ï¿½ï¿½ ï¿½ï¿½ BuildCycle È£ï¿½ï¿½
 	GetWorld()->GetTimerManager().SetTimer(BuildDelayHandle, this, &UAC_BuildComponent::BuildCycle, 0.01f, false);
 }
 
@@ -109,22 +111,22 @@ void UAC_BuildComponent::BuildCycle()
 {
 	if (!Camera || Buildables.Num() <= BuildID) return;
 
-	// 1. Ä«¸Þ¶ó À§Ä¡ ¹× ¹æÇâ
+	// 1. Ä«ï¿½Þ¶ï¿½ ï¿½ï¿½Ä¡ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	FVector Location = Camera->GetComponentLocation();
 	FVector Forward = Camera->GetForwardVector();
 
-	// 2. ¶óÀÎÆ®·¹ÀÌ½º ½ÃÀÛ/³¡ ÁöÁ¡
+	// 2. ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½Ì½ï¿½ ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	FVector Start = Location + Forward * 350.f;
 	FVector End = Location + Forward * 1000.f;
 
-	// 3. ¶óÀÎÆ®·¹ÀÌ½º
+	// 3. ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ï¿½Ì½ï¿½
 	FHitResult HitResult;
 	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(GetOwner()); // ÀÚ½Å ¹«½Ã
+	Params.AddIgnoredActor(GetOwner()); // ï¿½Ú½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	Params.bTraceComplex = false;
 
-	// Buildables¿¡¼­ TraceChannel ÃßÃâ
-	ECollisionChannel TraceChannel = ECC_Visibility; // ±âº» Ã¤³Î
+	// Buildablesï¿½ï¿½ï¿½ï¿½ TraceChannel ï¿½ï¿½ï¿½ï¿½
+	ECollisionChannel TraceChannel = ECC_Visibility; // ï¿½âº» Ã¤ï¿½ï¿½
 	if (Buildables.IsValidIndex(BuildID))
 	{
 
@@ -198,7 +200,7 @@ void UAC_BuildComponent::GiveBuildColor(bool bIsGreen)
 
 	if (!BuildGhost) return;
 
-	// 2. BuildGhostÀÇ ¸ÓÆ¼¸®¾ó ¼ö È®ÀÎ
+	// 2. BuildGhostï¿½ï¿½ ï¿½ï¿½Æ¼ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ È®ï¿½ï¿½
 	int32 MaterialCount = BuildGhost->GetNumMaterials();
 
 	static ConstructorHelpers::FObjectFinder<UMaterialInterface> GreenMatObj(TEXT("Game/BuildingSystem/Build/Material/M_Green"));
@@ -211,32 +213,32 @@ void UAC_BuildComponent::GiveBuildColor(bool bIsGreen)
 	{
 		RedMaterial = RedMatObj.Object;
 	}
-	// 3. ¸ÓÆ¼¸®¾ó ÀÎµ¦½º ¼øÈ¸ÇÏ¸ç »ö º¯°æ
+	// 3. ï¿½ï¿½Æ¼ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½È¸ï¿½Ï¸ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	for (int32 i = 0; i < MaterialCount; ++i)
 	{
 		if (bIsGreen)
 		{
-			BuildGhost->SetMaterial(i, GreenMaterial); // GreenMaterialÀº UMaterialInterface*
+			BuildGhost->SetMaterial(i, GreenMaterial); // GreenMaterialï¿½ï¿½ UMaterialInterface*
 		}
 		else
 		{
-			BuildGhost->SetMaterial(i, RedMaterial);   // RedMaterialÀº UMaterialInterface*
+			BuildGhost->SetMaterial(i, RedMaterial);   // RedMaterialï¿½ï¿½ UMaterialInterface*
 		}
 	}
 
-	// 4. À§Ä¡ Àû¿ë
+	// 4. ï¿½ï¿½Ä¡ ï¿½ï¿½ï¿½ï¿½
 	BuildGhost->SetWorldTransform(BuildTransform, false, nullptr, ETeleportType::None);
 }
 void UAC_BuildComponent::SpwanBuild()
 {
-	// À¯È¿¼º °Ë»ç
+	// ï¿½ï¿½È¿ï¿½ï¿½ ï¿½Ë»ï¿½
 	if (!Buildables.IsValidIndex(BuildID))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Invalid BuildID: %d"), BuildID);
 		return;
 	}
 
-	// ÇØ´ç ÀÎµ¦½ºÀÇ µ¥ÀÌÅÍ °¡Á®¿À±â
+	// ï¿½Ø´ï¿½ ï¿½Îµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	const FBuildableData& Data = Buildables[BuildID];
 
 	if (!Data.Actor)
@@ -245,7 +247,7 @@ void UAC_BuildComponent::SpwanBuild()
 		return;
 	}
 
-	// Actor ½ºÆù
+	// Actor ï¿½ï¿½ï¿½ï¿½
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
@@ -261,7 +263,7 @@ void UAC_BuildComponent::SpwanBuild()
 		return;
 	}
 
-	// ÀÎÅÍÆäÀÌ½º·Î Ä³½ºÆÃ ÈÄ SetMesh È£Ãâ
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ SetMesh È£ï¿½ï¿½
 	if (SpawnedActor->GetClass()->ImplementsInterface(UBuildInterface::StaticClass()))
 	{
 		IBuildInterface::Execute_SetMesh(SpawnedActor, Data.Mesh);
@@ -291,22 +293,22 @@ void UAC_BuildComponent::ChangeMesh()
 
 bool UAC_BuildComponent::DetectBuildBoxes(FTransform& OutTransform)
 {
-	// 1. À¯È¿¼º °Ë»ç
+	// 1. ï¿½ï¿½È¿ï¿½ï¿½ ï¿½Ë»ï¿½
 	if (!HitActor || !HitComponent)
 	{
 		return false;
 	}
 
-	// 2. ÀÎÅÍÆäÀÌ½º ±¸Çö ¿©ºÎ È®ÀÎ
+	// 2. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
 	if (!HitActor->GetClass()->ImplementsInterface(UBuildInterface::StaticClass()))
 	{
 		return false;
 	}
 
-	// 3. BuildInterfaceÀÇ ReturnBoxes È£Ãâ
+	// 3. BuildInterfaceï¿½ï¿½ ReturnBoxes È£ï¿½ï¿½
 	TArray<UBoxComponent*> BuildBoxes = IBuildInterface::Execute_ReturnBoxes(HitActor);
 
-	// 4. ¹Ýº¹¹®À» ÅëÇØ HitComponent°¡ Æ÷ÇÔµÇ¾î ÀÖ´ÂÁö È®ÀÎ
+	// 4. ï¿½Ýºï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ HitComponentï¿½ï¿½ ï¿½ï¿½ï¿½ÔµÇ¾ï¿½ ï¿½Ö´ï¿½ï¿½ï¿½ È®ï¿½ï¿½
 	for (UBoxComponent* Box : BuildBoxes)
 	{
 		if (Box == Cast<UBoxComponent>(HitComponent))
@@ -316,6 +318,6 @@ bool UAC_BuildComponent::DetectBuildBoxes(FTransform& OutTransform)
 		}
 	}
 
-	// 5. ¸ø Ã£Àº °æ¿ì
+	// 5. ï¿½ï¿½ Ã£ï¿½ï¿½ ï¿½ï¿½ï¿½
 	return false; // LocalFound = false
 }
