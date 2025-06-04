@@ -1,4 +1,5 @@
 #include "EmberMainMenuWidget.h"
+#include "EmberSaveWidget.h"
 #include "Components/Button.h"
 #include "Kismet/GameplayStatics.h"
 #include "EmberSettingWidget.h"
@@ -34,7 +35,21 @@ void UEmberMainMenuWidget::OnNewGameClicked()
 
 void UEmberMainMenuWidget::OnContinueClicked()
 {
-    this->RemoveFromParent();
+    if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+    {
+        if (SaveWidgetClass)
+        {
+            if (UUserWidget* SaveWidget = CreateWidget<UEmberSaveWidget>(PC, SaveWidgetClass))
+            {
+                RemoveFromParent();
+
+                SaveWidget->AddToViewport();
+
+                PC->bShowMouseCursor = true;
+                PC->SetInputMode(FInputModeUIOnly());
+            }
+        }
+    }
 }
 
 void UEmberMainMenuWidget::OnSettingsClicked()
