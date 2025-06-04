@@ -113,5 +113,5 @@ protected:
     UFUNCTION()
     void OnKeyCaptured(FKey NewKey);
 
-    EMoveDirection PendingKeyChangeDirection = EMoveDirection::Unknown;
+
 };

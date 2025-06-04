@@ -18,7 +18,7 @@ struct FCraftPair
 	FDataTableRowHandle ItemData;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Craft")
-	int32 Quantity;
+	int32 Quantity{0};
 };
 
 USTRUCT(BlueprintType)
