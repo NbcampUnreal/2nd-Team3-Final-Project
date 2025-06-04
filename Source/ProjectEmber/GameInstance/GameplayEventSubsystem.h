@@ -19,7 +19,7 @@ class PROJECTEMBER_API UGameplayEventSubsystem : public UGameInstanceSubsystem
 
 public:
 	UFUNCTION(BlueprintPure, Category = "Gameplay Event", meta = (WorldContext = "WorldContextObject"))
-	static UGameplayEventSubsystem* Get(const UObject* WorldContextObject);
+	static UGameplayEventSubsystem* GetGameplayEvent(const UObject* WorldContextObject);
 	
 	UPROPERTY(BlueprintAssignable, Category = "Gameplay Event")
 	FOnGameEvent OnGameEvent;

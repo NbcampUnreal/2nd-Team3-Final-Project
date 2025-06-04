@@ -3,6 +3,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
+#include "Character/EmberCharacter.h"
+#include "GameInstance/EffectManagerSubsystem.h"
 
 AProjectileBase::AProjectileBase()
 {
@@ -55,7 +57,6 @@ void AProjectileBase::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UP
     {
         return;
     }
-        
     
     if (OtherActor && OtherActor != this)
     {
@@ -68,6 +69,18 @@ void AProjectileBase::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UP
             this,
             nullptr
         );
+
+        if (UGameInstance* GameInstance = GetWorld()->GetGameInstance())
+        {
+            if (UEffectManagerSubsystem* EffectManager = GameInstance->GetSubsystem<UEffectManagerSubsystem>())
+            {
+                if (AEmberCharacter* Player = Cast<AEmberCharacter>(GetOwner()))
+                {
+                    EffectManager->PlayHitEffectAtLocation(Player->GetOverlayHitEffect(),Hit.Location,
+                        FRotator::ZeroRotator,FVector(1.f, 1.f, 1.f),true);    
+                }
+            }    
+        }
     }
     
     //Destroy();
