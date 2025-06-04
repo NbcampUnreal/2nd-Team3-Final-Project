@@ -62,9 +62,6 @@ public:
 	void GenerateRandom();
 	void DecreaseFullness();
 
-	UFUNCTION(BlueprintCallable)
-	FGameplayTagContainer& GetGameplayTagContainer();
-
 	UFUNCTION(BlueprintCallable, Category = AI)
 	FGameplayTag GetIdentityTag() const;
 	
@@ -79,6 +76,16 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetIdleState();
+
+	UFUNCTION(BlueprintCallable, Category = AI)
+	bool GetIsDead() const;
+	
+	UFUNCTION(BlueprintCallable, Category = AI)
+	void SetIsDead(const bool InIsDead);
+
+	UFUNCTION(BlueprintCallable, Category = SoundPitch)
+	float GetSoundPitch() const;
+	
 	
 	/* Spawn & Despawn*/
 	UFUNCTION()
@@ -103,10 +110,12 @@ public:
 	void OnHit(AActor* InstigatorActor);
 
 protected:
+	void ReceiveMessage(const FName MessageType, UObject* Payload);
+	void EndFarmingTime();
+
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void SetDetails();
 
-	
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UMeleeTraceComponent* MeleeTraceComponent;
@@ -134,7 +143,7 @@ protected:
 	float NavGenerationRadius;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Navigation)
-	float NavRemovalRadius;
+	float NavRemoveRadius;
 
 	//
 	UPROPERTY()
@@ -144,7 +153,7 @@ protected:
 	UBlackboardComponent* BlackboardComponent;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Montage)
-	TMap<FGameplayTag, UAnimMontage*> MontageMap; //키로 태그 넘겨주면 몽타주 가져옴 -> TSet이나 TMap 으로 바꿀 것 
+	TMap<FGameplayTag, UAnimMontage*> MontageMap; //키로 태그 넘겨주면 몽타주 가져옴 
 	
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
 	TArray<TSubclassOf<class UGameplayAbility>> StartAbilities;
@@ -160,6 +169,9 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	bool bIsShouldSwim = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI") //스포너 조건에 필요한데, 스포너에서 애니멀 블랙보드 접근x 위함 
+	bool bIsDead = false;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	float Fullness = 40.0f; //포만감
@@ -173,17 +185,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	float WanderRange = 500.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	FGameplayTagContainer AnimalTagContainer;
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SoundPitch")
+	float SoundPitch = 1.0f;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTag IdentityTag;
 
 	FTimerHandle TimerHandle;
+	
 	TArray<FVector> PatrolPoints;
-
-private:
-	void ReceiveMessage(const FName MessageType, UObject* Payload);
 	
 	FMessageDelegate MessageDelegateHandle;
 };
