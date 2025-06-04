@@ -35,10 +35,15 @@ public:/* My Custom Function & Variable */
 	UFUNCTION(BlueprintCallable, Category = "ALS|Character")
 	void ResetForceGameplayTags();
 
+	UFUNCTION(BlueprintCallable, Category="ALS|Character")
+	void ForceLastInputDirectionBlocked(bool bBlocked);
+	
 	UFUNCTION(BlueprintCallable, Category="ALS|Tags")
 	void RemoveGameplayTagFromAsc(const FGameplayTag Tag) const;
 
 	void ForceVelocityYawAngle(const FAlsLocomotionState& NewLocomotionState);
+
+	void ForceRoationTest(float YawAngle);
 	
 private:
 	TObjectPtr<UAbilitySystemComponent> AscInstance;
