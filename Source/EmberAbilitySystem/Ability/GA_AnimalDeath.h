@@ -31,13 +31,17 @@ protected:
 		const FGameplayAbilityActorInfo* OwnerInfo,
 		const FGameplayAbilityActivationInfo ActivationInfo,
 		const FGameplayEventData* TriggerEventData) override;
-	
+	void EndFarmingTime();
+	void EndAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	                FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled);
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability")
 	TSubclassOf<UGameplayEffect> EffectToApply;
 	
 private:
-	UFUNCTION()
-	void OnCompleteCallback();
-	
+	FTimerHandle WaitFarmingTimerHandle;
 	TWeakObjectPtr<const AActor> Instigator;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Sound")
+	USoundBase* DeathSound;
 };
