@@ -82,6 +82,10 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void SetIsDead(const bool InIsDead);
+
+	UFUNCTION(BlueprintCallable, Category = SoundPitch)
+	float GetSoundPitch() const;
+	
 	
 	/* Spawn & Despawn*/
 	UFUNCTION()
@@ -180,6 +184,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	float WanderRange = 500.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SoundPitch")
+	float SoundPitch = 1.0f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTag IdentityTag;
