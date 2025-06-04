@@ -7,7 +7,7 @@ void UGameplayEventSubsystem::BroadcastGameEvent(FGameplayTag EventTag, const FG
 	OnGameEvent.Broadcast(EventTag, EventData);
 }
 
-UGameplayEventSubsystem* UGameplayEventSubsystem::Get(const UObject* WorldContextObject)
+UGameplayEventSubsystem* UGameplayEventSubsystem::GetGameplayEvent(const UObject* WorldContextObject)
 {
 	if (!WorldContextObject)
 	{
