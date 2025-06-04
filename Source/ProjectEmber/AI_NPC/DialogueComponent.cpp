@@ -25,7 +25,6 @@ UDialogueComponent::UDialogueComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
     bPlayerInRange = false;
-    DialogueCameraActor = nullptr;
     DialogueWidget = nullptr;
     InteractionTrigger = nullptr;
     TalkPromptWidget = nullptr;

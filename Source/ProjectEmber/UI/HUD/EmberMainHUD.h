@@ -4,59 +4,59 @@
 #include "GameFramework/HUD.h"
 #include "GameplayTagContainer.h"
 #include "AI_NPC/PlayerQuestWidget.h"
+#include "Interface/EmberHUDInterface.h"
 #include "EmberMainHUD.generated.h"
 
 class ULayerDebugger;
 class UEmberLayerBase;
 
 UCLASS(Blueprintable, BlueprintType)
-class PROJECTEMBER_API AEmberMainHUD : public AHUD
+class PROJECTEMBER_API AEmberMainHUD : public AHUD, public IEmberHUDInterface
 {
 	GENERATED_BODY()
 
 public:
 	virtual void BeginPlay() override;
+	
+	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
+	virtual bool RegisterLayer(const FGameplayTag& LayerTag, UUserWidget* Layer) override;
 
 	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
-	bool RegisterLayer(FGameplayTag LayerTag, UEmberLayerBase* Layer);
+	virtual UUserWidget* PushContentToLayer(const FGameplayTag& LayerTag, const TSubclassOf<UUserWidget>& WidgetClass) override;
 
+	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
+	virtual void PopContentToLayer(const FGameplayTag& LayerTag) override;
+
+	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
+	virtual void ClearToLayer(const FGameplayTag& LayerTag) override;
+
+	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
+	virtual bool GetGameLeftMouseInputLock() const override;
+
+	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
+	virtual void SetGameLeftMouseInputLock(bool bLock) override;
+
+	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
+	virtual bool GetGameMovementInputLock() const override;
+
+	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
+	virtual void SetGameMovementInputLock(bool bLock) override;
+	
 	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
 	void PushInitialWidget();
 
-	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
-	UUserWidget* PushContentToLayer(FGameplayTag LayerTag, const TSubclassOf<UUserWidget>& WidgetClass);
-
-	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
-	void PopContentToLayer(FGameplayTag LayerTag);
-
-	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
-	void ClearToLayer(FGameplayTag LayerTag);
-
-	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
-	void SetGameLeftMouseInputLock(bool bLock);
-
-	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
-	bool GetGameLeftMouseInputLock();
-
-	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
-	void SetGameMovementInputLock(bool bLock);
-
-	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
-	bool GetGameMovementInputLock();
-
-	UEmberLayerBase* GetLayer(FGameplayTag LayerTag) const;
-
-
+	UEmberLayerBase* GetLayer(const FGameplayTag& LayerTag) const;
+	
 	UFUNCTION(BlueprintCallable)
 	UPlayerQuestWidget* GetQuestLogWidget() const;
-
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UPlayerQuestWidget> PlayerQuestWidgetClass;
 
 	UPROPERTY()
 	UPlayerQuestWidget* PlayerQuestWidgetInstance;
 
-	void UpdateQuestLogWidget(const UQuestDataAsset* QuestAsset);
+
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI|HUD")
@@ -68,19 +68,17 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI|HUD")
 	TMap<FGameplayTag, TSubclassOf<UUserWidget>> InitWidgetClasses;
 
-
-
-
 private:
-	bool bIsGameLeftMouseInputLock{false};
-	bool bIsGameMovementInputLock{false};
-	//#if !UE_BUILD_SHIPPING
+	bool bIsGameLeftMouseInputLock{ false };
+	bool bIsGameMovementInputLock{ false };
+
 public:
-	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
+//#if !UE_BUILD_SHIPPING
+	//UFUNCTION(BlueprintCallable, Category = "UI|HUD")
 	void ToggleDebugLayer();
 
 protected:
 	TObjectPtr<ULayerDebugger> PrimaryDebugLayer;
 	bool bDebugLayerVisible = false;
-	//#endif
+//#endif
 };

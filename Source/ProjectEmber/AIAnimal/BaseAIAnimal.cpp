@@ -89,11 +89,15 @@ void ABaseAIAnimal::BeginPlay()
 		}
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UEmberAnimalAttributeSet::GetFullnessAttribute()).
 								AddUObject(this, &ThisClass::OnFullnessChanged);
+		
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UEmberCharacterAttributeSet::GetHealthAttribute()).
 								AddUObject(this, &ThisClass::OnHealthChanged);
+		
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 			UEmberCharacterAttributeSet::GetMaxHealthAttribute()).AddUObject(this, &ThisClass::OnMaxHealthChanged);
+		
 		CharacterAttributeSet->OnOutOfHealth.AddDynamic(this, &ThisClass::OnBeginDeath);
+		
 		if (const UEmberCharacterAttributeSet* Attribute = AbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>())
 		{
 			const_cast<UEmberCharacterAttributeSet*>(Attribute)->OnHit.AddDynamic(this, &ABaseAIAnimal::OnHit);
@@ -115,7 +119,8 @@ void ABaseAIAnimal::BeginPlay()
 	UMessageBus::GetInstance()->Subscribe(TEXT("HideAnimal"), MessageDelegateHandle);
 
 	// 호출할 곳에서 
-	// 
+	//
+	
 }
 
 void ABaseAIAnimal::OnBeginDeath()
@@ -131,8 +136,26 @@ void ABaseAIAnimal::OnBeginDeath()
 	//유틸 엠버에 함수 작성 -> 어빌리티에서 컨틀러 받음 , 어빌리티 -> 동물 함수 호춯 용도
 }
 
+void ABaseAIAnimal::ReceiveMessage(const FName MessageType, UObject* Payload)
+{
+	if (TEXT("HideAnimal") == MessageType)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[ReceiveMessage] Animal: %s (%p), Payload: %s (%p), Match: %s"),
+	*GetName(), this,
+	Payload ? *Payload->GetName() : TEXT("null"),
+	Payload,
+	Payload == this ? TEXT("YES") : TEXT("NO"));
+
+		if (Payload == this)
+		{
+			SetHiddenInGame();
+		}
+	}
+}
+
 void ABaseAIAnimal::SetHiddenInGame()
 {
+	UE_LOG(LogTemp, Warning, TEXT("[SetHiddenInGame] Hiding %s (%p)"), *GetName(), this);
 	SetActorHiddenInGame(true);
 	SetActorEnableCollision(false);
 	SetActorTickEnabled(false);
@@ -163,14 +186,6 @@ void ABaseAIAnimal::SetVisibleInGame()
 	}
 }
 
-void ABaseAIAnimal::ReceiveMessage(const FName MessageType, UObject* Payload)
-{
-	if (TEXT("HideAnimal") == MessageType)
-	{
-		SetHiddenInGame();
-	}
-}
-
 void ABaseAIAnimal::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -178,9 +193,6 @@ void ABaseAIAnimal::Tick(float DeltaTime)
 
 void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 {
-	//현재 InstigatorActor = 플레이어스테이트 , 동물이 때린다면?
-	//-> 만약 터지면 동물도 스테이트 쓸건지 체크하는 ai 설정 있음, 그걸 쓸건지 아니며 다른방법 찾던지, 일단 보류
-	EMBER_LOG(LogTemp, Warning, TEXT("%s"), *InstigatorActor->GetName());
 	//도망가는 상황에서만 속도 빨라졌다 서서히 감소 추가해야함->이팩트로 적용예정
 	
 	if (BlackboardComponent)
@@ -197,47 +209,13 @@ void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 	}
 }
 
-void ABaseAIAnimal::ActorPreSave_Implementation()
-{
-	IEMSActorSaveInterface::ActorPreSave_Implementation();
-
-	if (CharacterAttributeSet)
-	{
-		FRawObjectSaveData SaveData;
-		SaveData.Id = TEXT("AttributeSet_Character");
-		SaveData.Object = CharacterAttributeSet;
-		UEMSFunctionLibrary::SaveRawObject(this, SaveData);
-	}
-}
-
-void ABaseAIAnimal::ActorLoaded_Implementation()
-{
-	IEMSActorSaveInterface::ActorLoaded_Implementation();
-	
-	if (CharacterAttributeSet)
-	{
-		FRawObjectSaveData SaveData;
-		SaveData.Id = TEXT("AttributeSet_Character");
-		SaveData.Object = CharacterAttributeSet;
-		UEMSFunctionLibrary::LoadRawObject(this, SaveData);
-
-		FOnAttributeChangeData ChangeData;
-		ChangeData.NewValue = CharacterAttributeSet->GetHealth();
-		Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(ChangeData);
-	}
-}
-
 void ABaseAIAnimal::OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData)
 {
-	// if (CharacterAttributeSet->GetHealth() == CharacterAttributeSet->GetMaxHealth())
-	// {
-	// 	SetHiddenInGame();
-	// }
+	Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(OnAttributeChangeData);
 }
 
 void ABaseAIAnimal::OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData)
 {
-	UE_LOG(LogTemp, Warning, TEXT("ABaseAIAnimal::OnMaxHealthChanged::성공"));
 }
 
 void ABaseAIAnimal::OnFullnessChanged(const FOnAttributeChangeData& OnAttributeChangeData)
@@ -371,9 +349,35 @@ void ABaseAIAnimal::SetDetails()
 	}
 }
 
-
-
 void ABaseAIAnimal::SetIdentityTag(const FGameplayTag InIdentityTag)
 {
 	IdentityTag= InIdentityTag;
+}
+
+FName ABaseAIAnimal::GetRoleTag() const
+{
+	if (!BlackboardComponent)
+	{
+		return "None"; 
+	}
+	return BlackboardComponent->GetValueAsName("NGroupTag");
+}
+
+
+void ABaseAIAnimal::SetRoleTag(const FName InRoleTag)
+{
+	if (!BlackboardComponent)
+	{
+		return; 
+	}
+	BlackboardComponent->SetValueAsName("NGroupTag", InRoleTag);
+}
+
+void ABaseAIAnimal::SetIdleState()
+{
+	if (!BlackboardComponent)
+	{
+		return; 
+	}
+	BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
 }

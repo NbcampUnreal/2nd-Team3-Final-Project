@@ -4,7 +4,7 @@
 UEmberKeyCaptureWidget::UEmberKeyCaptureWidget(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
 {
-    bIsFocusable = true;
+    SetIsFocusable(true);
 }
 
 void UEmberKeyCaptureWidget::NativeConstruct()

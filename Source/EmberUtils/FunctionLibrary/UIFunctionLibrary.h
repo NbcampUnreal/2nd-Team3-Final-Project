@@ -18,7 +18,7 @@ class EMBERUTILS_API UUIFunctionLibrary : public UBlueprintFunctionLibrary
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "UIFunctionLibrary")
-	static bool RegisterLayer(APlayerController* OwningPlayer, FGameplayTag LayerTag, UEmberLayerBase* Layer);
+	static bool RegisterLayer(APlayerController* OwningPlayer, FGameplayTag LayerTag, UUserWidget* Layer);
 
 	UFUNCTION(BlueprintCallable, Category = "UIFunctionLibrary")
 	static UUserWidget* PushContentToLayer(APlayerController* OwningPlayer, FGameplayTag LayerTag, const TSubclassOf<UUserWidget>& WidgetClass);
