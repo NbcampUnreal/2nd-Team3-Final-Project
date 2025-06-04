@@ -13,7 +13,7 @@ void UQuestSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     Super::Initialize(Collection);
     LoadAllQuests();
     
-    if (UGameplayEventSubsystem* EventSubsystem = UGameplayEventSubsystem::Get(GetWorld()))
+    if (UGameplayEventSubsystem* EventSubsystem = UGameplayEventSubsystem::GetGameplayEvent(GetWorld()))
     {
         EventSubsystem->OnGameEvent.AddDynamic(this, &UQuestSubsystem::OnGameEvent);
     }
