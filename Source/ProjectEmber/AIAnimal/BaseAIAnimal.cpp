@@ -19,7 +19,7 @@ ABaseAIAnimal::ABaseAIAnimal()
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	bIsShouldSwim = false;
 	NavGenerationRadius = 4000.0f; //시각,청각 인지 버뮈보다 인보커 생성 범위가 커야함
-	NavRemovalRadius = 4300.0f;
+	NavRemoveRadius = 4300.0f;
 	NavInvokerComponent = CreateDefaultSubobject<UNavigationInvokerComponent>("NavInvokerComponent");
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	CharacterAttributeSet = CreateDefaultSubobject<UEmberCharacterAttributeSet>(TEXT("CharacterAttributeSet"));
@@ -54,8 +54,7 @@ void ABaseAIAnimal::BeginPlay()
 	Super::BeginPlay();
 
 	AIController = Cast<AAIAnimalController>(GetController());
-	//SetHiddenInGame(); //생성시 숨김처리
-	NavInvokerComponent->SetGenerationRadii(NavGenerationRadius, NavRemovalRadius);
+	NavInvokerComponent->SetGenerationRadii(NavGenerationRadius, NavRemoveRadius);
 	
 	if (AIController)
 	{
@@ -92,11 +91,11 @@ void ABaseAIAnimal::BeginPlay()
 		
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UEmberCharacterAttributeSet::GetHealthAttribute()).
 								AddUObject(this, &ThisClass::OnHealthChanged);
-		
-		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
-			UEmberCharacterAttributeSet::GetMaxHealthAttribute()).AddUObject(this, &ThisClass::OnMaxHealthChanged);
-		
-		CharacterAttributeSet->OnOutOfHealth.AddDynamic(this, &ThisClass::OnBeginDeath);
+
+		if (const UEmberCharacterAttributeSet* Attribute = AbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>())
+		{
+			Attribute->OnOutOfHealth.AddDynamic(this, &ABaseAIAnimal::OnBeginDeath);
+		}
 		
 		if (const UEmberCharacterAttributeSet* Attribute = AbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>())
 		{
@@ -111,7 +110,6 @@ void ABaseAIAnimal::BeginPlay()
 	GetCharacterMovement()->AvoidanceWeight = 0.5f;
 
 	/* 메세지버스 사용 예시 */
-
 	// 함수 바인딩
 	MessageDelegateHandle = FMessageDelegate::CreateUObject(this, &ThisClass::ReceiveMessage);
 
@@ -119,33 +117,35 @@ void ABaseAIAnimal::BeginPlay()
 	UMessageBus::GetInstance()->Subscribe(TEXT("HideAnimal"), MessageDelegateHandle);
 
 	// 호출할 곳에서 
-	//
+	
 	
 }
 
 void ABaseAIAnimal::OnBeginDeath()
 {
-	//여기서 어빌리티 호출 -> 어빌리티에서 몽타주 재생
+	bIsDead = true;
+	
+	SetActorTickEnabled(false);
+	if (AIController && AIController->BrainComponent && BlackboardComponent)
+	{
+		BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Death"); 
+		AIController->BrainComponent->Cleanup();
+		AIController->BrainComponent->StopLogic(TEXT("HiddenInGame"));
+	}
+	
 	FGameplayEventData Payload;
 	Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.Death");
 	Payload.Instigator = this;
-	Payload.OptionalObject = MontageMap[FGameplayTag::RequestGameplayTag("Animal.Montage.Death")];
-	
-	// 게임플레이 이벤트를 어빌리티에게 전달(trigger)하는 함수, 어빌리티가 특정 GameplayTag 이벤트를 수신해서 발동되도록 하는 트리거 역할
 	AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
-	//유틸 엠버에 함수 작성 -> 어빌리티에서 컨틀러 받음 , 어빌리티 -> 동물 함수 호춯 용도
+	
 }
+
 
 void ABaseAIAnimal::ReceiveMessage(const FName MessageType, UObject* Payload)
 {
+	//파밍시간 종료 -> 어빌리티에서 메세지버스로 호출될 함수 -> 완전 죽음으로 숨김처리
 	if (TEXT("HideAnimal") == MessageType)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[ReceiveMessage] Animal: %s (%p), Payload: %s (%p), Match: %s"),
-	*GetName(), this,
-	Payload ? *Payload->GetName() : TEXT("null"),
-	Payload,
-	Payload == this ? TEXT("YES") : TEXT("NO"));
-
 		if (Payload == this)
 		{
 			SetHiddenInGame();
@@ -153,27 +153,30 @@ void ABaseAIAnimal::ReceiveMessage(const FName MessageType, UObject* Payload)
 	}
 }
 
+
 void ABaseAIAnimal::SetHiddenInGame()
 {
 	UE_LOG(LogTemp, Warning, TEXT("[SetHiddenInGame] Hiding %s (%p)"), *GetName(), this);
 	SetActorHiddenInGame(true);
 	SetActorEnableCollision(false);
-	SetActorTickEnabled(false);
-	if (AIController && AIController->BrainComponent && BlackboardComponent)
-	{
-		BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Death"); 
-		AIController->BrainComponent->Cleanup();
-		AIController->BrainComponent->StopLogic(TEXT("HiddenInGame")); //스폰시 숨김처리
-	}
+	 SetActorTickEnabled(false);
+	 if (AIController && AIController->BrainComponent && BlackboardComponent)
+	 {
+	 	BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Death"); 
+	 	AIController->BrainComponent->Cleanup();
+	 	AIController->BrainComponent->StopLogic(TEXT("HiddenInGame")); //스폰시 숨김처리
+	 }
 }
 
 void ABaseAIAnimal::SetVisibleInGame()
 {
-	CharacterAttributeSet->SetHealth(CharacterAttributeSet->GetMaxHealth());
-	FOnAttributeChangeData ChangeData;
-	ChangeData.NewValue = CharacterAttributeSet->GetHealth();
-	Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(ChangeData);
-	
+	if (CharacterAttributeSet)
+	{
+		CharacterAttributeSet->SetHealth(CharacterAttributeSet->GetMaxHealth());
+		FOnAttributeChangeData ChangeData;
+		ChangeData.NewValue = CharacterAttributeSet->GetHealth();
+		Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(ChangeData);
+	}
 	SetActorHiddenInGame(false);
 	SetActorEnableCollision(true);
 	SetActorTickEnabled(true);
@@ -189,6 +192,7 @@ void ABaseAIAnimal::SetVisibleInGame()
 void ABaseAIAnimal::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
 }
 
 void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
@@ -212,10 +216,6 @@ void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 void ABaseAIAnimal::OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData)
 {
 	Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(OnAttributeChangeData);
-}
-
-void ABaseAIAnimal::OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData)
-{
 }
 
 void ABaseAIAnimal::OnFullnessChanged(const FOnAttributeChangeData& OnAttributeChangeData)
@@ -261,10 +261,10 @@ void ABaseAIAnimal::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void ABaseAIAnimal::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
-{
-	TagContainer = AnimalTagContainer;
-}
+ void ABaseAIAnimal::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
+ {
+ 	TagContainer;
+ }
 
 float ABaseAIAnimal::GetWildPower() const
 {
@@ -284,11 +284,6 @@ UAnimMontage* ABaseAIAnimal::GetMontage(FGameplayTag MontageTag)
 TArray<FVector>& ABaseAIAnimal::GetPatrolPoints()
 {
 	return PatrolPoints;
-}
-
-FGameplayTagContainer& ABaseAIAnimal::GetGameplayTagContainer()
-{
-	return AnimalTagContainer;
 }
 
 FGameplayTag ABaseAIAnimal::GetIdentityTag() const
@@ -380,4 +375,19 @@ void ABaseAIAnimal::SetIdleState()
 		return; 
 	}
 	BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
+}
+
+bool ABaseAIAnimal::GetIsDead() const
+{
+	return bIsDead;
+}
+
+void ABaseAIAnimal::SetIsDead(const bool InIsDead)
+{
+	bIsDead = InIsDead;
+}
+
+float ABaseAIAnimal::GetSoundPitch() const
+{
+	return SoundPitch;
 }

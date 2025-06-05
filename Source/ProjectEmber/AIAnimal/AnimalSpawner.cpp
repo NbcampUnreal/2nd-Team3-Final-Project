@@ -21,8 +21,8 @@ void AAnimalSpawner::BeginPlay()
 
 	//타이머 1초마다 플레이어와 거리 체크
 	GetWorldTimerManager().SetTimer(DistanceTimerHandle, this, &AAnimalSpawner::DistanceCheck, 1.0f, true);
-	//GetWorld()->GetTimerManager().PauseTimer(DistanceTimerHandle);
 
+	//GetWorld()->GetTimerManager().PauseTimer(DistanceTimerHandle);
 	//스포너 엑티베이트 함수 따로 만들면 들어갈 애들
 	{
 		//GetWorld()->GetTimerManager().UnPauseTimer(DistanceTimerHandle);
@@ -36,16 +36,14 @@ void AAnimalSpawner::BeginPlay()
 
 void AAnimalSpawner::ReceiveMessage(const FName MessageType, UObject* Payload)
 {
+	//찐 죽었을 때
 	if (TEXT("HideAnimal") == MessageType)
 	{
-		//데스 어빌리티에서 몽타주 재생 끝났을 때 메세지 버스로 신호를 받고 애니멀쪾에서는 숨김, tick, collision, PC,BB 등등 정지
-		//스포너에서는 단순 스폰드 -> 히든으로 저장 위치 이동만, 나중에 세이브할 때는 저장 전처리 때 필터 함수 돌려서 최종확인하기
-		
-		MessageMoveToHidden(Payload);
+		MessageMoveToDead(Payload);
 	}
 }
 
-void AAnimalSpawner::MessageMoveToHidden(UObject* Payload)
+void AAnimalSpawner::MessageMoveToDead(UObject* Payload)
 {
 	if (ABaseAIAnimal* Animal = Cast<ABaseAIAnimal>(Payload))
 	{
@@ -56,7 +54,7 @@ void AAnimalSpawner::MessageMoveToHidden(UObject* Payload)
 				UE_LOG(LogTemp, Warning, TEXT("[Hidden] Animal %s (%p)"), *Animal->GetName(), Animal);
 				
 				Info.SpawnAnimals.Remove(Animal);
-				Info.HiddenAnimals.Add(Animal);
+				Info.DeadAnimals.Add(Animal);
 				return;
 			}
 		}
@@ -75,16 +73,8 @@ void AAnimalSpawner::Tick(float DeltaTime)
 	{
 		TickCreateQueue(CreateInfoQueue, bIsLoading);
 	}
-	TickSpawnQueue();
 	TickDespawnQueue();
-}
-
-void AAnimalSpawner::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	Super::EndPlay(EndPlayReason);
-
-	GetWorldTimerManager().ClearTimer(DistanceTimerHandle);
-	UMessageBus::GetInstance()->Unsubscribe(TEXT("HideAnimal"), MessageDelegateHandle);
+	TickSpawnQueue();
 }
 
 void AAnimalSpawner::ActorPreSave_Implementation()
@@ -97,7 +87,7 @@ void AAnimalSpawner::ActorPreSave_Implementation()
 		int32 SaveIndex = 0;
 		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : AnimalsInfo[i].SpawnAnimals)
 		{
-			if (Animal.IsValid() && !Animal->IsHidden())
+			if (Animal.IsValid() && !Animal->IsHidden() && !Animal->GetIsDead())
 			{
 				FName Tag = Animal->GetIdentityTag().GetTagName();
 				FString SaveId =
@@ -197,7 +187,7 @@ TArray<TSoftObjectPtr<AAnimalSpawnPoint>> AAnimalSpawner::DiscardNearestPoint()
 	APawn* Player = GetWorld()->GetFirstPlayerController()->GetPawn();
 	
 
-	//포인트들 순회 -> 가장 가까우 포인트만 스폰 지역에서 제외
+	//포인트들 순회 -> 가장 가까운 포인트만 스폰 지역에서 제외
 	for (int i=0; i < OutSpawnPoints.Num(); i++)
 	{
 		if (OutSpawnPoints[i].IsValid())
@@ -246,77 +236,7 @@ TArray<TSoftObjectPtr<AAnimalSpawnPoint>> AAnimalSpawner::SelectNearPoints(TArra
 	return OutSpawnPoints;
 }
 
-//디스폰 : SortFarthestAnimal(정렬 + 큐에 넣기) -> Tick에서 TickDespawnQueue ->ProcessDespawnQueue(해당하는 구조체 찾고, 숨김 TSet으로 이동, 애니멀 숨김처리)
-void AAnimalSpawner::SortFarthestAnimal()
-{
-	TArray<TSoftObjectPtr<ABaseAIAnimal>> SortFarAnimals;
-	APawn* Player = GetWorld()->GetFirstPlayerController()->GetPawn();
-	
-	for (FAnimalSpawnInfo& Info : AnimalsInfo)
-	{
-		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.SpawnAnimals)
-		{
-			if (Animal.IsValid())
-			{
-				SortFarAnimals.Add(Animal);
-			}
-		}
-	}
-	
-	//먼순서대로 정렬
-	SortFarAnimals.Sort([Player](const TSoftObjectPtr<ABaseAIAnimal>& A, const TSoftObjectPtr<ABaseAIAnimal>& B)
-	{
-		float DistA = FVector::DistSquared(A->GetActorLocation(), Player->GetActorLocation());
-		float DistB = FVector::DistSquared(B->GetActorLocation(), Player->GetActorLocation());
-		return DistA > DistB;
-	});
 
-	//디스폰 큐에 넣기
-	for (TSoftObjectPtr<ABaseAIAnimal>& Animal : SortFarAnimals)
-	{
-		if (!Animal->IsHidden()) //살아있는데 거리때문에 디스폰된 애들이 아니라면 디스폰 처리
-		{
-			DespawnQueue.Enqueue(Animal);
-		}
-	}
-}
-
-void AAnimalSpawner::TickDespawnQueue()
-{
-	int32 DespawnedThisFrame = 0;
-	while (!DespawnQueue.IsEmpty() && DespawnedThisFrame < MaxDespawnPerTick)
-	{
-		TSoftObjectPtr<ABaseAIAnimal> PerAnimal;
-		DespawnQueue.Dequeue(PerAnimal); //큐에서 맨앞 꺼내고 삭제, 객체 생성이 아예 진행되지 않은 상태에서 처음 생성할 때
-
-		if (!PerAnimal.IsValid())
-		{
-			return;
-		}
-		ProcessDespawnQueue(PerAnimal); // 거리 멀어지면 숨김처리할때, 죽은 애들은 이미 메세지버스로 숨김처리, 살아있는 애들 디스폰 구분이 필요해짐-> 숨기지만 대기열 이동은 하지않음
-		++DespawnedThisFrame;
-	}
-}
-
-void AAnimalSpawner::ProcessDespawnQueue(TSoftObjectPtr<ABaseAIAnimal>& InAnimal)
-{
-	// 거리 멀어지면 숨김처리할때, 죽은 애들은 이미 메세지버스로 숨김처리, 살아있는 애들 디스폰 구분이 필요해짐-> 숨기지만 대기열 이동은 하지않음
-	if (InAnimal)
-	{
-		for (FAnimalSpawnInfo& Info : AnimalsInfo)
-		{
-			if (Info.SpawnAnimals.Contains(InAnimal.Get()))
-			{
-				//Info.SpawnAnimals.Remove(InAnimal); //여기 수정함
-				//Info.HiddenAnimals.Add(InAnimal);   //여기 수정함
-				InAnimal->SetHiddenInGame();
-				
-				UE_LOG(LogTemp, Log, TEXT("Despawn Animal pointer: %p"), InAnimal.Get());
-				break;
-			}
-		}
-	}
-}
 
 //분할생성 : 거리체크 -> 생성 필요 -> TryCreateQueue -> AddSpawnQueue -> Tick에서 TickSpawnQueue ->GetRandomLocationInSpawnVolume
 void AAnimalSpawner::TryCreateQueue(TArray<TSoftObjectPtr<AAnimalSpawnPoint>>& InSpawnPoints)
@@ -333,14 +253,16 @@ void AAnimalSpawner::TryCreateQueue(TArray<TSoftObjectPtr<AAnimalSpawnPoint>>& I
 		{
 			for (FAnimalSpawnInfo& Info : AnimalsInfo)
 			{
+				//if (SpawnPoint->태그컨테이너에 Info의 동물태그가 일치하면 생성 가능 ) -> 특정 포인트에서 특정 동물만 생성할 수 있도록
 				CreateAnimalsQueue(Info,SpawnPoint);
 			}
 			SpawnPoint->SetIsCreated(true);
 		}
 		else//이미 create됐던 지역이라면 숨겨진 애들만 다시 보이게 처리로 바뀌어야함
 		{
-			if (SpawnPoint->GetAliveAnimalsInBox() < PermittedToSpawnLimit)
+			if (SpawnPoint->GetAliveAnimalsInBox() < PermittedToSpawnLimit) //애들이 다 튀어나가서 포인트 영역안에 사냥하고 잇는 애만 남으면 -> 그녀석 죽이면 바로 재스폰 되버림  -> 영역 제한하거나 포인트가 그 포인트에서 생성된 애들 수나 포인터 들고 있거나
 			{
+				UE_LOG(LogTemp, Warning, TEXT("SpawnPoint [%s]: Overlapping alive animals: %d"), *SpawnPoint->GetName(), SpawnPoint->GetAliveAnimalsInBox());
 				//타이머 기반 스폰 기능 넣으면 타이머에 TrySpawnDead(AnimalsInfo) 만 바인딩 해서 죽은 애들만 다시 스폰 가능 
 				TrySpawnEntire();
 			}
@@ -397,6 +319,7 @@ void AAnimalSpawner::TickCreateQueue(TQueue<FAnimalQueueInfo>& InQueue, bool& In
 		{
 			continue;
 		}
+		Spawned->SetRoleTag(PerAnimal.RoleTag);
 		Spawned->SetIdleState();
 		AnimalsInfo[PerAnimal.SpawnInfoIndex].SpawnAnimals.Emplace(Spawned);
 		++SpawnedThisFrame;
@@ -404,6 +327,217 @@ void AAnimalSpawner::TickCreateQueue(TQueue<FAnimalQueueInfo>& InQueue, bool& In
 	if (InIsLoading && LoadInfoQueue.IsEmpty())
 	{
 		InIsLoading = false; // 로드 완료 후 false
+	}
+}
+
+//디스폰 : SortFarthestAnimal(정렬 + 큐에 넣기) -> Tick에서 TickDespawnQueue ->ProcessDespawnQueue(해당하는 구조체 찾고, 숨김 TSet으로 이동, 애니멀 숨김처리)
+void AAnimalSpawner::SortFarthestAnimal()
+{
+	TArray<TSoftObjectPtr<ABaseAIAnimal>> SortFarAnimals;
+	APawn* Player = GetWorld()->GetFirstPlayerController()->GetPawn();
+	
+	for (FAnimalSpawnInfo& Info : AnimalsInfo)
+	{
+		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.SpawnAnimals)
+		{
+			if (Animal.IsValid())
+			{
+				SortFarAnimals.Add(Animal);
+			}
+		}
+	}
+	
+	//먼순서대로 정렬
+	SortFarAnimals.Sort([Player](const TSoftObjectPtr<ABaseAIAnimal>& A, const TSoftObjectPtr<ABaseAIAnimal>& B)
+	{
+		float DistA = FVector::DistSquared(A->GetActorLocation(), Player->GetActorLocation());
+		float DistB = FVector::DistSquared(B->GetActorLocation(), Player->GetActorLocation());
+		return DistA > DistB;
+	});
+
+	//디스폰 큐에 넣기
+	for (TSoftObjectPtr<ABaseAIAnimal>& Animal : SortFarAnimals)
+	{
+		if (!Animal->IsHidden()) //살아있거나 파밍대기 상태인 애들 디스폰 처리
+		{
+			DespawnQueue.Enqueue(Animal);
+		}
+	}
+}
+
+void AAnimalSpawner::TickDespawnQueue()
+{
+	int32 DespawnedThisFrame = 0;
+	while (!DespawnQueue.IsEmpty() && DespawnedThisFrame < MaxDespawnPerTick)
+	{
+		TSoftObjectPtr<ABaseAIAnimal> PerAnimal;
+		DespawnQueue.Dequeue(PerAnimal); //큐에서 맨앞 꺼내고 삭제
+
+		if (!PerAnimal.IsValid())
+		{
+			return;
+		}
+		ProcessDespawnQueue(PerAnimal);
+		++DespawnedThisFrame;
+	}
+}
+
+void AAnimalSpawner::ProcessDespawnQueue(TSoftObjectPtr<ABaseAIAnimal>& InAnimal)
+{
+	//살아있거나 파밍대기 상태인 애들
+	if (InAnimal)
+	{
+		for (FAnimalSpawnInfo& Info : AnimalsInfo)
+		{
+			if (Info.SpawnAnimals.Contains(InAnimal.Get()))
+			{
+				InAnimal->SetHiddenInGame();
+				
+				UE_LOG(LogTemp, Log, TEXT("Despawn Animal pointer: %p"), InAnimal.Get());
+				break;
+			}
+		}
+	}
+}
+
+
+//스폰 : 거리체크 -> 생성 필요없음 -> TrySpawnEntire -> TrySpawnAlive 또는 TrySpawnAlive + TrySpawnDead -> TickSpawnQueue
+void AAnimalSpawner::TrySpawnEntire()
+{
+	// 디스폰 -> 스폰 전환시
+	//살아있던 애들만 다시 스폰
+	//살아있는 애들 + 죽은 애들까지 전체 스폰
+	//게임 규칙에 따라 여기서 함수 추가
+	
+	TrySpawnAlive(AnimalsInfo);
+	TrySpawnDead(AnimalsInfo);
+}
+
+void AAnimalSpawner::TrySpawnAlive(TArray<FAnimalSpawnInfo>& InfoArray)
+{
+	// 살아있었는데 숨겨졌던 애만 보이게 
+	for (FAnimalSpawnInfo& Info : InfoArray)
+	{
+		TArray<TSoftObjectPtr<ABaseAIAnimal>> ToMove;
+		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.SpawnAnimals)
+		{
+			if (!Animal.IsValid())
+			{
+				continue;
+			}
+			
+			if (Animal->IsHidden()) 
+			{
+				SpawnQueue.Enqueue(Animal);
+			}
+		}
+	}
+}
+
+void AAnimalSpawner::TrySpawnDead(TArray<FAnimalSpawnInfo>& InfoArray)
+{
+	//죽었고 파밍시간도 끝나서 완전히 숨겨진 애들
+	
+	for (FAnimalSpawnInfo& Info : InfoArray)
+	{
+		TArray<TSoftObjectPtr<ABaseAIAnimal>> ToMove;
+		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.DeadAnimals)
+		{
+			if (!Animal.IsValid())
+			{
+				continue;
+			}
+			
+			SpawnQueue.Enqueue(Animal);
+			ToMove.Emplace(Animal);
+		}
+		//대기열 이동
+		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : ToMove)
+		{
+			Info.DeadAnimals.Remove(Animal);
+			Info.SpawnAnimals.Add(Animal);
+		}
+	}
+}
+
+void AAnimalSpawner::TickSpawnQueue()
+{
+	//다시 보이개만 처리
+	
+	int32 SpawnedThisFrame = 0;
+	while (!SpawnQueue.IsEmpty() && SpawnedThisFrame < MaxSpawnPerTick)
+	{
+		TSoftObjectPtr<ABaseAIAnimal> PerAnimal;
+		SpawnQueue.Dequeue(PerAnimal); //큐에서 맨앞 꺼내고 삭제
+		if (!PerAnimal.IsValid())
+		{
+			continue;
+		}
+		PerAnimal->SetVisibleInGame();
+		
+		++SpawnedThisFrame;
+	}
+}
+
+void AAnimalSpawner::TryReleaseEntire()
+{
+	//타이머 일시정지-> 남은 시간부터 재시작 -> 스포너 매니저 가능해지면 킬 것
+	// if (GetWorld()->GetTimerManager().IsTimerActive(DistanceTimerHandle))
+	// {
+	// 	GetWorld()->GetTimerManager().PauseTimer(DistanceTimerHandle);
+	// 	UE_LOG(LogTemp, Warning, TEXT("DistanceTimerHandle paused."));
+	// }
+	
+	//전체 메모리 해제
+	UE_LOG(LogTemp, Warning, TEXT("=== TryReleaseEntire: Start ==="));
+	
+	//큐 정리
+	LoadInfoQueue.Empty();
+	CreateInfoQueue.Empty();
+	SpawnQueue.Empty();
+	DespawnQueue.Empty();
+
+	//인포 돌면서 생성한 동물들 해제
+	for (int32 InfoIndex = 0; InfoIndex < AnimalsInfo.Num(); ++InfoIndex)
+	{
+		FAnimalSpawnInfo& Info = AnimalsInfo[InfoIndex];
+        UE_LOG(LogTemp, Warning, TEXT("--- Info[%d] ---"), InfoIndex);
+        UE_LOG(LogTemp, Warning, TEXT("SpawnAnimals Count: %d"), Info.SpawnAnimals.Num());
+        		
+		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.SpawnAnimals)
+		{
+			if (!Animal.IsValid())
+			{
+				continue;
+			}
+			
+			Animal->Destroy();
+			Animal = nullptr;
+		}
+		Info.SpawnAnimals.Empty();
+		UE_LOG(LogTemp, Warning, TEXT("SpawnAnimals Count: %d"), Info.SpawnAnimals.Num());
+
+		UE_LOG(LogTemp, Warning, TEXT("SpawnAnimals Count: %d"), Info.DeadAnimals.Num());
+		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.DeadAnimals)
+		{
+			if (!Animal.IsValid())
+			{
+				continue;
+			}
+			Animal->Destroy();
+			Animal = nullptr;
+		}
+		Info.DeadAnimals.Empty();
+		UE_LOG(LogTemp, Warning, TEXT("SpawnAnimals Count: %d"), Info.DeadAnimals.Num());
+	}
+
+	for (TSoftObjectPtr<AAnimalSpawnPoint>& Point : SpawnPoints)
+	{
+		if (!Point.IsValid())
+		{
+			continue;
+		}
+		Point->SetIsCreated(false);
 	}
 }
 
@@ -468,140 +602,10 @@ FAnimalInitInfo AAnimalSpawner::GetRandomLocationInSpawnVolume(TSoftObjectPtr<AA
 	return InitInfo;
 }
 
-//스폰 : 거리체크 -> 생성 필요없음 -> TrySpawnEntire -> TrySpawnAlive 또는 TrySpawnAlive + TrySpawnDead -> TickSpawnQueue
-void AAnimalSpawner::TrySpawnEntire()
+void AAnimalSpawner::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	// 디스폰 -> 스폰 전환시
-	//살아있던 애들만 다시 스폰
-	//살아있는 애들 + 죽은 애들까지 전체 스폰
-	//게임 규칙에 따라 여기서 함수 추가
-	
-	TrySpawnAlive(AnimalsInfo);
-	TrySpawnDead(AnimalsInfo);
-}
+	Super::EndPlay(EndPlayReason);
 
-void AAnimalSpawner::TrySpawnAlive(TArray<FAnimalSpawnInfo>& InfoArray)
-{
-	// 거리 멀어지면 숨김처리할때, 죽은 애들은 이미 메세지버스로 숨김처리, 살아있는 애들 디스폰 구분이 필요해짐-> 숨기지만 대기열 이동은 하지않음
-	//애니멀->SetvitableInGame (공통)
-	//HiddenAnimals 면 대기열 이동
-	
-	for (FAnimalSpawnInfo& Info : InfoArray)
-	{
-		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.SpawnAnimals)
-		{
-			if (!Animal.IsValid())
-			{
-				continue;
-			}
-			if (Animal->IsHidden())
-			{
-				//add 큐 -> 다시 보이개만 처리
-				SpawnQueue.Enqueue(Animal);
-			}
-		}
-	}
-}
-
-void AAnimalSpawner::TrySpawnDead(TArray<FAnimalSpawnInfo>& InfoArray)
-{
-	for (FAnimalSpawnInfo& Info : InfoArray)
-	{
-		TArray<TSoftObjectPtr<ABaseAIAnimal>> ToMove;
-		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.HiddenAnimals)
-		{
-			if (!Animal.IsValid())
-			{
-				continue;
-			}
-			//add 큐 -> 다시 보이개만 처리
-			SpawnQueue.Enqueue(Animal);
-			ToMove.Emplace(Animal);
-		}
-		//대기열 이동
-		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : ToMove)
-		{
-			Info.HiddenAnimals.Remove(Animal);
-			Info.SpawnAnimals.Add(Animal);
-		}
-	}
-}
-
-void AAnimalSpawner::TickSpawnQueue()
-{
-	//다시 보이개만 처리
-	int32 SpawnedThisFrame = 0;
-	while (!SpawnQueue.IsEmpty() && SpawnedThisFrame < MaxSpawnPerTick)
-	{
-		TSoftObjectPtr<ABaseAIAnimal> PerAnimal;
-		SpawnQueue.Dequeue(PerAnimal); //큐에서 맨앞 꺼내고 삭제
-		if (!PerAnimal.IsValid())
-		{
-			continue;
-		}
-		PerAnimal->SetVisibleInGame();
-		++SpawnedThisFrame;
-	}
-}
-
-void AAnimalSpawner::TryReleaseEntire()
-{
-	//타이머 일시정지-> 남은 시간부터 재시작 -> 스포너 매니저 가능해지면 킬 것
-	// if (GetWorld()->GetTimerManager().IsTimerActive(DistanceTimerHandle))
-	// {
-	// 	GetWorld()->GetTimerManager().PauseTimer(DistanceTimerHandle);
-	// 	UE_LOG(LogTemp, Warning, TEXT("DistanceTimerHandle paused."));
-	// }
-	
-	//전체 메모리 해제
-	UE_LOG(LogTemp, Warning, TEXT("=== TryReleaseEntire: Start ==="));
-	
-	//큐 정리
-	LoadInfoQueue.Empty();
-	CreateInfoQueue.Empty();
-	SpawnQueue.Empty();
-	DespawnQueue.Empty();
-
-	//인포 돌면서 생성한 동물들 해제
-	for (int32 InfoIndex = 0; InfoIndex < AnimalsInfo.Num(); ++InfoIndex)
-	{
-		FAnimalSpawnInfo& Info = AnimalsInfo[InfoIndex];
-        UE_LOG(LogTemp, Warning, TEXT("--- Info[%d] ---"), InfoIndex);
-        UE_LOG(LogTemp, Warning, TEXT("SpawnAnimals Count: %d"), Info.SpawnAnimals.Num());
-        		
-		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.SpawnAnimals)
-		{
-			if (!Animal.IsValid())
-			{
-				continue;
-			}
-			
-			Animal->Destroy();
-			Animal = nullptr;
-		}
-		Info.SpawnAnimals.Empty();
-		UE_LOG(LogTemp, Warning, TEXT("SpawnAnimals Count: %d"), Info.SpawnAnimals.Num());
-
-		UE_LOG(LogTemp, Warning, TEXT("SpawnAnimals Count: %d"), Info.HiddenAnimals.Num());
-		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.HiddenAnimals)
-		{
-			if (!Animal.IsValid())
-			{
-				continue;
-			}
-			Animal->Destroy();
-			Animal = nullptr;
-		}
-		Info.HiddenAnimals.Empty();
-		UE_LOG(LogTemp, Warning, TEXT("SpawnAnimals Count: %d"), Info.HiddenAnimals.Num());
-	}
-
-	for (TSoftObjectPtr<AAnimalSpawnPoint>& Point : SpawnPoints)
-	{
-		if (!Point.IsValid())
-		{
-			continue;
-		}
-		Point->SetIsCreated(false);
-	}
+	GetWorldTimerManager().ClearTimer(DistanceTimerHandle);
+	UMessageBus::GetInstance()->Unsubscribe(TEXT("HideAnimal"), MessageDelegateHandle);
 }

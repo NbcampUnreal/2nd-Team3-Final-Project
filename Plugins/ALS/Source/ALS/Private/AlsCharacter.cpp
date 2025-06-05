@@ -80,6 +80,19 @@ void AAlsCharacter::ForceVelocityYawAngle(const FAlsLocomotionState& NewLocomoti
 	LocomotionState = NewLocomotionState;
 }
 
+void AAlsCharacter::ForceRoationTest(float YawAngle)
+{
+	LocomotionState.VelocityYawAngle = YawAngle;
+	LocomotionState.TargetYawAngle = YawAngle;
+	LocomotionState.SmoothTargetYawAngle = YawAngle;
+	LocomotionState.ViewRelativeTargetYawAngle = YawAngle;
+}
+
+void AAlsCharacter::ForceLastInputDirectionBlocked(bool bBlocked)
+{
+	LocomotionState.bRotationTowardsLastInputDirectionBlocked = bBlocked;
+}
+
 AAlsCharacter::AAlsCharacter(const FObjectInitializer& ObjectInitializer) : Super{
 	ObjectInitializer.SetDefaultSubobjectClass<UAlsCharacterMovementComponent>(CharacterMovementComponentName)
 }
