@@ -3,9 +3,11 @@
 
 #include "GameMenuWidget.h"
 
-#include "AI_NPC/PlayerQuestWidget.h"
+#include "AI_NPC/Widget/PlayerQuestWidget.h"
 #include "Quest/QuestSubsystem.h"
 #include "Blueprint/WidgetTree.h"
+#include "Components/WidgetSwitcher.h"
+#include "Components/Border.h"
 #include "Character/EmberCharacter.h"
 
 void UGameMenuWidget::NativeConstruct()
