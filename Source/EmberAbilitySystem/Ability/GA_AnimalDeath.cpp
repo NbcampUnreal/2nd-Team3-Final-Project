@@ -78,7 +78,7 @@ void UGA_AnimalDeath::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
 	{
 		// 델리게이트 언바인딩 (메모리 누수 방지)
-		ASC->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag("GameplayCue.Animal.Death"), EGameplayTagEventType::NewOrRemoved)
+		ASC->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag("GameplayCue.Animal.Death"), EGameplayTagEventType::AnyCountChange)
 		   .Remove(EndCueDelegateHandle);
 	}
 	

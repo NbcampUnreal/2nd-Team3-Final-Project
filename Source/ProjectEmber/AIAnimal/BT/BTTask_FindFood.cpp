@@ -12,6 +12,7 @@
 UBTTask_FindFood::UBTTask_FindFood()
 {
 	NodeName = TEXT("FindFood");
+	bCreateNodeInstance = true;
 }
 
 EBTNodeResult::Type UBTTask_FindFood::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
@@ -65,12 +66,19 @@ void UBTTask_FindFood::OnFindFoodQueryFinished(UEnvQueryInstanceBlueprintWrapper
 	if (BlackboardComp)
 	{
 		AActor* TargetItem = QueryInstance->GetQueryResult()->GetItemAsActor(0);
-		BlackboardComp->SetValueAsObject("NTargetFood", TargetItem);
-		BlackboardComp->SetValueAsVector("NTargetFoodLocation", TargetItem->GetActorLocation());
-		Cast<ATestFood>(TargetItem)->SetSelected(true);
+		if (TargetItem)
+		{
+			
+			BlackboardComp->SetValueAsObject("NTargetFood", TargetItem);
+			BlackboardComp->SetValueAsVector("NTargetFoodLocation", TargetItem->GetActorLocation());
+			FinishLatentTask(*BTComp, EBTNodeResult::Succeeded);
+			return;
+		}
+		FinishLatentTask(*BTComp, EBTNodeResult::Failed);
+		return;
 	}
 	
-	FinishLatentTask(*BTComp, EBTNodeResult::Succeeded);
+	FinishLatentTask(*BTComp, EBTNodeResult::Failed);
 }
 
 //{
