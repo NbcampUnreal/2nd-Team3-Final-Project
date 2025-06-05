@@ -44,17 +44,26 @@ void UGA_AnimalDeath::EndFarmingTime() //파밍시간 종료 되면 호출될 �
 	Param.Instigator = Actor;
 	Param.Location = Actor->GetActorLocation();
 
-	GetAbilitySystemComponentFromActorInfo_Ensured()->
-		ExecuteGameplayCue(FGameplayTag::RequestGameplayTag("GameplayCue.Animal.Death"), Param);
-	
+	/*
+	 *ExecuteGameplayCue : 한 번의 이펙트(연출)만 실행-> 태그는 ASC에 등록되지 않음. -> 태그의 Count는 변하지 않음.
+	 *그래서 EGameplayTagEventType(태그 카운트 변경) 이 되지 않아서 GameplayTagEvent 델리게이트는 호출되지 않았음.
+	 *델리게이트 등록 -> 큐 연출 실행 -> 태그를 추가 Count 변화 발생 (0 → 1)
+	 */
+
 	EndCueDelegateHandle = GetAbilitySystemComponentFromActorInfo_Ensured()->
 		RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag("GameplayCue.Animal.Death"),
-		EGameplayTagEventType::NewOrRemoved).AddUObject(this, &UGA_AnimalDeath::CallEndAbility);
+		EGameplayTagEventType::AnyCountChange).AddUObject(this, &UGA_AnimalDeath::CallEndAbility);
 	
+	GetAbilitySystemComponentFromActorInfo_Ensured()->
+	ExecuteGameplayCue(FGameplayTag::RequestGameplayTag("GameplayCue.Animal.Death"), Param);
 	
+	GetAbilitySystemComponentFromActorInfo_Ensured()->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag("GameplayCue.Animal.Death"));
 }
+
 void UGA_AnimalDeath::CallEndAbility(const FGameplayTag Tag, int32 NewCount)
 {
+	GetAbilitySystemComponentFromActorInfo_Ensured()->RemoveLooseGameplayTag(FGameplayTag::RequestGameplayTag("GameplayCue.Animal.Death"));
+
 	bool bReplicatedEndAbility = true;
 	bool bWasCancelled = false;
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
@@ -69,7 +78,7 @@ void UGA_AnimalDeath::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
 	{
 		// 델리게이트 언바인딩 (메모리 누수 방지)
-		ASC->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag("GameplayCue.Animal.Death"), EGameplayTagEventType::NewOrRemoved)
+		ASC->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag("GameplayCue.Animal.Death"), EGameplayTagEventType::AnyCountChange)
 		   .Remove(EndCueDelegateHandle);
 	}
 	
