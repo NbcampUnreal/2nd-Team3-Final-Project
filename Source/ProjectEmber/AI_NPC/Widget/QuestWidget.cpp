@@ -45,7 +45,6 @@ void UQuestWidget::HandleCompleteClicked()
 
 void UQuestWidget::SetQuestInfoFromDataAsset(const UQuestDataAsset* QuestAsset, bool bIsComplete, bool bIsAccepted)
 {
-    UE_LOG(LogTemp, Warning, TEXT(">> [DEBUG] Accepted: %d / Complete: %d"), bIsAccepted, bIsComplete);
     CurrentQuestAsset = QuestAsset;
     if (!QuestAsset) return;
 

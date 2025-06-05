@@ -1,6 +1,6 @@
 ﻿#include "QuestSubsystem.h"
 #include "AbilitySystemComponent.h"
-#include "AI_NPC/QuestGiverComponent.h"
+#include "AI_NPC/NPC_Component/QuestGiverComponent.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
 #include "Character/EmberCharacter.h"
 #include "Data/QuestDataAsset.h"
@@ -38,6 +38,7 @@ void UQuestSubsystem::LoadAllQuests()
 //퀘스트 시작 등록
 bool UQuestSubsystem::TryStartQuest(FName QuestID, bool bPlayerAccepted)
 {
+    UE_LOG(LogTemp, Warning, TEXT("!!! [TryStartQuest] QuestID: %s / bPlayerAccepted: %d"), *QuestID.ToString(), bPlayerAccepted);
     if (LoadedQuests.Contains(QuestID) && !CompletedQuests.Contains(QuestID))
     {
         // bPlayerAccepted가 true일때만
@@ -54,6 +55,11 @@ bool UQuestSubsystem::TryStartQuest(FName QuestID, bool bPlayerAccepted)
         if (bPlayerAccepted)
         {
             LastAcceptedQuestID = QuestID;
+
+            if (UQuestDataAsset* QuestAsset = LoadedQuests.FindRef(QuestID))
+            {
+                OnQuestStarted.Broadcast(QuestAsset);
+            }
         }
 
         return true;
@@ -64,6 +70,7 @@ bool UQuestSubsystem::TryStartQuest(FName QuestID, bool bPlayerAccepted)
 //설정된 퀘스트 Tag로 조건검사
 void UQuestSubsystem::OnGameEvent(const FGameplayTag& EventTag, const FGameplayEventData& EventData)
 {
+    UE_LOG(LogTemp, Warning, TEXT(" [UQuestSubsystem::OnGameEvent] Received EventTag: %s"), *EventTag.ToString());
     TArray<FName> KeysToCheck;
     QuestProgress.GenerateKeyArray(KeysToCheck);
 
@@ -147,6 +154,15 @@ bool UQuestSubsystem::AdvanceQuestStep(FName QuestID)
     }
     
     const FQuestStep& NextStep = QuestAsset->Steps[Index];
+   
+    for (UQuestCondition* Condition : NextStep.Conditions)
+    {
+        if (Condition)
+        {
+            Condition->CurrentCount = 0;
+        }
+    }
+
     if (AActor* GiverActor = NextStep.QuestGiver.Get())
     {
         if (UQuestGiverComponent* GiverComp = GiverActor->FindComponentByClass<UQuestGiverComponent>())

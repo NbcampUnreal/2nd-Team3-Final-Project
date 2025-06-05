@@ -9,9 +9,10 @@
 #include "QuestSubsystem.generated.h"
 
 class UQuestDataAsset;
-/**
- * 
- */
+
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnQuestStarted, UQuestDataAsset*, QuestAsset);
+
 UCLASS(BlueprintType)
 class PROJECTEMBER_API UQuestSubsystem : public UGameInstanceSubsystem
 {
@@ -54,6 +55,9 @@ public:
 	const TMap<FName, UQuestDataAsset*>& GetAllLoadedQuests() const;
 
 	bool GetLastActiveQuestID(FName& OutQuestID) const;
+
+	UPROPERTY(BlueprintAssignable, Category = "Quest")
+	FOnQuestStarted OnQuestStarted;
 
 
 private:
