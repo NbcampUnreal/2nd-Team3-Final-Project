@@ -20,7 +20,7 @@ struct EMBERABILITYSYSTEM_API FStateMontageMapping
 	FGameplayTag StateTag;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|StateMapping")
-	UAnimMontage* Montage;
+	UAnimMontage* Montage{nullptr};
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|StateMapping")
 	int32 Priority = 0;
@@ -61,6 +61,8 @@ public:
 	virtual void InputPressed(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) override;
 	virtual void InputReleased(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) override;
 
+public:
+	UAnimMontage* GetDefaultMontage() const;
 protected:
 	/** Default Montage */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Base", Meta = (AllowPrivateAccess = "true"))

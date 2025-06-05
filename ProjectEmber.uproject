@@ -12,9 +12,7 @@
 				"AIModule",
 				"Engine",
 				"UMG",
-				"DeveloperSettings",
 				"GameplayAbilities",
-				"UMGEditor",
 				"EnhancedInput"
 			]
 		},
@@ -77,6 +75,10 @@
 		},
 		{
 			"Name": "AdvancedFadeObjects",
+			"Enabled": true
+		},
+		{
+			"Name": "ProceduralDungeon",
 			"Enabled": true
 		}
 	]

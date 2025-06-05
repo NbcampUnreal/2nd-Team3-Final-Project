@@ -8,18 +8,24 @@
 #include "AlsCharacterMovementComponent.h"
 #include "Framework/EmberPlayerState.h"
 #include "EnhancedInputSubsystems.h"
+#include "NiagaraComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "EnhancedInputComponent.h"
 #include "GameInstance/EmberGameInstance.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
+#include "MaterialHLSLTree.h"
 #include "WaterBodyActor.h"
 #include "Animation/AnimInstance.h"
+#include "Build/AC_BuildComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Define/CharacterDefine.h"
 #include "EmberLog/EmberLog.h"
 #include "Engine/LocalPlayer.h"
 #include "FunctionLibrary/UIFunctionLibrary.h"
 #include "GameFramework/PhysicsVolume.h"
+#include "GameInstance/EffectManagerSubsystem.h"
 #include "Item/UserItemManger.h"
 #include "UI/EmberWidgetComponent.h"
 #include "MeleeTrace/Public/MeleeTraceComponent.h"
@@ -31,6 +37,31 @@
 
 AEmberCharacter::AEmberCharacter()
 {
+    PrimaryActorTick.bCanEverTick = true;
+    
+    OverlayStaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("OverlayStaticMesh"));
+    OverlayStaticMesh->SetupAttachment(GetMesh());
+    OverlayStaticMesh->SetRelativeLocation(FVector::ZeroVector);
+    OverlayStaticMesh->SetRelativeRotation(FRotator::ZeroRotator);
+    
+    OverlaySkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("OverlaySkeletalMesh"));
+    OverlaySkeletalMesh->SetupAttachment(GetMesh());
+    OverlaySkeletalMesh->SetRelativeLocation(FVector::ZeroVector);
+    OverlaySkeletalMesh->SetRelativeRotation(FRotator::ZeroRotator);
+    
+    WeaponTrailComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("WeaponTrail"));
+    WeaponTrailComponent->SetupAttachment(GetMesh());
+    WeaponTrailComponent->SetRelativeLocation(FVector::ZeroVector);
+    WeaponTrailComponent->SetRelativeRotation(FRotator::ZeroRotator);
+    WeaponTrailComponent->bAutoActivate = false;
+
+    DualWeaponTrailComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("DualWeaponTrail"));
+    DualWeaponTrailComponent->SetupAttachment(GetMesh());
+    DualWeaponTrailComponent->SetRelativeLocation(FVector::ZeroVector);
+    DualWeaponTrailComponent->SetRelativeRotation(FRotator::ZeroRotator);
+    DualWeaponTrailComponent->bAutoActivate = false;
+    
+    
     Camera = CreateDefaultSubobject<UAlsCameraComponent>(TEXT("Camera"));
     Camera->SetupAttachment(GetMesh());
     Camera->SetRelativeRotation_Direct(FRotator(0.0f, 90.0f, 0.0f));
@@ -42,24 +73,33 @@ AEmberCharacter::AEmberCharacter()
     MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
     
     EmberItemManager = CreateDefaultSubobject<UUserItemManger>(TEXT("UserItemComponent"));
+
+    VisualCharacterMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SK_LittleBoyRyan"));
+    VisualCharacterMesh->SetupAttachment(GetMesh());
+
+    GliderMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Glide"));
+    GliderMesh->SetupAttachment(GetMesh());
+
+    BuildComponent = CreateDefaultSubobject<UAC_BuildComponent>(TEXT("BuildComponent"));
     
+    /* Test */
     HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
     HpBarWidget->SetupAttachment(GetMesh());
     HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
-    
-   
 }
 
 void AEmberCharacter::BeginPlay()
 {
     Super::BeginPlay();
 
+    if (BuildComponent)
+    {
+        BuildComponent->Camera = Camera;
+    }
     if (UEmberGameInstance* GI = GetGameInstance<UEmberGameInstance>())
     {
-        // 이 함수에서 Unmap/MapKey로 Modifier별로 키 반영!
         GI->ApplySavedMoveBindingsToUserSettings();
 
-        // 2. 입력 서브시스템에 Context 등록 (항상 최신값 반영)
         APlayerController* PC = Cast<APlayerController>(GetController());
         if (PC && PC->IsLocalController())
         {
@@ -68,6 +108,8 @@ void AEmberCharacter::BeginPlay()
             {
                 Subsystem->ClearAllMappings();
                 Subsystem->AddMappingContext(GI->PlayerMappingContext, 0);
+                Subsystem->AddMappingContext(GI->UI_ALS_MappingContext, 1);
+                Subsystem->AddMappingContext(GI->UIMappingContext, 2);
                 UE_LOG(LogTemp, Warning, TEXT("[Character::BeginPlay] MappingContext applied!"));
             }
         }
@@ -86,8 +128,7 @@ void AEmberCharacter::BeginPlay()
             }
         
             AbilitySystemComponent->InitAbilityActorInfo(EmberPlayerState, this);    
-        
-        
+            
             for (const TSubclassOf<UGameplayAbility>& Ability : StartAbilities)
             {
                 FGameplayAbilitySpec StartAbilitySpec = Ability;
@@ -120,6 +161,11 @@ void AEmberCharacter::BeginPlay()
             PlayerController->ConsoleCommand(TEXT("ShowDebug AbilitySystem"));*/
             //bClientAbility = true;   
         }
+
+        /*if (MeleeTraceComponent)
+        {
+            MeleeTraceComponent->OnTraceHit.AddDynamic(this, &AEmberCharacter::HandleMeleeTraceHit);
+        }*/
     }
     
     if (HpBarWidgetClass)
@@ -132,6 +178,47 @@ void AEmberCharacter::BeginPlay()
         HpBarWidget->UpdateAbilitySystemComponent(this);
     }
 }
+
+void AEmberCharacter::Tick(float DeltaSeconds)
+{
+    Super::Tick(DeltaSeconds);
+
+    if (LocomotionMode == AlsLocomotionModeTags::Gliding)
+    {
+        FVector WorldInput = GetLastMovementInputVector();
+        
+        const float DeadZoneSqr = 0.1f * 0.1f;
+        if (WorldInput.SizeSquared() <= DeadZoneSqr)
+        {
+            return; 
+        }
+        
+        WorldInput.Z = 0.0f;
+        
+        FVector LocalInput = GetActorRotation().UnrotateVector(WorldInput);
+        LocalInput = LocalInput.GetSafeNormal2D(); 
+        
+        float InputYawOffset = FMath::RadiansToDegrees(FMath::Atan2(LocalInput.Y, LocalInput.X));
+        
+        FRotator CurrentRot = GetActorRotation();
+        float CurrentYaw   = CurrentRot.Yaw;
+        
+        float DesiredYaw = CurrentYaw + InputYawOffset;
+        
+        const float RotationSpeed = 1.0f;
+        float NewYaw = FMath::FInterpTo(
+            CurrentYaw, 
+            DesiredYaw, 
+            DeltaSeconds, 
+            RotationSpeed
+        );
+        
+        FRotator NewRot(0.0f, NewYaw, 0.0f);
+        
+        SetActorRotation(NewRot);
+    }
+}
+
 
 void AEmberCharacter::PossessedBy(AController* NewController)
 {
@@ -282,10 +369,59 @@ void AEmberCharacter::TryAbilityFromOnAim(const bool bPressed)
     }
 }
 
+/*void AEmberCharacter::HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, AActor* HitActor,
+    const FVector& HitLocation, const FVector& HitNormal, FName HitBoneName, FMeleeTraceInstanceHandle TraceHandle)
+{
+    
+}*/
 
 UMeleeTraceComponent* AEmberCharacter::GetMeleeTraceComponent() const
 {
     return MeleeTraceComponent;
+}
+
+UNiagaraComponent* AEmberCharacter::GetWeaponTrailComponent() const
+{
+    return WeaponTrailComponent;
+}
+
+UNiagaraComponent* AEmberCharacter::GetDualWeaponTrailComponent() const
+{
+    return DualWeaponTrailComponent;
+}
+
+UNiagaraSystem* AEmberCharacter::GetOverlayHitEffect() const
+{
+    return OverlayHitEffect;
+}
+
+void AEmberCharacter::SetOverlayHitEffect(UNiagaraSystem* InHitEffectAsset)
+{
+    OverlayHitEffect = InHitEffectAsset;
+}
+
+void AEmberCharacter::PlayHitEffectAtLocation(const FVector& Location)
+{
+    UWorld* World = GetWorld();
+
+    if (!OverlayHitEffect || !World)
+    {
+        return;
+    }
+    
+    if (UGameInstance* GameInstance = World->GetGameInstance())
+    {
+        if (UEffectManagerSubsystem* EffectManager = GameInstance->GetSubsystem<UEffectManagerSubsystem>())
+        {
+            EffectManager->PlayHitEffectAtLocation(OverlayHitEffect,Location,
+                FRotator::ZeroRotator,FVector(1.f, 1.f, 1.f),true);            
+        }    
+    }
+}
+
+USkeletalMeshComponent* AEmberCharacter::GetGliderMesh() const
+{
+    return GliderMesh;
 }
 
 void AEmberCharacter::NotifyControllerChanged()
@@ -445,6 +581,43 @@ void AEmberCharacter::Input_OnAim(const FInputActionValue& ActionValue)
     }
 }
 
+void AEmberCharacter::Input_OnGlide()
+{
+    if (!AlsCharacterMovement)
+    {
+        return;
+    }
+    
+    const FGameplayTag CurrentMode = GetLocomotionMode();
+
+    if (CurrentMode == AlsLocomotionModeTags::InAir)
+    {
+        PreOverlayTag = GetOverlayMode();
+        SetOverlayMode(AlsOverlayModeTags::Default);
+        
+        GliderMesh->SetHiddenInGame(false);
+        
+        SetLocomotionMode(AlsLocomotionModeTags::Gliding);
+
+        AlsCharacterMovement->GravityScale = GlideGravityScale;
+        
+        const FRotator ControlRot = GetControlRotation();
+        const FVector ForwardDir = FRotationMatrix(ControlRot).GetScaledAxis(EAxis::X);
+        
+        FVector NewVelocity = ForwardDir.GetSafeNormal() * GlideForwardSpeed;
+        
+        NewVelocity.Z = -FMath::Abs(GlideDescendSpeed);
+
+        AlsCharacterMovement->Velocity = NewVelocity;
+    }
+    else if (CurrentMode == AlsLocomotionModeTags::Gliding)
+    {
+        SetLocomotionMode(AlsLocomotionModeTags::InAir);
+        
+        AlsCharacterMovement->GravityScale = DefaultGravityScale;
+    }
+}
+
 void AEmberCharacter::Input_OnRagdoll()
 {
     if (!StopRagdolling())
@@ -528,49 +701,19 @@ void AEmberCharacter::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& Dis
     Super::DisplayDebug(Canvas, DisplayInfo, Unused, VerticalLocation);
 }
 
+void AEmberCharacter::NotifyLocomotionModeChanged(const FGameplayTag& PreviousLocomotionMode)
+{
+    Super::NotifyLocomotionModeChanged(PreviousLocomotionMode);
+    
+    if (PreviousLocomotionMode == AlsLocomotionModeTags::Gliding)
+    {
+        AlsCharacterMovement->GravityScale = DefaultGravityScale;
+        SetOverlayMode(PreOverlayTag);
+        GliderMesh->SetHiddenInGame(true);
+    }
+}
+
 bool AEmberCharacter::StartMantlingInAir()
 {
     return false;
-}
-void AEmberCharacter::ToggleQuestUI()
-{
-    if (!QuestWidgetInstance)
-    {
-        QuestWidgetInstance = CreateWidget<UPlayerQuestWidget>(GetWorld(), QuestWidgetClass);
-    }
-
-    if (QuestWidgetInstance->IsInViewport())
-    {
-        QuestWidgetInstance->RemoveFromParent();
-        return;
-    }
-
-    QuestWidgetInstance->AddToViewport(100);
-    UE_LOG(LogTemp, Warning, TEXT(">>> Q key pressed - opening quest UI"));
-
-    if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
-    {
-        FName LastQuestID;
-        if (QuestSubsystem->GetLastActiveQuestID(LastQuestID))
-        {
-            // 퀘스트 상태 판별
-            const bool bIsAccepted = QuestSubsystem->IsQuestAccepted(LastQuestID);
-            const bool bIsComplete = QuestSubsystem->IsQuestCompleted(LastQuestID);
-
-            if (UQuestDataAsset* QuestAsset = QuestSubsystem->GetAllLoadedQuests().FindRef(LastQuestID))
-            {
-                // 위젯에 전달 (수락 전/후 모두 처리 가능)
-                QuestWidgetInstance->SetQuestInfoFromDataAsset(QuestAsset, bIsComplete, bIsAccepted);
-
-                UE_LOG(LogTemp, Warning, TEXT(">>> Quest UI 업데이트: %s (Accepted: %s, Complete: %s)"),
-                    *QuestAsset->QuestName.ToString(),
-                    bIsAccepted ? TEXT("true") : TEXT("false"),
-                    bIsComplete ? TEXT("true") : TEXT("false"));
-            }
-        }
-        else
-        {
-            UE_LOG(LogTemp, Warning, TEXT(">>> No accepted quest found — player must accept a quest first"));
-        }
-    }
 }
