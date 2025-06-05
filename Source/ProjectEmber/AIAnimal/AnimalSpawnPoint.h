@@ -20,7 +20,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	bool GetIsInHere() const;
+	
 	int32 GetAliveAnimalsInBox() const;
+	bool GetIsCreated() const;
+	void SetIsCreated(bool Inbool);
 	
 	//float Distance;
 protected:
@@ -45,7 +48,9 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning")
 	bool bIsInHere = false;
-
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning")
+	bool bIsCreated = false;
 };
 
 

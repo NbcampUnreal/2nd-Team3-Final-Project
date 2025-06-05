@@ -53,7 +53,8 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
         //Bind(RotationModeAction,  ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnRotationMode);
         //Bind(ViewModeAction,      ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnViewMode);
         Bind(SwitchShoulderAction,ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnSwitchShoulder);
-
+        Bind(GlideAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnGlide);
+        
         UInteractionComponent* Comp = Character->InteractionComponent.Get();
         if (Comp)
         {

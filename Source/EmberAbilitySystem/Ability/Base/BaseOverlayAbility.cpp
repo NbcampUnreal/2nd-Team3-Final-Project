@@ -7,6 +7,7 @@
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "EmberLog/EmberLog.h"
 #include "GameFramework/Character.h"
+#include "MessageBus/MessageBus.h"
 
 UBaseOverlayAbility::UBaseOverlayAbility()
 {
@@ -27,11 +28,12 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	}
 
 	LaunchCharacterForward(ActorInfo);
-
+	
 	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
 	{
 		Character->SetForceGameplayTags(ForceGameplayTags);
-		PreLocomotionState = Character->GetLocomotionState();
+		Character->ForceLastInputDirectionBlocked(true);
+		//PreLocomotionState = Character->GetLocomotionState();
 
 		if (bMontageTickEnable)
 		{
@@ -97,12 +99,15 @@ void UBaseOverlayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 		{
 			Character->SetDesiredGait(AlsGaitTags::Running);	
 		}
+		Character->ForceLastInputDirectionBlocked(true);
 	}
 
 	if (auto AbilityClass = ChooseAbilityByState())
 	{
 		AbilitySystemComponent->TryActivateAbilityByClass(AbilityClass,false);
 	}
+	
+	UMessageBus::GetInstance()->BroadcastMessage(TEXT("OverlayAbilityEnded"), GetAvatarActorFromActorInfo());
 }
 
 void UBaseOverlayAbility::InputPressed(const FGameplayAbilitySpecHandle Handle,
@@ -117,6 +122,11 @@ void UBaseOverlayAbility::InputReleased(const FGameplayAbilitySpecHandle Handle,
 	bComboInputReceived = false;
 	
 	EndAbility(Handle, ActorInfo, ActivationInfo,true, true);
+}
+
+UAnimMontage* UBaseOverlayAbility::GetDefaultMontage() const
+{
+	return DefaultMontage;
 }
 
 
@@ -178,7 +188,8 @@ void UBaseOverlayAbility::OnMontageTick() const
 	{
 		if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
 		{
-			Character->ForceVelocityYawAngle(PreLocomotionState);
+			Character->ForceLastInputDirectionBlocked(true);
+			//Character->ForceVelocityYawAngle(PreLocomotionState);
 		}	
 	}
 }

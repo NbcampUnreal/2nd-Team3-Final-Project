@@ -30,6 +30,11 @@ void UAudioSubsystem::LoadDataTables()
 		{
 			CharacterSoundTable = AudioDataSettings->CharacterSounds.LoadSynchronous();
 		}
+
+		if (!AudioDataSettings->CharacterSounds.IsNull())
+		{
+			UISfxSoundTable = AudioDataSettings->UISfxSounds.LoadSynchronous();
+		}
 	}
 }
 
@@ -82,6 +87,8 @@ void UAudioSubsystem::PlaySFX(ESfxSoundType SoundType, const FName RowName, FVec
 		break;
 	case ESfxSoundType::Character:
 		PlaySFXByRowName<FCharacterAudioDataStruct>(GetWorld(), CharacterSoundTable, RowName, Location);
+		break;
+	default:
 		break;
 	}
 }
