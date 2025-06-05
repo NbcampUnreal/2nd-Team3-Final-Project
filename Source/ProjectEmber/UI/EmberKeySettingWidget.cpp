@@ -109,7 +109,7 @@ static FString MoveDirectionToString(EMoveDirection Dir)
     }
 }
 
-static FString GetMoveDirectionMappingName(EMoveDirection Dir)
+FString UEmberKeySettingWidget::GetMoveDirectionMappingName(EMoveDirection Dir)
 {
     switch (Dir)
     {
