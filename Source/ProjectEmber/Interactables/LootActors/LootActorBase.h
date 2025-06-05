@@ -56,6 +56,11 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swing")
 	int32 SwingCount{1};
+	
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable")
+	FGameplayTagContainer GameplayTagContainer;
+	
 private:
 	void SetCharacterRotation(AEmberCharacter* EmberCharacter, const float YawAngle);
 	
