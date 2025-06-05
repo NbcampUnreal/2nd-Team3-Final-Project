@@ -31,6 +31,57 @@ public:
     UPROPERTY()
     UInputMappingContext* ClonedIMC = nullptr;
 
+    UPROPERTY(meta = (BindWidget))
+    UButton* ForwardKeyButton;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* ForwardButtonText;
+
+    UPROPERTY(meta = (BindWidget))
+    UButton* LeftwardKeyButton;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* LeftwardButtonText;
+
+    UPROPERTY(meta = (BindWidget))
+    UButton* RightwardKeyButton;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* RightwardButtonText;
+
+    UPROPERTY(meta = (BindWidget))
+    UButton* BackwardKeyButton;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* BackwardButtonText;
+
+    UPROPERTY(meta = (BindWidget))
+    UButton* ApplyButton;
+
+    UPROPERTY(meta = (BindWidget))
+    UButton* ResetButton;
+
+    UFUNCTION()
+    void UpdateKeyUI();
+
+    UFUNCTION()
+    void OnForwardKeyButtonClicked();
+
+    UFUNCTION()
+    void OnBackwardKeyButtonClicked();
+
+    UFUNCTION()
+    void OnLeftwardKeyButtonClicked();
+
+    UFUNCTION()
+    void OnRightwardKeyButtonClicked();
+
+    UFUNCTION()
+    void ShowKeyCaptureWidget();
+
+
+
+
     static EMoveDirection GetDirectionFromModifiers(const TArray<TObjectPtr<UInputModifier>>& Modifiers);
 
     UFUNCTION(BlueprintCallable)
@@ -40,13 +91,6 @@ protected:
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UVerticalBox> KeyListContainer;
 
-    UPROPERTY(meta = (BindWidget))
-    TObjectPtr<UButton> ApplyButton;
-
-    UPROPERTY(meta = (BindWidget))
-    TObjectPtr<UButton> ResetButton;
-
-    // Å° ÀÔ·Â Ä¸Ã³ À§Á¬ Å¬·¡½º
     UPROPERTY(EditDefaultsOnly, Category = "Input")
     TSubclassOf<UEmberKeyCaptureWidget> KeyCaptureWidgetClass;
 
@@ -60,8 +104,6 @@ protected:
 
     int32 PendingKeyChangeIndex = -1;
 
-    void RefreshKeyList();
-
     UFUNCTION()
     void OnApplyClicked();
 
@@ -69,10 +111,7 @@ protected:
     void OnResetClicked();
 
     UFUNCTION()
-    void OnAnyKeyButtonClicked();
-
-    UFUNCTION()
     void OnKeyCaptured(FKey NewKey);
 
-    void OnKeyButtonClicked(int32 MappingIndex);
+    EMoveDirection PendingKeyChangeDirection = EMoveDirection::Unknown;
 };
