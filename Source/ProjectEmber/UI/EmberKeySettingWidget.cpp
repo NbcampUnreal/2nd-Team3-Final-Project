@@ -19,6 +19,25 @@
 void UEmberKeySettingWidget::NativeConstruct()
 {
     Super::NativeConstruct();
+
+    if (ForwardKeyButton)
+        ForwardKeyButton->OnClicked.AddDynamic(this, &ThisClass::OnForwardKeyButtonClicked);
+
+    if (BackwardKeyButton)
+        BackwardKeyButton->OnClicked.AddDynamic(this, &ThisClass::OnBackwardKeyButtonClicked);
+
+    if (LeftwardKeyButton)
+        LeftwardKeyButton->OnClicked.AddDynamic(this, &ThisClass::OnLeftwardKeyButtonClicked);
+
+    if (RightwardKeyButton)
+        RightwardKeyButton->OnClicked.AddDynamic(this, &ThisClass::OnRightwardKeyButtonClicked);
+
+    if (ApplyButton)
+        ApplyButton->OnClicked.AddDynamic(this, &ThisClass::OnApplyClicked);
+
+    if (ResetButton)
+        ResetButton->OnClicked.AddDynamic(this, &ThisClass::OnResetClicked);
+
     LoadMappingsFromSave();
 }
 
@@ -102,69 +121,33 @@ static FString GetMoveDirectionMappingName(EMoveDirection Dir)
     }
 }
 
-void UEmberKeySettingWidget::RefreshKeyList()
+void UEmberKeySettingWidget::OnForwardKeyButtonClicked()
 {
-    KeyListContainer->ClearChildren();
-    KeyButtonMap.Empty();
-
-    for (int32 i = 0; i < CurrentMoveMappings.Num(); ++i)
-    {
-        const auto& Entry = CurrentMoveMappings[i];
-
-        UHorizontalBox* Row = NewObject<UHorizontalBox>(this);
-
-        UTextBlock* Label = NewObject<UTextBlock>(this);
-        Label->SetText(FText::FromString(MoveDirectionToString(Entry.Direction)));
-
-        UButton* KeyButton = NewObject<UButton>(this);
-        UTextBlock* KeyLabel = NewObject<UTextBlock>(this);
-        KeyLabel->SetText(FText::FromName(Entry.BoundKey.GetFName()));
-        KeyButton->AddChild(KeyLabel);
-
-        KeyButton->OnClicked.AddDynamic(this, &UEmberKeySettingWidget::OnAnyKeyButtonClicked);
-        KeyButtonMap.Add(KeyButton, i);
-
-        Row->AddChildToHorizontalBox(Label);
-        Row->AddChildToHorizontalBox(KeyButton);
-        KeyListContainer->AddChild(Row);
-    }
-
-    UHorizontalBox* BottomRow = NewObject<UHorizontalBox>(this);
-
-    UButton* DynamicApplyButton = NewObject<UButton>(this);
-    UTextBlock* ApplyText = NewObject<UTextBlock>(this);
-    ApplyText->SetText(FText::FromString(TEXT("Apply")));
-    DynamicApplyButton->AddChild(ApplyText);
-    DynamicApplyButton->OnClicked.AddDynamic(this, &UEmberKeySettingWidget::OnApplyClicked);
-
-    UButton* DynamicResetButton = NewObject<UButton>(this);
-    UTextBlock* ResetText = NewObject<UTextBlock>(this);
-    ResetText->SetText(FText::FromString(TEXT("Reset")));
-    DynamicResetButton->AddChild(ResetText);
-    DynamicResetButton->OnClicked.AddDynamic(this, &UEmberKeySettingWidget::OnResetClicked);
-
-    BottomRow->AddChildToHorizontalBox(DynamicApplyButton);
-    BottomRow->AddChildToHorizontalBox(DynamicResetButton);
-    KeyListContainer->AddChild(BottomRow);
+    PendingKeyChangeDirection = EMoveDirection::Forward;
+    ShowKeyCaptureWidget();
 }
 
-void UEmberKeySettingWidget::OnAnyKeyButtonClicked()
+void UEmberKeySettingWidget::OnBackwardKeyButtonClicked()
 {
-    for (const auto& Pair : KeyButtonMap)
-    {
-        if (Pair.Key->HasUserFocus(GetOwningPlayer()))
-        {
-            OnKeyButtonClicked(Pair.Value);
-            return;
-        }
-    }
+    PendingKeyChangeDirection = EMoveDirection::Backward;
+    ShowKeyCaptureWidget();
 }
 
-void UEmberKeySettingWidget::OnKeyButtonClicked(int32 MappingIndex)
+void UEmberKeySettingWidget::OnLeftwardKeyButtonClicked()
+{
+    PendingKeyChangeDirection = EMoveDirection::Left;
+    ShowKeyCaptureWidget();
+}
+
+void UEmberKeySettingWidget::OnRightwardKeyButtonClicked()
+{
+    PendingKeyChangeDirection = EMoveDirection::Right;
+    ShowKeyCaptureWidget();
+}
+
+void UEmberKeySettingWidget::ShowKeyCaptureWidget()
 {
     if (!KeyCaptureWidgetClass) return;
-
-    PendingKeyChangeIndex = MappingIndex;
 
     UEmberKeyCaptureWidget* CaptureWidget = CreateWidget<UEmberKeyCaptureWidget>(this, KeyCaptureWidgetClass);
     if (CaptureWidget)
@@ -176,20 +159,15 @@ void UEmberKeySettingWidget::OnKeyButtonClicked(int32 MappingIndex)
 
 void UEmberKeySettingWidget::OnKeyCaptured(FKey NewKey)
 {
-    if (!NewKey.IsValid() || !CurrentMoveMappings.IsValidIndex(PendingKeyChangeIndex))
-        return;
-
-    for (int32 i = 0; i < CurrentMoveMappings.Num(); ++i)
+    for (auto& Entry : CurrentMoveMappings)
     {
-        if (i != PendingKeyChangeIndex && CurrentMoveMappings[i].BoundKey == NewKey)
+        if (Entry.Direction == PendingKeyChangeDirection)
         {
-            UE_LOG(LogTemp, Warning, TEXT("[KeySetting] Key '%s' is already used by another direction!"), *NewKey.GetDisplayName().ToString());
-            return;
+            Entry.BoundKey = NewKey;
+            break;
         }
     }
-
-    CurrentMoveMappings[PendingKeyChangeIndex].BoundKey = NewKey;
-    RefreshKeyList();
+    UpdateKeyUI();
 }
 
 void UEmberKeySettingWidget::LoadMappingsFromSave()
@@ -223,7 +201,7 @@ void UEmberKeySettingWidget::LoadMappingsFromSave()
             }
         }
     }
-    RefreshKeyList();
+    UpdateKeyUI();
 }
 
 void UEmberKeySettingWidget::OnApplyClicked()
@@ -263,5 +241,27 @@ void UEmberKeySettingWidget::OnResetClicked()
     {
         Entry.BoundKey = Entry.DefaultKey;
     }
-    RefreshKeyList();
+    UpdateKeyUI();
+}
+
+void UEmberKeySettingWidget::UpdateKeyUI()
+{
+    for (const auto& Entry : CurrentMoveMappings)
+    {
+        switch (Entry.Direction)
+        {
+        case EMoveDirection::Forward:
+            if (ForwardButtonText) ForwardButtonText->SetText(FText::FromName(Entry.BoundKey.GetFName()));
+            break;
+        case EMoveDirection::Backward:
+            if (BackwardButtonText) BackwardButtonText->SetText(FText::FromName(Entry.BoundKey.GetFName()));
+            break;
+        case EMoveDirection::Left:
+            if (LeftwardButtonText) LeftwardButtonText->SetText(FText::FromName(Entry.BoundKey.GetFName()));
+            break;
+        case EMoveDirection::Right:
+            if (RightwardButtonText) RightwardButtonText->SetText(FText::FromName(Entry.BoundKey.GetFName()));
+            break;
+        }
+    }
 }

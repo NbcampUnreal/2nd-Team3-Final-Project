@@ -8,6 +8,9 @@
 #include "AlsCharacterMovementComponent.h"
 #include "Framework/EmberPlayerState.h"
 #include "EnhancedInputSubsystems.h"
+#include "NiagaraComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "EnhancedInputComponent.h"
 #include "GameInstance/EmberGameInstance.h"
 #include "InputMappingContext.h"
@@ -15,12 +18,14 @@
 #include "MaterialHLSLTree.h"
 #include "WaterBodyActor.h"
 #include "Animation/AnimInstance.h"
+#include "Build/AC_BuildComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Define/CharacterDefine.h"
 #include "EmberLog/EmberLog.h"
 #include "Engine/LocalPlayer.h"
 #include "FunctionLibrary/UIFunctionLibrary.h"
 #include "GameFramework/PhysicsVolume.h"
+#include "GameInstance/EffectManagerSubsystem.h"
 #include "Item/UserItemManger.h"
 #include "UI/EmberWidgetComponent.h"
 #include "MeleeTrace/Public/MeleeTraceComponent.h"
@@ -33,6 +38,29 @@
 AEmberCharacter::AEmberCharacter()
 {
     PrimaryActorTick.bCanEverTick = true;
+    
+    OverlayStaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("OverlayStaticMesh"));
+    OverlayStaticMesh->SetupAttachment(GetMesh());
+    OverlayStaticMesh->SetRelativeLocation(FVector::ZeroVector);
+    OverlayStaticMesh->SetRelativeRotation(FRotator::ZeroRotator);
+    
+    OverlaySkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("OverlaySkeletalMesh"));
+    OverlaySkeletalMesh->SetupAttachment(GetMesh());
+    OverlaySkeletalMesh->SetRelativeLocation(FVector::ZeroVector);
+    OverlaySkeletalMesh->SetRelativeRotation(FRotator::ZeroRotator);
+    
+    WeaponTrailComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("WeaponTrail"));
+    WeaponTrailComponent->SetupAttachment(GetMesh());
+    WeaponTrailComponent->SetRelativeLocation(FVector::ZeroVector);
+    WeaponTrailComponent->SetRelativeRotation(FRotator::ZeroRotator);
+    WeaponTrailComponent->bAutoActivate = false;
+
+    DualWeaponTrailComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("DualWeaponTrail"));
+    DualWeaponTrailComponent->SetupAttachment(GetMesh());
+    DualWeaponTrailComponent->SetRelativeLocation(FVector::ZeroVector);
+    DualWeaponTrailComponent->SetRelativeRotation(FRotator::ZeroRotator);
+    DualWeaponTrailComponent->bAutoActivate = false;
+    
     
     Camera = CreateDefaultSubobject<UAlsCameraComponent>(TEXT("Camera"));
     Camera->SetupAttachment(GetMesh());
@@ -51,6 +79,8 @@ AEmberCharacter::AEmberCharacter()
 
     GliderMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Glide"));
     GliderMesh->SetupAttachment(GetMesh());
+
+    BuildComponent = CreateDefaultSubobject<UAC_BuildComponent>(TEXT("BuildComponent"));
     
     /* Test */
     HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
@@ -62,6 +92,10 @@ void AEmberCharacter::BeginPlay()
 {
     Super::BeginPlay();
 
+    if (BuildComponent)
+    {
+        BuildComponent->Camera = Camera;
+    }
     if (UEmberGameInstance* GI = GetGameInstance<UEmberGameInstance>())
     {
         GI->ApplySavedMoveBindingsToUserSettings();
@@ -128,6 +162,11 @@ void AEmberCharacter::BeginPlay()
             PlayerController->ConsoleCommand(TEXT("ShowDebug AbilitySystem"));*/
             //bClientAbility = true;   
         }
+
+        /*if (MeleeTraceComponent)
+        {
+            MeleeTraceComponent->OnTraceHit.AddDynamic(this, &AEmberCharacter::HandleMeleeTraceHit);
+        }*/
     }
     
     if (HpBarWidgetClass)
@@ -331,10 +370,54 @@ void AEmberCharacter::TryAbilityFromOnAim(const bool bPressed)
     }
 }
 
+/*void AEmberCharacter::HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, AActor* HitActor,
+    const FVector& HitLocation, const FVector& HitNormal, FName HitBoneName, FMeleeTraceInstanceHandle TraceHandle)
+{
+    
+}*/
 
 UMeleeTraceComponent* AEmberCharacter::GetMeleeTraceComponent() const
 {
     return MeleeTraceComponent;
+}
+
+UNiagaraComponent* AEmberCharacter::GetWeaponTrailComponent() const
+{
+    return WeaponTrailComponent;
+}
+
+UNiagaraComponent* AEmberCharacter::GetDualWeaponTrailComponent() const
+{
+    return DualWeaponTrailComponent;
+}
+
+UNiagaraSystem* AEmberCharacter::GetOverlayHitEffect() const
+{
+    return OverlayHitEffect;
+}
+
+void AEmberCharacter::SetOverlayHitEffect(UNiagaraSystem* InHitEffectAsset)
+{
+    OverlayHitEffect = InHitEffectAsset;
+}
+
+void AEmberCharacter::PlayHitEffectAtLocation(const FVector& Location)
+{
+    UWorld* World = GetWorld();
+
+    if (!OverlayHitEffect || !World)
+    {
+        return;
+    }
+    
+    if (UGameInstance* GameInstance = World->GetGameInstance())
+    {
+        if (UEffectManagerSubsystem* EffectManager = GameInstance->GetSubsystem<UEffectManagerSubsystem>())
+        {
+            EffectManager->PlayHitEffectAtLocation(OverlayHitEffect,Location,
+                FRotator::ZeroRotator,FVector(1.f, 1.f, 1.f),true);            
+        }    
+    }
 }
 
 USkeletalMeshComponent* AEmberCharacter::GetGliderMesh() const
@@ -510,6 +593,9 @@ void AEmberCharacter::Input_OnGlide()
 
     if (CurrentMode == AlsLocomotionModeTags::InAir)
     {
+        PreOverlayTag = GetOverlayMode();
+        SetOverlayMode(AlsOverlayModeTags::Default);
+        
         GliderMesh->SetHiddenInGame(false);
         
         SetLocomotionMode(AlsLocomotionModeTags::Gliding);
@@ -623,7 +709,7 @@ void AEmberCharacter::NotifyLocomotionModeChanged(const FGameplayTag& PreviousLo
     if (PreviousLocomotionMode == AlsLocomotionModeTags::Gliding)
     {
         AlsCharacterMovement->GravityScale = DefaultGravityScale;
-
+        SetOverlayMode(PreOverlayTag);
         GliderMesh->SetHiddenInGame(true);
     }
 }
