@@ -38,7 +38,7 @@ EBTNodeResult::Type UBTTask_Interact::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	AActor* TargetActor = Cast<AActor>(TargetObject);
 	if (!TargetActor)
 	{
-		return EBTNodeResult::Succeeded;
+		return EBTNodeResult::Failed;
 	}
 	float Distance = FVector::Dist(AIPawn->GetActorLocation(), TargetActor->GetActorLocation());
 	if (Distance > InteractionDistance)
