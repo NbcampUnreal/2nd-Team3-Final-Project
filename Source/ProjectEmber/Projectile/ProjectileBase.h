@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "Components/SphereComponent.h"
 #include "GameFramework/Actor.h"
 #include "ProjectileBase.generated.h"
 
@@ -35,7 +36,13 @@ protected:
 	UStaticMeshComponent* MeshComp;
 	
 	UPROPERTY(VisibleDefaultsOnly, Category="Components")
+	USphereComponent* SphereComp;
+	
+	UPROPERTY(VisibleDefaultsOnly, Category="Components")
 	UProjectileMovementComponent* ProjectileMovement;
+
+	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
+	TSubclassOf<class UGameplayEffect> GameplayEffectClass;
 	
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComp,AActor* OtherActor,UPrimitiveComponent* OtherComp,FVector NormalImpulse,
