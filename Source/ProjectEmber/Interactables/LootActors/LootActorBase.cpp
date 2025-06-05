@@ -1,7 +1,9 @@
 ﻿#include "LootActorBase.h"
 #include "AbilitySystemComponent.h"
 #include "Abilities/GameplayAbility.h"
+#include "Ability/Base/BaseOverlayAbility.h"
 #include "Character/EmberCharacter.h"
+#include "EmberLog/EmberLog.h"
 
 ALootActorBase::ALootActorBase()
 {
@@ -36,10 +38,28 @@ void ALootActorBase::StartInteractAbility(APawn* InstigatorPawn)
 				FGameplayAbilitySpec* AbilitySpec = AbilitySystem->FindAbilitySpecFromClass(InteractAbilityClass);
 				if (AbilitySpec->IsActive())
 				{
-				
+					EMBER_LOG(LogEmber, Warning, TEXT("Interact Ability is already active on %s"), *EmberCharacter->GetName());
 				}
 				else
 				{
+					MessageBusSubscribe();
+					
+					const FVector TargetLocation = MeshComponent->GetComponentLocation();
+					const FVector CharacterLocation = EmberCharacter->GetActorLocation();
+					const FVector Dir = (TargetLocation - CharacterLocation).GetSafeNormal();
+					SetCharacterRotation(EmberCharacter, Dir.Rotation().Yaw);
+					
+					if (const UBaseOverlayAbility* OverlayAbility = Cast<UBaseOverlayAbility>(AbilitySpec->GetPrimaryInstance()))
+					{
+						float MontageLength = OverlayAbility->GetDefaultMontage()->GetPlayLength();
+						float MontageRateScale = OverlayAbility->GetDefaultMontage()->RateScale;
+						
+						/* 공식 : (몽타주전체길이 / 재생속도:공격속도) * (몇번휘두를건지 - 1) + (몽타주에서 내려찍는 시간 / 재생속도:공격속도) */
+						SetHoldTime((MontageLength / MontageRateScale) * (SwingCount - 1) + (0.95f / MontageRateScale));
+					}
+					
+					// 오버레이 전환 체크 및 어빌리티 재생
+					PreOverlayTag = EmberCharacter->GetOverlayMode(); 
 					EmberCharacter->SetOverlayMode(InteractOverlayTag);
 					AbilitySystem->TryActivateAbility(AbilitySpec->Handle);
 					TargetAbilitySystemComponent = AbilitySystem;
@@ -49,8 +69,61 @@ void ALootActorBase::StartInteractAbility(APawn* InstigatorPawn)
 	}
 }
 
-void ALootActorBase::UpdateInteractAbility()
+void ALootActorBase::UpdateInteractAbility() const
 {
 	TargetAbilitySystemComponent->TryActivateAbilityByClass(InteractAbilityClass);
+}
+
+void ALootActorBase::CancelInteractAbility()
+{
+	if (const FGameplayAbilitySpec* AbilitySpec = TargetAbilitySystemComponent->FindAbilitySpecFromClass(InteractAbilityClass))
+	{
+		bIsAbilityEnded = true;
+		TargetAbilitySystemComponent->CancelAbilityHandle(AbilitySpec->Handle);
+	}
+}
+
+void ALootActorBase::CompleteInteractAbility()
+{
+	bIsAbilityEnded = true;
+	// 아이템 추가
+}
+
+void ALootActorBase::RefreshOverlayMode(APawn* InstigatorPawn)
+{
+	if (InstigatorPawn)
+	{
+		if (AEmberCharacter* EmberCharacter = Cast<AEmberCharacter>(InstigatorPawn))
+		{
+			EmberCharacter->SetOverlayMode(PreOverlayTag);
+		}
+	}
+}
+
+void ALootActorBase::SetCharacterRotation(AEmberCharacter* EmberCharacter, const float YawAngle)
+{
+	EmberCharacter->ForceRoationTest(YawAngle);
+	EmberCharacter->ForceLastInputDirectionBlocked(true);
+}
+
+void ALootActorBase::MessageBusSubscribe()
+{
+	MessageDelegateHandle = FMessageDelegate::CreateUObject(this, &ThisClass::ReceiveMessage);
+	UMessageBus::GetInstance()->Subscribe(TEXT("OverlayAbilityEnded"), MessageDelegateHandle);
+}
+
+void ALootActorBase::MessageBusUnsubscribe()
+{
+	UMessageBus::GetInstance()->Unsubscribe(TEXT("OverlayAbilityEnded"), MessageDelegateHandle);
+}
+
+void ALootActorBase::ReceiveMessage(const FName MessageType, UObject* Payload)
+{
+	if (MessageType == TEXT("OverlayAbilityEnded") && bIsAbilityEnded)
+	{
+		RefreshOverlayMode(Cast<APawn>(Payload));
+		MessageBusUnsubscribe();
+		bIsAbilityEnded = false;
+	}
 }
 
