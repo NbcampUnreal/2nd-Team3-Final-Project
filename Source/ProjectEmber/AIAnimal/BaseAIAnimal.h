@@ -191,7 +191,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTag IdentityTag;
 
-	FTimerHandle TimerHandle;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability")
+	TSubclassOf<class UGameplayEffect> DecreaseFullnessEffect;
+
+	FTimerHandle FullnessTimerHandle;
 	
 	TArray<FVector> PatrolPoints;
 	
