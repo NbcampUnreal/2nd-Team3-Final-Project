@@ -16,20 +16,21 @@ class EMBERABILITYSYSTEM_API UGA_AnimalDeath : public UGameplayAbility
 	
 public:
 	UGA_AnimalDeath();
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="AnimalDeath")
-	UAnimMontage* Montage;
 
-	
-	
+	UFUNCTION(BlueprintCallable)
+	void CallEndAbility(const FGameplayTag Tag, int32 NewCount);
 protected:
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo* OwnerInfo,
 		const FGameplayAbilityActivationInfo ActivationInfo,
 		const FGameplayEventData* TriggerEventData) override;
+	
+	UFUNCTION(BlueprintCallable)
 	void EndFarmingTime();
-	void CallEndAbility(const FGameplayTag Tag, int32 NewCount);
+	
+	
+	
 	void EndAbility(FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	                FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled);
 
@@ -38,7 +39,5 @@ protected:
 
 private:
 	FTimerHandle WaitFarmingTimerHandle;
-	TWeakObjectPtr<const AActor> Instigator;
-	
 	FDelegateHandle EndCueDelegateHandle;
 };
