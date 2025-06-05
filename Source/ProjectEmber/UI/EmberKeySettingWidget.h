@@ -80,7 +80,7 @@ public:
     void ShowKeyCaptureWidget();
 
 
-
+	static FString GetMoveDirectionMappingName(EMoveDirection Dir);
 
     static EMoveDirection GetDirectionFromModifiers(const TArray<TObjectPtr<UInputModifier>>& Modifiers);
 
