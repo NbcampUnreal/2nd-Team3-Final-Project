@@ -36,9 +36,9 @@ ABaseAIAnimal::ABaseAIAnimal()
 
 	MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
 
-	HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
-	HpBarWidget->SetupAttachment(GetMesh());
-	HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
+	// HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
+	// HpBarWidget->SetupAttachment(GetMesh());
+	// HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
 }
 
 void ABaseAIAnimal::PossessedBy(AController* NewController)
@@ -62,15 +62,15 @@ void ABaseAIAnimal::BeginPlay()
 		BlackboardComponent = AIController->GetBlackboardComponent();
 	}
 	
-	if (HpBarWidgetClass)
-	{
-		HpBarWidget->SetWidgetClass(HpBarWidgetClass);
-		HpBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
-		HpBarWidget->SetDrawSize(FVector2D(200.0f, 20.0f));
-		HpBarWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-		HpBarWidget->UpdateAbilitySystemComponent(this);
-	}
+	// if (HpBarWidgetClass)
+	// {
+	// 	HpBarWidget->SetWidgetClass(HpBarWidgetClass);
+	// 	HpBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
+	// 	HpBarWidget->SetDrawSize(FVector2D(200.0f, 20.0f));
+	// 	HpBarWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	//
+	// 	HpBarWidget->UpdateAbilitySystemComponent(this);
+	// }
 	
 	//InitAbilityActorInfo 호출 위치: 네트워크 플레이가 아니고 싱글 플레이나 로컬 전용이라면 괜찮음
 	//서버와 클라이언트 동기화가 중요하다면 BeginPlay()에서 호출
@@ -168,6 +168,7 @@ void ABaseAIAnimal::SetHiddenInGame()
 	 	AIController->BrainComponent->Cleanup();
 	 	AIController->BrainComponent->StopLogic(TEXT("HiddenInGame")); //스폰시 숨김처리
 	 }
+	GetWorldTimerManager().PauseTimer(FullnessTimerHandle);
 }
 
 void ABaseAIAnimal::SetVisibleInGame()
@@ -177,11 +178,12 @@ void ABaseAIAnimal::SetVisibleInGame()
 		CharacterAttributeSet->SetHealth(CharacterAttributeSet->GetMaxHealth());
 		FOnAttributeChangeData ChangeData;
 		ChangeData.NewValue = CharacterAttributeSet->GetHealth();
-		Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(ChangeData);
+		//Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(ChangeData);
 	}
 	SetActorHiddenInGame(false);
 	SetActorEnableCollision(true);
 	SetActorTickEnabled(true);
+	GetWorldTimerManager().UnPauseTimer(FullnessTimerHandle);
 	if (AIController && AIController->BrainComponent && BlackboardComponent)
 	{
 		BlackboardComponent = AIController->GetBlackboardComponent();
@@ -194,7 +196,6 @@ void ABaseAIAnimal::SetVisibleInGame()
 void ABaseAIAnimal::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
 }
 
 void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
@@ -217,7 +218,7 @@ void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 
 void ABaseAIAnimal::OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData)
 {
-	Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(OnAttributeChangeData);
+	//Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(OnAttributeChangeData);
 }
 
 void ABaseAIAnimal::OnFullnessChanged(const FOnAttributeChangeData& OnAttributeChangeData)
@@ -227,13 +228,12 @@ void ABaseAIAnimal::OnFullnessChanged(const FOnAttributeChangeData& OnAttributeC
 	
 	Fullness = FMath::Clamp(Fullness, 0.0f, 100.0f);
 	
-	
 	if (bIsHungry == false && Fullness <= 50.0f)
 	{
 		bIsHungry = true;
 		BlackboardComponent->SetValueAsBool("IsHungry", bIsHungry);
 	}
-	else
+	else if (bIsHungry && Fullness >= 90.0f)
 	{
 		bIsHungry = false;
 		BlackboardComponent->SetValueAsBool("IsHungry", bIsHungry);
@@ -249,8 +249,7 @@ void ABaseAIAnimal::GenerateRandom()
 	int32 RandomPersonality =3; //임시수정
 	Personality = static_cast<EAnimalAIPersonality>(RandomPersonality);
 	SetDetails();
-	Fullness = FMath::FRandRange(30.f, 70.f);
-	bIsHungry = Fullness <= 50.f;
+	Fullness = FMath::FRandRange(30.f, 40.f);
 }
 
 void ABaseAIAnimal::DecreaseFullness()

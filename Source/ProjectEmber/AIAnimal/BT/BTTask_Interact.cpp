@@ -40,14 +40,7 @@ EBTNodeResult::Type UBTTask_Interact::ExecuteTask(UBehaviorTreeComponent& OwnerC
 	{
 		return EBTNodeResult::Failed;
 	}
-	float Distance = FVector::Dist(AIPawn->GetActorLocation(), TargetActor->GetActorLocation());
-	if (Distance > InteractionDistance)
-	{
-		return EBTNodeResult::Failed; // 너무 멀리 있음
-	}
-
-	if (TargetActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
-	{
+	
 		ABaseAIAnimal* AICharacter = Cast<ABaseAIAnimal>(AIPawn);
 		if (!AICharacter)
 		{
@@ -68,7 +61,5 @@ EBTNodeResult::Type UBTTask_Interact::ExecuteTask(UBehaviorTreeComponent& OwnerC
 		
 		// 태스크 성공 반환
 		return EBTNodeResult::Succeeded;
-	}
 	
-	return Super::ExecuteTask(OwnerComp, NodeMemory);
 }
