@@ -128,8 +128,7 @@ void AEmberCharacter::BeginPlay()
             }
         
             AbilitySystemComponent->InitAbilityActorInfo(EmberPlayerState, this);    
-        
-        
+            
             for (const TSubclassOf<UGameplayAbility>& Ability : StartAbilities)
             {
                 FGameplayAbilitySpec StartAbilitySpec = Ability;
@@ -593,6 +592,9 @@ void AEmberCharacter::Input_OnGlide()
 
     if (CurrentMode == AlsLocomotionModeTags::InAir)
     {
+        PreOverlayTag = GetOverlayMode();
+        SetOverlayMode(AlsOverlayModeTags::Default);
+        
         GliderMesh->SetHiddenInGame(false);
         
         SetLocomotionMode(AlsLocomotionModeTags::Gliding);
@@ -706,7 +708,7 @@ void AEmberCharacter::NotifyLocomotionModeChanged(const FGameplayTag& PreviousLo
     if (PreviousLocomotionMode == AlsLocomotionModeTags::Gliding)
     {
         AlsCharacterMovement->GravityScale = DefaultGravityScale;
-
+        SetOverlayMode(PreOverlayTag);
         GliderMesh->SetHiddenInGame(true);
     }
 }

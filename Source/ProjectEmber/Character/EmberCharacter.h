@@ -31,6 +31,7 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void PossessedBy(AController* NewController) override;
+	
 private:
 	void SetupEmberInputComponent() const;
 	
@@ -125,6 +126,7 @@ public: /* Als */
 	virtual void NotifyControllerChanged() override; // 컨트롤러 변경 시 매핑 등록/해제
 	virtual void DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DisplayInfo, float& Unused, float& VerticalLocation) override;
 	virtual void NotifyLocomotionModeChanged(const FGameplayTag& PreviousLocomotionMode) override;
+	
 protected:
 	virtual bool StartMantlingInAir() override; // 공중 자동 파쿠르막기 (AlsCharacter::Tick 에서 그냥 주석처리하면 될거같은데 수정해도 될지 모르겠음)
 	virtual void CalcCamera(float DeltaTime, FMinimalViewInfo& ViewInfo) override;
@@ -184,6 +186,8 @@ protected:
 
 	/** 기본 낙하 */
 	float DefaultGravityScale = 1.0f;
+
+	FGameplayTag PreOverlayTag;
 
 protected:
 	//UFUNCTION()
