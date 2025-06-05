@@ -128,8 +128,7 @@ void AEmberCharacter::BeginPlay()
             }
         
             AbilitySystemComponent->InitAbilityActorInfo(EmberPlayerState, this);    
-        
-        
+            
             for (const TSubclassOf<UGameplayAbility>& Ability : StartAbilities)
             {
                 FGameplayAbilitySpec StartAbilitySpec = Ability;
