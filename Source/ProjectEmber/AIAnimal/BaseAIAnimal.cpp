@@ -6,6 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "EMSFunctionLibrary.h"
 #include "MeleeTraceComponent.h"
+#include "AI/NavigationSystemBase.h"
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
 #include "EmberLog/EmberLog.h"
@@ -102,7 +103,8 @@ void ABaseAIAnimal::BeginPlay()
 			const_cast<UEmberCharacterAttributeSet*>(Attribute)->OnHit.AddDynamic(this, &ABaseAIAnimal::OnHit);
 		}
 	}
-	//GetWorldTimerManager().SetTimer(TimerHandle, this, &ABaseAIAnimal::DecreaseFullness, 5.0f, true);
+	
+	GetWorldTimerManager().SetTimer(FullnessTimerHandle, this, &ABaseAIAnimal::DecreaseFullness, 5.0f, true);
 	//PatrolPoints.SetNum(4);
 
 	GetCharacterMovement()->bUseRVOAvoidance = true;
@@ -220,14 +222,25 @@ void ABaseAIAnimal::OnHealthChanged(const FOnAttributeChangeData& OnAttributeCha
 
 void ABaseAIAnimal::OnFullnessChanged(const FOnAttributeChangeData& OnAttributeChangeData)
 {
-	//들어오면 무조건 배부름 상태
+	//감소하거나 증가하거나
 	Fullness = OnAttributeChangeData.NewValue;
-	bIsHungry = false;
-	BlackboardComponent->SetValueAsFloat("Fullness", Fullness);
-	BlackboardComponent->SetValueAsBool("IsHungry", bIsHungry);
-	BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
-	BlackboardComponent->SetValueAsObject("NTargetFood", nullptr);
-	BlackboardComponent->SetValueAsVector("NTargetFoodLocation", GetActorLocation());
+	
+	Fullness = FMath::Clamp(Fullness, 0.0f, 100.0f);
+	
+	
+	if (bIsHungry == false && Fullness <= 50.0f)
+	{
+		bIsHungry = true;
+		BlackboardComponent->SetValueAsBool("IsHungry", bIsHungry);
+	}
+	else
+	{
+		bIsHungry = false;
+		BlackboardComponent->SetValueAsBool("IsHungry", bIsHungry);
+		BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
+		BlackboardComponent->SetValueAsObject("NTargetFood", nullptr);
+		BlackboardComponent->SetValueAsVector("NTargetFoodLocation", GetActorLocation());
+	}
 }
 
 void ABaseAIAnimal::GenerateRandom()
@@ -236,30 +249,18 @@ void ABaseAIAnimal::GenerateRandom()
 	int32 RandomPersonality =3; //임시수정
 	Personality = static_cast<EAnimalAIPersonality>(RandomPersonality);
 	SetDetails();
-	Fullness = FMath::FRandRange(50.f, 100.f);
+	Fullness = FMath::FRandRange(30.f, 70.f);
 	bIsHungry = Fullness <= 50.f;
 }
 
 void ABaseAIAnimal::DecreaseFullness()
 {
-	Fullness -= 1.f;
-	Fullness = FMath::Clamp(Fullness, 0.0f, 100.0f);
-	if (bIsHungry == false && Fullness <= 50.0f)
-	{
-		bIsHungry = true;
-		BlackboardComponent->SetValueAsBool("IsHungry", bIsHungry);
-	}
+	FGameplayEventData Payload;
+	Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.Decrease");
+	Payload.Instigator = this;
+	AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
 }
 
-void ABaseAIAnimal::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	// 타이머 해제
-	//GetWorldTimerManager().ClearTimer(TimerHandle);
-	
-	UMessageBus::GetInstance()->Unsubscribe(TEXT("HideAnimal"), MessageDelegateHandle);
-	
-	Super::EndPlay(EndPlayReason);
-}
 
  void ABaseAIAnimal::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
  {
@@ -390,4 +391,14 @@ void ABaseAIAnimal::SetIsDead(const bool InIsDead)
 float ABaseAIAnimal::GetSoundPitch() const
 {
 	return SoundPitch;
+}
+
+void ABaseAIAnimal::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	// 타이머 해제
+	GetWorldTimerManager().ClearTimer(FullnessTimerHandle);
+	
+	UMessageBus::GetInstance()->Unsubscribe(TEXT("HideAnimal"), MessageDelegateHandle);
+	
+	Super::EndPlay(EndPlayReason);
 }

@@ -17,11 +17,6 @@ class EMBERABILITYSYSTEM_API UGA_AnimalDeath : public UGameplayAbility
 public:
 	UGA_AnimalDeath();
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="AnimalDeath")
-	UAnimMontage* Montage;
-
-	
-	
 protected:
 	virtual void ActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
@@ -38,7 +33,5 @@ protected:
 
 private:
 	FTimerHandle WaitFarmingTimerHandle;
-	TWeakObjectPtr<const AActor> Instigator;
-	
 	FDelegateHandle EndCueDelegateHandle;
 };
