@@ -48,15 +48,8 @@ void ALootActorBase::StartInteractAbility(APawn* InstigatorPawn)
 					const FVector CharacterLocation = EmberCharacter->GetActorLocation();
 					const FVector Dir = (TargetLocation - CharacterLocation).GetSafeNormal();
 					SetCharacterRotation(EmberCharacter, Dir.Rotation().Yaw);
-					
-					if (const UBaseOverlayAbility* OverlayAbility = Cast<UBaseOverlayAbility>(AbilitySpec->GetPrimaryInstance()))
-					{
-						float MontageLength = OverlayAbility->GetDefaultMontage()->GetPlayLength();
-						float MontageRateScale = OverlayAbility->GetDefaultMontage()->RateScale;
-						
-						/* 공식 : (몽타주전체길이 / 재생속도:공격속도) * (몇번휘두를건지 - 1) + (몽타주에서 내려찍는 시간 / 재생속도:공격속도) */
-						SetHoldTime((MontageLength / MontageRateScale) * (SwingCount - 1) + (0.95f / MontageRateScale));
-					}
+
+					SetLootTypeToHoldTime(AbilitySpec->GetPrimaryInstance());
 					
 					// 오버레이 전환 체크 및 어빌리티 재생
 					PreOverlayTag = EmberCharacter->GetOverlayMode(); 
@@ -71,7 +64,7 @@ void ALootActorBase::StartInteractAbility(APawn* InstigatorPawn)
 
 void ALootActorBase::UpdateInteractAbility() const
 {
-	TargetAbilitySystemComponent->TryActivateAbilityByClass(InteractAbilityClass);
+	TargetAbilitySystemComponent->TryActivateAbilityByClass(InteractAbilityClass);	
 }
 
 void ALootActorBase::CancelInteractAbility()
@@ -85,7 +78,7 @@ void ALootActorBase::CancelInteractAbility()
 
 void ALootActorBase::CompleteInteractAbility()
 {
-	bIsAbilityEnded = true;
+	CancelInteractAbility();
 	// 아이템 추가
 }
 
@@ -96,6 +89,29 @@ void ALootActorBase::RefreshOverlayMode(APawn* InstigatorPawn)
 		if (AEmberCharacter* EmberCharacter = Cast<AEmberCharacter>(InstigatorPawn))
 		{
 			EmberCharacter->SetOverlayMode(PreOverlayTag);
+		}
+	}
+}
+
+void ALootActorBase::SetLootTypeToHoldTime(UGameplayAbility* GameplayAbility)
+{
+	if (const UBaseOverlayAbility* OverlayAbility = Cast<UBaseOverlayAbility>(GameplayAbility))
+	{
+		float MontageLength = OverlayAbility->GetDefaultMontage()->GetPlayLength();
+		float MontageRateScale = OverlayAbility->GetDefaultMontage()->RateScale;
+
+		/* 공식 : (몽타주전체길이 / 재생속도:공격속도) * (몇번휘두를건지 - 1) + (몽타주에서 내려찍는 시간 / 재생속도:공격속도) */
+		if (LootAbilityType == ELootAbilityType::Harvest)
+		{
+			SetHoldTime((MontageLength / MontageRateScale) - 0.3f);	
+		}
+		else if (LootAbilityType == ELootAbilityType::Tree)
+		{
+			SetHoldTime((MontageLength / MontageRateScale) * (SwingCount - 1) + (0.6f / MontageRateScale));
+		}
+		else if (LootAbilityType == ELootAbilityType::Mineral)
+		{
+			SetHoldTime((MontageLength / MontageRateScale) * (SwingCount - 1) + (0.95f / MontageRateScale));
 		}
 	}
 }
