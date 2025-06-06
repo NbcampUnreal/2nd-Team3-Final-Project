@@ -4,6 +4,8 @@
 #include "Ability/Base/BaseOverlayAbility.h"
 #include "Character/EmberCharacter.h"
 #include "EmberLog/EmberLog.h"
+#include "GameInstance/GameplayEventSubsystem.h"
+#include "Kismet/GameplayStatics.h"
 
 ALootActorBase::ALootActorBase()
 {
@@ -85,8 +87,23 @@ void ALootActorBase::CancelInteractAbility()
 
 void ALootActorBase::CompleteInteractAbility()
 {
-	bIsAbilityEnded = true;
-	// 아이템 추가
+    bIsAbilityEnded = true;
+
+    // 1. 퀘스트 조건 충족을 위한 이벤트 데이터 구성
+    FGameplayEventData EventData;
+    EventData.EventTag = FGameplayTag::RequestGameplayTag(FName("Quest.Gathering"));
+    EventData.Instigator = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);  // 플레이어
+    EventData.Target = this;  // 이 루팅 액터 자신
+
+    // 2. 이벤트 시스템에 전달 (OnGameEvent 브로드캐스트)
+    if (UGameplayEventSubsystem* EventSystem = UGameplayEventSubsystem::GetGameplayEvent(GetWorld()))
+    {
+        EventSystem->OnGameEvent.Broadcast(EventData.EventTag, EventData);
+        UE_LOG(LogTemp, Warning, TEXT(" [LootActor] Gathering 퀘스트 이벤트 발생: %s"), *EventData.EventTag.ToString());
+    }
+
+    // 3. 아이템 획득 등의 후속 처리 (선택)
+    // AddItemToInventory(...);
 }
 
 void ALootActorBase::RefreshOverlayMode(APawn* InstigatorPawn)
@@ -95,7 +112,7 @@ void ALootActorBase::RefreshOverlayMode(APawn* InstigatorPawn)
 	{
 		if (AEmberCharacter* EmberCharacter = Cast<AEmberCharacter>(InstigatorPawn))
 		{
-			EmberCharacter->SetOverlayMode(PreOverlayTag);
+			EmberCharacter->SetOverlayMode(PreOverlayTag); 
 		}
 	}
 }

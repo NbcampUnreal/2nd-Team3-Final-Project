@@ -25,6 +25,8 @@ public:
     virtual void Interact_Implementation(AActor* Caller) override;
     virtual float GetGatherTime_Implementation() override;
 
+
+
     UFUNCTION()
     void RepositionNPCForDialogue();
 
@@ -33,7 +35,7 @@ public:
 
     UFUNCTION()
     void PositionDetachedCamera();
-    void ShowQuestCompleteWidget(const UQuestDataAsset* InQuestAsset);
+    void ShowQuestCompleteWidget(const UQuestDataAsset* InQuestAsset, bool bIsQuestComplete);
     void AdvanceDialogue();
     void Interact();
     void ShowQuestUI();

@@ -113,11 +113,6 @@ void UQuestSubsystem::CheckQuestStepCompletion(const UQuestDataAsset* QuestAsset
             break;
         }
     }
-    
-    if (bAllConditionsMet)
-    {
-        AdvanceQuestStep(QuestAsset->QuestID);
-    }
 }
 
 bool UQuestSubsystem::AdvanceQuestStep(FName QuestID)
@@ -152,14 +147,13 @@ bool UQuestSubsystem::AdvanceQuestStep(FName QuestID)
     {
         return CompleteQuest(QuestID);
     }
-    
     const FQuestStep& NextStep = QuestAsset->Steps[Index];
    
     for (UQuestCondition* Condition : NextStep.Conditions)
     {
         if (Condition)
         {
-            Condition->CurrentCount = 0;
+           Condition->CurrentCount = 0;
         }
     }
 
@@ -199,6 +193,7 @@ int32 UQuestSubsystem::GetCurrentStepIndexForQuest(FName QuestID, bool bAutoStar
     return INDEX_NONE;
 }
 
+
 bool UQuestSubsystem::CompleteQuest(FName QuestID)
 {
     if (!QuestProgress.Contains(QuestID))
@@ -219,6 +214,8 @@ bool UQuestSubsystem::CompleteQuest(FName QuestID)
          * AddItem이라던가 경험치면 GameplayEffect를 호출한다던가
          */
     }
+    int32 StepIndex = QuestProgress.FindChecked(QuestID);
+    UE_LOG(LogEmber, Log, TEXT("[CompleteQuest] QuestID: %s, 마지막 StepIndex: %d"), *QuestID.ToString(), StepIndex);
 
     QuestProgress.Remove(QuestID);
     CompletedQuests.Add(QuestID);
