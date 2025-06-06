@@ -1,4 +1,4 @@
-#include "DialogueQuestCondition.h"
+ï»¿#include "DialogueQuestCondition.h"
 #include "AI_NPC/NPC_Component/DialogueComponent.h"
 
 bool UDialogueQuestCondition::OnEvent_Implementation(const FGameplayTag& InEventTag, const FGameplayEventData& EventData)
@@ -12,21 +12,18 @@ bool UDialogueQuestCondition::OnEvent_Implementation(const FGameplayTag& InEvent
     if (!EventData.Target || !EventData.Target->IsA(TargetNPCClass))
         return false;
 
-    // (1) ¾ÆÁ÷ Á¶°ÇÀÌ ÃæÁ·µÇÁö ¾Ê¾Ò´Ù¸é(Áï, ¸¶Áö¸· Ä«¿îÆ®¿¡¸¸ ´ë»ç Ãâ·Â)
-    bool bWasFulfilled = IsFulfilled();
-
-    CurrentCount++; // Ä«¿îÆ® Áõ°¡
+    CurrentCount++; // ì¹´ìš´íŠ¸ ì¦ê°€
 
     bool bNowFulfilled = IsFulfilled();
-
-    // (2) Á¶°Ç ´Þ¼º ¼ø°£¿¡¸¸ ´ë»ç ¼¼ÆÃ
-    if (!bWasFulfilled && bNowFulfilled)
+    if (bNowFulfilled)
     {
-        if (UDialogueComponent* DialogueComp = EventData.Target->FindComponentByClass<UDialogueComponent>())
-        {
-            DialogueComp->SetCustomDialogueLines(DialogueLines);
-        }
+        UE_LOG(LogTemp, Warning, TEXT("[DialogueCondition] ì¡°ê±´ ì¶©ì¡± ì™„ë£Œ! Target: %s / í˜„ìž¬ ì¹´ìš´íŠ¸: %d"),
+            *EventData.Target->GetName(), CurrentCount);
     }
-
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[DialogueCondition] ì¡°ê±´ ì•„ì§ ë¯¸ì¶©ì¡±. Target: %s / í˜„ìž¬ ì¹´ìš´íŠ¸: %d / í•„ìš” ìˆ˜: %d"),
+            *EventData.Target->GetName(), CurrentCount, RequiredCount);
+    }
     return bNowFulfilled;
 }
