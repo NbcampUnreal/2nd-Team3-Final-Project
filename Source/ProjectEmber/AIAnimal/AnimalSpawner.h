@@ -198,7 +198,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning") //플레이어와 가까운 지점들 수
 	int32 BestSpawnPointsAmount = 3;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning") //해당 스폰 포인트에 스폰된 동물 수가 이 수치 이하일 경우에만 추가 스폰을 허용
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning") //해당 스폰너에서 한 종류의 죽은 동물이 이 수치 이상이면 스폰 허용
 	int32 PermittedToSpawnLimit = 3;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning") //매 tick 디스폰될 동물 수
