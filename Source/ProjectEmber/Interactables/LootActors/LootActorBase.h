@@ -9,6 +9,14 @@
 #include "MessageBus/MessageBus.h"
 #include "LootActorBase.generated.h"
 
+UENUM(BlueprintType)
+enum class ELootAbilityType : uint8
+{
+	Harvest,
+	Mineral,
+	Tree
+};
+
 class AEmberCharacter;
 class UAbilitySystemComponent;
 class UGameplayAbility;
@@ -31,7 +39,7 @@ public:
 	void StartInteractAbility(APawn* InstigatorPawn);
 
 	UFUNCTION(BlueprintCallable)
-	void UpdateInteractAbility() const;
+	void UpdateInteractAbility();
 
 	UFUNCTION(BlueprintCallable)
 	void CancelInteractAbility();
@@ -44,6 +52,8 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Ability")
 	void SetHoldTime(float HoldTime);
+
+	void SetLootTypeToHoldTime(UGameplayAbility* GameplayAbility);
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	UStaticMeshComponent* MeshComponent;
@@ -56,7 +66,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swing")
 	int32 SwingCount{1};
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LootType")
+	ELootAbilityType LootAbilityType{ELootAbilityType::Tree};
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable")
 	FGameplayTagContainer GameplayTagContainer;
