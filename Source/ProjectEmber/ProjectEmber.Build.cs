@@ -45,8 +45,7 @@ public class ProjectEmber : ModuleRules
             "EmberAbilitySystem",
             "EmberUtils",
             "MeleeTrace",
-            "EasyMultiSave",
-            "Water"
+            "EasyMultiSave"
         });
 
         //───────────────────────────────────────────────────────────────────────────────

@@ -62,9 +62,16 @@ void ALootActorBase::StartInteractAbility(APawn* InstigatorPawn)
 	}
 }
 
-void ALootActorBase::UpdateInteractAbility() const
+void ALootActorBase::UpdateInteractAbility()
 {
-	TargetAbilitySystemComponent->TryActivateAbilityByClass(InteractAbilityClass);	
+	if (TargetAbilitySystemComponent->TryActivateAbilityByClass(InteractAbilityClass))
+	{
+		AEmberCharacter* EmberCharacter = Cast<AEmberCharacter>(TargetAbilitySystemComponent->GetAvatarActor());
+		const FVector TargetLocation = MeshComponent->GetComponentLocation();
+		const FVector CharacterLocation = EmberCharacter->GetActorLocation();
+		const FVector Dir = (TargetLocation - CharacterLocation).GetSafeNormal();
+		SetCharacterRotation(EmberCharacter, Dir.Rotation().Yaw);
+	}
 }
 
 void ALootActorBase::CancelInteractAbility()
