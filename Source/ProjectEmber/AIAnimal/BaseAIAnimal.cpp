@@ -108,7 +108,7 @@ void ABaseAIAnimal::BeginPlay()
 	//PatrolPoints.SetNum(4);
 
 	GetCharacterMovement()->bUseRVOAvoidance = true;
-	GetCharacterMovement()->AvoidanceConsiderationRadius = 400.0f; // AI가 다른 에이전트를 감지할 반경
+	GetCharacterMovement()->AvoidanceConsiderationRadius = 800.0f; // AI가 다른 에이전트를 감지할 반경
 	GetCharacterMovement()->AvoidanceWeight = 0.5f;
 
 	/* 메세지버스 사용 예시 */
@@ -251,8 +251,8 @@ void ABaseAIAnimal::OnFullnessChanged(const FOnAttributeChangeData& OnAttributeC
 
 void ABaseAIAnimal::GenerateRandom()
 {
-	//int32 RandomPersonality = FMath::RandRange(0, static_cast<int32>(EAnimalAIPersonality::End) - 1);
-	int32 RandomPersonality =3; //임시수정
+	int32 RandomPersonality = FMath::RandRange(0, static_cast<int32>(EAnimalAIPersonality::End) - 1);
+	//int32 RandomPersonality =3; //임시수정
 	Personality = static_cast<EAnimalAIPersonality>(RandomPersonality);
 	SetDetails();
 	Fullness = FMath::FRandRange(50.f, 100.f);

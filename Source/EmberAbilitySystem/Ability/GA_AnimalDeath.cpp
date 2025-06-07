@@ -74,7 +74,6 @@ void UGA_AnimalDeath::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	}
 	
 	//어빌리티 끝나면 필드에서 숨김처리 시키기
-	UE_LOG(LogTemp, Warning, TEXT("[Death] Send HideAnimal for %s (%p)"), *GetAvatarActorFromActorInfo()->GetName(), GetAvatarActorFromActorInfo());
 	UObject* HideAnimal = Cast<UObject>(GetAvatarActorFromActorInfo());
 	UMessageBus::GetInstance()->BroadcastMessage(TEXT("HideAnimal"), HideAnimal);
 }
