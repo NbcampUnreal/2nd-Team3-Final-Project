@@ -19,16 +19,16 @@ class PROJECTEMBER_API UQuestListWidget : public UUserWidget
 protected:
     virtual void NativeConstruct() override;
 
-    /** 델리게이트 수신용 */
+    /** 퀘스트 시작 시 호출됨 */
     UFUNCTION()
     void HandleQuestStarted(UQuestDataAsset* QuestAsset);
 
-    /** 버튼 클릭 시 상세 정보 출력 */
+    /** 스텝 버튼 클릭 시 호출됨 */
     UFUNCTION()
-    void OnQuestEntryClicked(UQuestDataAsset* ClickedQuest);
+    void OnQuestEntryClicked(UQuestDataAsset* ClickedQuest, int32 StepIndex); 
 
-    /** 버튼 생성 */
-    void AddQuest(UQuestDataAsset* QuestAsset);
+    /** 퀘스트의 각 스텝마다 버튼 생성 */
+    void AddQuest(UQuestDataAsset* QuestAsset, int32 StepIndex);
 
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest")
@@ -37,6 +37,7 @@ public:
     UPROPERTY(meta = (BindWidget))
     UScrollBox* QuestListScrollBox;
 
+    /** 선택된 퀘스트 스텝 내용을 표시할 위젯 */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest")
     UPlayerQuestWidget* QuestContentsWidget;
 };
