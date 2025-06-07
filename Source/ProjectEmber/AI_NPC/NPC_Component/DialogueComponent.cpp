@@ -65,6 +65,7 @@ void UDialogueComponent::BeginPlay()
 
     
     LoadDialogueFromDataTable(true);
+
 }
 //대화 위젯관련
 void UDialogueComponent::LoadDialogueFromDataTable(bool bResetDialogueIndex, FName InObjectiveTag)
@@ -292,9 +293,11 @@ void UDialogueComponent::StartDialogue()
 
 void UDialogueComponent::Interact()
 {
+
     UE_LOG(LogTemp, Warning, TEXT("[Interact] bDialogueOverriddenByCondition: %d, NumLines: %d"), bDialogueOverriddenByCondition, LinesOfDialogue.Num());
     if (!bPlayerInRange || !DialogueWidgetClass || bDialogueFinished) return;
 
+ 
     APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
     AActor* OwnerActor = GetOwner();
 
@@ -351,6 +354,7 @@ void UDialogueComponent::Interact()
 
 void UDialogueComponent::AdvanceDialogue()
 {
+
     UE_LOG(LogTemp, Warning, TEXT(">>>> AdvanceDialogue() called, Index: %d, NumLines: %d"), CurrentDialogueIndex, LinesOfDialogue.Num());
 
     if (bDialogueFinished)
@@ -408,9 +412,8 @@ void UDialogueComponent::AdvanceDialogue()
     int32 CurrentStepIndex = QuestSubsystem->GetCurrentStepIndexForQuest(QuestAsset->QuestID);
 
     // StepIndex가 -1 (미수락 상태)이거나, QuestGiver와 일치하는 경우
-    if (StepIndex == -1 || (QuestAsset->Steps.IsValidIndex(StepIndex) && OwnerActor == QuestAsset->Steps[StepIndex].QuestGiver.Get() && CurrentStepIndex == StepIndex))
+    if (StepIndex == -1 ||(QuestAsset->Steps.IsValidIndex(StepIndex) && OwnerActor == QuestAsset->Steps[StepIndex].QuestGiver.Get() &&CurrentStepIndex == StepIndex &&!bIsAccepteing))
     {
-
         UE_LOG(LogTemp, Warning, TEXT("[AdvanceDialogue] 현재 Step %d이 수락되지 않은 상태이거나 이 NPC가 QuestGiver임 → 수락 UI 표시"), StepIndex);
         ShowQuestUI();
         return;
@@ -552,6 +555,8 @@ void UDialogueComponent::ShowQuestUI()
         
             }
             QuestUI->RemoveFromParent();
+            bDialogueFinished = false;
+            this->bIsAccepteing = true;
             SetDialogueVisualState(false);
         });
 
@@ -597,6 +602,8 @@ void UDialogueComponent::ShowQuestCompleteWidget(const UQuestDataAsset* InQuestA
 
             //  입력 및 시점 복구
             SetDialogueVisualState(false);
+            bDialogueFinished = false;
+            this->bIsAccepteing = false;
             PC->SetInputMode(FInputModeGameOnly());
             PC->SetViewTargetWithBlend(PC->GetPawn(), 0.5f);
         });
@@ -663,14 +670,24 @@ void UDialogueComponent::UpdateQuestLogWidgetFromAsset(const UQuestDataAsset* In
         {
             bool bIsComplete = false;
             bool bIsAccepted = false;
+            bool bShowStepComplete = false;
+            int32 StepIndex = 0; // 기본값
 
             if (UQuestSubsystem* QuestSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UQuestSubsystem>())
             {
                 bIsComplete = QuestSubsystem->IsQuestCompleted(InQuestAsset->QuestID);
                 bIsAccepted = QuestSubsystem->IsQuestAccepted(InQuestAsset->QuestID);
+
+                // 수락된 상태면 현재 스텝 인덱스를 가져오기
+                if (bIsAccepted)
+                {
+                    StepIndex = QuestSubsystem->GetCurrentStepIndexForQuest(InQuestAsset->QuestID);
+                }
+
+                bShowStepComplete = QuestSubsystem->IsStepCompleted(InQuestAsset->QuestID, StepIndex);
             }
 
-            QuestLogWidget->SetQuestInfoFromDataAsset(InQuestAsset, bIsComplete, bIsAccepted);
+            QuestLogWidget->SetQuestInfoFromDataAsset(InQuestAsset, bIsComplete, bIsAccepted, bShowStepComplete, StepIndex);
         }
     }
 }
@@ -690,3 +707,4 @@ float UDialogueComponent::GetGatherTime_Implementation()
 {
     return 0.0f;
 }
+

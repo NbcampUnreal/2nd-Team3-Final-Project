@@ -112,7 +112,8 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
     UInputMappingContext* GameplayUIInputMappingContext;
 
-
+    UPROPERTY(BlueprintReadOnly)
+    bool bIsAccepteing = false;
 
     UFUNCTION()
     void SetDialogueVisualState(bool bShowUI);

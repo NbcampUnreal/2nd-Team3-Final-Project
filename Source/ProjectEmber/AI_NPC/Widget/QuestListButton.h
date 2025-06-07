@@ -10,7 +10,8 @@ class UButton;
 class UTextBlock;
 class UQuestDataAsset;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnQuestItemClicked, UQuestDataAsset*, ClickedQuest);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnQuestItemClicked, UQuestDataAsset*, QuestAsset, int32, StepIndex);
+
 
 UCLASS()
 class PROJECTEMBER_API UQuestListButton : public UUserWidget
@@ -18,25 +19,22 @@ class PROJECTEMBER_API UQuestListButton : public UUserWidget
 	GENERATED_BODY()
 	
 public:
+    virtual void NativeConstruct() override;
+
+    void SetQuestData(UQuestDataAsset* InQuestAsset, int32 InStepIndex);
+
+    UPROPERTY(BlueprintAssignable)
+    FOnQuestItemClicked OnQuestItemClicked;
+
+protected:
     UPROPERTY(meta = (BindWidget))
     UButton* RootButton;
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* QuestNameText;
 
-    /** 바인딩용 퀘스트 데이터 */
-    UPROPERTY()
     UQuestDataAsset* QuestAsset;
-
-    /** 외부에서 클릭을 받을 수 있게 델리게이트 제공 */
-    UPROPERTY(BlueprintAssignable)
-    FOnQuestItemClicked OnQuestItemClicked;
-
-    /** 퀘스트 정보를 외부에서 세팅 */
-    void SetQuestData(UQuestDataAsset* InAsset);
-
-protected:
-    virtual void NativeConstruct() override;
+    int32 StepIndex = 0;
 
 private:
     UFUNCTION()

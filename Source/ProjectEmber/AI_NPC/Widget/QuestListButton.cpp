@@ -13,13 +13,19 @@ void UQuestListButton::NativeConstruct()
     }
 }
 
-void UQuestListButton::SetQuestData(UQuestDataAsset* InAsset)
+void UQuestListButton::SetQuestData(UQuestDataAsset* InQuestAsset, int32 InStepIndex)
 {
-    QuestAsset = InAsset;
+    QuestAsset = InQuestAsset;
+    StepIndex = InStepIndex;
 
-    if (QuestNameText && QuestAsset && QuestAsset->Steps.IsValidIndex(0))
+    if (QuestNameText && QuestAsset && QuestAsset->Steps.IsValidIndex(StepIndex))
     {
-        QuestNameText->SetText(QuestAsset->Steps[0].StepQuestListName);
+        const FText StepName = QuestAsset->Steps[StepIndex].StepQuestListName;
+        QuestNameText->SetText(StepName);
+    }
+    else if (QuestNameText)
+    {
+        QuestNameText->SetText(FText::FromString(TEXT("Unknown Step")));
     }
 }
 
@@ -27,6 +33,6 @@ void UQuestListButton::HandleClick()
 {
     if (QuestAsset)
     {
-        OnQuestItemClicked.Broadcast(QuestAsset);
+        OnQuestItemClicked.Broadcast(QuestAsset, StepIndex); // 저장된 인덱스 전달
     }
 }

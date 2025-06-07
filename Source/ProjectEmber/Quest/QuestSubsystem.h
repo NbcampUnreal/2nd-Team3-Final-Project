@@ -62,6 +62,8 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Quest")
 	FOnQuestStarted OnQuestStarted;
 
+	UFUNCTION(BlueprintCallable, Category = "Quest")
+	bool IsStepCompleted(FName QuestID, int32 StepIndex) const;
 
 
 

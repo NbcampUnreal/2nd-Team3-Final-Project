@@ -61,7 +61,7 @@ struct FQuestStep
 
     //퀘스트 대상 (UI 표시용)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
-    FText ObjectiveName;
+    FText StepObjectiveName;
 
     // 이 단계에서 상호작용할 퀘스트 NPC (월드 인스턴스)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
