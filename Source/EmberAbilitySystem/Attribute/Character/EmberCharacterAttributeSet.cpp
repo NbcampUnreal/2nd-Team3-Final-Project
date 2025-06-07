@@ -12,6 +12,7 @@ UEmberCharacterAttributeSet::UEmberCharacterAttributeSet()
 	InitMaxHealth(100.0f);
 	
 	InitDamage(0.0f);
+	
 }
 
 void UEmberCharacterAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)

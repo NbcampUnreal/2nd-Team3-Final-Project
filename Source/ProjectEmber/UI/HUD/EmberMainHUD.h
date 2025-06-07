@@ -75,10 +75,10 @@ private:
 public:
 //#if !UE_BUILD_SHIPPING
 	//UFUNCTION(BlueprintCallable, Category = "UI|HUD")
-
+	void ToggleDebugLayer();
 
 protected:
-	TObjectPtr<ULayerDebugger> PrimaryDebugLayer;
-	bool bDebugLayerVisible = false;
+	//TObjectPtr<ULayerDebugger> PrimaryDebugLayer;
+	//bool bDebugLayerVisible = false;
 //#endif
 };
