@@ -11,7 +11,8 @@ enum class EInputID : int32
 	Spear	= 6,
 	Dagger	= 7,
 	SwordTwoHanded	= 8,
-	Throw	= 9
+	Throw	= 9,
+	Hammer	= 10
 };
 
 enum class EAimInputID : int32
@@ -25,5 +26,6 @@ enum class EAimInputID : int32
 	Spear	= 1006,
 	Dagger	= 1007,
 	SwordTwoHanded	= 1008,
-	Throw	= 1009
+	Throw	= 1009,
+	Hammer	= 1010
 };

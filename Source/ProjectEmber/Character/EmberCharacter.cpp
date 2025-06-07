@@ -16,7 +16,6 @@
 #include "InputMappingContext.h"
 #include "InputAction.h"
 #include "MaterialHLSLTree.h"
-#include "WaterBodyActor.h"
 #include "Animation/AnimInstance.h"
 #include "Build/AC_BuildComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -332,6 +331,10 @@ FGameplayAbilitySpec* AEmberCharacter::GetSpecFromOverlayMode(const bool IsRight
     else if (OverlayMode == AlsOverlayModeTags::Throw) 
     {
         InputID = static_cast<int32>(EInputID::Throw);
+    }
+    else if (OverlayMode == AlsOverlayModeTags::Hammer) 
+    {
+        InputID = static_cast<int32>(EInputID::Hammer);
     }
     
     if (IsRightInput)
