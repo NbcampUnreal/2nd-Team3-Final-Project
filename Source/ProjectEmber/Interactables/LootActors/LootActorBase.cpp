@@ -50,15 +50,8 @@ void ALootActorBase::StartInteractAbility(APawn* InstigatorPawn)
 					const FVector CharacterLocation = EmberCharacter->GetActorLocation();
 					const FVector Dir = (TargetLocation - CharacterLocation).GetSafeNormal();
 					SetCharacterRotation(EmberCharacter, Dir.Rotation().Yaw);
-					
-					if (const UBaseOverlayAbility* OverlayAbility = Cast<UBaseOverlayAbility>(AbilitySpec->GetPrimaryInstance()))
-					{
-						float MontageLength = OverlayAbility->GetDefaultMontage()->GetPlayLength();
-						float MontageRateScale = OverlayAbility->GetDefaultMontage()->RateScale;
-						
-						/* 공식 : (몽타주전체길이 / 재생속도:공격속도) * (몇번휘두를건지 - 1) + (몽타주에서 내려찍는 시간 / 재생속도:공격속도) */
-						SetHoldTime((MontageLength / MontageRateScale) * (SwingCount - 1) + (0.95f / MontageRateScale));
-					}
+
+					SetLootTypeToHoldTime(AbilitySpec->GetPrimaryInstance());
 					
 					// 오버레이 전환 체크 및 어빌리티 재생
 					PreOverlayTag = EmberCharacter->GetOverlayMode(); 
@@ -71,9 +64,16 @@ void ALootActorBase::StartInteractAbility(APawn* InstigatorPawn)
 	}
 }
 
-void ALootActorBase::UpdateInteractAbility() const
+void ALootActorBase::UpdateInteractAbility()
 {
-	TargetAbilitySystemComponent->TryActivateAbilityByClass(InteractAbilityClass);
+	if (TargetAbilitySystemComponent->TryActivateAbilityByClass(InteractAbilityClass))
+	{
+		AEmberCharacter* EmberCharacter = Cast<AEmberCharacter>(TargetAbilitySystemComponent->GetAvatarActor());
+		const FVector TargetLocation = MeshComponent->GetComponentLocation();
+		const FVector CharacterLocation = EmberCharacter->GetActorLocation();
+		const FVector Dir = (TargetLocation - CharacterLocation).GetSafeNormal();
+		SetCharacterRotation(EmberCharacter, Dir.Rotation().Yaw);
+	}
 }
 
 void ALootActorBase::CancelInteractAbility()
@@ -87,24 +87,25 @@ void ALootActorBase::CancelInteractAbility()
 
 void ALootActorBase::CompleteInteractAbility()
 {
-    bIsAbilityEnded = true;
+	bIsAbilityEnded = true;
 
-    // 1. 퀘스트 조건 충족을 위한 이벤트 데이터 구성
-    FGameplayEventData EventData;
-    EventData.EventTag = FGameplayTag::RequestGameplayTag(FName("Quest.Gathering"));
-    EventData.Instigator = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);  // 플레이어
-    EventData.Target = this;  // 이 루팅 액터 자신
+	// 1. 퀘스트 조건 충족을 위한 이벤트 데이터 구성
+	FGameplayEventData EventData;
+	EventData.EventTag = FGameplayTag::RequestGameplayTag(FName("Quest.Gathering"));
+	EventData.Instigator = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);  // 플레이어
+	EventData.Target = this;  // 이 루팅 액터 자신
 
-    // 2. 이벤트 시스템에 전달 (OnGameEvent 브로드캐스트)
-    if (UGameplayEventSubsystem* EventSystem = UGameplayEventSubsystem::GetGameplayEvent(GetWorld()))
-    {
-        EventSystem->OnGameEvent.Broadcast(EventData.EventTag, EventData);
-        UE_LOG(LogTemp, Warning, TEXT(" [LootActor] Gathering 퀘스트 이벤트 발생: %s"), *EventData.EventTag.ToString());
-    }
+	// 2. 이벤트 시스템에 전달 (OnGameEvent 브로드캐스트)
+	if (UGameplayEventSubsystem* EventSystem = UGameplayEventSubsystem::GetGameplayEvent(GetWorld()))
+	{
+		EventSystem->OnGameEvent.Broadcast(EventData.EventTag, EventData);
+		UE_LOG(LogTemp, Warning, TEXT(" [LootActor] Gathering 퀘스트 이벤트 발생: %s"), *EventData.EventTag.ToString());
+	}
 
-    // 3. 아이템 획득 등의 후속 처리 (선택)
-    // AddItemToInventory(...);
+	// 3. 아이템 획득 등의 후속 처리 (선택)
+	// AddItemToInventory(...);
 }
+
 
 void ALootActorBase::RefreshOverlayMode(APawn* InstigatorPawn)
 {
@@ -113,6 +114,29 @@ void ALootActorBase::RefreshOverlayMode(APawn* InstigatorPawn)
 		if (AEmberCharacter* EmberCharacter = Cast<AEmberCharacter>(InstigatorPawn))
 		{
 			EmberCharacter->SetOverlayMode(PreOverlayTag); 
+		}
+	}
+}
+
+void ALootActorBase::SetLootTypeToHoldTime(UGameplayAbility* GameplayAbility)
+{
+	if (const UBaseOverlayAbility* OverlayAbility = Cast<UBaseOverlayAbility>(GameplayAbility))
+	{
+		float MontageLength = OverlayAbility->GetDefaultMontage()->GetPlayLength();
+		float MontageRateScale = OverlayAbility->GetDefaultMontage()->RateScale;
+
+		/* 공식 : (몽타주전체길이 / 재생속도:공격속도) * (몇번휘두를건지 - 1) + (몽타주에서 내려찍는 시간 / 재생속도:공격속도) */
+		if (LootAbilityType == ELootAbilityType::Harvest)
+		{
+			SetHoldTime((MontageLength / MontageRateScale) - 0.3f);	
+		}
+		else if (LootAbilityType == ELootAbilityType::Tree)
+		{
+			SetHoldTime((MontageLength / MontageRateScale) * (SwingCount - 1) + (0.6f / MontageRateScale));
+		}
+		else if (LootAbilityType == ELootAbilityType::Mineral)
+		{
+			SetHoldTime((MontageLength / MontageRateScale) * (SwingCount - 1) + (0.95f / MontageRateScale));
 		}
 	}
 }
