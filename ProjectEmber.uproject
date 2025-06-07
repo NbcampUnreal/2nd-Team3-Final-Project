@@ -76,6 +76,10 @@
 		{
 			"Name": "ProceduralDungeon",
 			"Enabled": true
+		},
+		{
+			"Name": "AnimationWarping",
+			"Enabled": true
 		}
 	]
 }
