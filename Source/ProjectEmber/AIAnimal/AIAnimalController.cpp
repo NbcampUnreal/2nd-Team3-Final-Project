@@ -107,10 +107,10 @@ void AAIAnimalController::FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus)
         if (BlackboardComponent)
         {
             //--- 공격 확률 설정 --------------------------------------------------
-            float AttackProb = 0.95;          // 기본 5 %
+            float AttackProb = 0.05;          // 기본 5 %
             if (Cast<ABaseAIAnimal>(GetPawn())->GetPersonality() == EAnimalAIPersonality::Brave) // 성격이 ‘용감’이라면 +5 %
             {
-                AttackProb += 0.05f;           // ⇒ 10 %
+                AttackProb += 0.05f;           // 총합 ⇒ 10 %
             }
             //--------------------------------------------------------------------
 
@@ -138,6 +138,11 @@ void AAIAnimalController::FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus)
         // 감지된게 동물이면
         if (const ABaseAIAnimal* TargetAnimal = Cast<ABaseAIAnimal>(Actor))
         {
+            //같은 종이면 무시
+            if (TargetAnimal->GetIdentityTag() == Cast<ABaseAIAnimal>(GetPawn())->GetIdentityTag())
+            {
+                return;
+            }
             const UAbilitySystemComponent* TargetAsc = TargetAnimal->GetAbilitySystemComponent();
             const UAbilitySystemComponent* SourceAsc = Cast<ABaseAIAnimal>(GetPawn())->GetAbilitySystemComponent();
             const UEmberAnimalAttributeSet* TargetAttribute = TargetAsc->GetSet<UEmberAnimalAttributeSet>();
@@ -150,7 +155,7 @@ void AAIAnimalController::FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus)
             if (PawnWildPower <= TargetWildPower) //this가 우선순위가 더 작다면(높다면)
             {
                 //--- 공격 확률 설정 --------------------------------------------------
-                float AttackProb = 0.95f;          // 기본 5 %
+                float AttackProb = 0.05f;          // 기본 5 %
                 if (Cast<ABaseAIAnimal>(GetPawn())->GetPersonality() == EAnimalAIPersonality::Brave) // 성격이 ‘용감’이라면 +5 %
                 {
                     AttackProb += 0.05f;           // ⇒ 10 %
