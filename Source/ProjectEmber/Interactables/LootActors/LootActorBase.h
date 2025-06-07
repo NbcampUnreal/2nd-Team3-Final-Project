@@ -39,7 +39,7 @@ public:
 	void StartInteractAbility(APawn* InstigatorPawn);
 
 	UFUNCTION(BlueprintCallable)
-	void UpdateInteractAbility() const;
+	void UpdateInteractAbility();
 
 	UFUNCTION(BlueprintCallable)
 	void CancelInteractAbility();
