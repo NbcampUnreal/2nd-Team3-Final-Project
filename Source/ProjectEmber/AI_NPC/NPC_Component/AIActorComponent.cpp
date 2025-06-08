@@ -38,7 +38,7 @@ void UAIActorComponent::CheckPlayerDistance()
 
     if (Distance > TeleportThreshold)
     {
-        FVector TeleportLocation = PlayerPawn->GetActorLocation() + PlayerPawn->GetActorForwardVector() * -10.f;
+        FVector TeleportLocation = PlayerPawn->GetActorLocation() + PlayerPawn->GetActorForwardVector() * -100.f;
         Owner->SetActorLocation(TeleportLocation);
         UE_LOG(LogTemp, Warning, TEXT("AINPC teleported behind player."));
         return;

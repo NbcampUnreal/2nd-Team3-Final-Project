@@ -20,6 +20,6 @@ public:
     virtual FString GetConditionText_Implementation() const override;
 
     //  기존 FName → FGameplayTag로 변경
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest|Condition")
     FGameplayTag TargetItemTag;
 };
