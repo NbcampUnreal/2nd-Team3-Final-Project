@@ -306,6 +306,11 @@ void AEmberCharacter::AbilityInputPressed(int32 InputID)
             }
         }
     }
+
+    if (GetOverlayMode() == AlsOverlayModeTags::Hammer)
+    {
+        BuildComponent->SpwanBuild();
+    }
 }
 
 FGameplayAbilitySpec* AEmberCharacter::GetSpecFromOverlayMode(const bool IsRightInput) const
@@ -715,6 +720,30 @@ UUserItemManger* AEmberCharacter::GetItemManager()
 UEmberCraftComponent* AEmberCharacter::GetCraftComponent()
 {
     return CraftCollision;
+}
+
+void AEmberCharacter::Input_OnBuild()
+{
+    if (GetOverlayMode() != AlsOverlayModeTags::Hammer)
+    {
+        PreOverlayTag = GetOverlayMode();
+        SetOverlayMode(AlsOverlayModeTags::Hammer);
+        
+        if (BuildComponent)
+        {
+            BuildComponent->LaunchBuildMode();
+        }
+    }
+    else
+    {
+        SetOverlayMode(PreOverlayTag);
+        PreOverlayTag = AlsOverlayModeTags::Default;
+        
+        if (BuildComponent)
+        {
+            BuildComponent->LaunchBuildMode();
+        }
+    }
 }
 
 void AEmberCharacter::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DisplayInfo, float& Unused, float& VerticalLocation)
