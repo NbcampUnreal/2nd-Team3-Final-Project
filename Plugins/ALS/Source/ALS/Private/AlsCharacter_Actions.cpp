@@ -680,7 +680,7 @@ void AAlsCharacter::OnMantlingEnded_Implementation() {}
 bool AAlsCharacter::IsRagdollingAllowedToStart() const
 {
 	return LocomotionAction != AlsLocomotionActionTags::Ragdolling &&
-v	       ALS_ENSURE_MESSAGE(GetMesh()->GetBodyInstance(UAlsConstants::PelvisBoneName()) != nullptr &&
+	       ALS_ENSURE_MESSAGE(GetMesh()->GetBodyInstance(UAlsConstants::PelvisBoneName()) != nullptr &&
 	                          GetMesh()->GetBodyInstance(UAlsConstants::Spine03BoneName()) != nullptr,
 	                          TEXT("A physics asset with the %s and %s bones are required for the ragdolling to work."),
 	                          *UAlsConstants::PelvisBoneName().ToString(), *UAlsConstants::Spine03BoneName().ToString());
