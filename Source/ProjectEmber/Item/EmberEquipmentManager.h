@@ -20,14 +20,18 @@ public:
 	int32 GetSlotIndex(const FGameplayTag& InTag) const;
 
 	virtual void MoveItemByWidget_Implementation(const FGameplayTag& SlotTag, int32 IndexTo, const TScriptInterface<UEmberSlotDataProviderInterface>& AnotherProvider, int32 IndexFrom, int32 Quantity) override;
+	virtual int32 RemoveItemFromSlot_Implementation(int32 SlotIndex, int32 QuantityToRemove = 0) override;
 
+	virtual int32 AddDataInIndex(const FInstancedStruct& InItem, int32 InSlotIndex) override;
 protected:
 	
-	virtual int32 TryAddItemsToSlots(const FItemPair& InItem, int32 InSlotIndex = -1) override;
+	virtual int32 TryAddItems(const FInstancedStruct& InItem, int32 InSlotIndex = -1) override;
 
 	virtual void InitializeInventorySlots() override;
 
-	virtual int32 AddDataInIndex(const FItemPair& InItem, int32 InSlotIndex) override;
+	void RemoveEffect(int32 InSlotIndex);
+	void ActiveEffect(int32 InSlotIndex);
+	
 
 protected:
 	FGameplayTagContainer SlotGameplayTags;

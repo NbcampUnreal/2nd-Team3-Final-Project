@@ -26,6 +26,7 @@
 #include "GameFramework/PhysicsVolume.h"
 #include "GameInstance/EffectManagerSubsystem.h"
 #include "Item/UserItemManger.h"
+#include "Item/Craft/EmberCraftComponent.h"
 #include "UI/EmberWidgetComponent.h"
 #include "MeleeTrace/Public/MeleeTraceComponent.h"
 #include "Quest/QuestSubsystem.h"
@@ -74,7 +75,11 @@ AEmberCharacter::AEmberCharacter()
     MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
     
     EmberItemManager = CreateDefaultSubobject<UUserItemManger>(TEXT("UserItemComponent"));
-
+    CraftCollision = CreateDefaultSubobject<UEmberCraftComponent>(TEXT("CraftBoxCollision"));
+    CraftCollision->SetRelativeLocation(FVector::ZeroVector);
+    CraftCollision->SetRelativeRotation(FRotator::ZeroRotator);
+    CraftCollision->SetupAttachment(GetMesh());
+    
     VisualCharacterMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SK_LittleBoyRyan"));
     VisualCharacterMesh->SetupAttachment(GetMesh());
 
@@ -124,7 +129,7 @@ void AEmberCharacter::BeginPlay()
         {
             AbilitySystemComponent = EmberPlayerState->GetAbilitySystemComponent();
             Super::SetAbilitySystemComponent(AbilitySystemComponent);
-        
+            EmberItemManager->InitAbilitySystem();
             if (const UEmberCharacterAttributeSet* CurrentAttributeSet = AbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>())
             {
                 CurrentAttributeSet->OnOutOfHealth.AddDynamic(this, &ThisClass::OnOutOfHealth);
@@ -180,6 +185,8 @@ void AEmberCharacter::BeginPlay()
         
         HpBarWidget->UpdateAbilitySystemComponent(this);
     }
+
+    
 }
 
 void AEmberCharacter::Tick(float DeltaSeconds)
@@ -703,6 +710,16 @@ void AEmberCharacter::Input_OnQuickSlot(int32 PressedIndex)
     {
         SetOverlayMode(AlsOverlayModeTags::Default);
     }
+}
+
+UUserItemManger* AEmberCharacter::GetItemManager()
+{
+    return EmberItemManager;
+}
+
+UEmberCraftComponent* AEmberCharacter::GetCraftComponent()
+{
+    return CraftCollision;
 }
 
 void AEmberCharacter::Input_OnBuild()

@@ -21,4 +21,6 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<class UEmberCharacterAttributeSet> AttributeSet;
+	UPROPERTY()
+	TObjectPtr<class UEmberItemAttributeSet> ItemAttributeSet;
 };
