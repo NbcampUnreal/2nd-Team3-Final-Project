@@ -9,6 +9,8 @@
 #include "MessageBus/MessageBus.h"
 #include "LootActorBase.generated.h"
 
+class UEmberInteractableItemDropComponent;
+class UEmberDropComponent;
 class AEmberCharacter;
 class UAbilitySystemComponent;
 class UGameplayAbility;
@@ -37,7 +39,7 @@ public:
 	void CancelInteractAbility();
 
 	UFUNCTION(BlueprintCallable)
-	void CompleteInteractAbility();
+	void CompleteInteractAbility(APawn* InstigatorPawn = nullptr);
 	
 	UFUNCTION(BlueprintCallable)
 	void RefreshOverlayMode(APawn* InstigatorPawn);
@@ -56,6 +58,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swing")
 	int32 SwingCount{1};
+
 private:
 	void SetCharacterRotation(AEmberCharacter* EmberCharacter, const float YawAngle);
 	
@@ -69,4 +72,8 @@ private: /* MessageBus */
 	void ReceiveMessage(const FName MessageType, UObject* Payload);
 	
 	FMessageDelegate MessageDelegateHandle;
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+	TObjectPtr<UEmberInteractableItemDropComponent> DropItemDropComponent;
 };

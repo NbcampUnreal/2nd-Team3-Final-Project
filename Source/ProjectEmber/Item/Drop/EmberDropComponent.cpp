@@ -4,6 +4,7 @@
 #include "EmberDropComponent.h"
 
 #include "EmberDropItemManager.h"
+#include "EmberLog/EmberLog.h"
 
 
 // Sets default values for this component's properties
@@ -14,16 +15,39 @@ UEmberDropComponent::UEmberDropComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 
 	DropManager = CreateDefaultSubobject<UEmberDropItemManager>(TEXT("EmberDropItemManager"));
-
+	if (DropManager)
+	{
+		DropManager->InitSlot(30, 10, GetOwner());
+	}
 	// ...
 }
 
 
-void UEmberDropComponent::SetRandomItems()
+void UEmberDropComponent::SetRandomItems(const UAbilitySystemComponent* AbilitySystemComponent)
 {
 	if (DropManager)
 	{
-		DropManager->SetDropItem(DropID);
+		DropManager->SetDropItem(DropID, AbilitySystemComponent);
 	}
+}
+
+TMap<FName, int32> UEmberDropComponent::GetAllItemInfos_Implementation()
+{
+	return IEmberResourceProvider::Execute_GetAllItemInfos(DropManager);
+}
+
+void UEmberDropComponent::TryConsumeResource_Implementation(const TArray<FItemPair>& InRequireItems)
+{
+	IEmberResourceProvider::Execute_TryConsumeResource(DropManager, InRequireItems);
+}
+
+TArray<FItemPair> UEmberDropComponent::RemoveResourceUntilAble_Implementation(const TArray<FItemPair>& InRequireItems)
+{
+	return IEmberResourceProvider::Execute_RemoveResourceUntilAble(DropManager, InRequireItems);
+}
+
+bool UEmberDropComponent::bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems)
+{
+	return IEmberResourceProvider::Execute_bConsumeAbleResource(DropManager, InRequireItems);
 }
 

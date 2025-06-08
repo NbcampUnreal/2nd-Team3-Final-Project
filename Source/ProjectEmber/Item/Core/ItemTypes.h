@@ -96,7 +96,7 @@ struct FEquipmentInfoRow : public FTableRowBase
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment Component")
-    FGameplayTag EquipmentTag = FGameplayTag::EmptyTag;
+    FGameplayTagContainer EquipmentTag = FGameplayTagContainer::EmptyContainer;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment Component")
     TArray<FDataTableRowHandle> MainEffects;

@@ -25,3 +25,11 @@ namespace EmberEquipmentGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Ring, "Item.Equipment.Ring");
 	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Shield, "Item.Equipment.Shield");
 }
+
+namespace EmberItemEffectGameplayTags
+{
+	UE_DEFINE_GAMEPLAY_TAG(Item_Effect_MaxHealth, "Item.Effect.MaxHealth");
+	UE_DEFINE_GAMEPLAY_TAG(Item_Effect_Damage, "Item.Effect.Damage");
+	UE_DEFINE_GAMEPLAY_TAG(Item_Effect_DropRate, "Item.Effect.DropRate");
+	UE_DEFINE_GAMEPLAY_TAG(Item_Effect_DropBonus, "Item.Effect.DropBonus");
+}

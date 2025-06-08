@@ -97,6 +97,7 @@ void UEmberKeySettingWidget::SetTargetMappingContext(UInputMappingContext* InCon
     }
 }
 
+/*
 static FString MoveDirectionToString(EMoveDirection Dir)
 {
     switch (Dir)
@@ -107,7 +108,7 @@ static FString MoveDirectionToString(EMoveDirection Dir)
     case EMoveDirection::Right:    return TEXT("Right");
     default:                       return TEXT("Unknown");
     }
-}
+}*/
 
 static FString GetMoveDirectionMappingName(EMoveDirection Dir)
 {

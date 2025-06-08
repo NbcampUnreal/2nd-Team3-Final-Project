@@ -9,6 +9,7 @@
 #include "Engine/DataTable.h"
 #include "ItemSubsystem.generated.h"
 
+class UAbilitySystemComponent;
 struct FItemMasterInfoRow;
 /**
  * 
@@ -24,7 +25,7 @@ public:
 
     const FItemMasterInfoRow* GetItemMasterInfoRow(FName ItemID) const;
 
-	TArray<FItemPair> GetDroppedItem(FName MonsterID);
+	TArray<FItemPair> GetDroppedItem(FName MonsterID, const UAbilitySystemComponent* AbilitySystemComponent = nullptr);
 protected:
 	bool SelectWeightedItem(const TArray<FEmberDropItemGroup>& ItemsToSelectFrom, FEmberDropItemGroup& OutSelectedItem);
 	TArray<FItemEffectApplicationInfo> SetEnchantEquipment(const TObjectPtr<UDataTable>& EnchantDataTable);

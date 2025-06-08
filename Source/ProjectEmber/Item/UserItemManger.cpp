@@ -7,6 +7,7 @@
 #include "QuickSlotManager.h"
 #include "Item/Drop/EmberDropItemManager.h"
 #include "EmberEquipmentManager.h"
+#include "Craft/EmberCraftComponent.h"
 
 
 // Sets default values for this component's properties
@@ -45,7 +46,7 @@ UUserItemManger::UUserItemManger()
 		EquipmentManager->InitSlot(4, 0, GetOwner());
 	}
 
-	
+	CraftComponent = CreateDefaultSubobject<UEmberCraftComponent>(TEXT("CraftComponent"));
 	// ...
 }
 
@@ -56,9 +57,29 @@ void UUserItemManger::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
-	
+
 }
 
+void UUserItemManger::InitAbilitySystem()
+{
+	
+	if (InventoryManager)
+	{
+		InventoryManager->InitOwner(GetOwner());
+	}
+	if (QuickSlotManager)
+	{
+		QuickSlotManager->InitOwner(GetOwner());
+	}
+	if (DropItemManager)
+	{
+		DropItemManager->InitOwner(GetOwner());
+	}
+	if (EquipmentManager)
+	{
+		EquipmentManager->InitOwner(GetOwner());
+	}
+}
 
 // Called every frame
 void UUserItemManger::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
