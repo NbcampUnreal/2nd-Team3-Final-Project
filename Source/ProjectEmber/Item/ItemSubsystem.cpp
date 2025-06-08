@@ -108,7 +108,6 @@ TArray<FItemPair> UItemSubsystem::GetDroppedItem(FName MonsterID, const UAbility
             int32 ActualQuantityOrPicks = FMath::RandRange(DropEntry.MinQuantity, DropEntry.MaxQuantity);
             if (ActualQuantityOrPicks <= 0) continue;
             ActualQuantityOrPicks += DropBonus;
-            EMBER_LOG(LogEmberItem, Warning, TEXT("abcd %d"), DropBonus);
             if (DropEntry.bIsDropPool)
             {
                 if (!DropEntry.ItemID.DataTable || !DropEntry.ItemID.RowName.IsValid() || DropEntry.ItemID.RowName.IsNone())

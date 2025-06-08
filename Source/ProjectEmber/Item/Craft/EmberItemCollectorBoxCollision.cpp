@@ -46,19 +46,15 @@ void UEmberItemCollectorBoxCollision::FindOverlappingResourceComponent()
 	this->GetOverlappingActors(OverlappingActors);
 
 	ResourceProviders.Empty();
-	EMBER_LOG(LogEmberItem, Warning, TEXT("abcdz %s"), *this->GetName());
 
 	for (TObjectPtr<AActor> Actor : OverlappingActors)
 	{
-		EMBER_LOG(LogEmberItem, Warning, TEXT("abcdzabc %s, %s"), *Actor->GetName(), *this->GetName());
 
 		if (Actor && Actor != GetOwner())
 		{
-			EMBER_LOG(LogEmberItem, Warning, TEXT("abcdzabc %s, %s"), *Actor->GetName(), *this->GetName());
 
 			for (TObjectPtr<UActorComponent> Component : Actor->GetComponentsByInterface(UEmberResourceProvider::StaticClass()))
 			{
-				EMBER_LOG(LogEmberItem, Warning, TEXT("abcdzabcd %s, %s"), *Component->GetName(), *this->GetName());
 
 				if (!Component.IsA(UEmberCraftComponent::StaticClass()))
 				ResourceProviders.Add(Component);

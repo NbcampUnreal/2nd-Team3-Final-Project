@@ -191,16 +191,11 @@ void UEmberEquipmentManager::RemoveEffect(int32 InSlotIndex)
 
 void UEmberEquipmentManager::ActiveEffect(int32 InSlotIndex)
 {
-	EMBER_LOG(LogEmberItem, Warning, TEXT("abcde"));
-
 	if (DataSlots.IsValidIndex(InSlotIndex) && OwnerAbilitySystemComponent)
 	{
-		EMBER_LOG(LogEmberItem, Warning, TEXT("abcde1"));
 
 		if (FEquipmentSlotData* InSlot = DataSlots[InSlotIndex].GetMutablePtr<FEquipmentSlotData>())
 		{
-			EMBER_LOG(LogEmberItem, Warning, TEXT("abcde2, %d, %d"), InSlot->MainEffect.Num(), InSlot->EnchantEffects.Num());
-
 			UItemSystemLibrary::ApplyEffectInfoList(OwnerAbilitySystemComponent, InSlot->MainEffect, Owner);
 			UItemSystemLibrary::ApplyEffectInfoList(OwnerAbilitySystemComponent, InSlot->EnchantEffects, Owner);
 

@@ -26,33 +26,22 @@ FItemPair UEmberCraftComponent::CraftItem(const FName& InItemID)
 		return ReturnItem;
 	}
 	FindOverlappingResourceComponent();
-
-	EMBER_LOG(LogEmberItem, Warning, TEXT("abcd %d"), ResourceProviders.Num());
-
+	
 	if (const FCraftInfoRow* CraftInfoRow = CraftDataTable->FindRow<FCraftInfoRow>(InItemID, TEXT("CraftInfo")))
 	{
 		TArray<FItemPair> RequireItems;
 		FItemPair RequestItem;
-		EMBER_LOG(LogEmberItem, Warning, TEXT("abcd1"));
 
 		if (!CraftInfoRow->RequestItem.ItemData.IsNull())
 		{
-			EMBER_LOG(LogEmberItem, Warning, TEXT("abcd2"));
-
 			RequestItem = FItemPair(CraftInfoRow->RequestItem.ItemData.RowName, CraftInfoRow->RequestItem.Quantity);
 		}
 		for (const FCraftPair& RequireItem : CraftInfoRow->RequireItems)
 		{
 			if (!RequireItem.ItemData.IsNull())
 			{
-				EMBER_LOG(LogEmberItem, Warning, TEXT("abcd3"));
-
 				RequireItems.Add(FItemPair(RequireItem.ItemData.RowName, RequireItem.Quantity));
 			}
-		}
-		for (auto& a : IEmberResourceProvider::Execute_GetAllItemInfos(this))
-		{
-			EMBER_LOG(LogEmberItem, Warning, TEXT("abcd4 %s : %d"), *a.Key.ToString(), a.Value);
 		}
 
 		if (IEmberResourceProvider::Execute_bConsumeAbleResource(this, RequireItems))

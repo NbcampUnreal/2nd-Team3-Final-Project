@@ -69,12 +69,8 @@ void UEmberItemCollectorComponent::FindOverlappingResourceComponent()
 
 		if (Actor && Actor != GetOwner())
 		{
-			EMBER_LOG(LogEmberItem, Warning, TEXT("abcdzabc %s, %s"), *Actor->GetName(), *this->GetName());
-
 			for (TObjectPtr<UActorComponent> Component : Actor->GetComponentsByInterface(UEmberResourceProvider::StaticClass()))
 			{
-				EMBER_LOG(LogEmberItem, Warning, TEXT("abcdzabcd %s, %s"), *Component->GetName(), *this->GetName());
-
 				if (!Component.IsA(UEmberCraftComponent::StaticClass()))
 				ResourceProviders.Add(Component);
 			}
