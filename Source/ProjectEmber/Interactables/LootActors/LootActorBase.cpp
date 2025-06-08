@@ -69,7 +69,7 @@ void ALootActorBase::StartInteractAbility(APawn* InstigatorPawn)
 
 void ALootActorBase::UpdateInteractAbility()
 {
-	if (TargetAbilitySystemComponent->TryActivateAbilityByClass(InteractAbilityClass))
+	if (TargetAbilitySystemComponent && TargetAbilitySystemComponent->TryActivateAbilityByClass(InteractAbilityClass))
 	{
 		AEmberCharacter* EmberCharacter = Cast<AEmberCharacter>(TargetAbilitySystemComponent->GetAvatarActor());
 		const FVector TargetLocation = MeshComponent->GetComponentLocation();
@@ -81,10 +81,13 @@ void ALootActorBase::UpdateInteractAbility()
 
 void ALootActorBase::CancelInteractAbility()
 {
-	if (const FGameplayAbilitySpec* AbilitySpec = TargetAbilitySystemComponent->FindAbilitySpecFromClass(InteractAbilityClass))
+	if (TargetAbilitySystemComponent)
 	{
-		bIsAbilityEnded = true;
-		TargetAbilitySystemComponent->CancelAbilityHandle(AbilitySpec->Handle);
+		if (const FGameplayAbilitySpec* AbilitySpec = TargetAbilitySystemComponent->FindAbilitySpecFromClass(InteractAbilityClass))
+		{
+			bIsAbilityEnded = true;
+			TargetAbilitySystemComponent->CancelAbilityHandle(AbilitySpec->Handle);
+		}	
 	}
 }
 
