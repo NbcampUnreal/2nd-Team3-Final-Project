@@ -37,6 +37,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability")
 	TSubclassOf<UGameplayEffect> DeathEffectToApply;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability")
+	TArray<USoundBase*> Sounds;
 private:
 	FTimerHandle WaitFarmingTimerHandle;
 	FDelegateHandle EndCueDelegateHandle;

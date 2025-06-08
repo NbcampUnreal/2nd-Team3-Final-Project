@@ -47,6 +47,5 @@ void UGA_AnimalAttack::OnCompleteCallback()
 	bool bReplicatedEndAbility = true;
 	bool bWasCancelled = false;
 	
-	//UMessageBus::GetInstance()->BroadcastMessage(TEXT("HideAnimal"), this);
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
 }
