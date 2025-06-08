@@ -12,6 +12,7 @@ AEmberPlayerState::AEmberPlayerState()
 	AbilitySystemComponent->AddAttributeSetSubobject<UEmberItemAttributeSet>(ItemAttributeSet);
 
 	AbilitySystemComponent->SetIsReplicated(true);
+	
 }
 
 class UAbilitySystemComponent* AEmberPlayerState::GetAbilitySystemComponent() const

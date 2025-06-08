@@ -9,8 +9,14 @@
 #include "MessageBus/MessageBus.h"
 #include "LootActorBase.generated.h"
 
-class UEmberInteractableItemDropComponent;
-class UEmberDropComponent;
+UENUM(BlueprintType)
+enum class ELootAbilityType : uint8
+{
+	Harvest,
+	Mineral,
+	Tree
+};
+
 class AEmberCharacter;
 class UAbilitySystemComponent;
 class UGameplayAbility;
@@ -33,19 +39,21 @@ public:
 	void StartInteractAbility(APawn* InstigatorPawn);
 
 	UFUNCTION(BlueprintCallable)
-	void UpdateInteractAbility() const;
+	void UpdateInteractAbility();
 
 	UFUNCTION(BlueprintCallable)
 	void CancelInteractAbility();
 
 	UFUNCTION(BlueprintCallable)
-	void CompleteInteractAbility(APawn* InstigatorPawn = nullptr);
+	void CompleteInteractAbility();
 	
 	UFUNCTION(BlueprintCallable)
 	void RefreshOverlayMode(APawn* InstigatorPawn);
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Ability")
 	void SetHoldTime(float HoldTime);
+
+	void SetLootTypeToHoldTime(UGameplayAbility* GameplayAbility);
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	UStaticMeshComponent* MeshComponent;
@@ -59,6 +67,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swing")
 	int32 SwingCount{1};
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LootType")
+	ELootAbilityType LootAbilityType{ELootAbilityType::Tree};
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable")
+	FGameplayTagContainer GameplayTagContainer;
+	
 private:
 	void SetCharacterRotation(AEmberCharacter* EmberCharacter, const float YawAngle);
 	
@@ -72,8 +86,4 @@ private: /* MessageBus */
 	void ReceiveMessage(const FName MessageType, UObject* Payload);
 	
 	FMessageDelegate MessageDelegateHandle;
-
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
-	TObjectPtr<UEmberInteractableItemDropComponent> DropItemDropComponent;
 };

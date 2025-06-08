@@ -19,5 +19,7 @@ public:
 	TSubclassOf<AActor> TargetNPCClass;
 	virtual bool OnEvent_Implementation(const FGameplayTag& InEventTag, const FGameplayEventData& EventData) override;
 
-	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Condition")
+	TArray<FText> DialogueLines;
+
 };

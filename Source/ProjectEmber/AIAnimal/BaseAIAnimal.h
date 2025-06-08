@@ -84,7 +84,7 @@ public:
 	void SetIsDead(const bool InIsDead);
 
 	UFUNCTION(BlueprintCallable, Category = SoundPitch)
-	float GetSoundPitch() const;
+	int32 GetSoundIndex() const;
 	
 	
 	/* Spawn & Despawn*/
@@ -111,8 +111,7 @@ public:
 
 protected:
 	void ReceiveMessage(const FName MessageType, UObject* Payload);
-	void EndFarmingTime();
-
+	
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void SetDetails();
 
@@ -186,12 +185,15 @@ protected:
 	float WanderRange = 500.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SoundPitch")
-	float SoundPitch = 1.0f;
+	int32 SoundIndex = 0;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTag IdentityTag;
 
-	FTimerHandle TimerHandle;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability")
+	TSubclassOf<class UGameplayEffect> DecreaseFullnessEffect;
+
+	FTimerHandle FullnessTimerHandle;
 	
 	TArray<FVector> PatrolPoints;
 	
