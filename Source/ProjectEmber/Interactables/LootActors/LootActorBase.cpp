@@ -5,6 +5,9 @@
 #include "Character/EmberCharacter.h"
 #include "EmberLog/EmberLog.h"
 #include "GameInstance/GameplayEventSubsystem.h"
+#include "Item/ItemSubsystem.h"
+#include "Item/Core/ItemSystemLibrary.h"
+#include "Item/Drop/EmberInteractableItemDropComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 ALootActorBase::ALootActorBase()
@@ -12,7 +15,7 @@ ALootActorBase::ALootActorBase()
 	PrimaryActorTick.bCanEverTick = false;
 
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
-	
+	ItemDropComponent = CreateDefaultSubobject<UEmberInteractableItemDropComponent>(TEXT("ItemDropComponent"));
 	SetRootComponent(MeshComponent);
 }
 
@@ -102,6 +105,7 @@ void ALootActorBase::CompleteInteractAbility()
 		UE_LOG(LogTemp, Warning, TEXT(" [LootActor] Gathering 퀘스트 이벤트 발생: %s"), *EventData.EventTag.ToString());
 	}
 
+	ItemDropComponent->DropItem(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	// 3. 아이템 획득 등의 후속 처리 (선택)
 	// AddItemToInventory(...);
 }

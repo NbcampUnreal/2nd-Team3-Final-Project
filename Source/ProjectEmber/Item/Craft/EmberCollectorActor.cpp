@@ -3,6 +3,7 @@
 
 #include "EmberCollectorActor.h"
 
+#include "EmberItemCollectorBoxCollision.h"
 #include "EmberItemCollectorComponent.h"
 
 
@@ -13,7 +14,8 @@ AEmberCollectorActor::AEmberCollectorActor()
 	PrimaryActorTick.bCanEverTick = false;
 	SceneComponent = CreateDefaultSubobject<USceneComponent>("SceneComponent");
 	SetRootComponent(SceneComponent);
-	ItemCollectorComponent = CreateDefaultSubobject<UEmberItemCollectorComponent>(TEXT("ItemCollectorComponent"));
+	CollectorCollision = CreateDefaultSubobject<UEmberItemCollectorBoxCollision>(TEXT("ItemCollectorBoxComponent"));
+	CollectorCollision->SetupAttachment(GetRootComponent());
 }
 
 
