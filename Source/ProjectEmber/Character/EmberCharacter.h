@@ -6,6 +6,8 @@
 #include "EMSActorSaveInterface.h"
 #include "EmberCharacter.generated.h"
 
+class UEmberCraftComponent;
+class UUserItemManger;
 class UAC_BuildComponent;
 class UNiagaraSystem;
 struct FMeleeTraceInstanceHandle;
@@ -198,10 +200,17 @@ protected:
 protected:
 	//UFUNCTION()
 	//void HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, AActor* HitActor, const FVector& HitLocation, const FVector& HitNormal, FName HitBoneName, FMeleeTraceInstanceHandle TraceHandle);
-	
-protected: /* Inventory */
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "EmberCharacter")
-	TObjectPtr<class UUserItemManger> EmberItemManager;
+
+public: /* Inventory */
+	UFUNCTION(BlueprintCallable, Category = "Item")
+	UUserItemManger* GetItemManager();
+	UFUNCTION(BlueprintCallable, Category = "Item")
+	UEmberCraftComponent* GetCraftComponent();
+protected: 
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Item")
+	TObjectPtr<UUserItemManger> EmberItemManager;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Item")
+	TObjectPtr<UEmberCraftComponent> CraftCollision;
 	
 };
 

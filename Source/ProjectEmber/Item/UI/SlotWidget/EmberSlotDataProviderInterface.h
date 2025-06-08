@@ -34,6 +34,9 @@ public:
 	FName GetSlotItemID(int32 InIndex) const;
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "SlotProvider")
+	FInstancedStruct GetSlotItemInfo(int32 InIndex) const;
+	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "SlotProvider")
 	FGameplayTag GetSlotType() const;
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "SlotProvider")

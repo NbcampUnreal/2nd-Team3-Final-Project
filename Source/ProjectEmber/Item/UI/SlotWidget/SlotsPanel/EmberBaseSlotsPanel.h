@@ -34,6 +34,8 @@ public:
 
 	UFUNCTION()
 	virtual void SlotChanged(int32 InIndex, const FInstancedStruct& InSlotData);
+	UFUNCTION()
+	virtual void UpdateSlots();
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Slots Panel")
 	TScriptInterface<IEmberSlotDataProviderInterface> DataProvider;

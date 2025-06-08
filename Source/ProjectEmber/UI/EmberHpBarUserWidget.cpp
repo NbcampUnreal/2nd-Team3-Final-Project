@@ -8,7 +8,7 @@
 void UEmberHpBarUserWidget::SetAbilitySystemComponent(class AActor* InOwner)
 {
 	Super::SetAbilitySystemComponent(InOwner);
-	
+
 	if (AbilitySystemComponent)
 	{
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UEmberCharacterAttributeSet::GetHealthAttribute()).AddUObject(this, &ThisClass::OnHealthChanged);
@@ -20,6 +20,7 @@ void UEmberHpBarUserWidget::SetAbilitySystemComponent(class AActor* InOwner)
 
 		if (const UEmberCharacterAttributeSet* CurrentAttributeSet = AbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>())
 		{
+			
 			CurrentHealth = CurrentAttributeSet->GetHealth();
 			CurrentMaxHealth = CurrentAttributeSet->GetMaxHealth();
 			UpdateHpBar();

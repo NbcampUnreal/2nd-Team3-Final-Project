@@ -3,6 +3,7 @@
 
 #include "EmberCraftComponent.h"
 
+#include "EmberLog/EmberLog.h"
 #include "Item/UserItemManger.h"
 #include "Item/Core/ItemCraftType.h"
 
@@ -19,6 +20,13 @@ UEmberCraftComponent::UEmberCraftComponent()
 FItemPair UEmberCraftComponent::CraftItem(const FName& InItemID)
 {
 	FItemPair ReturnItem;
+	
+	if (!CraftDataTable && !InItemID.IsValid() || InItemID.IsNone())
+	{
+		return ReturnItem;
+	}
+	FindOverlappingResourceComponent();
+	
 	if (const FCraftInfoRow* CraftInfoRow = CraftDataTable->FindRow<FCraftInfoRow>(InItemID, TEXT("CraftInfo")))
 	{
 		TArray<FItemPair> RequireItems;
@@ -35,10 +43,11 @@ FItemPair UEmberCraftComponent::CraftItem(const FName& InItemID)
 				RequireItems.Add(FItemPair(RequireItem.ItemData.RowName, RequireItem.Quantity));
 			}
 		}
-		
+
 		if (IEmberResourceProvider::Execute_bConsumeAbleResource(this, RequireItems))
 		{
 			IEmberResourceProvider::Execute_TryConsumeResource(this, RequireItems);
+			
 			ReturnItem = RequestItem;
 		}
 	}
