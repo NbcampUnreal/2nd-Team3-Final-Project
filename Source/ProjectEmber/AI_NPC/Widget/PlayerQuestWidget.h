@@ -16,8 +16,8 @@ class PROJECTEMBER_API UPlayerQuestWidget : public UUserWidget
 	GENERATED_BODY()
 	
 public:
-	UFUNCTION(BlueprintCallable, Category = "Quest")
-	void SetQuestInfoFromDataAsset(const class UQuestDataAsset* QuestAsset, bool bIsComplete, bool bIsAccepted);
+	UFUNCTION(BlueprintCallable)
+	void SetQuestInfoFromDataAsset(const UQuestDataAsset* QuestAsset, bool bIsComplete, bool bIsAccepted, bool bShowStepComplete, int32 StepIndex);
 
 	virtual void NativeConstruct() override;
 

@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/WidgetSwitcher.h"
 #include "GameMenuWidget.generated.h"
 
 class UWidgetSwitcher;
-class UUserWidget; 
-class UPlayerQuestWidget;
+class UBorder;
 
 UCLASS()
 class PROJECTEMBER_API UGameMenuWidget : public UUserWidget
@@ -27,11 +27,15 @@ public:
     UFUNCTION(BlueprintCallable)
     void UpdateQuestInfoViaWidgetTree();
 
-protected:
-
-    /** 퀘스트 전환용 위젯 스위처 */
-    UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
+public:
+    // Toggle 시 접근할 수 있도록 public으로 설정
+    UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
     UWidgetSwitcher* WidgetSwitcher;
+
+    UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
+    UBorder* EmptyBorder;
+
+protected:
 
     /** 중간 퀘스트 래퍼 위젯 (블루프린트: WBP_Quest) */
     UPROPERTY(meta = (BindWidget), BlueprintReadOnly)

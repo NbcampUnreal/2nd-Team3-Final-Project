@@ -23,14 +23,13 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Condition")
     int32 RequiredCount = 1;
 
-protected:
+
     /**
      * 런타임 카운트
      */
     UPROPERTY(VisibleInstanceOnly, Category = "Quest|Condition")
     int32 CurrentCount = 0;
 
-public:
     /**
      * 블루프린트에서도 상속 가능하게 처리
      * 태그가 일치하면 카운트 증가 후 조건 충족 여부 확인

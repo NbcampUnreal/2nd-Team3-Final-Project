@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
-#include "AI_NPC/DialogueComponent.h"
+#include "AI_NPC/NPC_Component/DialogueComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "EmberInputHandlerComponent.generated.h"

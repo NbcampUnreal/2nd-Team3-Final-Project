@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
 #include "GameplayTagContainer.h"
-#include "AI_NPC/PlayerQuestWidget.h"
+#include "AI_NPC/Widget/PlayerQuestWidget.h"
 #include "Interface/EmberHUDInterface.h"
 #include "EmberMainHUD.generated.h"
 
@@ -75,7 +75,7 @@ private:
 public:
 //#if !UE_BUILD_SHIPPING
 	//UFUNCTION(BlueprintCallable, Category = "UI|HUD")
-	//void ToggleDebugLayer();
+	void ToggleDebugLayer();
 
 protected:
 	//TObjectPtr<ULayerDebugger> PrimaryDebugLayer;

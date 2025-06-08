@@ -45,7 +45,6 @@ void UQuestWidget::HandleCompleteClicked()
 
 void UQuestWidget::SetQuestInfoFromDataAsset(const UQuestDataAsset* QuestAsset, bool bIsComplete, bool bIsAccepted)
 {
-    UE_LOG(LogTemp, Warning, TEXT(">> [DEBUG] Accepted: %d / Complete: %d"), bIsAccepted, bIsComplete);
     CurrentQuestAsset = QuestAsset;
     if (!QuestAsset) return;
 
@@ -104,21 +103,4 @@ void UQuestWidget::SetQuestInfoFromDataAsset(const UQuestDataAsset* QuestAsset, 
         RewardText->SetText(FText::FromString(RewardSummary));
     }
 
-    // 버튼 가시성 설정
-    if (AcceptButton)
-    {
-        AcceptButton->SetVisibility(bIsAccepted || bIsComplete ? ESlateVisibility::Collapsed: ESlateVisibility::Visible);
-    }
-
-    // 거절 버튼: 퀘스트 수락 전만 보이게
-    if (RefuseButton)
-    {
-        RefuseButton->SetVisibility(bIsAccepted || bIsComplete ? ESlateVisibility::Collapsed: ESlateVisibility::Visible);
-    }
-
-    // 완료 버튼: 퀘스트 완료 상태일 때만 보이게
-    if (CompleteButton)
-    {
-        CompleteButton->SetVisibility(bIsComplete ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
-    }
 }

@@ -2,7 +2,7 @@
 #include "../EmberCharacter.h"
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputComponent.h"
-#include "AI_NPC/DialogueComponent.h"
+#include "AI_NPC/NPC_Component/DialogueComponent.h"
 #include "Character/EmberComponents/InteractionComponent.h"
 #include "UI/BaseWidget/GameMenuWidget.h"
 #include "UI/HUD/EmberMainHUD.h"
