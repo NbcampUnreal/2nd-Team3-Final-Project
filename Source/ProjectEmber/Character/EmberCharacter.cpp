@@ -31,6 +31,8 @@
 #include "Quest/QuestSubsystem.h"
 #include "UI/HUD/EmberMainHUD.h"
 #include "Utility/AlsVector.h"
+#include "MotionWarpingComponent.h"
+
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(EmberCharacter)
 
@@ -80,6 +82,8 @@ AEmberCharacter::AEmberCharacter()
     GliderMesh->SetupAttachment(GetMesh());
 
     BuildComponent = CreateDefaultSubobject<UAC_BuildComponent>(TEXT("BuildComponent"));
+
+    MotionWarpComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpComponent"));
     
     /* Test */
     HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
