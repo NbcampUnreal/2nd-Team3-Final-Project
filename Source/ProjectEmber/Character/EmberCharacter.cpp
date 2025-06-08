@@ -16,7 +16,6 @@
 #include "InputMappingContext.h"
 #include "InputAction.h"
 #include "MaterialHLSLTree.h"
-#include "WaterBodyActor.h"
 #include "Animation/AnimInstance.h"
 #include "Build/AC_BuildComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -33,6 +32,8 @@
 #include "Quest/QuestSubsystem.h"
 #include "UI/HUD/EmberMainHUD.h"
 #include "Utility/AlsVector.h"
+#include "MotionWarpingComponent.h"
+
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(EmberCharacter)
 
@@ -83,6 +84,8 @@ AEmberCharacter::AEmberCharacter()
     GliderMesh->SetupAttachment(GetMesh());
 
     BuildComponent = CreateDefaultSubobject<UAC_BuildComponent>(TEXT("BuildComponent"));
+
+    MotionWarpComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpComponent"));
     
     /* Test */
     HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
@@ -130,8 +133,7 @@ void AEmberCharacter::BeginPlay()
             }
         
             AbilitySystemComponent->InitAbilityActorInfo(EmberPlayerState, this);    
-        
-        
+            
             for (const TSubclassOf<UGameplayAbility>& Ability : StartAbilities)
             {
                 FGameplayAbilitySpec StartAbilitySpec = Ability;
@@ -337,6 +339,10 @@ FGameplayAbilitySpec* AEmberCharacter::GetSpecFromOverlayMode(const bool IsRight
     else if (OverlayMode == AlsOverlayModeTags::Throw) 
     {
         InputID = static_cast<int32>(EInputID::Throw);
+    }
+    else if (OverlayMode == AlsOverlayModeTags::Hammer) 
+    {
+        InputID = static_cast<int32>(EInputID::Hammer);
     }
     
     if (IsRightInput)

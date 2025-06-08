@@ -1,5 +1,5 @@
 ﻿#include "EmberMainHUD.h"
-#include "AI_NPC/PlayerQuestWidget.h"
+#include "AI_NPC/Widget/PlayerQuestWidget.h"
 #include "Quest/QuestSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "EmberLog/EmberLog.h"
@@ -17,10 +17,10 @@ void AEmberMainHUD::BeginPlay()
 		PushInitialWidget();
 
 #if !UE_BUILD_SHIPPING
-		if (UWidget* DebugLayer = Widget->GetWidgetFromName(TEXT("LayerDebugger")))
+		/*if (UWidget* DebugLayer = Widget->GetWidgetFromName(TEXT("LayerDebugger")))
 		{
 			PrimaryDebugLayer = Cast<ULayerDebugger>(DebugLayer);
-		}
+		}*/
 #endif
 	}
 	else
@@ -51,10 +51,10 @@ bool AEmberMainHUD::RegisterLayer(const FGameplayTag& LayerTag, UUserWidget* Lay
 		EmberLayers.Add(LayerTag, LayerObj);
 
 #if !UE_BUILD_SHIPPING
-		if (PrimaryDebugLayer)
+		/*if (PrimaryDebugLayer)
 		{
 			PrimaryDebugLayer->SetChangedLayer();
-		}
+		}*/
 #endif
 
 		return true;
@@ -71,10 +71,10 @@ UUserWidget* AEmberMainHUD::PushContentToLayer(const FGameplayTag& LayerTag, con
 		UUserWidget* PushWidget = FoundLayer->PushWidget(WidgetClass);
 
 #if !UE_BUILD_SHIPPING
-		if (PrimaryDebugLayer)
+		/*if (PrimaryDebugLayer)
 		{
 			PrimaryDebugLayer->SetChangedLayer();
-		}
+		}*/
 #endif
 
 		return PushWidget;
@@ -89,10 +89,10 @@ void AEmberMainHUD::PopContentToLayer(const FGameplayTag& LayerTag)
 		FoundLayer->PopWidget();
 
 #if !UE_BUILD_SHIPPING
-		if (PrimaryDebugLayer)
+		/*if (PrimaryDebugLayer)
 		{
 			PrimaryDebugLayer->SetChangedLayer();
-		}
+		}*/
 #endif
 	}
 }
@@ -104,10 +104,10 @@ void AEmberMainHUD::ClearToLayer(const FGameplayTag& LayerTag)
 		FoundLayer->ClearStack();
 
 #if !UE_BUILD_SHIPPING
-		if (PrimaryDebugLayer)
+		/*if (PrimaryDebugLayer)
 		{
 			PrimaryDebugLayer->SetChangedLayer();
-		}
+		}*/
 #endif
 	}
 }
@@ -139,10 +139,10 @@ void AEmberMainHUD::PushInitialWidget()
 		PushContentToLayer(Pair.Key, Pair.Value);
 
 #if !UE_BUILD_SHIPPING
-		if (PrimaryDebugLayer)
+		/*if (PrimaryDebugLayer)
 		{
 			PrimaryDebugLayer->SetChangedLayer();
-		}
+		}*/
 #endif
 	}
 }

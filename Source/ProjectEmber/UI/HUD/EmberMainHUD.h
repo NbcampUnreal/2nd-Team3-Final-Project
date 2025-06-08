@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
 #include "GameplayTagContainer.h"
-#include "AI_NPC/PlayerQuestWidget.h"
+#include "AI_NPC/Widget/PlayerQuestWidget.h"
 #include "Interface/EmberHUDInterface.h"
 #include "EmberMainHUD.generated.h"
 
@@ -78,7 +78,7 @@ public:
 	void ToggleDebugLayer();
 
 protected:
-	TObjectPtr<ULayerDebugger> PrimaryDebugLayer;
-	bool bDebugLayerVisible = false;
+	//TObjectPtr<ULayerDebugger> PrimaryDebugLayer;
+	//bool bDebugLayerVisible = false;
 //#endif
 };
