@@ -17,6 +17,8 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Condition")
     FGameplayTag EventTag{FGameplayTag()};
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest|Condition")
+    FText ConditionName;
     /**
      * 조건 충족을 위한 횟수
      */
@@ -63,4 +65,13 @@ public:
     {
         CurrentCount = 0;
     }
+
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Quest|Condition")
+    FString GetConditionText() const;
+    virtual FString GetConditionText_Implementation() const
+    {
+        return FString::Printf(TEXT("진행도: %d / %d"), CurrentCount, RequiredCount);
+    }
+
+ 
 };
