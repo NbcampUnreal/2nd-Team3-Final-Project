@@ -536,7 +536,7 @@ void UDialogueComponent::SetDialogueVisualState(bool bShowUI)
 
         PC->SetInputMode(FInputModeGameOnly());
         PC->SetViewTargetWithBlend(PC->GetPawn(), 0.5f);
-        SetInputMappingContexts({ GameplayInputMappingContext, GameplayUIInputMappingContext }, true);
+        SetInputMappingContexts({ GameplayInputMappingContext, GameplayUIInputMappingContext, GameplayAlsUIInputMappingContext }, true);
         PC->bShowMouseCursor = false;
         if (DialogueWidget)
         {
