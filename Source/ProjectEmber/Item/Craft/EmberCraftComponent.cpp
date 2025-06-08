@@ -21,7 +21,7 @@ FItemPair UEmberCraftComponent::CraftItem(const FName& InItemID)
 {
 	FItemPair ReturnItem;
 	
-	if (!CraftDataTable && !InItemID.IsValid() || InItemID.IsNone())
+	if (!CraftDataTable || !InItemID.IsValid() || InItemID.IsNone())
 	{
 		return ReturnItem;
 	}
