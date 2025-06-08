@@ -35,19 +35,6 @@ void UEmberDataContainer::InitOwner(TObjectPtr<AActor> InOwner)
     if (Owner)
     {
         OwnerAbilitySystemComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Owner);
-        if (AEmberCharacter* EmberCharacter = Cast<AEmberCharacter>(Owner))
-        {
-            EMBER_LOG(LogEmberItem, Warning, TEXT("abcd7"));
-
-            if (const UEmberCharacterAttributeSet* Set = EmberCharacter->GetAbilitySystemComponent()->GetSet<UEmberCharacterAttributeSet>())
-            {
-                EMBER_LOG(LogEmberItem, Warning, TEXT("abcd8 %f"), Set->GetMaxHealth());
-            }
-        }
-        if (const UEmberCharacterAttributeSet* Set = OwnerAbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>())
-        {
-            EMBER_LOG(LogEmberItem, Warning, TEXT("abcd6 %f"), Set->GetMaxHealth());
-        }
     } 
 #if UE_BUILD_DEVELOPMENT
     if (!OwnerAbilitySystemComponent)
