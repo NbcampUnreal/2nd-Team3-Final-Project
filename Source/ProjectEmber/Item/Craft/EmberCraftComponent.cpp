@@ -20,7 +20,14 @@ UEmberCraftComponent::UEmberCraftComponent()
 FItemPair UEmberCraftComponent::CraftItem(const FName& InItemID)
 {
 	FItemPair ReturnItem;
-	EMBER_LOG(LogEmberItem, Warning, TEXT("abcd"));
+	
+	if (!CraftDataTable && !InItemID.IsValid() || InItemID.IsNone())
+	{
+		return ReturnItem;
+	}
+	FindOverlappingResourceComponent();
+
+	EMBER_LOG(LogEmberItem, Warning, TEXT("abcd %d"), ResourceProviders.Num());
 
 	if (const FCraftInfoRow* CraftInfoRow = CraftDataTable->FindRow<FCraftInfoRow>(InItemID, TEXT("CraftInfo")))
 	{

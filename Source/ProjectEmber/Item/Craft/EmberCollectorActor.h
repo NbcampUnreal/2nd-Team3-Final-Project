@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "EmberCollectorActor.generated.h"
 
+class UEmberItemCollectorBoxCollision;
 class UEmberItemCollectorComponent;
 
 UCLASS()
@@ -19,7 +20,7 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Craft")
-	TObjectPtr<UEmberItemCollectorComponent> ItemCollectorComponent;
+	TObjectPtr<UEmberItemCollectorBoxCollision> CollectorCollision;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Craft")
 	TObjectPtr<USceneComponent> SceneComponent;
 };

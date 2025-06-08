@@ -9,6 +9,8 @@
 #include "MessageBus/MessageBus.h"
 #include "LootActorBase.generated.h"
 
+class UEmberInteractableItemDropComponent;
+
 UENUM(BlueprintType)
 enum class ELootAbilityType : uint8
 {
@@ -86,4 +88,8 @@ private: /* MessageBus */
 	void ReceiveMessage(const FName MessageType, UObject* Payload);
 	
 	FMessageDelegate MessageDelegateHandle;
+
+protected:
+	UPROPERTY(EditAnywhere, Blueprintable, Category = "Item")
+	TObjectPtr<UEmberInteractableItemDropComponent> ItemDropComponent;
 };

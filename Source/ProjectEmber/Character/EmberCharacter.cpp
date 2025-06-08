@@ -75,8 +75,11 @@ AEmberCharacter::AEmberCharacter()
     MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
     
     EmberItemManager = CreateDefaultSubobject<UUserItemManger>(TEXT("UserItemComponent"));
-    CraftComponent = CreateDefaultSubobject<UEmberCraftComponent>(TEXT("CraftComponent"));
-
+    CraftCollision = CreateDefaultSubobject<UEmberCraftComponent>(TEXT("CraftBoxCollision"));
+    CraftCollision->SetRelativeLocation(FVector::ZeroVector);
+    CraftCollision->SetRelativeRotation(FRotator::ZeroRotator);
+    CraftCollision->SetupAttachment(GetMesh());
+    
     VisualCharacterMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SK_LittleBoyRyan"));
     VisualCharacterMesh->SetupAttachment(GetMesh());
 
@@ -711,7 +714,7 @@ UUserItemManger* AEmberCharacter::GetItemManager()
 
 UEmberCraftComponent* AEmberCharacter::GetCraftComponent()
 {
-    return CraftComponent;
+    return CraftCollision;
 }
 
 void AEmberCharacter::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DisplayInfo, float& Unused, float& VerticalLocation)

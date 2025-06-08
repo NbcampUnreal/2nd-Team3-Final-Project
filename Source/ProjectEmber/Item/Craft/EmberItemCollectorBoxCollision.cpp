@@ -1,71 +1,56 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "EmberItemCollectorComponent.h"
+#include "EmberItemCollectorBoxCollision.h"
 
 #include "EmberCraftComponent.h"
-#include "Components/BoxComponent.h"
+#include "EmberResourceProvider.h"
 #include "EmberLog/EmberLog.h"
-#include "GameFramework/Character.h"
 
 
 // Sets default values for this component's properties
-UEmberItemCollectorComponent::UEmberItemCollectorComponent()
+UEmberItemCollectorBoxCollision::UEmberItemCollectorBoxCollision()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
 
-	CollectRangeBox = CreateDefaultSubobject<UBoxComponent>(TEXT("CollectRangeBox"));
-	if (CollectRangeBox && GetOwner())
-	{
-		if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
-		{
-			
-			/*
-			CollectRangeBox->SetupAttachment(Character->GetMesh());
-			*/
-
-		}
-	}
 	// ...
+}
+
+void UEmberItemCollectorBoxCollision::PostInitProperties()
+{
+	Super::PostInitProperties();
+	
+	
+	this->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	this->SetGenerateOverlapEvents(true);
 }
 
 
 // Called when the game starts
-void UEmberItemCollectorComponent::BeginPlay()
+void UEmberItemCollectorBoxCollision::BeginPlay()
 {
 	Super::BeginPlay();
-
 	// ...
-	if (CollectRangeBox)
-	{/*
-		if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
-		{
-			CollectRangeBox->SetupAttachment(Character->GetMesh());
-			CollectRangeBox->SetWorldLocation(Character->GetActorLocation());
-			CollectRangeBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-
-			CollectRangeBox->SetHiddenInGame(true);
-		}*/
-	}
 	FindOverlappingResourceComponent();
+
 }
 
-void UEmberItemCollectorComponent::FindOverlappingResourceComponent()
+
+void UEmberItemCollectorBoxCollision::FindOverlappingResourceComponent()
 {
-	if (!CollectRangeBox)
-	{
-		return;
-	}
 
 	TArray<AActor*> OverlappingActors;
 
-	CollectRangeBox->GetOverlappingActors(OverlappingActors);
+	this->GetOverlappingActors(OverlappingActors);
 
 	ResourceProviders.Empty();
+	EMBER_LOG(LogEmberItem, Warning, TEXT("abcdz %s"), *this->GetName());
+
 	for (TObjectPtr<AActor> Actor : OverlappingActors)
 	{
+		EMBER_LOG(LogEmberItem, Warning, TEXT("abcdzabc %s, %s"), *Actor->GetName(), *this->GetName());
 
 		if (Actor && Actor != GetOwner())
 		{
@@ -82,12 +67,12 @@ void UEmberItemCollectorComponent::FindOverlappingResourceComponent()
 	}
 }
 
-TArray<TWeakObjectPtr<UObject>> UEmberItemCollectorComponent::GetResourceProvider()
+TArray<TWeakObjectPtr<UObject>> UEmberItemCollectorBoxCollision::GetResourceProvider()
 {
 	return ResourceProviders;
 }
 
-void UEmberItemCollectorComponent::SetResourceProvider(TScriptInterface<UEmberResourceProvider> Provider)
+void UEmberItemCollectorBoxCollision::SetResourceProvider(TScriptInterface<UEmberResourceProvider> Provider)
 {
 	if (Provider.GetObject())
 	{
@@ -97,10 +82,11 @@ void UEmberItemCollectorComponent::SetResourceProvider(TScriptInterface<UEmberRe
 
 }
 
-TMap<FName, int32> UEmberItemCollectorComponent::GetAllItemInfos_Implementation()
+TMap<FName, int32> UEmberItemCollectorBoxCollision::GetAllItemInfos_Implementation()
 {
 	TMap<FName, int32> AllItemInfos;
-	
+	FindOverlappingResourceComponent();
+
 	for (TWeakObjectPtr<UObject>& ResourceProvider : ResourceProviders)
 	{
 		if (ResourceProvider.Get())
@@ -122,7 +108,7 @@ TMap<FName, int32> UEmberItemCollectorComponent::GetAllItemInfos_Implementation(
 	return AllItemInfos;
 }
 
-void UEmberItemCollectorComponent::TryConsumeResource_Implementation(const TArray<FItemPair>& InRequireItems)
+void UEmberItemCollectorBoxCollision::TryConsumeResource_Implementation(const TArray<FItemPair>& InRequireItems)
 {
 	TArray<FItemPair> RequireItems = InRequireItems;
 
@@ -140,7 +126,7 @@ void UEmberItemCollectorComponent::TryConsumeResource_Implementation(const TArra
 	}
 }
 
-bool UEmberItemCollectorComponent::bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems)
+bool UEmberItemCollectorBoxCollision::bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems)
 {
 	TMap<FName, int32> AllItemInfos = GetAllItemInfos_Implementation();
 	for (FItemPair RequireItem : InRequireItems)
@@ -154,7 +140,7 @@ bool UEmberItemCollectorComponent::bConsumeAbleResource_Implementation(const TAr
 	return true;
 }
 
-TArray<FItemPair> UEmberItemCollectorComponent::RemoveResourceUntilAble_Implementation(
+TArray<FItemPair> UEmberItemCollectorBoxCollision::RemoveResourceUntilAble_Implementation(
    const TArray<FItemPair>& InRequireItems)
 {
 	TArray<FItemPair> RequireItems = InRequireItems;
@@ -168,7 +154,7 @@ TArray<FItemPair> UEmberItemCollectorComponent::RemoveResourceUntilAble_Implemen
 	}
 	return RequireItems;
 }
-int32 UEmberItemCollectorComponent::DEBUG_GetResourceProviderNum()
+int32 UEmberItemCollectorBoxCollision::DEBUG_GetResourceProviderNum()
 {
 	return ResourceProviders.Num();
 }

@@ -208,7 +208,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Item")
 	TObjectPtr<UUserItemManger> EmberItemManager;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Item")
-	TObjectPtr<UEmberCraftComponent> CraftComponent;
+	TObjectPtr<UEmberCraftComponent> CraftCollision;
 	
 };
 
