@@ -30,7 +30,7 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 
 	if (!bLoopingMontage)
 	{
-		if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
+		/*if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
 		{
 			FRotator CtrlRot = Character->GetController()->GetControlRotation();
 			CtrlRot.Pitch = 0.f;
@@ -61,7 +61,7 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 				WarpTarget.Rotation = MoveDir.Rotation();
 				WarpComp->AddOrUpdateWarpTarget(WarpTarget);
 			}
-		}
+		}*/
 	}
 
 	LaunchCharacterForward(ActorInfo);

@@ -90,29 +90,34 @@ void ALootActorBase::CancelInteractAbility()
 		}	
 	}
 }
-
 void ALootActorBase::CompleteInteractAbility()
 {
 	bIsAbilityEnded = true;
 
-	// 1. 퀘스트 조건 충족을 위한 이벤트 데이터 구성
 	FGameplayEventData EventData;
 	EventData.EventTag = FGameplayTag::RequestGameplayTag(FName("Quest.Gathering"));
-	EventData.Instigator = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);  // 플레이어
-	EventData.Target = this;  // 이 루팅 액터 자신
+	EventData.Instigator = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	EventData.Target = this;
 
-	// 2. 이벤트 시스템에 전달 (OnGameEvent 브로드캐스트)
+	//  태그 기반으로 대상 오브젝트 정보 부여
+	if (TargetItemTag.IsValid())
+	{
+		EventData.TargetTags.AddTag(TargetItemTag);
+	}
+
 	if (UGameplayEventSubsystem* EventSystem = UGameplayEventSubsystem::GetGameplayEvent(GetWorld()))
 	{
 		EventSystem->OnGameEvent.Broadcast(EventData.EventTag, EventData);
-		UE_LOG(LogTemp, Warning, TEXT(" [LootActor] Gathering 퀘스트 이벤트 발생: %s"), *EventData.EventTag.ToString());
+		UE_LOG(LogTemp, Warning, TEXT(" [LootActor] Gathering 이벤트 발생: %s / 아이템 태그: %s"),
+			*EventData.EventTag.ToString(), *TargetItemTag.ToString());
 	}
+
 
 	ItemDropComponent->DropItem(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	// 3. 아이템 획득 등의 후속 처리 (선택)
 	// AddItemToInventory(...);
-}
 
+}
 
 void ALootActorBase::RefreshOverlayMode(APawn* InstigatorPawn)
 {
