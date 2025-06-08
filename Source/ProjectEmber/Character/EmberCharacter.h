@@ -74,6 +74,7 @@ protected: /* HpBar */
 public:/* Build System */
 	
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Build", meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<UAC_BuildComponent> BuildComponent;
 public: /* VFX */
 	UFUNCTION(BlueprintCallable, Category = "Effects")
@@ -169,6 +170,7 @@ protected:
 	virtual void Input_OnViewMode();
 	virtual void Input_OnSwitchShoulder();
 	virtual void Input_OnQuickSlot(int32 PressedIndex);
+	virtual void Input_OnBuild();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "EmberCharacter")
 	TObjectPtr<UEmberInputHandlerComponent> InputHandler;
