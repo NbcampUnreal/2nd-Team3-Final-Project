@@ -8,6 +8,7 @@
 #include "EmberLog/EmberLog.h"
 #include "GameFramework/Character.h"
 #include "MessageBus/MessageBus.h"
+#include "MotionWarpingComponent.h"
 
 UBaseOverlayAbility::UBaseOverlayAbility()
 {
@@ -25,6 +26,42 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
+	}
+
+	if (!bLoopingMontage)
+	{
+		if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
+		{
+			FRotator CtrlRot = Character->GetController()->GetControlRotation();
+			CtrlRot.Pitch = 0.f;
+			CtrlRot.Roll  = 0.f;
+			FVector Forward = CtrlRot.Vector();
+			FVector Right   = FRotationMatrix(CtrlRot).GetScaledAxis(EAxis::Y);
+			
+			float InputY = 0.f, InputX = 0.f;
+			if (APlayerController* PC = Cast<APlayerController>(Character->GetController()))
+			{
+				InputY = PC->GetInputAxisValue(TEXT("MoveForward"));
+				InputX = PC->GetInputAxisValue(TEXT("MoveRight"));
+			}
+			
+			FVector MoveDir = (Forward * InputY + Right * InputX).GetSafeNormal();
+			if (MoveDir.IsNearlyZero())
+			{
+				MoveDir = Forward;
+			}
+			
+			FVector WarpTargetLocation = Character->GetActorLocation() + MoveDir * 500.f;
+			
+			if (UMotionWarpingComponent* WarpComp = Character->FindComponentByClass<UMotionWarpingComponent>())
+			{
+				FMotionWarpingTarget WarpTarget{};
+				WarpTarget.Name = FName("AttackWarp");
+				WarpTarget.Location = WarpTargetLocation;
+				WarpTarget.Rotation = MoveDir.Rotation();
+				WarpComp->AddOrUpdateWarpTarget(WarpTarget);
+			}
+		}
 	}
 
 	LaunchCharacterForward(ActorInfo);
