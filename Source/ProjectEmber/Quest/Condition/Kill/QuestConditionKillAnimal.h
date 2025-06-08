@@ -16,11 +16,11 @@ class PROJECTEMBER_API UQuestConditionKillAnimal : public UQuestCondition
 	GENERATED_BODY()
 
 public:
-	UQuestConditionKillAnimal();
 
-public:
-	UPROPERTY(EditAnywhere, Category = "Quest|Condition")
-	TSubclassOf<ABaseAIAnimal> AiAnimal;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Condition")
+	TSoftClassPtr<AActor> TargetNPCClass;
+
+	virtual FString GetConditionText_Implementation() const override;
 	virtual bool OnEvent_Implementation(const FGameplayTag& InEventTag, const FGameplayEventData& EventData) override;
 };

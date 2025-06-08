@@ -131,7 +131,7 @@ void UDialogueComponent::LoadDialogueFromDataTable(bool bResetDialogueIndex, FNa
             }
         }
 
-        // 2) 조건 대사 없을 경우 기본 Giver/Completer 대사
+        // 2) 조건 대사가 없을 경우 완료 조건부터 체크
         if (LinesOfDialogue.Num() == 0)
         {
             AActor* Giver = CurrentStep.QuestGiver.Get();
@@ -140,37 +140,35 @@ void UDialogueComponent::LoadDialogueFromDataTable(bool bResetDialogueIndex, FNa
             const bool bIsQuestAccepted = QuestSubsystem->IsQuestAccepted(QuestAsset->QuestID);
             const bool bIsStepCompleted = QuestSubsystem->IsStepCompleted(QuestAsset->QuestID, StepIndex);
 
-            // (예외 허용) 퀘스트 수락 후, 해당 Step이 아직 완료되지 않았고, NPC가 Giver일 경우만 대사 출력
-            if (!bIsStepCompleted && !QuestSubsystem->IsQuestCompleted(QuestAsset->QuestID) && Owner == Giver)
+            //  완료 조건 Fulfilled + NPC가 Completer → 완료 대사
+            bool bAllConditionsMet = true;
+            for (const UQuestCondition* Condition : CurrentStep.Conditions)
+            {
+                if (Condition && !Condition->IsFulfilled())
+                {
+                    bAllConditionsMet = false;
+                    break;
+                }
+            }
+
+            if (bAllConditionsMet && Owner == Completer)
+            {
+                LinesOfDialogue = CurrentStep.CompleteDialogueLines;
+                UE_LOG(LogTemp, Warning, TEXT(" CompletionGiver + 조건 충족 → 완료 대사 로딩됨"));
+            }
+            // 조건 Fulfilled가 아니고, 아직 Step 완료도 아니며 NPC가 Giver일 경우 → 수락 대사
+            else if (!bIsStepCompleted && !QuestSubsystem->IsQuestCompleted(QuestAsset->QuestID) && Owner == Giver)
             {
                 LinesOfDialogue = CurrentStep.GiverDialogueLines;
-                UE_LOG(LogTemp, Warning, TEXT(" QuestGiver + 미완료 Step → 시작 대사 로딩됨"));
+                UE_LOG(LogTemp, Warning, TEXT(" Giver + 미완료 Step → 수락 대사 로딩됨"));
             }
             else
             {
-                // 조건 Fulfilled 여부 체크
-                bool bAllConditionsMet = true;
-                for (const UQuestCondition* Condition : CurrentStep.Conditions)
-                {
-                    if (Condition && !Condition->IsFulfilled())
-                    {
-                        bAllConditionsMet = false;
-                        break;
-                    }
-                }
-
-                if (bAllConditionsMet && Owner == Completer)
-                {
-                    LinesOfDialogue = CurrentStep.CompleteDialogueLines;
-                    UE_LOG(LogTemp, Warning, TEXT(" CompletionGiver + 조건 충족 → 완료 대사 로딩됨"));
-                }
-                else
-                {
-                    UE_LOG(LogTemp, Warning, TEXT(" 조건 미충족 or NPC 불일치 → 기본 대사 생략"));
-                }
+                UE_LOG(LogTemp, Warning, TEXT(" 조건 미충족 or NPC 불일치 → 기본 대사 생략"));
             }
         }
     }
+
     UE_LOG(LogTemp, Warning, TEXT(" 최종 LinesOfDialogue.Num(): %d"), LinesOfDialogue.Num());
 
     if (bResetDialogueIndex)
