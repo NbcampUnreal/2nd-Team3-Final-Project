@@ -32,7 +32,8 @@ public class ProjectEmber : ModuleRules
             "UMG",
             "CinematicCamera",
             "Slate",
-            "SlateCore"
+            "SlateCore",
+            "MotionWarping"
         });
 
         //───────────────────────────────────────────────────────────────────────────────
@@ -49,7 +50,7 @@ public class ProjectEmber : ModuleRules
         });
 
         //───────────────────────────────────────────────────────────────────────────────
-        // 아래 블록 안의 모듈들은 **에디터 전용**
+        // 에디터 전용
         if (Target.Type == TargetType.Editor)
         {
             PublicDependencyModuleNames.Add("DeveloperSettings");
