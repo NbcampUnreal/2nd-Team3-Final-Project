@@ -25,6 +25,8 @@ public:
     virtual void Interact_Implementation(AActor* Caller) override;
     virtual float GetGatherTime_Implementation() override;
 
+
+
     UFUNCTION()
     void RepositionNPCForDialogue();
 
@@ -33,11 +35,12 @@ public:
 
     UFUNCTION()
     void PositionDetachedCamera();
-    void ShowQuestCompleteWidget(const UQuestDataAsset* InQuestAsset);
+    void ShowQuestCompleteWidget(const UQuestDataAsset* InQuestAsset, bool bIsQuestComplete);
     void AdvanceDialogue();
     void Interact();
     void ShowQuestUI();
     void LoadDialogueFromDataTable(bool bResetDialogueIndex, FName InObjectiveTag = NAME_None);
+
     UFUNCTION(BlueprintCallable, Category = "Input")
     void SetInputMappingContexts(TArray<UInputMappingContext*> MappingContexts, bool bClearExisting = true);
 
@@ -48,6 +51,16 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest")
     UQuestDataAsset* QuestAsset;
 
+
+    UFUNCTION(BlueprintCallable, Category = "Dialogue")
+    void SetCustomDialogueLines(const TArray<FText>& InLines);
+
+    /** 대화 위젯을 표시하고 대사 출력 시작 */
+    UFUNCTION(BlueprintCallable, Category = "Dialogue")
+    void StartDialogue();
+
+    UPROPERTY()
+    bool bDialogueOverriddenByCondition = false;
 protected:
     virtual void BeginPlay() override;
     UFUNCTION()
@@ -99,8 +112,8 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
     UInputMappingContext* GameplayUIInputMappingContext;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TArray<FName> DialogueRowNames;
+    UPROPERTY(BlueprintReadOnly)
+    bool bIsAccepteing = false;
 
     UFUNCTION()
     void SetDialogueVisualState(bool bShowUI);

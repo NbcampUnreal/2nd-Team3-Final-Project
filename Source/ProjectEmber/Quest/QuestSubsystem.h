@@ -9,9 +9,11 @@
 #include "QuestSubsystem.generated.h"
 
 class UQuestDataAsset;
-/**
- * 
- */
+
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnQuestStarted, UQuestDataAsset*, QuestAsset);
+
+
 UCLASS(BlueprintType)
 class PROJECTEMBER_API UQuestSubsystem : public UGameInstanceSubsystem
 {
@@ -21,7 +23,9 @@ public:
 	virtual void Deinitialize() override;
 	int32 GetCurrentStepIndexForQuest(FName QuestID, bool bAutoStartIfNotExists = false);
 
+
 public:
+
 	// NPC에게 F눌러서 통과 받을때 호출될 함수
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	bool TryStartQuest(FName QuestID, bool bPlayerAccepted = false);
@@ -54,6 +58,14 @@ public:
 	const TMap<FName, UQuestDataAsset*>& GetAllLoadedQuests() const;
 
 	bool GetLastActiveQuestID(FName& OutQuestID) const;
+
+	UPROPERTY(BlueprintAssignable, Category = "Quest")
+	FOnQuestStarted OnQuestStarted;
+
+	UFUNCTION(BlueprintCallable, Category = "Quest")
+	bool IsStepCompleted(FName QuestID, int32 StepIndex) const;
+
+
 
 
 private:

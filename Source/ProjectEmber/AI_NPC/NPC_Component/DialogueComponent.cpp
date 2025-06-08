@@ -10,16 +10,16 @@
 #include "Camera/PlayerCameraManager.h"
 #include "Components/PrimitiveComponent.h"
 #include "Interactables/Interactable.h"
-#include "AttatchAIDialogueCamera.h"
-#include "PlayerQuestWidget.h"
+#include "AI_NPC/Camera/AttatchAIDialogueCamera.h"
+#include "AI_NPC/Widget/PlayerQuestWidget.h"
 #include "Components/TextBlock.h"
-#include "DialogueDataRow.h"
 #include "EnhancedInputSubsystems.h"
 #include "UI/HUD/EmberMainHUD.h"
 #include "Character/EmberComponents/InteractionComponent.h"
 #include "EngineUtils.h"
 #include "Quest/QuestSubsystem.h"
-#include "QuestWidget.h"
+#include "Quest/Condition/Dialogue/DialogueQuestCondition.h"
+#include "AI_NPC/Widget/QuestWidget.h"
 
 UDialogueComponent::UDialogueComponent()
 {
@@ -63,52 +63,119 @@ void UDialogueComponent::BeginPlay()
         InteractionTrigger->OnComponentEndOverlap.AddDynamic(this, &UDialogueComponent::OnPlayerExitRadius);
     }
 
+    
     LoadDialogueFromDataTable(true);
+
 }
 //대화 위젯관련
 void UDialogueComponent::LoadDialogueFromDataTable(bool bResetDialogueIndex, FName InObjectiveTag)
 {
+    UE_LOG(LogTemp, Warning, TEXT("==== [LoadDialogueFromDataTable] 호출됨 ===="));
+
+    if (bDialogueOverriddenByCondition)
+    {
+        UE_LOG(LogTemp, Warning, TEXT(" 조건 대사 우선 적용 중 → 로딩 중단"));
+        return;
+    }
+
     LinesOfDialogue.Empty();
 
-    if (!QuestAsset) return;
+    if (!QuestAsset)
+    {
+        UE_LOG(LogTemp, Warning, TEXT(" QuestAsset 없음"));
+        return;
+    }
 
     UQuestSubsystem* QuestSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UQuestSubsystem>();
-    if (!QuestSubsystem) return;
+    if (!QuestSubsystem)
+    {
+        UE_LOG(LogTemp, Warning, TEXT(" QuestSubsystem 없음"));
+        return;
+    }
 
     const int32 StepIndex = QuestSubsystem->GetCurrentStepIndexForQuest(QuestAsset->QuestID, false);
-
     const TArray<FQuestStep>& Steps = QuestAsset->Steps;
     AActor* Owner = GetOwner();
 
-    // ① 퀘스트 아직 수락 전 (StepIndex == INDEX_NONE)
-    if (StepIndex == INDEX_NONE)
+    UE_LOG(LogTemp, Warning, TEXT(" StepIndex: %d / Steps.Num: %d / Owner: %s"), StepIndex, Steps.Num(), *GetNameSafe(Owner));
+
+    if (StepIndex == INDEX_NONE && Steps.Num() > 0)
     {
-        if (Steps.Num() > 0)
+        const FQuestStep& FirstStep = Steps[0];
+        UE_LOG(LogTemp, Warning, TEXT(" 퀘스트 미시작 상태 / FirstStep.QuestGiver: %s"), *GetNameSafe(FirstStep.QuestGiver.Get()));
+
+        if (Owner == FirstStep.QuestGiver.Get())
         {
-            const FQuestStep& FirstStep = Steps[0];
-            if (Owner == FirstStep.QuestGiver.Get())
-            {
-                LinesOfDialogue = FirstStep.GiverDialogueLines;
-            }
+            LinesOfDialogue = FirstStep.GiverDialogueLines;
+            UE_LOG(LogTemp, Warning, TEXT(" 첫 스텝 QuestGiver 일치 → 대사 로딩됨"));
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT(" QuestGiver 불일치 → 대사 없음"));
         }
     }
     else if (Steps.IsValidIndex(StepIndex))
     {
         const FQuestStep& CurrentStep = Steps[StepIndex];
 
-        if (Owner == CurrentStep.CompletionGiver.Get())
+        // 조건 대사 체크
+        for (const UQuestCondition* Condition : CurrentStep.Conditions)
         {
-            LinesOfDialogue = CurrentStep.CompleteDialogueLines;
+            const bool bFulfilled = Condition && Condition->IsFulfilled();
+            const int32 CurrentCount = Condition ? Condition->CurrentCount : -1;
+            const UDialogueQuestCondition* DialogueCond = Cast<UDialogueQuestCondition>(Condition);
+
+            UE_LOG(LogTemp, Warning, TEXT(" [조건 체크] Condition: %p / IsFulfilled: %d / Count: %d"), Condition, bFulfilled, CurrentCount);
+
+            if (DialogueCond)
+            {
+                const FString TargetClassName = DialogueCond->TargetNPCClass ? DialogueCond->TargetNPCClass->GetName() : TEXT("None");
+                UE_LOG(LogTemp, Warning, TEXT("→ DialogueCond.TargetNPCClass: %s / OwnerClass: %s"),
+                    *TargetClassName, *Owner->GetClass()->GetName());
+
+                if (Owner->GetClass() == DialogueCond->TargetNPCClass)
+                {
+                    LinesOfDialogue = DialogueCond->DialogueLines;
+                    UE_LOG(LogTemp, Warning, TEXT(" 조건 NPC 클래스 일치 → 조건 대사 로딩됨"));
+                    break;
+                }
+            }
         }
-        else if (Owner == CurrentStep.QuestGiver.Get())
+
+        //  조건 대사 없으면 기본 대사 로딩
+        if (LinesOfDialogue.Num() == 0)
         {
-            LinesOfDialogue = CurrentStep.GiverDialogueLines;
+            UE_LOG(LogTemp, Warning, TEXT(" 조건 대사 없음 → 기본 Giver/CompletionGiver 체크"));
+
+            AActor* Giver = CurrentStep.QuestGiver.Get();
+            AActor* Completer = CurrentStep.CompletionGiver.Get();
+
+            UE_LOG(LogTemp, Warning, TEXT(" CompletionGiver: %s / QuestGiver: %s"),
+                *GetNameSafe(Completer), *GetNameSafe(Giver));
+
+            if (Owner == Completer)
+            {
+                LinesOfDialogue = CurrentStep.CompleteDialogueLines;
+                UE_LOG(LogTemp, Warning, TEXT("CompletionGiver 일치 → 완료 대사 로딩됨"));
+            }
+            else if (Owner == Giver)
+            {
+                LinesOfDialogue = CurrentStep.GiverDialogueLines;
+                UE_LOG(LogTemp, Warning, TEXT(" QuestGiver 일치 → 시작 대사 로딩됨"));
+            }
+            else
+            {
+                UE_LOG(LogTemp, Warning, TEXT(" QuestGiver/CompletionGiver 모두 불일치 → 대사 없음"));
+            }
         }
     }
+
+    UE_LOG(LogTemp, Warning, TEXT(" 최종 LinesOfDialogue.Num(): %d"), LinesOfDialogue.Num());
 
     if (bResetDialogueIndex)
     {
         CurrentDialogueIndex = 0;
+        bDialogueFinished = false;
     }
 }
 void UDialogueComponent::SetInputMappingContexts(TArray<UInputMappingContext*> MappingContexts, bool bClearExisting)
@@ -184,10 +251,53 @@ void UDialogueComponent::OnPlayerExitRadius(UPrimitiveComponent* OverlappedComp,
     }
 }
 
+void UDialogueComponent::SetCustomDialogueLines(const TArray<FText>& InLines)
+{
+    UE_LOG(LogTemp, Warning, TEXT("[SetCustomDialogueLines] Called! InLines: %d"), InLines.Num());
+    LinesOfDialogue = InLines;
+    CurrentDialogueIndex = 0;
+    bDialogueFinished = false;
+    bDialogueOverriddenByCondition = true;
+}
+
+void UDialogueComponent::StartDialogue()
+{
+    if (LinesOfDialogue.Num() == 0)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[StartDialogue] No dialogue lines provided."));
+        return;
+    }
+
+    APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+    if (!PC || !DialogueWidgetClass)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[StartDialogue] PC or WidgetClass is null."));
+        return;
+    }
+
+    DialogueWidget = CreateWidget<UUserWidget>(PC, DialogueWidgetClass);
+    if (!DialogueWidget)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[StartDialogue] Widget creation failed."));
+        return;
+    }
+
+    DialogueWidget->AddToViewport(999);
+
+    FInputModeGameAndUI InputMode;
+    InputMode.SetWidgetToFocus(DialogueWidget->TakeWidget());
+    InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+    PC->SetInputMode(InputMode);
+    PC->bShowMouseCursor = true;
+}
+
 void UDialogueComponent::Interact()
 {
+
+    UE_LOG(LogTemp, Warning, TEXT("[Interact] bDialogueOverriddenByCondition: %d, NumLines: %d"), bDialogueOverriddenByCondition, LinesOfDialogue.Num());
     if (!bPlayerInRange || !DialogueWidgetClass || bDialogueFinished) return;
 
+ 
     APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
     AActor* OwnerActor = GetOwner();
 
@@ -196,11 +306,16 @@ void UDialogueComponent::Interact()
         UE_LOG(LogTemp, Warning, TEXT("[DialogueComponent::Interact] Missing PC or Owner"));
         return;
     }
+
     // 대화 상태 초기화
+
+    if (!bDialogueOverriddenByCondition)
+    {
+        LoadDialogueFromDataTable(true);
+    }
+
     bDialogueFinished = false;
     CurrentDialogueIndex = 0;
-    LoadDialogueFromDataTable(true);
-
     RepositionNPCForDialogue();
     PositionDetachedCamera();
 
@@ -232,13 +347,16 @@ void UDialogueComponent::Interact()
         }
 
         UE_LOG(LogTemp, Warning, TEXT("[Interact] DialogueWidget created and shown (ZOrder %d)."), HighZOrder);
-    }
+        AdvanceDialogue();
 
-    AdvanceDialogue();
+    }
 }
 
 void UDialogueComponent::AdvanceDialogue()
 {
+
+    UE_LOG(LogTemp, Warning, TEXT(">>>> AdvanceDialogue() called, Index: %d, NumLines: %d"), CurrentDialogueIndex, LinesOfDialogue.Num());
+
     if (bDialogueFinished)
     {
         UE_LOG(LogTemp, Warning, TEXT("[AdvanceDialogue] Dialogue already finished, skipping."));
@@ -257,11 +375,11 @@ void UDialogueComponent::AdvanceDialogue()
         PC->bShowMouseCursor = false;
     }
 
+    // --- 대사 출력 ---
     if (CurrentDialogueIndex < LinesOfDialogue.Num())
     {
         if (UTextBlock* ChatBox = Cast<UTextBlock>(DialogueWidget->GetWidgetFromName("NPC_ChatBox")))
         {
-            // FText 그대로 출력
             ChatBox->SetText(LinesOfDialogue[CurrentDialogueIndex]);
             UE_LOG(LogTemp, Warning, TEXT("[AdvanceDialogue] Line %d shown."), CurrentDialogueIndex + 1);
             ++CurrentDialogueIndex;
@@ -270,40 +388,91 @@ void UDialogueComponent::AdvanceDialogue()
         {
             UE_LOG(LogTemp, Error, TEXT("[AdvanceDialogue] NPC_ChatBox not found."));
         }
+        return;
     }
-    else
-    {
-        bDialogueFinished = true;
-        if (AActor* Owner = GetOwner())
-        {
-            if (UInteractionComponent* Interact = Owner->FindComponentByClass<UInteractionComponent>())
-            {
-                Interact->SetCurrentInteractable(nullptr);
-                UE_LOG(LogTemp, Warning, TEXT("[AdvanceDialogue] Interactable cleared after full dialogue."));
-            }
-        }
-        if (UQuestSubsystem* QuestSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UQuestSubsystem>())
-        {
-            FGameplayEventData EventData;
-            EventData.EventTag = FGameplayTag::RequestGameplayTag(TEXT("Quest.Dialogue.DialogueReceiver"));
-            EventData.Instigator = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-            EventData.Target = GetOwner();
-            //진행 조건 충족 여부
-            QuestSubsystem->OnGameEvent(EventData.EventTag, EventData);
 
-            if (QuestAsset && QuestSubsystem->IsQuestCompleted(QuestAsset->QuestID))
+    // --- 대사 다 봤을 때 ---
+    bDialogueFinished = true;
+    bDialogueOverriddenByCondition = false;
+    UE_LOG(LogTemp, Warning, TEXT("[AdvanceDialogue] Dialogue finished. Checking quest logic."));
+
+    UQuestSubsystem* QuestSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UQuestSubsystem>();
+    if (!QuestSubsystem || !QuestAsset)
+    {
+        SetDialogueVisualState(false);
+        return;
+    }
+
+    // StepIndex 구하고 기본 분기
+    const int32 StepIndex = QuestSubsystem->GetCurrentStepIndexForQuest(QuestAsset->QuestID, false);
+    const int32 LastStepIndex = QuestAsset->Steps.Num() - 1;
+
+
+    AActor* OwnerActor = GetOwner();
+    int32 CurrentStepIndex = QuestSubsystem->GetCurrentStepIndexForQuest(QuestAsset->QuestID);
+
+    // StepIndex가 -1 (미수락 상태)이거나, QuestGiver와 일치하는 경우
+    if (StepIndex == -1 ||(QuestAsset->Steps.IsValidIndex(StepIndex) && OwnerActor == QuestAsset->Steps[StepIndex].QuestGiver.Get() &&CurrentStepIndex == StepIndex &&!bIsAccepteing))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[AdvanceDialogue] 현재 Step %d이 수락되지 않은 상태이거나 이 NPC가 QuestGiver임 → 수락 UI 표시"), StepIndex);
+        ShowQuestUI();
+        return;
+    }
+    const FQuestStep& CurrentStep = QuestAsset->Steps[StepIndex];
+  
+    // --- 조건 NPC(이벤트 발생) 처리 ---
+    for (UQuestCondition* Condition : CurrentStep.Conditions)
+    {
+        if (UDialogueQuestCondition* DialogueCond = Cast<UDialogueQuestCondition>(Condition))
+        {
+            if (GetOwner()->GetClass() == DialogueCond->TargetNPCClass)
             {
-                ShowQuestCompleteWidget(QuestAsset);
+                FGameplayEventData EventData;
+                EventData.EventTag = FGameplayTag::RequestGameplayTag(TEXT("Quest.Dialogue.DialogueReceiver"));
+                EventData.Instigator = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+                EventData.Target = GetOwner();
+
+                if (UGameplayEventSubsystem* EventSystem = UGameplayEventSubsystem::GetGameplayEvent(GetWorld()))
+                {
+                    EventSystem->OnGameEvent.Broadcast(EventData.EventTag, EventData);
+                    UE_LOG(LogTemp, Warning, TEXT(" [AdvanceDialogue] 조건 NPC 이벤트 Broadcast: %s"), *GetOwner()->GetName());
+                }
+                else
+                {
+                    UE_LOG(LogTemp, Error, TEXT(" GameplayEventSubsystem을 찾을 수 없습니다."));
+                }
+
+                SetDialogueVisualState(false);
                 return;
             }
         }
-        FTimerHandle DummyHandle;
-        GetWorld()->GetTimerManager().SetTimer(DummyHandle, [this]()
-            {
-                ShowQuestUI();
-            }, 0.01f, false);
     }
+
+    // --- 퀘스트 조건 확인 ---
+    bool bAllConditionsMet = true;
+    for (const UQuestCondition* Condition : CurrentStep.Conditions)
+    {
+        if (Condition && !Condition->IsFulfilled())
+        {
+            bAllConditionsMet = false;
+            break;
+        }
+    }
+
+    if (bAllConditionsMet)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[AdvanceDialogue] 모든 조건 충족 → 퀘스트 완료 위젯 표시"));
+        ShowQuestCompleteWidget(QuestAsset, true);
+        return;
+    }
+
+
+
+   
 }
+
+    // -- 그 외 상황: UI 닫기 ---
+  
 
 void UDialogueComponent::InitializeAndDisplayWidget(UUserWidget* Widget)
 {
@@ -378,14 +547,17 @@ void UDialogueComponent::ShowQuestUI()
 
     QuestUI->SetQuestInfoFromDataAsset(QuestAsset, bIsComplete, bIsAccepted);
 
-    QuestUI->OnQuestAccepted.AddLambda([this, QuestUI]() {
-        if (UQuestSubsystem* Subsystem = GetWorld()->GetGameInstance()->GetSubsystem<UQuestSubsystem>())
+    QuestUI->OnQuestAccepted.AddLambda([this, QuestUI]()
         {
-            Subsystem->TryStartQuest(QuestAsset->QuestID, true);
-            UE_LOG(LogTemp, Warning, TEXT(">>> QuestAsset valid: %s"), *QuestAsset->QuestID.ToString());
-        }
-        QuestUI->RemoveFromParent();
-        SetDialogueVisualState(false);
+            if (UQuestSubsystem* Subsystem = GetWorld()->GetGameInstance()->GetSubsystem<UQuestSubsystem>())
+            {
+                Subsystem->TryStartQuest(QuestAsset->QuestID, true);
+        
+            }
+            QuestUI->RemoveFromParent();
+            bDialogueFinished = false;
+            this->bIsAccepteing = true;
+            SetDialogueVisualState(false);
         });
 
     QuestUI->OnQuestRefused.AddLambda([this, QuestUI]() {
@@ -397,7 +569,8 @@ void UDialogueComponent::ShowQuestUI()
     InitializeAndDisplayWidget(QuestUI);
 }
 
-void UDialogueComponent::ShowQuestCompleteWidget(const UQuestDataAsset* InQuestAsset)
+
+void UDialogueComponent::ShowQuestCompleteWidget(const UQuestDataAsset* InQuestAsset, bool bIsQuestComplete)
 {
     APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
     if (!PC || !QuestCompleteWidgetClass || !QuestAsset) return;
@@ -413,20 +586,26 @@ void UDialogueComponent::ShowQuestCompleteWidget(const UQuestDataAsset* InQuestA
         CompleteWidget->SetQuestInfoFromDataAsset(QuestAsset, bIsComplete, bIsAccepted);
     }
 
-    CompleteWidget->OnQuestCompleted.AddLambda([this, PC, CapturedQuestAsset = QuestAsset, CompleteWidget]() {
-        if (UQuestSubsystem* Subsystem = GetWorld()->GetGameInstance()->GetSubsystem<UQuestSubsystem>())
+    CompleteWidget->OnQuestCompleted.AddLambda([this, PC, CapturedQuestAsset = QuestAsset, CompleteWidget]()
         {
-            Subsystem->CompleteQuest(CapturedQuestAsset->QuestID);
-        }
+            if (UQuestSubsystem* Subsystem = GetWorld()->GetGameInstance()->GetSubsystem<UQuestSubsystem>())
+            {
+                //  완료 버튼 클릭 시 다음 퀘스트 스텝으로 진행
+                Subsystem->AdvanceQuestStep(CapturedQuestAsset->QuestID);
+            }
 
-        if (CompleteWidget && CompleteWidget->IsInViewport())
-        {
-            CompleteWidget->RemoveFromParent();
-        }
+            //  UI 제거
+            if (CompleteWidget && CompleteWidget->IsInViewport())
+            {
+                CompleteWidget->RemoveFromParent();
+            }
 
-        SetDialogueVisualState(false);
-        PC->SetInputMode(FInputModeGameOnly());
-        PC->SetViewTargetWithBlend(PC->GetPawn(), 0.5f);
+            //  입력 및 시점 복구
+            SetDialogueVisualState(false);
+            bDialogueFinished = false;
+            this->bIsAccepteing = false;
+            PC->SetInputMode(FInputModeGameOnly());
+            PC->SetViewTargetWithBlend(PC->GetPawn(), 0.5f);
         });
 
     if (DialogueWidget)
@@ -491,14 +670,24 @@ void UDialogueComponent::UpdateQuestLogWidgetFromAsset(const UQuestDataAsset* In
         {
             bool bIsComplete = false;
             bool bIsAccepted = false;
+            bool bShowStepComplete = false;
+            int32 StepIndex = 0; // 기본값
 
             if (UQuestSubsystem* QuestSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UQuestSubsystem>())
             {
                 bIsComplete = QuestSubsystem->IsQuestCompleted(InQuestAsset->QuestID);
                 bIsAccepted = QuestSubsystem->IsQuestAccepted(InQuestAsset->QuestID);
+
+                // 수락된 상태면 현재 스텝 인덱스를 가져오기
+                if (bIsAccepted)
+                {
+                    StepIndex = QuestSubsystem->GetCurrentStepIndexForQuest(InQuestAsset->QuestID);
+                }
+
+                bShowStepComplete = QuestSubsystem->IsStepCompleted(InQuestAsset->QuestID, StepIndex);
             }
 
-            QuestLogWidget->SetQuestInfoFromDataAsset(InQuestAsset, bIsComplete, bIsAccepted);
+            QuestLogWidget->SetQuestInfoFromDataAsset(InQuestAsset, bIsComplete, bIsAccepted, bShowStepComplete, StepIndex);
         }
     }
 }
@@ -518,3 +707,4 @@ float UDialogueComponent::GetGatherTime_Implementation()
 {
     return 0.0f;
 }
+

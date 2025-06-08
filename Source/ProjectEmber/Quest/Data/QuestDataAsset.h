@@ -9,6 +9,16 @@
 #include "QuestDataAsset.generated.h"
 
 
+
+USTRUCT(BlueprintType)
+struct FDialogueLines
+{
+    GENERATED_BODY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    TArray<FText> Lines;
+};
+
 USTRUCT(BlueprintType)
 struct FQuestRewardData
 {
@@ -30,12 +40,16 @@ USTRUCT(BlueprintType)
 struct FQuestStep
 {
     GENERATED_BODY()
-    
+
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
     FName StepID;
     // 퀘스트 이름 (UI 표시용)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
     FText StepName;
+
+    // 퀘스트 박스 리스트 이름 (UI 표시용)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
+    FText StepQuestListName;
 
     // 퀘스트 설명 (UI 표시용)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
@@ -47,7 +61,7 @@ struct FQuestStep
 
     //퀘스트 대상 (UI 표시용)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
-    FText ObjectiveName;
+    FText StepObjectiveName;
 
     // 이 단계에서 상호작용할 퀘스트 NPC (월드 인스턴스)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Step")
@@ -76,6 +90,8 @@ struct FQuestStep
     // 해금 조건들
     UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Quest|Step")
     TArray<UQuestCondition*> UnlockConditions;
+
+
 };
 
 /**
@@ -106,4 +122,7 @@ public:
     // 퀘스트 단계를 순서대로 나열
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Config")
     TArray<FQuestStep> Steps;
+
+
+
 };

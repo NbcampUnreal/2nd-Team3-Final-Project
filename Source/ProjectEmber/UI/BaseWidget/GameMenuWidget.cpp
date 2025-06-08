@@ -3,9 +3,11 @@
 
 #include "GameMenuWidget.h"
 
-#include "AI_NPC/PlayerQuestWidget.h"
+#include "AI_NPC/Widget/PlayerQuestWidget.h"
 #include "Quest/QuestSubsystem.h"
 #include "Blueprint/WidgetTree.h"
+#include "Components/WidgetSwitcher.h"
+#include "Components/Border.h"
 #include "Character/EmberCharacter.h"
 
 void UGameMenuWidget::NativeConstruct()
@@ -23,12 +25,12 @@ void UGameMenuWidget::UpdateQuestInfoViaWidgetTree()
 {
     if (!WBP_Quest) return;
 
-    // 중간 위젯인 QuestWidget의 내부 위젯 트리에서 "WBP_Questcontents" 검색
+    // 내부 위젯 트리에서 WBP_Questcontents 찾기
     if (UWidget* Found = WBP_Quest->WidgetTree->FindWidget(FName("WBP_Questcontents")))
     {
         if (UPlayerQuestWidget* WBP_Questcontents = Cast<UPlayerQuestWidget>(Found))
         {
-            // 정상적으로 찾았을 경우 퀘스트 데이터 갱신
+            // 퀘스트 서브시스템에서 마지막 활성 퀘스트 ID 조회
             if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
             {
                 FName LastQuestID;
@@ -39,7 +41,15 @@ void UGameMenuWidget::UpdateQuestInfoViaWidgetTree()
                         const bool bIsComplete = QuestSubsystem->IsQuestCompleted(LastQuestID);
                         const bool bIsAccepted = QuestSubsystem->IsQuestAccepted(LastQuestID);
 
-                        WBP_Questcontents->SetQuestInfoFromDataAsset(QuestAsset, bIsComplete, bIsAccepted);
+                        int32 StepIndex = 0;
+                        if (bIsAccepted)
+                        {
+                            StepIndex = QuestSubsystem->GetCurrentStepIndexForQuest(LastQuestID);
+                        }
+
+                        const bool bShowStepComplete = QuestSubsystem->IsStepCompleted(LastQuestID, StepIndex);
+
+                        WBP_Questcontents->SetQuestInfoFromDataAsset(QuestAsset, bIsComplete, bIsAccepted, bShowStepComplete, StepIndex);
                         return;
                     }
                 }
