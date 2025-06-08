@@ -118,18 +118,27 @@ void UAC_BuildComponent::BuildDelay()
 void UAC_BuildComponent::BuildCycle()
 {
 	if (!Camera || Buildables.Num() <= BuildID) return;
-
-	// 1. ī�޶� ��ġ �� ����
-	FVector Location = Camera->GetComponentLocation();
-	FVector Forward = Camera->GetForwardVector();
 	
-	EMBER_LOG(LogEmber, Warning, TEXT("[BuildCycle] Camera Location: %s, Forward: %s"), *Location.ToString(), *Forward.ToString());
-	
-	EMBER_LOG(LogEmber, Warning, TEXT("[BuildCycle] Owner Location: %s, Forward: %s"), *Camera->GetOwner()->GetActorLocation().ToString(), *Camera->GetOwner()->GetActorForwardVector().ToString());
+	FVector WorldLocation;
+	FVector WorldDirection;
+	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	{
+		int32 ViewportSizeX, ViewportSizeY;
+		PC->GetViewportSize(ViewportSizeX, ViewportSizeY);
+		
+		FVector2D ScreenCenter(ViewportSizeX * 0.5f, ViewportSizeY * 0.5f);
+		
+		PC->DeprojectScreenPositionToWorld(
+			ScreenCenter.X,
+			ScreenCenter.Y,
+			WorldLocation,
+			WorldDirection
+		);
+	}
 	
 	// 2. ����Ʈ���̽� ����/�� ����
-	FVector Start = Location + Forward * 350.f;
-	FVector End = Location + Forward * 1000.f;
+	FVector Start = WorldLocation + WorldDirection * 350.f;
+	FVector End   = WorldLocation + WorldDirection * 1000.f;
 
 	// 3. ����Ʈ���̽�
 	FHitResult HitResult;
@@ -176,7 +185,7 @@ void UAC_BuildComponent::BuildCycle()
 	else
 	{
 		BuildTransform.SetLocation(End);
-		BuildTransform.SetRotation(Forward.ToOrientationQuat());
+		BuildTransform.SetRotation(WorldDirection.ToOrientationQuat());
 		HitActor = nullptr;
 		HitComponent = nullptr;
 		if (IsValid(BuildGhost))
@@ -245,6 +254,11 @@ void UAC_BuildComponent::GiveBuildColor(bool bIsGreen)
 }
 void UAC_BuildComponent::SpwanBuild()
 {
+	if (!bCanBuild)
+	{
+		return;
+	}
+	
 	// ��ȿ�� �˻�
 	if (!Buildables.IsValidIndex(BuildID))
 	{
