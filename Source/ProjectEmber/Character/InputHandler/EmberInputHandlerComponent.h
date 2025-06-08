@@ -83,6 +83,9 @@ public: /* Base Input */
 
 	UPROPERTY(EditAnywhere, Category="Input") 
 	TObjectPtr<UInputAction> GlideAction;
+
+	UPROPERTY(EditAnywhere, Category="Input") 
+	TObjectPtr<UInputAction> BuildAction;
 	
 	UPROPERTY(EditAnywhere, Category="Input") 
 	TArray<TObjectPtr<UInputAction>> QuickSlotActions;

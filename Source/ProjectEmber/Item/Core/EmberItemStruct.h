@@ -40,11 +40,14 @@ struct FEmberSlotData
     
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory Slot")
     TOptional<FDataTableRowHandle> SlotData;
+    
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory Slot")
+    TArray<FItemEffectApplicationInfo> EnchantEffects;
 
     FEmberSlotData() = default;
     virtual ~FEmberSlotData() = default;
 
-    FEmberSlotData(const FName& InItemID, const int32 InQuantity = 0);
+    FEmberSlotData(const FName& InItemID, const int32 InQuantity = 0, const TArray<FItemEffectApplicationInfo>& InEnchantEffects = TArray<FItemEffectApplicationInfo>());
 
     virtual void InitializeInstancedStruct(FInstancedStruct& OutInstancedStruct) const
     {
@@ -63,6 +66,7 @@ struct FEmberSlotData
         ConsumableData.Reset();
         EquipmentData.Reset();
         SlotData.Reset();
+        EnchantEffects.Reset();
     }
 };
 
@@ -73,6 +77,9 @@ struct FEquipmentSlotData : public FEmberSlotData
 
     TOptional<FEquipmentInfoRow> EquipmentInfo;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory Slot")
+    TArray<FItemEffectApplicationInfo> MainEffect;
+    
     FEquipmentSlotData() = default;
     
     FEquipmentSlotData(const FEmberSlotData& InInventorySlotData);
@@ -87,6 +94,7 @@ struct FEquipmentSlotData : public FEmberSlotData
     {
         Super::Clear();
         EquipmentInfo = FEquipmentInfoRow();
+        MainEffect.Reset();
     }
 };
 
@@ -128,9 +136,12 @@ struct FItemPair
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item struct")
     int32 Quantity = 0;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item struct")
+    TArray<FItemEffectApplicationInfo> Enchants = TArray<FItemEffectApplicationInfo>();
 
     FItemPair() = default;
-    FItemPair(const FName& InItemID, const int32 InQuantity) : ItemID(InItemID), Quantity(InQuantity) {};
+    FItemPair(const FName& InItemID, const int32 InQuantity, const TArray<FItemEffectApplicationInfo>& InEnchants = TArray<FItemEffectApplicationInfo>()) : ItemID(InItemID), Quantity(InQuantity), Enchants(InEnchants) {} ;
 };
 
 

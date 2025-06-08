@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "EmberItemCollectorComponent.h"
+#include "EmberItemCollectorBoxCollision.h"
 #include "EmberResourceProvider.h"
 #include "Components/ActorComponent.h"
 #include "EmberCraftComponent.generated.h"
 
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class PROJECTEMBER_API UEmberCraftComponent : public UEmberItemCollectorComponent
+class PROJECTEMBER_API UEmberCraftComponent : public UEmberItemCollectorBoxCollision
 {
 	GENERATED_BODY()
 

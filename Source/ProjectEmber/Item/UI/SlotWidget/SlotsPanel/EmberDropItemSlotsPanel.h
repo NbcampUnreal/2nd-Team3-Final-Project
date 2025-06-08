@@ -17,4 +17,6 @@ class PROJECTEMBER_API UEmberDropItemSlotsPanel : public UEmberBaseSlotsPanel
 public:
 	virtual void BP_SetProvider_Implementation() override;
 
+	virtual FReply NativeOnFocusReceived(const FGeometry& InGeometry, const FFocusEvent& InFocusEvent) override;
+	virtual void NativeOnFocusLost(const FFocusEvent& InFocusEvent) override;
 };

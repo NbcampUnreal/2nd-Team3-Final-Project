@@ -5,6 +5,9 @@
 #include "Character/EmberCharacter.h"
 #include "EmberLog/EmberLog.h"
 #include "GameInstance/GameplayEventSubsystem.h"
+#include "Item/ItemSubsystem.h"
+#include "Item/Core/ItemSystemLibrary.h"
+#include "Item/Drop/EmberInteractableItemDropComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 ALootActorBase::ALootActorBase()
@@ -12,7 +15,7 @@ ALootActorBase::ALootActorBase()
 	PrimaryActorTick.bCanEverTick = false;
 
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
-	
+	ItemDropComponent = CreateDefaultSubobject<UEmberInteractableItemDropComponent>(TEXT("ItemDropComponent"));
 	SetRootComponent(MeshComponent);
 }
 
@@ -66,7 +69,7 @@ void ALootActorBase::StartInteractAbility(APawn* InstigatorPawn)
 
 void ALootActorBase::UpdateInteractAbility()
 {
-	if (TargetAbilitySystemComponent->TryActivateAbilityByClass(InteractAbilityClass))
+	if (TargetAbilitySystemComponent && TargetAbilitySystemComponent->TryActivateAbilityByClass(InteractAbilityClass))
 	{
 		AEmberCharacter* EmberCharacter = Cast<AEmberCharacter>(TargetAbilitySystemComponent->GetAvatarActor());
 		const FVector TargetLocation = MeshComponent->GetComponentLocation();
@@ -78,10 +81,13 @@ void ALootActorBase::UpdateInteractAbility()
 
 void ALootActorBase::CancelInteractAbility()
 {
-	if (const FGameplayAbilitySpec* AbilitySpec = TargetAbilitySystemComponent->FindAbilitySpecFromClass(InteractAbilityClass))
+	if (TargetAbilitySystemComponent)
 	{
-		bIsAbilityEnded = true;
-		TargetAbilitySystemComponent->CancelAbilityHandle(AbilitySpec->Handle);
+		if (const FGameplayAbilitySpec* AbilitySpec = TargetAbilitySystemComponent->FindAbilitySpecFromClass(InteractAbilityClass))
+		{
+			bIsAbilityEnded = true;
+			TargetAbilitySystemComponent->CancelAbilityHandle(AbilitySpec->Handle);
+		}	
 	}
 }
 void ALootActorBase::CompleteInteractAbility()
@@ -105,6 +111,12 @@ void ALootActorBase::CompleteInteractAbility()
 		UE_LOG(LogTemp, Warning, TEXT(" [LootActor] Gathering 이벤트 발생: %s / 아이템 태그: %s"),
 			*EventData.EventTag.ToString(), *TargetItemTag.ToString());
 	}
+
+
+	ItemDropComponent->DropItem(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	// 3. 아이템 획득 등의 후속 처리 (선택)
+	// AddItemToInventory(...);
+
 }
 
 void ALootActorBase::RefreshOverlayMode(APawn* InstigatorPawn)
