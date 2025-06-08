@@ -6,6 +6,7 @@
 #include "Character/EmberCharacter.h"
 #include "ALSCamera/Public/AlsCameraComponent.h"
 #include "Components/BoxComponent.h"
+#include "EmberLog/EmberLog.h"
 
 // Sets default values for this component's properties
 UAC_BuildComponent::UAC_BuildComponent()
@@ -13,7 +14,7 @@ UAC_BuildComponent::UAC_BuildComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
-	static ConstructorHelpers::FObjectFinder<UDataTable> DataTableRef(TEXT("/Script/Engine.DataTable'/Game/_Data/BuildingSystem/BuildableDB.BuildableDB'"));
+	static ConstructorHelpers::FObjectFinder<UDataTable> DataTableRef(TEXT("/Script/Engine.DataTable'/Game/_Data/BuildingSystem/DT_Buildable.DT_Buildable'"));
 	if (DataTableRef.Succeeded())
 	{
 		BuildData = DataTableRef.Object;
@@ -121,7 +122,11 @@ void UAC_BuildComponent::BuildCycle()
 	// 1. ī�޶� ��ġ �� ����
 	FVector Location = Camera->GetComponentLocation();
 	FVector Forward = Camera->GetForwardVector();
-
+	
+	EMBER_LOG(LogEmber, Warning, TEXT("[BuildCycle] Camera Location: %s, Forward: %s"), *Location.ToString(), *Forward.ToString());
+	
+	EMBER_LOG(LogEmber, Warning, TEXT("[BuildCycle] Owner Location: %s, Forward: %s"), *Camera->GetOwner()->GetActorLocation().ToString(), *Camera->GetOwner()->GetActorForwardVector().ToString());
+	
 	// 2. ����Ʈ���̽� ����/�� ����
 	FVector Start = Location + Forward * 350.f;
 	FVector End = Location + Forward * 1000.f;
@@ -209,9 +214,10 @@ void UAC_BuildComponent::GiveBuildColor(bool bIsGreen)
 
 	// 2. BuildGhost�� ��Ƽ���� �� Ȯ��
 	int32 MaterialCount = BuildGhost->GetNumMaterials();
-
-	static ConstructorHelpers::FObjectFinder<UMaterialInterface> GreenMatObj(TEXT("Game/BuildingSystem/Build/Material/M_Green"));
-	static ConstructorHelpers::FObjectFinder<UMaterialInterface> RedMatObj(TEXT("Game/BuildingSystem/Build/Material/M_Red"));
+	
+	/*
+	static ConstructorHelpers::FObjectFinder<UMaterialInstance> GreenMatObj(TEXT("/Script/Engine.MaterialInstanceConstant'/Game/_Art/_EasyBuilding/Materials/Instances/Dummy/MI_Can_Build.MI_Can_Build'"));
+	static ConstructorHelpers::FObjectFinder<UMaterialInstance> RedMatObj(TEXT("/Script/Engine.MaterialInstanceConstant'/Game/_Art/_EasyBuilding/Materials/Instances/Dummy/MI_CanNot_Build.MI_CanNot_Build'"));
 	if (GreenMatObj.Succeeded())
 	{
 		GreenMaterial = GreenMatObj.Object;
@@ -219,7 +225,8 @@ void UAC_BuildComponent::GiveBuildColor(bool bIsGreen)
 	if (RedMatObj.Succeeded())
 	{
 		RedMaterial = RedMatObj.Object;
-	}
+	}*/
+	
 	// 3. ��Ƽ���� �ε��� ��ȸ�ϸ� �� ����
 	for (int32 i = 0; i < MaterialCount; ++i)
 	{

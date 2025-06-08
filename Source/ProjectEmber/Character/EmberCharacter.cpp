@@ -700,6 +700,30 @@ void AEmberCharacter::Input_OnQuickSlot(int32 PressedIndex)
     }
 }
 
+void AEmberCharacter::Input_OnBuild()
+{
+    if (GetOverlayMode() != AlsOverlayModeTags::Hammer)
+    {
+        PreOverlayTag = GetOverlayMode();
+        SetOverlayMode(AlsOverlayModeTags::Hammer);
+        
+        if (BuildComponent)
+        {
+            BuildComponent->LaunchBuildMode();
+        }
+    }
+    else
+    {
+        SetOverlayMode(PreOverlayTag);
+        PreOverlayTag = AlsOverlayModeTags::Default;
+        
+        if (BuildComponent)
+        {
+            BuildComponent->LaunchBuildMode();
+        }
+    }
+}
+
 void AEmberCharacter::DisplayDebug(UCanvas* Canvas, const FDebugDisplayInfo& DisplayInfo, float& Unused, float& VerticalLocation)
 {
     if (Camera->IsActive())

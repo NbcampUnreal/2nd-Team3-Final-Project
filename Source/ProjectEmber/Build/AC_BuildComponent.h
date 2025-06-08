@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Camera/CameraComponent.h"
-#include "Build/S_Buildable.h"
+#include "Build/BuildableData.h"
 #include "AC_BuildComponent.generated.h"
 
 
@@ -102,7 +102,9 @@ public:
 
     FTimerHandle BuildDelayHandle;
 
-    UMaterialInterface* GreenMaterial;
-
-    UMaterialInterface* RedMaterial;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UMaterialInstance> GreenMaterial;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UMaterialInstance> RedMaterial;
 };
