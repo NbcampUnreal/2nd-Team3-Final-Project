@@ -3,6 +3,8 @@
 
 #include "ItemSubsystem.h"
 
+#include "AbilitySystemComponent.h"
+#include "Ability/EmberItemAttributeSet.h"
 #include "Core/EmberDropStruct.h"
 #include "Core/ItemTypes.h"
 #include "EmberLog/EmberLog.h"
@@ -70,7 +72,7 @@ const FItemMasterInfoRow* UItemSubsystem::GetItemMasterInfoRow(FName ItemID) con
         
 }
 
-TArray<FItemPair> UItemSubsystem::GetDroppedItem(FName MonsterID)
+TArray<FItemPair> UItemSubsystem::GetDroppedItem(FName MonsterID, const UAbilitySystemComponent* AbilitySystemComponent)
 {
     TArray<FItemPair> FinalDroppedItems;
 
@@ -89,13 +91,24 @@ TArray<FItemPair> UItemSubsystem::GetDroppedItem(FName MonsterID)
         return FinalDroppedItems;
     }
 
+    float DropRate = 1.0f;
+    int32 DropBonus = 0;
+    if (AbilitySystemComponent)
+    {
+        if (const UEmberItemAttributeSet* ItemAttributeSet = Cast<UEmberItemAttributeSet>(AbilitySystemComponent->GetAttributeSet(UEmberItemAttributeSet::StaticClass())))
+        {
+            DropRate += ItemAttributeSet->GetItemDropRate();
+            DropBonus += ItemAttributeSet->GetItemDropBonus();
+        }
+    }
     for (const FEmberDropEntry& DropEntry : MonsterLootData->EmberDropEntries)
     {
-        if (FMath::FRand() <= DropEntry.DropChance)
+        if (FMath::FRand() * DropRate <= DropEntry.DropChance)
         {
             int32 ActualQuantityOrPicks = FMath::RandRange(DropEntry.MinQuantity, DropEntry.MaxQuantity);
             if (ActualQuantityOrPicks <= 0) continue;
-
+            ActualQuantityOrPicks += DropBonus;
+            EMBER_LOG(LogEmberItem, Warning, TEXT("abcd %d"), DropBonus);
             if (DropEntry.bIsDropPool)
             {
                 if (!DropEntry.ItemID.DataTable || !DropEntry.ItemID.RowName.IsValid() || DropEntry.ItemID.RowName.IsNone())
@@ -105,8 +118,7 @@ TArray<FItemPair> UItemSubsystem::GetDroppedItem(FName MonsterID)
                 }
                 
                 FPoolContents* PoolToProcess = LoadedLootPoolDataTable->FindRow<FPoolContents>(DropEntry.ItemID.RowName, ContextString);
-
-
+                
                 if (!PoolToProcess || PoolToProcess->PossibleItems.IsEmpty())
                 {
                     EMBER_LOG(LogEmberItem, Warning, TEXT("CalculateMonsterDrops: Loot Pool '%s' not found or empty in LootPoolDataTable."), *DropEntry.ItemID.RowName.ToString());
@@ -153,8 +165,9 @@ TArray<FItemPair> UItemSubsystem::GetDroppedItem(FName MonsterID)
     return FinalDroppedItems;
 }
 
+
 bool UItemSubsystem::SelectWeightedItem(const TArray<FEmberDropItemGroup>& ItemsToSelectFrom,
-    FEmberDropItemGroup& OutSelectedItem)
+                                        FEmberDropItemGroup& OutSelectedItem)
 {
     if (ItemsToSelectFrom.IsEmpty())
     {

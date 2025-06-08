@@ -56,6 +56,10 @@ FEquipmentSlotData::FEquipmentSlotData(const FEmberSlotData& InEmberSlot) : FEmb
 		if (FEquipmentInfoRow* Row = InEmberSlot.EquipmentData->GetRow<FEquipmentInfoRow>(TEXT("EquipmentInfo")))
 		{
 			EquipmentInfo = FEquipmentInfoRow(*Row);
+			for (auto InMainEffect : Row->MainEffects)
+			{
+				MainEffect.Add(FItemEffectApplicationInfo(*InMainEffect.GetRow<FItemEffectApplicationInfo>(TEXT("EquipmentEffect"))));
+			}
 		}
 	}
 }
@@ -97,7 +101,7 @@ FEmberItemInfo::FEmberItemInfo(const FEmberSlotData& InItemInventorySlotData)
 					InActiveEffects.Add(*Handle.GetRow<FItemEffectApplicationInfo>(TEXT("EquipmentInfo")));
 				}
 			}
-			ItemTags.AddTag(EquipmentInfo->EquipmentTag);
+			ItemTags.AppendTags(EquipmentInfo->EquipmentTag);
 		}
 	}
 	ActiveEffects = InActiveEffects;

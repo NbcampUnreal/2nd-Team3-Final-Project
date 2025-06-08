@@ -4,12 +4,16 @@
 #include "Ability/Base/BaseOverlayAbility.h"
 #include "Character/EmberCharacter.h"
 #include "EmberLog/EmberLog.h"
+#include "Item/Drop/EmberInteractableItemDropComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 ALootActorBase::ALootActorBase()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
+	DropItemDropComponent = CreateDefaultSubobject<UEmberInteractableItemDropComponent>(TEXT("DropItemComponent"));
 	
 	SetRootComponent(MeshComponent);
 }
@@ -83,9 +87,14 @@ void ALootActorBase::CancelInteractAbility()
 	}
 }
 
-void ALootActorBase::CompleteInteractAbility()
+void ALootActorBase::CompleteInteractAbility(APawn* InstigatorPawn)
 {
 	bIsAbilityEnded = true;
+	if (DropItemDropComponent)
+	{
+		DropItemDropComponent->DropItem(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+
+	}
 	// 아이템 추가
 }
 

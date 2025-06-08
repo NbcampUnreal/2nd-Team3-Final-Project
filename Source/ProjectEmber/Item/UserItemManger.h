@@ -8,6 +8,8 @@
 #include "Craft/EmberResourceProvider.h"
 #include "UserItemManger.generated.h"
 
+class UEmberCraftComponent;
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class PROJECTEMBER_API UUserItemManger : public UActorComponent, public IEmberResourceProvider
 {
@@ -78,6 +80,8 @@ public:
 	virtual bool bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems) override;
 
 
+	void InitAbilitySystem();
+	
 public: /* Quick Slot Interaction */
 	FName SelectQuickSlot(int32 InIndex) const;
 	
@@ -103,5 +107,9 @@ public:
 	TObjectPtr<UQuickSlotManager> QuickSlotManager;
 	TObjectPtr<UEmberEquipmentManager> EquipmentManager;
 	TObjectPtr<UEmberDropItemManager> DropItemManager;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
+	TObjectPtr<UEmberCraftComponent> CraftComponent;
+
 };
+

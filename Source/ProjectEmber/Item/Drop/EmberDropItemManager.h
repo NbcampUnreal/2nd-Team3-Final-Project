@@ -13,7 +13,7 @@ class PROJECTEMBER_API UEmberDropItemManager : public UEmberDataContainer
 	GENERATED_BODY()
 	
 public:
-	TArray<FItemPair> GetDropItemName(const FName& MonsterID);
+	TArray<FItemPair> GetDropItemName(const FName& MonsterID, const UAbilitySystemComponent* AbilitySystemComponent = nullptr);
 
-	void SetDropItem(const FName& MonsterID);
+	void SetDropItem(const FName& MonsterID, const UAbilitySystemComponent* AbilitySystemComponent = nullptr);
 };
