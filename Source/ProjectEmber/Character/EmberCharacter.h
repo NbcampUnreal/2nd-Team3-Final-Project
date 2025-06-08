@@ -6,6 +6,8 @@
 #include "EMSActorSaveInterface.h"
 #include "EmberCharacter.generated.h"
 
+class UEmberCraftComponent;
+class UUserItemManger;
 class UAC_BuildComponent;
 class UNiagaraSystem;
 struct FMeleeTraceInstanceHandle;
@@ -48,6 +50,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UMeleeTraceComponent* MeleeTraceComponent;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<class UMotionWarpingComponent> MotionWarpComponent;
+	
+protected: /* Mesh */
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> VisualCharacterMesh;
 	
@@ -60,7 +66,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Overlay", meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> OverlaySkeletalMesh;
 
-protected:
+protected: /* HpBar */
 	UPROPERTY(EditAnywhere, Category = "HpBar")
 	TSubclassOf<class UUserWidget> HpBarWidgetClass;
 	
@@ -70,6 +76,7 @@ protected:
 public:/* Build System */
 	
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Build", meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<UAC_BuildComponent> BuildComponent;
 public: /* VFX */
 	UFUNCTION(BlueprintCallable, Category = "Effects")
@@ -165,6 +172,7 @@ protected:
 	virtual void Input_OnViewMode();
 	virtual void Input_OnSwitchShoulder();
 	virtual void Input_OnQuickSlot(int32 PressedIndex);
+	virtual void Input_OnBuild();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "EmberCharacter")
 	TObjectPtr<UEmberInputHandlerComponent> InputHandler;
@@ -192,10 +200,17 @@ protected:
 protected:
 	//UFUNCTION()
 	//void HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, AActor* HitActor, const FVector& HitLocation, const FVector& HitNormal, FName HitBoneName, FMeleeTraceInstanceHandle TraceHandle);
-	
-protected: /* Inventory */
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "EmberCharacter")
-	TObjectPtr<class UUserItemManger> EmberItemManager;
+
+public: /* Inventory */
+	UFUNCTION(BlueprintCallable, Category = "Item")
+	UUserItemManger* GetItemManager();
+	UFUNCTION(BlueprintCallable, Category = "Item")
+	UEmberCraftComponent* GetCraftComponent();
+protected: 
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Item")
+	TObjectPtr<UUserItemManger> EmberItemManager;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Item")
+	TObjectPtr<UEmberCraftComponent> CraftCollision;
 	
 };
 

@@ -21,16 +21,7 @@ void UGA_AnimalDeath::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	}
 
 	//시체 바닥에 쓰러지는 사운드 큐 재생 -> BP에서 처리
-
 	
-	if (DeathEffectToApply)
-	{
-		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(DeathEffectToApply, GetAbilityLevel());
-		if (SpecHandle.IsValid())
-		{
-			FActiveGameplayEffectHandle EffectHandle = ApplyGameplayEffectSpecToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, SpecHandle);
-		}
-	}
 	//타이머 걸기 -> 20초 정도 죽은 상태로 보이면서 대기
 	GetWorld()->GetTimerManager().SetTimer(WaitFarmingTimerHandle, this, &ThisClass::EndFarmingTime, 5.0f, false);
 }
@@ -83,7 +74,6 @@ void UGA_AnimalDeath::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	}
 	
 	//어빌리티 끝나면 필드에서 숨김처리 시키기
-	UE_LOG(LogTemp, Warning, TEXT("[Death] Send HideAnimal for %s (%p)"), *GetAvatarActorFromActorInfo()->GetName(), GetAvatarActorFromActorInfo());
 	UObject* HideAnimal = Cast<UObject>(GetAvatarActorFromActorInfo());
 	UMessageBus::GetInstance()->BroadcastMessage(TEXT("HideAnimal"), HideAnimal);
 }

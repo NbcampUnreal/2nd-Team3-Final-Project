@@ -109,7 +109,7 @@ void ABaseAIAnimal::BeginPlay()
 	//PatrolPoints.SetNum(4);
 
 	GetCharacterMovement()->bUseRVOAvoidance = true;
-	GetCharacterMovement()->AvoidanceConsiderationRadius = 400.0f; // AI가 다른 에이전트를 감지할 반경
+	GetCharacterMovement()->AvoidanceConsiderationRadius = 800.0f; // AI가 다른 에이전트를 감지할 반경
 	GetCharacterMovement()->AvoidanceWeight = 0.5f;
 
 	/* 메세지버스 사용 예시 */
@@ -176,6 +176,8 @@ void ABaseAIAnimal::SetHiddenInGame()
 	 SetActorTickEnabled(false);
 	 if (AIController && AIController->BrainComponent && BlackboardComponent)
 	 {
+	 	BlackboardComponent->SetValueAsObject("TargetActor",nullptr); 
+	 	BlackboardComponent->SetValueAsObject("NTargetFood",nullptr); 
 	 	BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Death"); 
 	 	AIController->BrainComponent->Cleanup();
 	 	AIController->BrainComponent->StopLogic(TEXT("HiddenInGame")); //스폰시 숨김처리
@@ -208,6 +210,10 @@ void ABaseAIAnimal::SetVisibleInGame()
 void ABaseAIAnimal::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (GetMovementComponent())
+	{
+		bIsShouldSwim = GetMovementComponent()->IsSwimming();
+	}
 }
 
 void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
@@ -257,11 +263,11 @@ void ABaseAIAnimal::OnFullnessChanged(const FOnAttributeChangeData& OnAttributeC
 
 void ABaseAIAnimal::GenerateRandom()
 {
-	//int32 RandomPersonality = FMath::RandRange(0, static_cast<int32>(EAnimalAIPersonality::End) - 1);
-	int32 RandomPersonality =3; //임시수정
+	int32 RandomPersonality = FMath::RandRange(0, static_cast<int32>(EAnimalAIPersonality::End) - 1);
+	//int32 RandomPersonality =3; //임시수정
 	Personality = static_cast<EAnimalAIPersonality>(RandomPersonality);
 	SetDetails();
-	Fullness = FMath::FRandRange(30.f, 40.f);
+	Fullness = FMath::FRandRange(50.f, 100.f);
 }
 
 void ABaseAIAnimal::DecreaseFullness()
@@ -399,9 +405,9 @@ void ABaseAIAnimal::SetIsDead(const bool InIsDead)
 	bIsDead = InIsDead;
 }
 
-float ABaseAIAnimal::GetSoundPitch() const
+int32 ABaseAIAnimal::GetSoundIndex() const
 {
-	return SoundPitch;
+	return SoundIndex;
 }
 
 void ABaseAIAnimal::EndPlay(const EEndPlayReason::Type EndPlayReason)

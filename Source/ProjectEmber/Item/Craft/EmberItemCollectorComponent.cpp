@@ -5,6 +5,8 @@
 
 #include "EmberCraftComponent.h"
 #include "Components/BoxComponent.h"
+#include "EmberLog/EmberLog.h"
+#include "GameFramework/Character.h"
 
 
 // Sets default values for this component's properties
@@ -17,10 +19,14 @@ UEmberItemCollectorComponent::UEmberItemCollectorComponent()
 	CollectRangeBox = CreateDefaultSubobject<UBoxComponent>(TEXT("CollectRangeBox"));
 	if (CollectRangeBox && GetOwner())
 	{
-		CollectRangeBox->SetupAttachment(GetOwner()->GetRootComponent());
-		CollectRangeBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
+		{
+			
+			/*
+			CollectRangeBox->SetupAttachment(Character->GetMesh());
+			*/
 
-		CollectRangeBox->SetHiddenInGame(true);
+		}
 	}
 	// ...
 }
@@ -33,11 +39,15 @@ void UEmberItemCollectorComponent::BeginPlay()
 
 	// ...
 	if (CollectRangeBox)
-	{
-		CollectRangeBox->AttachToComponent(GetOwner()->GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
-		CollectRangeBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	{/*
+		if (ACharacter* Character = Cast<ACharacter>(GetOwner()))
+		{
+			CollectRangeBox->SetupAttachment(Character->GetMesh());
+			CollectRangeBox->SetWorldLocation(Character->GetActorLocation());
+			CollectRangeBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
-		CollectRangeBox->SetHiddenInGame(true);
+			CollectRangeBox->SetHiddenInGame(true);
+		}*/
 	}
 	FindOverlappingResourceComponent();
 }
@@ -56,6 +66,7 @@ void UEmberItemCollectorComponent::FindOverlappingResourceComponent()
 	ResourceProviders.Empty();
 	for (TObjectPtr<AActor> Actor : OverlappingActors)
 	{
+
 		if (Actor && Actor != GetOwner())
 		{
 			for (TObjectPtr<UActorComponent> Component : Actor->GetComponentsByInterface(UEmberResourceProvider::StaticClass()))
@@ -85,6 +96,7 @@ void UEmberItemCollectorComponent::SetResourceProvider(TScriptInterface<UEmberRe
 TMap<FName, int32> UEmberItemCollectorComponent::GetAllItemInfos_Implementation()
 {
 	TMap<FName, int32> AllItemInfos;
+	
 	for (TWeakObjectPtr<UObject>& ResourceProvider : ResourceProviders)
 	{
 		if (ResourceProvider.Get())

@@ -4,6 +4,8 @@
 #include "EmberDataContainer.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
+#include "Attribute/Character/EmberCharacterAttributeSet.h"
+#include "Character/EmberCharacter.h"
 #include "Core/EmberItemStruct.h"
 #include "Core/ItemSystemLibrary.h"
 #include "Containers/Queue.h"
@@ -24,11 +26,16 @@ void UEmberDataContainer::InitSlot(int32 InSlotMax, int32 InSlotMaxRow, TObjectP
     SlotCapacity = InSlotMax;
     SlotMaxRow = InSlotMaxRow;
 
+    InitializeInventorySlots();
+}
+
+void UEmberDataContainer::InitOwner(TObjectPtr<AActor> InOwner)
+{
     Owner = InOwner;
     if (Owner)
     {
         OwnerAbilitySystemComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Owner);
-    }
+    } 
 #if UE_BUILD_DEVELOPMENT
     if (!OwnerAbilitySystemComponent)
     {
@@ -36,7 +43,6 @@ void UEmberDataContainer::InitSlot(int32 InSlotMax, int32 InSlotMaxRow, TObjectP
     }
 #endif
     
-    InitializeInventorySlots();
 }
 
 int32 UEmberDataContainer::MergeSameItemSlot(int32 SlotIndexTo ,int32 SlotIndexFrom)
@@ -113,6 +119,9 @@ int32 UEmberDataContainer::AddDataInIndex(const FItemPair& InItem, int32 InSlotI
                 CurrentQuantity = FMath::Max(CurrentQuantity, 0);
 
                 Slot->Quantity += CurrentQuantity;
+
+                
+                Slot->EnchantEffects = InItem.Enchants;
                 
                 FTotalItemInfo& Total = TotalData.FindOrAdd(Slot->ItemID);
                 Total.AddItem(CurrentQuantity, InSlotIndex);
@@ -132,8 +141,53 @@ int32 UEmberDataContainer::AddDataInIndex(const FItemPair& InItem, int32 InSlotI
     return CurrentQuantity;
 }
 
+int32 UEmberDataContainer::AddDataInIndex(const FInstancedStruct& InItem, int32 InSlotIndex)
+{
+    int32 CurrentQuantity = 0;
+    FInstancedStruct TmpInItem = InItem;
+
+    if (DataSlots.IsValidIndex(InSlotIndex))
+    {
+        if (FEmberSlotData* Slot = DataSlots[InSlotIndex].GetMutablePtr<FEmberSlotData>())
+        {
+            if (FEmberSlotData* InSlot = TmpInItem.GetMutablePtr<FEmberSlotData>())
+            {
+                if (Slot->ItemID.IsNone())
+                {
+                    InSlot->InitializeInstancedStruct(DataSlots[InSlotIndex]);
+                    Slot = DataSlots[InSlotIndex].GetMutablePtr<FEmberSlotData>();
+                    Slot->Quantity = 0;
+                }
+                
+                if (InSlot->ItemID == Slot->ItemID)
+                {
+
+                    CurrentQuantity = FMath::Min(Slot->MaxStackSize - Slot->Quantity, InSlot->Quantity);
+
+                    CurrentQuantity = FMath::Max(CurrentQuantity, 0);
+                    
+                    Slot->Quantity += CurrentQuantity;
+                
+                    FTotalItemInfo& Total = TotalData.FindOrAdd(Slot->ItemID);
+                    Total.AddItem(CurrentQuantity, InSlotIndex);
+                
+                    OnDataChangedDelegate.Broadcast(InSlotIndex, DataSlots[InSlotIndex]);
+                }
+            }
+        }
+    }
+
+#if UE_BUILD_DEVELOPMENT
+    EMBER_LOG(LogEmberItem, Display, TEXT("ReturnQuantity : %d"), CurrentQuantity);
+
+#endif
+
+    
+    return CurrentQuantity;
+}
+
 void UEmberDataContainer::FindSlotIndexesByItemID(const FName& ItemID, TQueue<int32>& OutSlotIndexes,
-    int32 InBeginIndex)
+                                                  int32 InBeginIndex)
 {
     if (!DataSlots.IsValidIndex(InBeginIndex))
     {
@@ -173,6 +227,11 @@ void UEmberDataContainer::FindEmptySlotIndexes(TQueue<int32>& OutSlotIndexes) co
             if (Slot->bIsEmpty())
             {
                 OutSlotIndexes.Enqueue(Index);
+            }
+            else
+            {
+                EMBER_LOG(LogEmberItem, Display, TEXT("Slot : %s, %d"), *Slot->ItemID.ToString(), Slot->Quantity);
+
             }
         }
     }
@@ -275,7 +334,7 @@ int32 UEmberDataContainer::TryAddItemsToSlots(const FItemPair& InItem, int32 InS
 
     int32 QuantityAdded = 0;
     FItemPair CurrentItem = InItem;
-    
+
     if (DataSlots.IsValidIndex(InSlotIndex))
     {
         QuantityAdded = AddDataInIndex(CurrentItem, InSlotIndex);
@@ -289,7 +348,7 @@ int32 UEmberDataContainer::TryAddItemsToSlots(const FItemPair& InItem, int32 InS
     TQueue<int32> TargetSlotIndexes;
     FindSlotIndexesByItemID(InItem.ItemID, TargetSlotIndexes, InSlotIndex);
     FindEmptySlotIndexes(TargetSlotIndexes);
-
+    
     if (TargetSlotIndexes.IsEmpty())
     {
         return 0;
@@ -321,6 +380,98 @@ int32 UEmberDataContainer::TryAddItemsToSlots(const FItemPair& InItem, int32 InS
     
     return QuantityAdded;
 }
+
+int32 UEmberDataContainer::TryAddItems(const FInstancedStruct& InItem, int32 InSlotIndex)
+{
+    int32 QuantityAdded = 0;
+
+    if (InItem.IsValid())
+    {
+        FInstancedStruct InCurrentItem = InItem;
+
+        if (FEmberSlotData* CurrentItem = InCurrentItem.GetMutablePtr<FEmberSlotData>())
+        {
+            if (DataSlots.IsValidIndex(InSlotIndex))
+            {
+                QuantityAdded = AddDataInIndex(InCurrentItem, InSlotIndex);
+
+                DataSlots[InSlotIndex] = InItem;
+                CurrentItem->Quantity -= QuantityAdded;
+
+                
+                if (QuantityAdded > 0)
+                {
+                    OnDataChangedDelegate.Broadcast(InSlotIndex, DataSlots[InSlotIndex]);
+                }
+            }
+            TQueue<int32> TargetSlotIndexes;
+            FindSlotIndexesByItemID(CurrentItem->ItemID, TargetSlotIndexes, InSlotIndex);
+            FindEmptySlotIndexes(TargetSlotIndexes);
+            
+            if (TargetSlotIndexes.IsEmpty())
+            {
+                return 0;
+            }
+            if (int32* SlotIndex = TargetSlotIndexes.Peek())
+            {
+                while (SlotIndex && CurrentItem->Quantity > 0 && DataSlots.IsValidIndex(*SlotIndex))
+                {
+                    int32 CurrentAddedQuantity = AddDataInIndex(InCurrentItem, *SlotIndex);
+
+                    QuantityAdded += CurrentAddedQuantity;
+                    CurrentItem->Quantity -= CurrentAddedQuantity;
+
+                    if (CurrentAddedQuantity > 0)
+                    {
+                        OnDataChangedDelegate.Broadcast(*SlotIndex, DataSlots[*SlotIndex]);
+                    }
+                    if (!TargetSlotIndexes.Dequeue(*SlotIndex) || CurrentItem->Quantity <= 0)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+#if UE_BUILD_DEVELOPMENT
+            EMBER_LOG(LogEmberItem, Display, TEXT("ReturnRemainNum : %d"), QuantityAdded);
+#endif
+    return QuantityAdded;
+}
+
+int32 UEmberDataContainer::AddItemSlot(const FInstancedStruct& InItem, int32 InSlotIndex)
+{
+    int32 QuantityActuallyAddedToSlots = 0;
+    if (InItem.IsValid())
+    {
+        if (const FEmberSlotData* InSlotData = InItem.GetPtr<FEmberSlotData>())
+        {
+            if (InSlotData->ItemID.IsNone() || InSlotData->Quantity <= 0)
+            {
+                return 0;
+            }
+
+            QuantityActuallyAddedToSlots = TryAddItems(InItem, InSlotIndex);
+
+            const int32 QuantityLeftToDrop = InSlotData->Quantity - QuantityActuallyAddedToSlots;
+
+            if (QuantityLeftToDrop > 0 && Owner)
+            {
+                EMBER_LOG(LogEmberItem, Log, TEXT("Inventory full or partial add. Dropping %d of %s"), QuantityLeftToDrop, *InSlotData->ItemID.ToString());
+                SpawnDroppedItem(InSlotData->ItemID, QuantityLeftToDrop, Owner->GetActorLocation(), FRotator::ZeroRotator);
+            }
+
+        }
+    }
+    
+#if UE_BUILD_DEVELOPMENT
+    EMBER_LOG(LogEmberItem, Display, TEXT("ReturnAmount : %d"), QuantityActuallyAddedToSlots);
+#endif
+    
+    return QuantityActuallyAddedToSlots;
+}
+
 
 void UEmberDataContainer::SpawnDroppedItem(FName ItemIDToDrop, int32 QuantityToDrop, FVector SpawnLocation, FRotator SpawnRotation)
 {
@@ -505,8 +656,8 @@ int32 UEmberDataContainer::GetSlotMaxRow_Implementation() const
 void UEmberDataContainer::MovedInItemByAnotherProvider(int32 IndexTo,
     TScriptInterface<UEmberSlotDataProviderInterface> AnotherProvider, int32 IndexFrom, int32 Quantity)
 {
-    FName ItemID = IEmberSlotDataProviderInterface::Execute_GetSlotItemID(AnotherProvider.GetObject(), IndexFrom);
-    int32 AddItem = AddItem_Implementation(FItemPair(ItemID, Quantity), IndexTo);
+    FInstancedStruct ItemInfo = IEmberSlotDataProviderInterface::Execute_GetSlotItemInfo(AnotherProvider.GetObject(), IndexFrom);
+    int32 AddItem = AddItemSlot(ItemInfo, IndexTo);
     IEmberSlotDataProviderInterface::Execute_RemoveItemFromSlot(AnotherProvider.GetObject(), IndexFrom, AddItem);
 
       
@@ -535,8 +686,17 @@ FName UEmberDataContainer::GetSlotItemID_Implementation(int32 InIndex) const
     return ItemID;
 }
 
+FInstancedStruct UEmberDataContainer::GetSlotItemInfo_Implementation(int32 InIndex) const
+{
+    if (DataSlots.IsValidIndex(InIndex))
+    {
+        return DataSlots[InIndex];
+    }
+    return FInstancedStruct();
+}
+
 void UEmberDataContainer::MoveItemByWidget_Implementation(const FGameplayTag& InSlotTag, int32 IndexTo,
-    const TScriptInterface<UEmberSlotDataProviderInterface>& AnotherProvider, int32 IndexFrom, int32 Quantity)
+                                                          const TScriptInterface<UEmberSlotDataProviderInterface>& AnotherProvider, int32 IndexFrom, int32 Quantity)
 {
     if (AnotherProvider.GetObject() == this)
     {

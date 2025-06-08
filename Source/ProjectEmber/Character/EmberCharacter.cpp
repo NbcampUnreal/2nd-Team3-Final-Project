@@ -26,11 +26,14 @@
 #include "GameFramework/PhysicsVolume.h"
 #include "GameInstance/EffectManagerSubsystem.h"
 #include "Item/UserItemManger.h"
+#include "Item/Craft/EmberCraftComponent.h"
 #include "UI/EmberWidgetComponent.h"
 #include "MeleeTrace/Public/MeleeTraceComponent.h"
 #include "Quest/QuestSubsystem.h"
 #include "UI/HUD/EmberMainHUD.h"
 #include "Utility/AlsVector.h"
+#include "MotionWarpingComponent.h"
+
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(EmberCharacter)
 
@@ -72,7 +75,11 @@ AEmberCharacter::AEmberCharacter()
     MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
     
     EmberItemManager = CreateDefaultSubobject<UUserItemManger>(TEXT("UserItemComponent"));
-
+    CraftCollision = CreateDefaultSubobject<UEmberCraftComponent>(TEXT("CraftBoxCollision"));
+    CraftCollision->SetRelativeLocation(FVector::ZeroVector);
+    CraftCollision->SetRelativeRotation(FRotator::ZeroRotator);
+    CraftCollision->SetupAttachment(GetMesh());
+    
     VisualCharacterMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SK_LittleBoyRyan"));
     VisualCharacterMesh->SetupAttachment(GetMesh());
 
@@ -80,6 +87,8 @@ AEmberCharacter::AEmberCharacter()
     GliderMesh->SetupAttachment(GetMesh());
 
     BuildComponent = CreateDefaultSubobject<UAC_BuildComponent>(TEXT("BuildComponent"));
+
+    MotionWarpComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpComponent"));
     
     /* Test */
     HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
@@ -120,7 +129,7 @@ void AEmberCharacter::BeginPlay()
         {
             AbilitySystemComponent = EmberPlayerState->GetAbilitySystemComponent();
             Super::SetAbilitySystemComponent(AbilitySystemComponent);
-        
+            EmberItemManager->InitAbilitySystem();
             if (const UEmberCharacterAttributeSet* CurrentAttributeSet = AbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>())
             {
                 CurrentAttributeSet->OnOutOfHealth.AddDynamic(this, &ThisClass::OnOutOfHealth);
@@ -176,6 +185,8 @@ void AEmberCharacter::BeginPlay()
         
         HpBarWidget->UpdateAbilitySystemComponent(this);
     }
+
+    
 }
 
 void AEmberCharacter::Tick(float DeltaSeconds)
@@ -294,6 +305,11 @@ void AEmberCharacter::AbilityInputPressed(int32 InputID)
                 AbilitySystemComponent->AbilitySpecInputPressed(Spec);
             }
         }
+    }
+
+    if (GetOverlayMode() == AlsOverlayModeTags::Hammer)
+    {
+        BuildComponent->SpwanBuild();
     }
 }
 
@@ -693,6 +709,40 @@ void AEmberCharacter::Input_OnQuickSlot(int32 PressedIndex)
     else // else는 잡템
     {
         SetOverlayMode(AlsOverlayModeTags::Default);
+    }
+}
+
+UUserItemManger* AEmberCharacter::GetItemManager()
+{
+    return EmberItemManager;
+}
+
+UEmberCraftComponent* AEmberCharacter::GetCraftComponent()
+{
+    return CraftCollision;
+}
+
+void AEmberCharacter::Input_OnBuild()
+{
+    if (GetOverlayMode() != AlsOverlayModeTags::Hammer)
+    {
+        PreOverlayTag = GetOverlayMode();
+        SetOverlayMode(AlsOverlayModeTags::Hammer);
+        
+        if (BuildComponent)
+        {
+            BuildComponent->LaunchBuildMode();
+        }
+    }
+    else
+    {
+        SetOverlayMode(PreOverlayTag);
+        PreOverlayTag = AlsOverlayModeTags::Default;
+        
+        if (BuildComponent)
+        {
+            BuildComponent->LaunchBuildMode();
+        }
     }
 }
 

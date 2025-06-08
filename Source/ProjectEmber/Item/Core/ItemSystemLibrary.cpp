@@ -6,6 +6,8 @@
 #include "AbilitySystemComponent.h"
 #include "GameplayEffect.h"
 #include "GameplayEffectTypes.h"
+#include "Attribute/Character/EmberCharacterAttributeSet.h"
+#include "EmberLog/EmberLog.h"
 #include "Engine/GameInstance.h"
 #include "Item/ItemSubsystem.h"
 
@@ -30,6 +32,7 @@ UItemSubsystem* UItemSystemLibrary::GetItemSubsystem()
 void UItemSystemLibrary::ApplyEffectInfoList(UAbilitySystemComponent* TargetASC,
 	const TArray<FItemEffectApplicationInfo>& EffectInfos, UObject* SourceObject, float SourceLevel)
 {
+
 	if (!TargetASC || EffectInfos.Num() == 0)
 	{
 		return;
@@ -37,6 +40,7 @@ void UItemSystemLibrary::ApplyEffectInfoList(UAbilitySystemComponent* TargetASC,
 
 	for (const FItemEffectApplicationInfo& EffectInfo : EffectInfos)
 	{
+
 		if (!EffectInfo.GameplayEffectClass) continue;
 
 		FGameplayEffectContextHandle ContextHandle = TargetASC->MakeEffectContext();
@@ -52,9 +56,7 @@ void UItemSystemLibrary::ApplyEffectInfoList(UAbilitySystemComponent* TargetASC,
 			{
 				SpecHandle.Data->SetSetByCallerMagnitude(EffectInfo.MagnitudeSetByCallerTag, EffectInfo.Magnitude);
 			}
-			// 필요하다면 다른 Set By Caller 값들도 여기서 설정
-
-			// 효과 적용 (대상은 TargetASC 자신이라고 가정)
+			
 			TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 		}
 	}

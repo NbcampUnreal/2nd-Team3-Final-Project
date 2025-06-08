@@ -11,26 +11,7 @@
 #include "EmberLog/EmberLog.h"
 #include "Item/Core/ItemSystemLibrary.h"
 #include "Item/UI/DragDropOperation/EmberItemSlotDragDropOperation.h"
-
-FWidgetSlotData::FWidgetSlotData(const FInstancedStruct& InSlotData)
-{
-	if (const FEmberSlotData* Slot = InSlotData.GetPtr<FEmberSlotData>())
-	{
-		UE_LOG(LogTemp, Display, TEXT("InventoryManagerComponent4: SlotData %d"),Slot->Quantity);
-		ItemID = Slot->ItemID;
-		Quantity = Slot->Quantity;
-		MaxStackSize = Slot->MaxStackSize;
-		ItemDisplayName = Slot->ItemDisplayName;
-		ItemDescription = Slot->ItemDescription;
-		if (Slot->SlotData)
-		{
-			if (const FSlotInfoRow* SlotInfoRow = Slot->SlotData->GetRow<FSlotInfoRow>("SlotInfo"))
-			{
-				ItemIcon = SlotInfoRow->ItemIcon;
-			}
-		}
-	}
-}
+#include "Item/UI/SlotWidget/ItemDetailWidget.h"
 
 void UEmberBaseSlotWidget::NativeOnInitialized()
 {
@@ -58,7 +39,7 @@ void UEmberBaseSlotWidget::InitSlot(int32 InSlotIndex, TScriptInterface<IEmberSl
 
 void UEmberBaseSlotWidget::SetSlotData(const FInstancedStruct& InSlotData)
 {
-	SlotData = FWidgetSlotData(InSlotData);
+	SlotData = FEmberWidgetSlotData(InSlotData);
 
 	UpdateSlot();
 }
@@ -109,20 +90,28 @@ bool UEmberBaseSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDrag
 		Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
 }
 
-/*
-FReply UEmberBaseSlotWidget::NativeOnMouseButtonDown(const FGeometry& Geometry, const FPointerEvent& MouseEvent)
+void UEmberBaseSlotWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-	FEventReply Reply;
-	Reply.NativeReply = Super::NativeOnMouseButtonDown(Geometry, MouseEvent);
+	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
 
-	if (MouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton))
+	if (ItemDetailWidgetClass && !SlotData.IsEmpty())
 	{
-		if (SlotData.ItemID.IsValid())
+		ItemDetailWidget = CreateWidget<UItemDetailWidget>(this->GetOwningPlayer(), ItemDetailWidgetClass, TEXT("DetailWidget"));
+		
+		if (ItemDetailWidget)
 		{
-			Reply = UWidgetBlueprintLibrary::DetectDragIfPressed(MouseEvent, this, EKeys::LeftMouseButton);
+			ItemDetailWidget->AddToViewport();
+			ItemDetailWidget->EmberWidgetSlotData = SlotData;
 		}
 	}
-	return Reply.NativeReply;
-
 }
-*/
+
+void UEmberBaseSlotWidget::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
+{
+	Super::NativeOnMouseLeave(InMouseEvent);
+	if (ItemDetailWidget)
+	{
+		ItemDetailWidget->RemoveFromParent();
+	}
+}
+

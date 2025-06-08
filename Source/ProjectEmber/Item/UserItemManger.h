@@ -3,10 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/ActorComponent.h"
+
 #include "Core/EmberItemStruct.h"
 #include "Craft/EmberResourceProvider.h"
 #include "UserItemManger.generated.h"
+
+class UEmberCraftComponent;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class PROJECTEMBER_API UUserItemManger : public UActorComponent, public IEmberResourceProvider
@@ -38,6 +40,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UseInventorySlotInfo(int32 InIndex);
 
+	UFUNCTION(BlueprintCallable)
+	void SetDropProvider(class UEmberDropItemManager* InDropItemProvider);
+	
+	UFUNCTION(BlueprintCallable)
+	void ClearDropProvider();
 	/**
 	 * 
 	 * @param ItemID 넣을 아이템의 ID
@@ -59,7 +66,7 @@ public:
 
 	UEmberEquipmentManager* GetEquipmentManager();
 	
-	const class UEmberDropItemManager* GetEmberDropItemManager() const;
+	const UEmberDropItemManager* GetEmberDropItemManager() const;
 
 	UEmberDropItemManager* GetEmberDropItemManager();
 
@@ -73,6 +80,8 @@ public:
 	virtual bool bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems) override;
 
 
+	void InitAbilitySystem();
+	
 public: /* Quick Slot Interaction */
 	FName SelectQuickSlot(int32 InIndex) const;
 	
@@ -93,9 +102,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
 	int32 DropItemMaxSlotRow = 10;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
 	TObjectPtr<UInventoryManager> InventoryManager;
 	TObjectPtr<UQuickSlotManager> QuickSlotManager;
 	TObjectPtr<UEmberEquipmentManager> EquipmentManager;
 	TObjectPtr<UEmberDropItemManager> DropItemManager;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
+	TObjectPtr<UEmberCraftComponent> CraftComponent;
+
 };
+
