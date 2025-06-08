@@ -71,6 +71,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LootType")
 	ELootAbilityType LootAbilityType{ELootAbilityType::Tree};
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest")
+	FGameplayTag TargetItemTag;
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable")
 	FGameplayTagContainer GameplayTagContainer;

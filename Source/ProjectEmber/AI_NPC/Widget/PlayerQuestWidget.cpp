@@ -90,8 +90,38 @@ void UPlayerQuestWidget::SetQuestInfoFromDataAsset(const UQuestDataAsset* QuestA
 
 	if (ObjectiveNameText)
 	{
-		ObjectiveNameText->SetText(Step.StepObjectiveName.IsEmpty()
-			? FText::FromString(Step.StepID.ToString())
-			: Step.StepObjectiveName);
+		FString CombinedObjectives;
+
+		// 조건 대사 정보 포함
+		for (const UQuestCondition* Condition : Step.Conditions)
+		{
+			if (Condition)
+			{
+				FString ConditionText;
+				const bool bIsFulfilled = Condition->IsFulfilled();
+
+				// 이름 처리
+				FString NameStr = Condition->ConditionName.IsEmpty()
+					? TEXT("")  // 기본 이름
+					: Condition->ConditionName.ToString();
+
+				ConditionText = FString::Printf(TEXT("- %s: %d / %d%s"),
+					*NameStr,
+					Condition->CurrentCount,
+					Condition->RequiredCount,
+					bIsFulfilled ? TEXT(" (Complete)") : TEXT(""));
+
+				CombinedObjectives += ConditionText + TEXT("\n");
+			}
+		}
+
+		// 퀘스트 목표 헤더가 존재할 경우 포함
+		if (!Step.StepObjectiveName.IsEmpty())
+		{
+			const FString Header = Step.StepObjectiveName.ToString() + TEXT("\n");
+			CombinedObjectives = Header + CombinedObjectives;
+		}
+
+		ObjectiveNameText->SetText(FText::FromString(CombinedObjectives.TrimEnd()));
 	}
 }
