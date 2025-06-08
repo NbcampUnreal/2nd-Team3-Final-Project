@@ -41,32 +41,14 @@ EBTNodeResult::Type UBTTask_AttackTarget::ExecuteTask(UBehaviorTreeComponent& Ow
 		return EBTNodeResult::Failed;
 	}
 	
-	//
-	// UObject* TargetObject = BlackboardComp->GetValueAsObject("TargetObject");
-	// AActor* TargetActor = Cast<AActor>(TargetObject);
-	//
-	// FGameplayEventData Payload;
-	// Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.Attack");
-	// Payload.Instigator = AICharacter;
-	// Payload.Target = TargetActor;
-	// Payload.OptionalObject = TargetActor;
-	// Payload.OptionalObject2 = AICharacter->GetMontage(FGameplayTag::RequestGameplayTag("Animal.Montage.Attack")); //키로 태그 넘겨주면 몽타주 가져옴 -> TSet이나 TMap 으로 바꿀 것  
-	//
-	// // 게임플레이 이벤트를 어빌리티에게 전달(trigger)하는 함수, 어빌리티가 특정 GameplayTag 이벤트를 수신해서 발동되도록 하는 트리거 역할
-	// AICharacter->GetAbilitySystemComponent()->HandleGameplayEvent(Payload.EventTag, &Payload);
-	
-	// 자기 동물 태그랑 상대 태그랑 같으면 공격 취소
-
+	// 공격중 겹침 + 자기 동물 태그랑 상대 태그랑 같으면 -> 공격 취소
 	ABaseAIAnimal* AIAnimal = Cast<ABaseAIAnimal>(AIPawn);
 	if (AIAnimal)
 	{
-		FGameplayTag  IdentityTag = AIAnimal->GetIdentityTag();
-		
 		UObject* TargetObject = BlackboardComp->GetValueAsObject("TargetObject");
 		if (ABaseAIAnimal* TargetActor = Cast<ABaseAIAnimal>(TargetObject))//가져왔는데 동물이면
 		{
-			FGameplayTag  TargetIdentityTag = TargetActor->GetIdentityTag();
-			if (IdentityTag == TargetIdentityTag)
+			if (Cast<ABaseAIAnimal>(AIPawn)->GetIdentityTag() == TargetActor->GetIdentityTag())
 			{
 				return EBTNodeResult::Failed;
 			}
@@ -85,7 +67,6 @@ EBTNodeResult::Type UBTTask_AttackTarget::ExecuteTask(UBehaviorTreeComponent& Ow
 		AICharacter->GetAbilitySystemComponent()->HandleGameplayEvent(Payload.EventTag, &Payload);
 		
 		return Super::ExecuteTask(OwnerComp, NodeMemory);
-
 	}
 	return EBTNodeResult::Failed;
 }
