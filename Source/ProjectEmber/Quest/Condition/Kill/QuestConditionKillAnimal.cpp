@@ -1,31 +1,38 @@
 ﻿#include "QuestConditionKillAnimal.h"
 
-UQuestConditionKillAnimal::UQuestConditionKillAnimal()
-{
-	// 블루프린트에서 세팅할 값
-	//AnimalID = 소, 늑대, 곰, 사슴;
-
-	
-}
-
-bool UQuestConditionKillAnimal::OnEvent_Implementation(const FGameplayTag& InEventTag,
-	const FGameplayEventData& EventData)
+bool UQuestConditionKillAnimal::OnEvent_Implementation(const FGameplayTag& InEventTag, const FGameplayEventData& EventData)
 {
 	if (InEventTag != EventTag)
 	{
 		return false;
 	}
 
-	if (AiAnimal == EventData.Target.GetClass())
+	const AActor* TargetActor = EventData.Target.Get();
+	if (!TargetActor)
+	{
+		return false;
+	}
+
+	// 액터 클래스가 TargetNPCClass와 일치하는지 확인
+	if (TargetNPCClass.IsValid() && TargetActor->GetClass()->IsChildOf(TargetNPCClass.Get()))
 	{
 		CurrentCount++;
-		if (IsFulfilled())
-		{
-			return true;
-		}
+		return IsFulfilled();
 	}
 
 	return false;
 }
+FString UQuestConditionKillAnimal::GetConditionText_Implementation() const
+{
+	FString NameStr;
+	if (ConditionName.IsEmpty())
+	{
+		NameStr = TargetNPCClass.IsValid() ? TargetNPCClass->GetName() : TEXT("UnknownTarget");
+	}
+	else
+	{
+		NameStr = ConditionName.ToString();
+	}
 
-
+	return FString::Printf(TEXT("%s: %d / %d"), *NameStr, CurrentCount, RequiredCount);
+}

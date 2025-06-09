@@ -45,6 +45,10 @@ void UGameMenuWidget::UpdateQuestInfoViaWidgetTree()
                         if (bIsAccepted)
                         {
                             StepIndex = QuestSubsystem->GetCurrentStepIndexForQuest(LastQuestID);
+                            if (StepIndex > 0 && QuestSubsystem->IsStepCompleted(LastQuestID, StepIndex - 1))
+                            {
+                                StepIndex -= 1; 
+                            }
                         }
 
                         const bool bShowStepComplete = QuestSubsystem->IsStepCompleted(LastQuestID, StepIndex);
