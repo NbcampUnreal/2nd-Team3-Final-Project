@@ -21,8 +21,14 @@ class PROJECTEMBER_API UItemDetailWidget : public UUserWidget
 public:
 	UFUNCTION(BlueprintCallable)
 	FString GetEffectsName() const;
+
+private:
+	UFUNCTION(BlueprintCallable)
+	void SetWidgetMousePosition();
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Slot")
 	FEmberWidgetSlotData EmberWidgetSlotData = FEmberWidgetSlotData();
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Slot")
+	FTimerHandle MouseTimerHandle;
 };

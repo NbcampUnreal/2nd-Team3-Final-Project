@@ -27,7 +27,6 @@ void UEmberDropItemSlotsPanel::BP_SetProvider_Implementation()
 FReply UEmberDropItemSlotsPanel::NativeOnFocusReceived(const FGeometry& InGeometry, const FFocusEvent& InFocusEvent)
 {
 	FReply Reply = Super::NativeOnFocusReceived(InGeometry, InFocusEvent);
-	EMBER_LOG(LogEmberItem, Warning, TEXT("absd"));
 
 	BP_SetProvider_Implementation();
 	for (int32 Index = 0; Index < Slots.Num(); ++Index)

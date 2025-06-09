@@ -27,7 +27,9 @@ public:
 	virtual void NativeOnInitialized() override;
 	UFUNCTION(BlueprintCallable)
 	void InitSlot(int32 InSlotIndex, TScriptInterface<IEmberSlotDataProviderInterface> InDataProvider);
-
+	UFUNCTION(BlueprintCallable)
+	void InitDetailWidget();
+	
 	UFUNCTION(BlueprintCallable)
 	void SetSlotData(const FInstancedStruct& InSlotData);
 	
