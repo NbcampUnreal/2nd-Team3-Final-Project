@@ -93,7 +93,7 @@ AEmberCharacter::AEmberCharacter()
     /* Test */
     HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
     HpBarWidget->SetupAttachment(GetMesh());
-    HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
+    HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 150.0f));
 }
 
 void AEmberCharacter::BeginPlay()
