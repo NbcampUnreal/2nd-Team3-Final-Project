@@ -55,7 +55,7 @@ bool UQuestSubsystem::TryStartQuest(FName QuestID, bool bPlayerAccepted)
         {
             if (QuestAsset->Steps.IsValidIndex(0))
             {
-                const FQuestStep& FirstStep = QuestAsset->Steps[0];
+                FQuestStep FirstStep = QuestAsset->Steps[0];
                 for (UQuestCondition* Condition : FirstStep.Conditions)
                 {
                     if (Condition)
@@ -243,10 +243,11 @@ bool UQuestSubsystem::GetLastActiveQuestID(FName& OutQuestID) const
     OutQuestID = LastAcceptedQuestID;
     return true;
 }
-const TMap<FName, UQuestDataAsset*>& UQuestSubsystem::GetAllLoadedQuests() const 
+TMap<FName, TObjectPtr<UQuestDataAsset>>& UQuestSubsystem::GetAllLoadedQuests() 
 {
     return LoadedQuests;
 }
+
 bool UQuestSubsystem::IsQuestAccepted(FName QuestID) const
 {
     return QuestProgress.Contains(QuestID);
