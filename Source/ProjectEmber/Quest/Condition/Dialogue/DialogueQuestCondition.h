@@ -15,11 +15,13 @@ class PROJECTEMBER_API UDialogueQuestCondition : public UQuestCondition
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Condition")
-	TSubclassOf<AActor> TargetNPCClass;
-	virtual bool OnEvent_Implementation(const FGameplayTag& InEventTag, const FGameplayEventData& EventData) override;
 
+	virtual bool OnEvent_Implementation(const FGameplayTag& InEventTag, const FGameplayEventData& EventData) override;
+	virtual FString GetConditionText_Implementation() const override;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Condition")
 	TArray<FText> DialogueLines;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest|Condition")
+	TSoftObjectPtr<AActor> TargetNPCActor;
 
 };

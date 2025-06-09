@@ -9,7 +9,7 @@
 
 UAIActorComponent::UAIActorComponent()
 {
-    PrimaryComponentTick.bCanEverTick = false;  // ÄÄÆ÷³ÍÆ®¿ë
+    PrimaryComponentTick.bCanEverTick = false;  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½
 }
 
 void UAIActorComponent::BeginPlay()
@@ -33,18 +33,18 @@ void UAIActorComponent::CheckPlayerDistance()
     AActor* Owner = GetOwner();
     float Distance = FVector::Dist(PlayerPawn->GetActorLocation(), Owner->GetActorLocation());
 
-    const float TeleportThreshold = 2000.f;
+    const float TeleportThreshold = 200000.f;
     const float FollowThreshold = 10.f;
 
     if (Distance > TeleportThreshold)
     {
-        FVector TeleportLocation = PlayerPawn->GetActorLocation() + PlayerPawn->GetActorForwardVector() * -10.f;
+        FVector TeleportLocation = PlayerPawn->GetActorLocation() + PlayerPawn->GetActorForwardVector() * -100.f;
         Owner->SetActorLocation(TeleportLocation);
         UE_LOG(LogTemp, Warning, TEXT("AINPC teleported behind player."));
         return;
     }
 
-    // AIController´Â PawnÀ» ÅëÇØ Á¢±Ù
+    // AIControllerï¿½ï¿½ Pawnï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     APawn* OwnerPawn = Cast<APawn>(Owner);
     if (OwnerPawn)
     {

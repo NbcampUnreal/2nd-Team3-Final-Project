@@ -16,4 +16,10 @@ class PROJECTEMBER_API UQuestConditiongathering : public UQuestCondition
 
 public:
     virtual bool OnEvent_Implementation(const FGameplayTag& InEventTag, const FGameplayEventData& EventData) override;
+
+    virtual FString GetConditionText_Implementation() const override;
+
+    //  기존 FName → FGameplayTag로 변경
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest|Condition")
+    FGameplayTag TargetItemTag;
 };

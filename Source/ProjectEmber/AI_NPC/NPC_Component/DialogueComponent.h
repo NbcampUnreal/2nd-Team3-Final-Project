@@ -55,7 +55,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Dialogue")
     void SetCustomDialogueLines(const TArray<FText>& InLines);
 
-    /** ´ëÈ­ À§Á¬À» Ç¥½ÃÇÏ°í ´ë»ç Ãâ·Â ½ÃÀÛ */
+    /** ï¿½ï¿½È­ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ */
     UFUNCTION(BlueprintCallable, Category = "Dialogue")
     void StartDialogue();
 
@@ -112,6 +112,9 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
     UInputMappingContext* GameplayUIInputMappingContext;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+    UInputMappingContext* GameplayAlsUIInputMappingContext;
+    
     UPROPERTY(BlueprintReadOnly)
     bool bIsAccepteing = false;
 
