@@ -77,7 +77,8 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
     // Ability input
     InputComponent->BindAction(AttackAction, ETriggerEvent::Started, Character, &AEmberCharacter::AbilityInputPressed, 0);
 
-
+    // Bind Action Value
+    Character->MoveInputBinding = &InputComponent->BindActionValue(MoveAction);
 }
 
 void UEmberInputHandlerComponent::RegisterMapping(APlayerController* PC, int32 Priority, const FModifyContextOptions& Options)
