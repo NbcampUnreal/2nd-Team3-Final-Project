@@ -6,6 +6,8 @@
 #include "EMSActorSaveInterface.h"
 #include "EmberCharacter.generated.h"
 
+class UEmberHpBarUserWidget;
+class UTargetSystemComponent;
 class UEmberCraftComponent;
 class UUserItemManger;
 class UAC_BuildComponent;
@@ -52,6 +54,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<class UMotionWarpingComponent> MotionWarpComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<UTargetSystemComponent> TargetSystemComponent;
 	
 protected: /* Mesh */
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, meta=(AllowPrivateAccess = "true"))
@@ -66,12 +71,13 @@ protected: /* Mesh */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Overlay", meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> OverlaySkeletalMesh;
 
-protected: /* HpBar */
-	UPROPERTY(EditAnywhere, Category = "HpBar")
-	TSubclassOf<class UUserWidget> HpBarWidgetClass;
+public: /* HpBar */
+	UFUNCTION(BlueprintCallable, Category = "HpBar")
+	void SetHpBarWidget(UEmberHpBarUserWidget* InHpBarWidget);
 	
+protected:
 	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<class UEmberWidgetComponent> HpBarWidget;
+	TWeakObjectPtr<class UEmberHpBarUserWidget> HpBarWidget;
 	
 public:/* Build System */
 	
