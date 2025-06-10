@@ -71,11 +71,23 @@ void UEmberCharacterAttributeSet::PostGameplayEffectExecute(const struct FGamepl
 		
 		OnHit.Broadcast(Data.EffectSpec.GetContext().GetInstigator());
 	}
-
+	else if (Data.EvaluatedData.Attribute == GetManaAttribute())
+	{
+		EMBER_LOG(LogEmber,Log,TEXT("Mana: %f"), GetMana());
+		SetMana(FMath::Clamp(GetMana(), MinimumHealth, GetMaxMana()));
+	}
+	else if (Data.EvaluatedData.Attribute == GetShieldAttribute())
+	{
+		EMBER_LOG(LogEmber,Log,TEXT("Mana: %f"), GetShield());
+		SetShield(FMath::Clamp(GetShield(), MinimumHealth, GetMaxShield()));
+	}
+	
 	if (GetHealth() <= MinimumHealth && !bOutOfHealth)
 	{
 		//Data.Target.AddLooseGameplayTag(ABGameplayTag::Character_State_IsDead);
 		OnOutOfHealth.Broadcast();
 	}
 	bOutOfHealth = (GetHealth() <= MinimumHealth);
+	
+	/* 마나랑 쉴드 브로드캐스트가 필요할지는 잘 모르겠음 */
 }

@@ -34,6 +34,10 @@ public:
 	ATTRIBUTE_ACCESSORS(UEmberCharacterAttributeSet, Health);
 	ATTRIBUTE_ACCESSORS(UEmberCharacterAttributeSet, MaxHealth);
 	ATTRIBUTE_ACCESSORS(UEmberCharacterAttributeSet, Damage);
+	ATTRIBUTE_ACCESSORS(UEmberCharacterAttributeSet, Mana);
+	ATTRIBUTE_ACCESSORS(UEmberCharacterAttributeSet, MaxMana);
+	ATTRIBUTE_ACCESSORS(UEmberCharacterAttributeSet, Shield);
+	ATTRIBUTE_ACCESSORS(UEmberCharacterAttributeSet, MaxShield);
 	
 	mutable FOutOfHealthDelegate OnOutOfHealth;
 
@@ -54,6 +58,18 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Health", Meta = (AllowPrivateAccess=true), SaveGame)
 	FGameplayAttributeData Damage;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Mana", Meta = (AllowPrivateAccess=true), SaveGame)
+	FGameplayAttributeData Mana;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Mana", Meta = (AllowPrivateAccess=true), SaveGame)
+	FGameplayAttributeData MaxMana;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Shield", Meta = (AllowPrivateAccess=true), SaveGame)
+	FGameplayAttributeData Shield;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Shield", Meta = (AllowPrivateAccess=true), SaveGame)
+	FGameplayAttributeData MaxShield;
 
 	bool bOutOfHealth{false};
 };
