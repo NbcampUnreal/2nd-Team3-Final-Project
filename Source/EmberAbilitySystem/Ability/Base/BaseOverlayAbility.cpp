@@ -9,6 +9,8 @@
 #include "GameFramework/Character.h"
 #include "MessageBus/MessageBus.h"
 #include "MotionWarpingComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UBaseOverlayAbility::UBaseOverlayAbility()
 {
@@ -30,46 +32,13 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 
 	if (!bLoopingMontage)
 	{
-		/*if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
-		{
-			FRotator CtrlRot = Character->GetController()->GetControlRotation();
-			CtrlRot.Pitch = 0.f;
-			CtrlRot.Roll  = 0.f;
-			FVector Forward = CtrlRot.Vector();
-			FVector Right   = FRotationMatrix(CtrlRot).GetScaledAxis(EAxis::Y);
-			
-			float InputY = 0.f, InputX = 0.f;
-			if (APlayerController* PC = Cast<APlayerController>(Character->GetController()))
-			{
-				InputY = PC->GetInputAxisValue(TEXT("MoveForward"));
-				InputX = PC->GetInputAxisValue(TEXT("MoveRight"));
-			}
-			
-			FVector MoveDir = (Forward * InputY + Right * InputX).GetSafeNormal();
-			if (MoveDir.IsNearlyZero())
-			{
-				MoveDir = Forward;
-			}
-			
-			FVector WarpTargetLocation = Character->GetActorLocation() + MoveDir * 500.f;
-			
-			if (UMotionWarpingComponent* WarpComp = Character->FindComponentByClass<UMotionWarpingComponent>())
-			{
-				FMotionWarpingTarget WarpTarget{};
-				WarpTarget.Name = FName("AttackWarp");
-				WarpTarget.Location = WarpTargetLocation;
-				WarpTarget.Rotation = MoveDir.Rotation();
-				WarpComp->AddOrUpdateWarpTarget(WarpTarget);
-			}
-		}*/
+		SetUpdateWarping();
 	}
 
-	LaunchCharacterForward(ActorInfo);
-	
 	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
 	{
 		Character->SetForceGameplayTags(ForceGameplayTags);
-		Character->ForceLastInputDirectionBlocked(true);
+		//Character->ForceLastInputDirectionBlocked(true);
 		//PreLocomotionState = Character->GetLocomotionState();
 
 		if (bMontageTickEnable)
@@ -136,7 +105,11 @@ void UBaseOverlayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 		{
 			Character->SetDesiredGait(AlsGaitTags::Running);	
 		}
-		Character->ForceLastInputDirectionBlocked(true);
+
+		if (bMontageTickEnable)
+		{
+			Character->ForceLastInputDirectionBlocked(true);	
+		}
 	}
 
 	if (auto AbilityClass = ChooseAbilityByState())
@@ -206,19 +179,6 @@ void UBaseOverlayAbility::OnComboNotify(const FGameplayEventData Payload)
 	}
 }
 
-void UBaseOverlayAbility::LaunchCharacterForward(const FGameplayAbilityActorInfo* ActorInfo) const
-{
-	if (bEnableForwardMovementDuringMontage && ForwardMovementDistance > 0.f && ForwardMovementDuration > 0.f)
-	{
-		if (ACharacter* Character = Cast<ACharacter>(ActorInfo->AvatarActor.Get()))
-		{
-			const FVector Forward = Character->GetActorForwardVector();
-			const float Speed = ForwardMovementDistance / ForwardMovementDuration;
-			Character->LaunchCharacter(Forward * Speed, true, true);
-		}
-	}
-}
-
 void UBaseOverlayAbility::OnMontageTick() const
 {
 	if (bMontageTickEnable)
@@ -233,6 +193,53 @@ void UBaseOverlayAbility::OnMontageTick() const
 
 void UBaseOverlayAbility::OnBlendOut()
 {
+}
+
+void UBaseOverlayAbility::SetUpdateWarping()
+{
+	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
+	{
+		FRotator CtrlRot = Character->GetController()->GetControlRotation();
+		CtrlRot.Pitch = 0.f;
+		CtrlRot.Roll  = 0.f;
+		const FVector Forward = CtrlRot.Vector();
+		const FVector Right   = FRotationMatrix(CtrlRot).GetScaledAxis(EAxis::Y);
+
+		const FVector2D MoveInput = Character->GetMoveInput();
+		FVector MoveDir = (Forward * MoveInput.Y + Right * MoveInput.X).GetSafeNormal();
+		if (MoveDir.IsNearlyZero())
+		{
+			MoveDir = Forward;
+		}
+		
+		const FVector DesiredWarp = Character->GetActorLocation() + MoveDir * WarpDistance;
+		
+		FHitResult Hit;
+		FCollisionQueryParams Params(NAME_None, false, Character);
+		const bool bBlocked = Character->GetWorld()->LineTraceSingleByChannel(Hit,Character->GetActorLocation(),
+			DesiredWarp,
+			ECC_Pawn,
+			Params
+		);
+		
+		FVector FinalWarp = DesiredWarp;
+		if (bBlocked)
+		{
+			const float Radius = Character->GetCapsuleComponent()->GetScaledCapsuleRadius();
+			FinalWarp = Hit.ImpactPoint - Hit.ImpactNormal * Radius;
+		}
+
+		if (UMotionWarpingComponent* WarpComp = Character->FindComponentByClass<UMotionWarpingComponent>())
+		{
+			FMotionWarpingTarget WarpTarget;
+			WarpTarget.Name     = FName("AttackWarp");
+			WarpTarget.Location = FinalWarp;
+			WarpTarget.Rotation = MoveDir.Rotation();
+			WarpComp->AddOrUpdateWarpTarget(WarpTarget);
+		}
+
+		Character->ForceRoationTest(MoveDir.Rotation().Yaw);
+	}
 }
 
 UAnimMontage* UBaseOverlayAbility::ChooseMontageByState()
