@@ -145,7 +145,7 @@ UAlsCharacterMovementComponent::UAlsCharacterMovementComponent()
 	SetNetworkMoveDataContainer(MoveDataContainer);
 
 	bRunPhysicsWithNoController = true;
-	bAllowPhysicsRotationDuringAnimRootMotion = false;       // Required to be able to manually rotate the actor while rolling.
+	bAllowPhysicsRotationDuringAnimRootMotion = true;       // Required to be able to manually rotate the actor while rolling.
 	bNetworkAlwaysReplicateTransformUpdateTimestamp = true; // Required for view network smoothing.
 
 	SetCrouchedHalfHeight(56.0f);
