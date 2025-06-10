@@ -18,6 +18,7 @@
 #include "Utility/AlsVector.h"
 
 #include "AbilitySystemComponent.h"
+#include "../../../../../../../Program Files/Epic Games/UE_5.5/Engine/Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(AlsCharacter)
 
@@ -86,6 +87,11 @@ void AAlsCharacter::ForceRoationTest(float YawAngle)
 	LocomotionState.TargetYawAngle = YawAngle;
 	LocomotionState.SmoothTargetYawAngle = YawAngle;
 	LocomotionState.ViewRelativeTargetYawAngle = YawAngle;
+}
+
+FVector2D AAlsCharacter::GetMoveInput() const
+{
+	return MoveInputBinding->GetValue().Get<FVector2D>();
 }
 
 void AAlsCharacter::ForceLastInputDirectionBlocked(bool bBlocked)
