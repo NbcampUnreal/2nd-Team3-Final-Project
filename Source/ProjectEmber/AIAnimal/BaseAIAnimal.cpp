@@ -6,9 +6,12 @@
 #include "AbilitySystemComponent.h"
 #include "EMSFunctionLibrary.h"
 #include "MeleeTraceComponent.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
 #include "AI/NavigationSystemBase.h"
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
+#include "Components/CapsuleComponent.h"
 #include "EmberLog/EmberLog.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "UI/EmberHpBarUserWidget.h"
@@ -22,11 +25,17 @@ ABaseAIAnimal::ABaseAIAnimal()
 	bIsShouldSwim = false;
 	NavGenerationRadius = 4000.0f; //시각,청각 인지 버뮈보다 인보커 생성 범위가 커야함
 	NavRemoveRadius = 4300.0f;
-	NavInvokerComponent = CreateDefaultSubobject<UNavigationInvokerComponent>("NavInvokerComponent");
+	NavInvokerComponent = CreateDefaultSubobject<UNavigationInvokerComponent>(TEXT("NavInvokerComponent"));
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	CharacterAttributeSet = CreateDefaultSubobject<UEmberCharacterAttributeSet>(TEXT("CharacterAttributeSet"));
 	AnimalAttributeSet = CreateDefaultSubobject<UEmberAnimalAttributeSet>(TEXT("AnimalAttributeSet"));
-
+	RCapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("RCapsuleComponent"));
+	RCapsuleComponent->SetCapsuleHalfHeight(88.0f);
+	RCapsuleComponent->SetCapsuleRadius(44.0f);
+	LCapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("LCapsuleComponent"));
+	LCapsuleComponent->SetCapsuleHalfHeight(88.0f);
+	LCapsuleComponent->SetCapsuleRadius(44.0f);
+	
 	GenerateRandom();
 	FEmberAnimalAttributeData AttributeData;
 	AttributeData.Fullness = Fullness;
@@ -90,9 +99,11 @@ void ABaseAIAnimal::BeginPlay()
 		}
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UEmberAnimalAttributeSet::GetFullnessAttribute()).
 								AddUObject(this, &ThisClass::OnFullnessChanged);
-		
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UEmberCharacterAttributeSet::GetHealthAttribute()).
 								AddUObject(this, &ThisClass::OnHealthChanged);
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UEmberAnimalAttributeSet::GetWalkSpeedAttribute()).
+										AddUObject(this, &ThisClass::OnWalkSpeedChanged);
+		
 
 		if (const UEmberCharacterAttributeSet* Attribute = AbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>())
 		{
@@ -109,31 +120,36 @@ void ABaseAIAnimal::BeginPlay()
 	//PatrolPoints.SetNum(4);
 
 	GetCharacterMovement()->bUseRVOAvoidance = true;
-	GetCharacterMovement()->AvoidanceConsiderationRadius = 800.0f; // AI가 다른 에이전트를 감지할 반경
+	GetCharacterMovement()->AvoidanceConsiderationRadius = 800.0f; // AI가 다른 AI 감지할 반경
 	GetCharacterMovement()->AvoidanceWeight = 0.5f;
-
+	
 	/* 메세지버스 사용 예시 */
 	// 함수 바인딩
 	MessageDelegateHandle = FMessageDelegate::CreateUObject(this, &ThisClass::ReceiveMessage);
 
 	// FName으로 키값(메세지) 지정하고 델리게이트 전달
 	UMessageBus::GetInstance()->Subscribe(TEXT("HideAnimal"), MessageDelegateHandle);
-
+	UMessageBus::GetInstance()->Subscribe(TEXT("FixSpeed"), MessageDelegateHandle);
 	// 호출할 곳에서 
-	
-	
 }
 
 void ABaseAIAnimal::OnBeginDeath()
 {
 	bIsDead = true;
-	
+	SetActorEnableCollision(false);
 	SetActorTickEnabled(false);
+	GetWorldTimerManager().PauseTimer(FullnessTimerHandle);
+	if (NiagaraComponent)
+	{
+		NiagaraComponent->Deactivate();
+	}
 	if (AIController && AIController->BrainComponent && BlackboardComponent)
 	{
+		BlackboardComponent->SetValueAsObject("TargetActor",nullptr); 
+		BlackboardComponent->SetValueAsObject("NTargetFood",nullptr); 
 		BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Death"); 
 		AIController->BrainComponent->Cleanup();
-		AIController->BrainComponent->StopLogic(TEXT("HiddenInGame"));
+		AIController->BrainComponent->StopLogic(TEXT("HiddenInGame")); //스폰시 숨김처리
 	}
 
 	if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
@@ -143,7 +159,6 @@ void ABaseAIAnimal::OnBeginDeath()
 		Data.EventTag = EventTag;
 		Data.Target = this;
 		Data.TargetTags.AddTag(IdentityTag); // 예: Animal.Boar 또는 Animal.Wolf
-
 		QuestSubsystem->OnGameEvent(EventTag, Data);
 	}
 	
@@ -165,28 +180,38 @@ void ABaseAIAnimal::ReceiveMessage(const FName MessageType, UObject* Payload)
 			SetHiddenInGame();
 		}
 	}
-}
 
+	if (TEXT("FixSpeed") == MessageType)
+	{
+		if (Payload == this)
+		{
+			AnimalAttributeSet->SetWalkSpeed(WalkSpeed);
+		}
+	}
+}
 
 void ABaseAIAnimal::SetHiddenInGame()
 {
 	SetActorHiddenInGame(true);
-	SetActorEnableCollision(false);
-	 SetActorTickEnabled(false);
-	 if (AIController && AIController->BrainComponent && BlackboardComponent)
-	 {
-	 	BlackboardComponent->SetValueAsObject("TargetActor",nullptr); 
-	 	BlackboardComponent->SetValueAsObject("NTargetFood",nullptr); 
-	 	BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Death"); 
-	 	AIController->BrainComponent->Cleanup();
-	 	AIController->BrainComponent->StopLogic(TEXT("HiddenInGame")); //스폰시 숨김처리
-	 }
-	GetWorldTimerManager().PauseTimer(FullnessTimerHandle);
 }
 
 void ABaseAIAnimal::SetVisibleInGame()
 {
 	bIsDead = false;
+	if (NiagaraComponent)
+	{
+		NiagaraComponent->Activate(true);
+	}
+	
+	if (AIController && AIController->BrainComponent)
+	{
+		AIController->BrainComponent->StartLogic();
+		BlackboardComponent = AIController->GetBlackboardComponent();
+		BlackboardComponent->ClearValue("TargetObject");
+		BlackboardComponent->SetValueAsName("NStateTag","Animal.State.Idle");
+		
+	}
+	
 	if (CharacterAttributeSet)
 	{
 		CharacterAttributeSet->SetHealth(CharacterAttributeSet->GetMaxHealth());
@@ -194,17 +219,11 @@ void ABaseAIAnimal::SetVisibleInGame()
 		ChangeData.NewValue = CharacterAttributeSet->GetHealth();
 		//Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(ChangeData);
 	}
-	SetActorHiddenInGame(false);
+	
 	SetActorEnableCollision(true);
 	SetActorTickEnabled(true);
 	GetWorldTimerManager().UnPauseTimer(FullnessTimerHandle);
-	if (AIController && AIController->BrainComponent && BlackboardComponent)
-	{
-		BlackboardComponent = AIController->GetBlackboardComponent();
-		BlackboardComponent->ClearValue("TargetObject");
-		BlackboardComponent->SetValueAsName("NStateTag","Animal.State.Idle");
-		AIController->BrainComponent->StartLogic();
-	}
+	SetActorHiddenInGame(false);
 }
 
 void ABaseAIAnimal::Tick(float DeltaTime)
@@ -214,11 +233,28 @@ void ABaseAIAnimal::Tick(float DeltaTime)
 	{
 		bIsShouldSwim = GetMovementComponent()->IsSwimming();
 	}
+	if (BlackboardComponent)
+	{
+		UObject* TargetObject = BlackboardComponent->GetValueAsObject("TargetActor");
+		if (AActor* Target = Cast<AActor>(TargetObject))
+		{
+			FVector Direction = (Target->GetActorLocation()- GetActorLocation()).GetSafeNormal2D(); //z무시
+			FRotator TargetRotation = Direction.Rotation(); //얼마나 회전해야하는지
+			FRotator NewRot = FMath::RInterpTo(GetActorRotation(), TargetRotation, DeltaTime, 5.0f);
+			SetActorRotation(NewRot);
+		}
+	}
 }
 
 void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 {
-	//도망가는 상황에서만 속도 빨라졌다 서서히 감소 추가해야함->이팩트로 적용예정
+	//도망가는 상황에서만 속도 빨라졌다 감소 추가해야함->이팩트로 적용예정
+
+	FGameplayEventData Payload;
+	Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.SpeedUp");
+	Payload.Instigator = this;
+	Payload.EventMagnitude = WalkSpeed;
+	AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
 	
 	if (BlackboardComponent)
 	{
@@ -232,6 +268,11 @@ void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 			BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Attack"); 
 		}
 	}
+}
+
+void ABaseAIAnimal::OnWalkSpeedChanged(const FOnAttributeChangeData& OnAttributeChangeData)
+{
+	GetCharacterMovement()->MaxWalkSpeed = OnAttributeChangeData.NewValue;
 }
 
 void ABaseAIAnimal::OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData)
@@ -272,6 +313,10 @@ void ABaseAIAnimal::GenerateRandom()
 
 void ABaseAIAnimal::DecreaseFullness()
 {
+	if (Fullness <= 0.f)
+	{
+		return;
+	}
 	FGameplayEventData Payload;
 	Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.Decrease");
 	Payload.Instigator = this;
@@ -299,10 +344,6 @@ UAnimMontage* ABaseAIAnimal::GetMontage(FGameplayTag MontageTag)
 	return MontageMap[MontageTag];
 }
 
-TArray<FVector>& ABaseAIAnimal::GetPatrolPoints()
-{
-	return PatrolPoints;
-}
 
 FGameplayTag ABaseAIAnimal::GetIdentityTag() const
 {
@@ -348,11 +389,6 @@ void ABaseAIAnimal::SetDetails()
 			WalkSpeed *= 0.8f;
 			break;
 		}
-	case EAnimalAIPersonality::Outsider:
-		{
-			WanderRange *= 1.2f;
-			break;
-		}
 	default:
 		{
 			WalkSpeed = 300.0f;
@@ -383,7 +419,31 @@ void ABaseAIAnimal::SetRoleTag(const FName InRoleTag)
 	{
 		return; 
 	}
+	RoleTag = FGameplayTag::RequestGameplayTag(InRoleTag);
 	BlackboardComponent->SetValueAsName("NGroupTag", InRoleTag);
+
+		
+	if (RoleTag == FGameplayTag::RequestGameplayTag("Animal.Role.Leader"))
+	{
+		FVector NewScale = GetActorScale3D()*1.5f;
+		SetActorScale3D(NewScale);
+		GetMesh()->SetMaterial(0,MaterialInterface[1]);
+	
+		UNiagaraSystem* NiagaraSystem = LoadObject<UNiagaraSystem>(nullptr, TEXT("/Game/SoStylized/Effects/Systems/NS_ElectricBuildup.NS_ElectricBuildup"));
+		if (NiagaraSystem)
+		{
+			NiagaraComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+		   NiagaraSystem,
+		   GetMesh(),
+		   TEXT("spine_04"), // 없으면 NAME_None
+		   FVector::ZeroVector,
+		   FRotator::ZeroRotator,
+		   EAttachLocation::SnapToTarget,
+		   false,  // bAutoDestroy
+		   true   // bAutoActivate
+		   );
+		}
+	}
 }
 
 void ABaseAIAnimal::SetIdleState()
@@ -416,6 +476,13 @@ void ABaseAIAnimal::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	GetWorldTimerManager().ClearTimer(FullnessTimerHandle);
 	
 	UMessageBus::GetInstance()->Unsubscribe(TEXT("HideAnimal"), MessageDelegateHandle);
+	UMessageBus::GetInstance()->Unsubscribe(TEXT("FixSpeed"), MessageDelegateHandle);
+	if (NiagaraComponent)
+	{
+		NiagaraComponent->Deactivate();         
+		NiagaraComponent->DestroyComponent(); 
+		NiagaraComponent = nullptr;
+	}
 	
 	Super::EndPlay(EndPlayReason);
 }

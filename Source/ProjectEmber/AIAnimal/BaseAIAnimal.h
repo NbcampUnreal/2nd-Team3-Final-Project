@@ -25,11 +25,10 @@ class AAIController;
 UENUM(BlueprintType)
 enum class EAnimalAIPersonality : uint8
 {
-	Normal			UMETA(DisplayName = "Normal"),			//디폴트
-	Cowardly        UMETA(DisplayName = "Cowardly"),        // 기본 경계거리 증가
-	Curious			UMETA(DisplayName = "Curious"),			// 플레이어에 접근
-	Brave			UMETA(DisplayName = "Brave"),			// 위협받으면 반격
-	Outsider		UMETA(DisplayName = "Outsider"),		// 기본 어슬렁거리 증가
+	Normal			UMETA(DisplayName = "Normal"),			//인지 -> Idle, 피격-> 확정 도망
+	Cowardly        UMETA(DisplayName = "Cowardly"),        // 인지 -> 도망 확률 증가, 피격-> 확정 도망
+	Curious			UMETA(DisplayName = "Curious"),			// 인지 -> 접근 확률 증가, 피격-> 확정 도망
+	Brave			UMETA(DisplayName = "Brave"),			// 인지 -> 선공격 확률 증가, 피격-> 반격 확률 증가
 	Agile			UMETA(DisplayName = "Agile"),			// 기본 이동속도 증가
 	Lazy			UMETA(DisplayName = "Lazy"),			// 기본 이동속도 감소
 	End				UMETA(DisplayName = "End")
@@ -48,7 +47,10 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
 	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override; //어빌리티시스템 함수 오버라이드
-	
+
+	UFUNCTION()
+	void OnHit(AActor* InstigatorActor);
+	void OnWalkSpeedChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnFullnessChanged(const FOnAttributeChangeData& OnAttributeChangeData);
@@ -57,7 +59,6 @@ public:
 	float GetWildPower() const;
 	float GetWanderRange() const;
 	UAnimMontage* GetMontage(FGameplayTag MontageTag);
-	TArray<FVector>& GetPatrolPoints();
 	
 	void GenerateRandom();
 	void DecreaseFullness();
@@ -106,8 +107,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Attribute)
 	const class UEmberCharacterAttributeSet* GetCharacterAttributeSet() const;
 
-	UFUNCTION()
-	void OnHit(AActor* InstigatorActor);
+
 
 protected:
 	void ReceiveMessage(const FName MessageType, UObject* Payload);
@@ -115,6 +115,11 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void SetDetails();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UCapsuleComponent* RCapsuleComponent;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UCapsuleComponent* LCapsuleComponent;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UMeleeTraceComponent* MeleeTraceComponent;
@@ -154,7 +159,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Montage)
 	TMap<FGameplayTag, UAnimMontage*> MontageMap; //키로 태그 넘겨주면 몽타주 가져옴 
 	
-	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
+	UPROPERTY(EditAnywhere, Category = "12")
 	TArray<TSubclassOf<class UGameplayAbility>> StartAbilities;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AnimalEnum)
@@ -190,12 +195,16 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTag IdentityTag;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability")
-	TSubclassOf<class UGameplayEffect> DecreaseFullnessEffect;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGameplayTag RoleTag;
 
-	FTimerHandle FullnessTimerHandle;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TObjectPtr<UMaterialInterface>> MaterialInterface;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<class UNiagaraComponent> NiagaraComponent;
 	
-	TArray<FVector> PatrolPoints;
+	FTimerHandle FullnessTimerHandle;
 	
 	FMessageDelegate MessageDelegateHandle;
 };

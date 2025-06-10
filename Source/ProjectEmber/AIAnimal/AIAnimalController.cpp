@@ -7,23 +7,13 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "DrawDebugHelpers.h"
-#include "EMSCompSaveInterface.h"
-#include "TestFood.h"
-#include "GameFramework/PawnMovementComponent.h"
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
-#include "EnvironmentQuery/EnvQueryManager.h"
 
-const FName AAIAnimalController::SleepTime = "SleepTime";
 const FName AAIAnimalController::IsShouldSleep = "IsShouldSleep";
 const FName AAIAnimalController::DistanceToTarget = "DistanceToTarget";
-const FName AAIAnimalController::CurrentState = "CurrentState";
 const FName AAIAnimalController::TargetActor = "TargetActor";
 const FName AAIAnimalController::TargetLocation = "TargetLocation";
-const FName AAIAnimalController::FleeRange = "FleeRange";
-const FName AAIAnimalController::WanderRange = "WanderRange"; 
 const FName AAIAnimalController::SafeLocation = "SafeLocation"; 
-const FName AAIAnimalController::IsHit = "IsHit";
 
 AAIAnimalController::AAIAnimalController()
 {
@@ -79,18 +69,14 @@ void AAIAnimalController::InitBlackboard()
 {
     GetBlackboardComponent()->SetValueAsName("NStateTag", "Animal.State.Idle");
     GetBlackboardComponent()->SetValueAsBool("NIsNeedToGeneratePP", true);
-    GetBlackboardComponent()->SetValueAsFloat("SleepTime", fSleepTime);
     GetBlackboardComponent()->SetValueAsBool("IsShouldSleep",bIsShouldSleep);
-    GetBlackboardComponent()->SetValueAsEnum("Personality",
-                                            static_cast<uint8>(Cast<ABaseAIAnimal>(GetPawn())->GetPersonality()) );
-    GetBlackboardComponent()->SetValueAsFloat("WanderRange",500.0f);
 }
 
 void AAIAnimalController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
     //시각 청각적으로 감지됐을 때 -> 뒤에서 접근하면 감지 못하는 문제 있을 듯 ,근데 동물은 그게 맞아
-    FindTargetPlayer(Actor, Stimulus);
     FindTargetAnimal(Actor, Stimulus);
+    FindTargetPlayer(Actor, Stimulus);
 }
 
 void AAIAnimalController::FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus)
@@ -107,10 +93,14 @@ void AAIAnimalController::FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus)
         if (BlackboardComponent)
         {
             //--- 공격 확률 설정 --------------------------------------------------
-            float AttackProb = 0.05;          // 기본 5 %
+            float AttackProb = 0.00;          // 기본 0 %
             if (Cast<ABaseAIAnimal>(GetPawn())->GetPersonality() == EAnimalAIPersonality::Brave) // 성격이 ‘용감’이라면 +5 %
             {
-                AttackProb += 0.05f;           // 총합 ⇒ 10 %
+                AttackProb += 0.05f;           // 총합 ⇒ 5 %
+            }
+            if (Cast<ABaseAIAnimal>(GetPawn())->GetRoleTag() == "Animal.Role.Leader")
+            {
+                AttackProb += 0.5f;            // 총합 ⇒ 55 %
             }
             //--------------------------------------------------------------------
 
@@ -123,8 +113,7 @@ void AAIAnimalController::FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus)
             }
             else
             {
-                BlackboardComponent->SetValueAsName("NEnemyTag", "Player");
-                BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
+                BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Warning");
                 BlackboardComponent->SetValueAsObject("TargetActor", Actor);
             }
         }
@@ -176,7 +165,6 @@ void AAIAnimalController::FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus)
             }
             else //this가 우선순위가 더 크다면(낮다면) -> 도망
             {
-                BlackboardComponent->SetValueAsName("NEnemyTag", "Animal");
                 //여기서 인식되면 타겟, 거리 등록
                 BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
                 BlackboardComponent->SetValueAsObject("TargetActor", Actor);

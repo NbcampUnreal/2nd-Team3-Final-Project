@@ -4,7 +4,6 @@
 #include "AIAnimal/BT/BTTask_FindFood.h"
 
 #include "AIController.h"
-#include "AIAnimal/TestFood.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "EnvironmentQuery/EnvQueryInstanceBlueprintWrapper.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
@@ -59,6 +58,7 @@ void UBTTask_FindFood::OnFindFoodQueryFinished(UEnvQueryInstanceBlueprintWrapper
 	//성공하지 않았으면 리턴
 	if (EEnvQueryStatus::Success != QueryStatus)
 	{
+		
 		FinishLatentTask(*BTComp, EBTNodeResult::Failed);
 		return;
 	}

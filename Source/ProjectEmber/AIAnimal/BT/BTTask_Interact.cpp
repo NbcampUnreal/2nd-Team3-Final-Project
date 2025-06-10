@@ -1,12 +1,8 @@
 #include "ProjectEmber/AIAnimal/BT/BTTask_Interact.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AIController.h"
-#include "AIAnimal/TestFood.h"
-#include "GameFramework/Character.h"
-//#include "Interactables/BaseInteractableActor.h"
 #include "AbilitySystemComponent.h"
 #include "Abilities/GameplayAbilityTypes.h"
-#include "Interactables/Interactable.h"
 #include "ProjectEmber/AIAnimal/BaseAIAnimal.h"
 
 UBTTask_Interact::UBTTask_Interact()

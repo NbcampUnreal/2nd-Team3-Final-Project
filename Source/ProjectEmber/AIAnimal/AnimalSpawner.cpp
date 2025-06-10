@@ -272,10 +272,10 @@ void AAnimalSpawner::TryCreateQueue(TArray<TSoftObjectPtr<AAnimalSpawnPoint>>& I
 
 void AAnimalSpawner::CreateAnimalsQueue(FAnimalSpawnInfo& Info, TSoftObjectPtr<AAnimalSpawnPoint>& InSpawnPoint)
 {
-	AddCreateQueue(Info, InSpawnPoint, Info.LeaderCount, "Animal.Group.Leader");
-	AddCreateQueue(Info, InSpawnPoint, Info.PatrolCount, "Animal.Group.Patrol");
-	AddCreateQueue(Info, InSpawnPoint, Info.FollowCount, "Animal.Group.Follower");
-	AddCreateQueue(Info, InSpawnPoint, Info.AloneCount , "Animal.Group.Alone");
+	AddCreateQueue(Info, InSpawnPoint, Info.LeaderCount, "Animal.Role.Leader");
+	AddCreateQueue(Info, InSpawnPoint, Info.PatrolCount, "Animal.Role.Patrol");
+	AddCreateQueue(Info, InSpawnPoint, Info.FollowCount, "Animal.Role.Follower");
+	AddCreateQueue(Info, InSpawnPoint, Info.AloneCount , "Animal.Role.Alone");
 }
 
 void AAnimalSpawner::AddCreateQueue(FAnimalSpawnInfo& Info, TSoftObjectPtr<AAnimalSpawnPoint>& InSpawnPoint, int32 Count, FName RoleTag)
@@ -551,10 +551,10 @@ void AAnimalSpawner::TryCreateEntire(TArray<TSoftObjectPtr<AAnimalSpawnPoint>>& 
 
 void AAnimalSpawner::CreateAnimals(FAnimalSpawnInfo& Info, TSoftObjectPtr<AAnimalSpawnPoint>& InSpawnPoint)
 {
-	SpawnAnimalWithTag(Info, InSpawnPoint, "Animal.Group.Leader", Info.LeaderCount);
-	SpawnAnimalWithTag(Info, InSpawnPoint, "Animal.Group.Patrol", Info.PatrolCount);
-	SpawnAnimalWithTag(Info, InSpawnPoint, "Animal.Group.Follower", Info.FollowCount);
-	SpawnAnimalWithTag(Info, InSpawnPoint, "Animal.Group.Alone", Info.AloneCount);
+	SpawnAnimalWithTag(Info, InSpawnPoint, "Animal.Role.Leader", Info.LeaderCount);
+	SpawnAnimalWithTag(Info, InSpawnPoint, "Animal.Role.Patrol", Info.PatrolCount);
+	SpawnAnimalWithTag(Info, InSpawnPoint, "Animal.Role.Follower", Info.FollowCount);
+	SpawnAnimalWithTag(Info, InSpawnPoint, "Animal.Role.Alone", Info.AloneCount);
 }
 
 void AAnimalSpawner::SpawnAnimalWithTag(FAnimalSpawnInfo& Info, TSoftObjectPtr<AAnimalSpawnPoint>& SpawnPoint, FName RoleTag, int32 Count)

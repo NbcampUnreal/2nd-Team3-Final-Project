@@ -37,6 +37,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EQS")
 	TObjectPtr<UEnvQuery> FoodQuery;
 
-	UBlackboardComponent* BlackboardComp;
-	UBehaviorTreeComponent* BTComp;
+	TObjectPtr<UBlackboardComponent> BlackboardComp;
+	TObjectPtr<UBehaviorTreeComponent> BTComp;
 };
