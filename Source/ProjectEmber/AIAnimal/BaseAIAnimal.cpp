@@ -158,7 +158,6 @@ void ABaseAIAnimal::ReceiveMessage(const FName MessageType, UObject* Payload)
 
 void ABaseAIAnimal::SetHiddenInGame()
 {
-	UE_LOG(LogTemp, Warning, TEXT("[SetHiddenInGame] Hiding %s (%p)"), *GetName(), this);
 	SetActorHiddenInGame(true);
 	SetActorEnableCollision(false);
 	 SetActorTickEnabled(false);
@@ -175,6 +174,7 @@ void ABaseAIAnimal::SetHiddenInGame()
 
 void ABaseAIAnimal::SetVisibleInGame()
 {
+	bIsDead = false;
 	if (CharacterAttributeSet)
 	{
 		CharacterAttributeSet->SetHealth(CharacterAttributeSet->GetMaxHealth());
@@ -255,7 +255,7 @@ void ABaseAIAnimal::GenerateRandom()
 	//int32 RandomPersonality =3; //임시수정
 	Personality = static_cast<EAnimalAIPersonality>(RandomPersonality);
 	SetDetails();
-	Fullness = FMath::FRandRange(50.f, 100.f);
+	Fullness = FMath::FRandRange(30.f, 40.f);
 }
 
 void ABaseAIAnimal::DecreaseFullness()

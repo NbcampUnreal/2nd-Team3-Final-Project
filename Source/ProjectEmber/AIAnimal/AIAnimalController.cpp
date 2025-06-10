@@ -124,7 +124,7 @@ void AAIAnimalController::FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus)
             else
             {
                 BlackboardComponent->SetValueAsName("NEnemyTag", "Player");
-                BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Warning");
+                BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
                 BlackboardComponent->SetValueAsObject("TargetActor", Actor);
             }
         }
@@ -178,7 +178,7 @@ void AAIAnimalController::FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus)
             {
                 BlackboardComponent->SetValueAsName("NEnemyTag", "Animal");
                 //여기서 인식되면 타겟, 거리 등록
-                BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Warning");
+                BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
                 BlackboardComponent->SetValueAsObject("TargetActor", Actor);
             }
         }

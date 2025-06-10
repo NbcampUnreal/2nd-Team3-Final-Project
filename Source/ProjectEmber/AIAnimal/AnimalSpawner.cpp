@@ -51,8 +51,6 @@ void AAnimalSpawner::MessageMoveToDead(UObject* Payload)
 		{
 			if (Info.SpawnAnimals.Contains(Animal))
 			{
-				//UE_LOG(LogTemp, Warning, TEXT("[Hidden] Animal %s (%p)"), *Animal->GetName(), Animal);
-				
 				Info.SpawnAnimals.Remove(Animal);
 				Info.DeadAnimals.Add(Animal);
 				return;
@@ -258,13 +256,11 @@ void AAnimalSpawner::TryCreateQueue(TArray<TSoftObjectPtr<AAnimalSpawnPoint>>& I
 			}
 			SpawnPoint->SetIsCreated(true);
 		}
-		else//이미 create됐던 지역이라면 숨겨진 애들만 다시 보이게 처리로 바뀌어야함
+		else
 		{
 			// if (SpawnPoint->GetAliveAnimalsInBox() < PermittedToSpawnLimit) //애들이 다 튀어나가서 포인트 영역안에 사냥하고 잇는 애만 남으면 -> 그녀석 죽이면 바로 재스폰 되버림  -> 영역 제한하거나 포인트가 그 포인트에서 생성된 애들 수나 포인터 들고 있거나
 			// {
-			// 	UE_LOG(LogTemp, Warning, TEXT("SpawnPoint [%s]: Overlapping alive animals: %d"), *SpawnPoint->GetName(), SpawnPoint->GetAliveAnimalsInBox());
 			// 	//타이머 기반 스폰 기능 넣으면 타이머에 TrySpawnDead(AnimalsInfo) 만 바인딩 해서 죽은 애들만 다시 스폰 가능 
-			// 	TrySpawnEntire();
 			// }
 
 			TrySpawnEntire();
@@ -288,7 +284,7 @@ void AAnimalSpawner::AddCreateQueue(FAnimalSpawnInfo& Info, TSoftObjectPtr<AAnim
 	for (int32 i=0; i < Count; i++)
 	{
 		FAnimalInitInfo InitInfo = GetRandomLocationInSpawnVolume(InSpawnPoint);
-		FAnimalQueueInfo PerAnimalQueueInfo; //여기수정함
+		FAnimalQueueInfo PerAnimalQueueInfo;
 		PerAnimalQueueInfo.AnimalClass = Info.AnimalClass;
 		PerAnimalQueueInfo.InitInfo = InitInfo;
 		PerAnimalQueueInfo.RoleTag = RoleTag;
@@ -396,8 +392,6 @@ void AAnimalSpawner::ProcessDespawnQueue(TSoftObjectPtr<ABaseAIAnimal>& InAnimal
 			if (Info.SpawnAnimals.Contains(InAnimal.Get()))
 			{
 				InAnimal->SetHiddenInGame();
-				
-				//UE_LOG(LogTemp, Log, TEXT("Despawn Animal pointer: %p"), InAnimal.Get());
 				break;
 			}
 		}
@@ -494,11 +488,9 @@ void AAnimalSpawner::TryReleaseEntire()
 	// if (GetWorld()->GetTimerManager().IsTimerActive(DistanceTimerHandle))
 	// {
 	// 	GetWorld()->GetTimerManager().PauseTimer(DistanceTimerHandle);
-	// 	UE_LOG(LogTemp, Warning, TEXT("DistanceTimerHandle paused."));
 	// }
 	
-	//전체 메모리 해제
-	//UE_LOG(LogTemp, Warning, TEXT("=== TryReleaseEntire: Start ==="));
+
 	
 	//큐 정리
 	LoadInfoQueue.Empty();
@@ -510,9 +502,6 @@ void AAnimalSpawner::TryReleaseEntire()
 	for (int32 InfoIndex = 0; InfoIndex < AnimalsInfo.Num(); ++InfoIndex)
 	{
 		FAnimalSpawnInfo& Info = AnimalsInfo[InfoIndex];
-        //UE_LOG(LogTemp, Warning, TEXT("--- Info[%d] ---"), InfoIndex);
-        //UE_LOG(LogTemp, Warning, TEXT("SpawnAnimals Count: %d"), Info.SpawnAnimals.Num());
-        		
 		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.SpawnAnimals)
 		{
 			if (!Animal.IsValid())
@@ -524,9 +513,7 @@ void AAnimalSpawner::TryReleaseEntire()
 			Animal = nullptr;
 		}
 		Info.SpawnAnimals.Empty();
-		//UE_LOG(LogTemp, Warning, TEXT("SpawnAnimals Count: %d"), Info.SpawnAnimals.Num());
-
-		//UE_LOG(LogTemp, Warning, TEXT("SpawnAnimals Count: %d"), Info.DeadAnimals.Num());
+		
 		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.DeadAnimals)
 		{
 			if (!Animal.IsValid())
@@ -537,7 +524,6 @@ void AAnimalSpawner::TryReleaseEntire()
 			Animal = nullptr;
 		}
 		Info.DeadAnimals.Empty();
-		//UE_LOG(LogTemp, Warning, TEXT("SpawnAnimals Count: %d"), Info.DeadAnimals.Num());
 	}
 
 	for (TSoftObjectPtr<AAnimalSpawnPoint>& Point : SpawnPoints)
