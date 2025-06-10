@@ -122,12 +122,30 @@ FSavedMovePtr FAlsNetworkPredictionData::AllocateNewMove()
 	return MakeShared<FAlsSavedMove>();
 }
 
+float UAlsCharacterMovementComponent::SlideAlongSurface(const FVector& Delta, float Time, const FVector& Normal,
+	FHitResult& Hit, bool bHandleImpact)
+{
+	if (bIsActiveOverlayAbility)
+	{
+		return 0.0f;
+	}
+	else
+	{
+		return Super::SlideAlongSurface(Delta, Time, Normal, Hit, bHandleImpact);	
+	}
+}
+
+void UAlsCharacterMovementComponent::SetIsActiveOverlayAbility(bool bNewIsActiveOverlayAbility)
+{
+	bIsActiveOverlayAbility = bNewIsActiveOverlayAbility;
+}
+
 UAlsCharacterMovementComponent::UAlsCharacterMovementComponent()
 {
 	SetNetworkMoveDataContainer(MoveDataContainer);
 
 	bRunPhysicsWithNoController = true;
-	bAllowPhysicsRotationDuringAnimRootMotion = true;       // Required to be able to manually rotate the actor while rolling.
+	bAllowPhysicsRotationDuringAnimRootMotion = false;       // Required to be able to manually rotate the actor while rolling.
 	bNetworkAlwaysReplicateTransformUpdateTimestamp = true; // Required for view network smoothing.
 
 	SetCrouchedHalfHeight(56.0f);
