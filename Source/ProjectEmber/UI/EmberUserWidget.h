@@ -16,6 +16,7 @@ class PROJECTEMBER_API UEmberUserWidget : public UUserWidget, public IAbilitySys
 
 public:
 	virtual void SetAbilitySystemComponent(class AActor* InOwner);
+	UFUNCTION(BlueprintCallable, Category = "AbilitySystem")
 	virtual class UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 protected:
