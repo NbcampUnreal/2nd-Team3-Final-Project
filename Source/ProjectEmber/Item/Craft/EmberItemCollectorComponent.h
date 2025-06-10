@@ -53,6 +53,7 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Collectors|Collision")
 	float Radius;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Collectors|Collision")
 	FVector RelativeOffset;
 	

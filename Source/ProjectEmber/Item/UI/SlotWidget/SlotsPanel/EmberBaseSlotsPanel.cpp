@@ -24,6 +24,7 @@ void UEmberBaseSlotsPanel::InitializePanel()
 	{
 		BP_CreateSlots();
 		BindToManagerDelegates();
+		UpdateSlots();
 	}
 	else
 	{
@@ -36,6 +37,20 @@ void UEmberBaseSlotsPanel::SlotChanged(int32 InIndex, const FInstancedStruct& In
 	if (Slots.IsValidIndex(InIndex))
 	{
 		Slots[InIndex]->SetSlotData(InSlotData);
+	}
+}
+
+void UEmberBaseSlotsPanel::UpdateSlots()
+{
+	if (DataProvider)
+	{
+		if (TObjectPtr<UEmberDataContainer> ProviderManager = Cast<UEmberDataContainer>(DataProvider.GetObject()))
+		{
+			for (int32 Index = 0; Index < Slots.Num(); Index++)
+			{
+				Slots[Index]->SetSlotData(ProviderManager->GetSlotDataByIndex(Index));
+			}
+		}
 	}
 }
 

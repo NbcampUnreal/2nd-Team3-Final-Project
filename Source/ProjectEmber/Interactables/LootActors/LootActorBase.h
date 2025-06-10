@@ -9,6 +9,8 @@
 #include "MessageBus/MessageBus.h"
 #include "LootActorBase.generated.h"
 
+class UEmberInteractableItemDropComponent;
+
 UENUM(BlueprintType)
 enum class ELootAbilityType : uint8
 {
@@ -69,6 +71,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LootType")
 	ELootAbilityType LootAbilityType{ELootAbilityType::Tree};
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest")
+	FGameplayTag TargetItemTag;
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable")
 	FGameplayTagContainer GameplayTagContainer;
@@ -86,4 +91,8 @@ private: /* MessageBus */
 	void ReceiveMessage(const FName MessageType, UObject* Payload);
 	
 	FMessageDelegate MessageDelegateHandle;
+
+protected:
+	UPROPERTY(EditAnywhere, Blueprintable, Category = "Item")
+	TObjectPtr<UEmberInteractableItemDropComponent> ItemDropComponent;
 };

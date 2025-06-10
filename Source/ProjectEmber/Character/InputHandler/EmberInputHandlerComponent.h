@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
-#include "AI_NPC/DialogueComponent.h"
+#include "AI_NPC/NPC_Component/DialogueComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "EmberInputHandlerComponent.generated.h"
@@ -83,6 +83,9 @@ public: /* Base Input */
 
 	UPROPERTY(EditAnywhere, Category="Input") 
 	TObjectPtr<UInputAction> GlideAction;
+
+	UPROPERTY(EditAnywhere, Category="Input") 
+	TObjectPtr<UInputAction> BuildAction;
 	
 	UPROPERTY(EditAnywhere, Category="Input") 
 	TArray<TObjectPtr<UInputAction>> QuickSlotActions;

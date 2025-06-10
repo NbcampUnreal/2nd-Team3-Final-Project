@@ -1,6 +1,6 @@
 ﻿#include "QuestSubsystem.h"
 #include "AbilitySystemComponent.h"
-#include "AI_NPC/QuestGiverComponent.h"
+#include "AI_NPC/NPC_Component/QuestGiverComponent.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
 #include "Character/EmberCharacter.h"
 #include "Data/QuestDataAsset.h"
@@ -38,32 +38,48 @@ void UQuestSubsystem::LoadAllQuests()
 //퀘스트 시작 등록
 bool UQuestSubsystem::TryStartQuest(FName QuestID, bool bPlayerAccepted)
 {
-    if (LoadedQuests.Contains(QuestID) && !CompletedQuests.Contains(QuestID))
+    UE_LOG(LogTemp, Warning, TEXT("!!! [TryStartQuest] QuestID: %s / bPlayerAccepted: %d"), *QuestID.ToString(), bPlayerAccepted);
+
+    // 수락 의사가 없거나, 퀘스트가 존재하지 않거나 이미 완료됐으면 리턴
+    if (!bPlayerAccepted || !LoadedQuests.Contains(QuestID) || CompletedQuests.Contains(QuestID))
     {
-        // bPlayerAccepted가 true일때만
-        if (!bPlayerAccepted)
-        {
-            return false;
-        }
-
-        if (!QuestProgress.Contains(QuestID))
-        {
-            QuestProgress.Add(QuestID, 0);
-        }
-
-        if (bPlayerAccepted)
-        {
-            LastAcceptedQuestID = QuestID;
-        }
-
-        return true;
+        return false;
     }
 
-    return false;
+    // 퀘스트가 처음 시작되는 경우만 Step 0 초기화
+    if (!QuestProgress.Contains(QuestID))
+    {
+        QuestProgress.Add(QuestID, 0);
+
+        if (UQuestDataAsset* QuestAsset = LoadedQuests.FindRef(QuestID))
+        {
+            if (QuestAsset->Steps.IsValidIndex(0))
+            {
+                FQuestStep FirstStep = QuestAsset->Steps[0];
+                for (UQuestCondition* Condition : FirstStep.Conditions)
+                {
+                    if (Condition)
+                    {
+                        Condition->CurrentCount = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    LastAcceptedQuestID = QuestID;
+
+    if (UQuestDataAsset* QuestAsset = LoadedQuests.FindRef(QuestID))
+    {
+        OnQuestStarted.Broadcast(QuestAsset);
+    }
+
+    return true;
 }
 //설정된 퀘스트 Tag로 조건검사
 void UQuestSubsystem::OnGameEvent(const FGameplayTag& EventTag, const FGameplayEventData& EventData)
 {
+    UE_LOG(LogTemp, Warning, TEXT(" [UQuestSubsystem::OnGameEvent] Received EventTag: %s"), *EventTag.ToString());
     TArray<FName> KeysToCheck;
     QuestProgress.GenerateKeyArray(KeysToCheck);
 
@@ -106,11 +122,6 @@ void UQuestSubsystem::CheckQuestStepCompletion(const UQuestDataAsset* QuestAsset
             break;
         }
     }
-    
-    if (bAllConditionsMet)
-    {
-        AdvanceQuestStep(QuestAsset->QuestID);
-    }
 }
 
 bool UQuestSubsystem::AdvanceQuestStep(FName QuestID)
@@ -145,8 +156,16 @@ bool UQuestSubsystem::AdvanceQuestStep(FName QuestID)
     {
         return CompleteQuest(QuestID);
     }
-    
     const FQuestStep& NextStep = QuestAsset->Steps[Index];
+   
+    for (UQuestCondition* Condition : NextStep.Conditions)
+    {
+        if (Condition)
+        {
+           Condition->CurrentCount = 0;
+        }
+    }
+
     if (AActor* GiverActor = NextStep.QuestGiver.Get())
     {
         if (UQuestGiverComponent* GiverComp = GiverActor->FindComponentByClass<UQuestGiverComponent>())
@@ -183,6 +202,7 @@ int32 UQuestSubsystem::GetCurrentStepIndexForQuest(FName QuestID, bool bAutoStar
     return INDEX_NONE;
 }
 
+
 bool UQuestSubsystem::CompleteQuest(FName QuestID)
 {
     if (!QuestProgress.Contains(QuestID))
@@ -203,6 +223,8 @@ bool UQuestSubsystem::CompleteQuest(FName QuestID)
          * AddItem이라던가 경험치면 GameplayEffect를 호출한다던가
          */
     }
+    int32 StepIndex = QuestProgress.FindChecked(QuestID);
+    UE_LOG(LogEmber, Log, TEXT("[CompleteQuest] QuestID: %s, 마지막 StepIndex: %d"), *QuestID.ToString(), StepIndex);
 
     QuestProgress.Remove(QuestID);
     CompletedQuests.Add(QuestID);
@@ -221,11 +243,28 @@ bool UQuestSubsystem::GetLastActiveQuestID(FName& OutQuestID) const
     OutQuestID = LastAcceptedQuestID;
     return true;
 }
-const TMap<FName, UQuestDataAsset*>& UQuestSubsystem::GetAllLoadedQuests() const 
+TMap<FName, TObjectPtr<UQuestDataAsset>>& UQuestSubsystem::GetAllLoadedQuests() 
 {
     return LoadedQuests;
 }
+
 bool UQuestSubsystem::IsQuestAccepted(FName QuestID) const
 {
     return QuestProgress.Contains(QuestID);
+}
+bool UQuestSubsystem::IsStepCompleted(FName QuestID, int32 StepIndex) const
+{
+    if (!QuestProgress.Contains(QuestID))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[IsStepCompleted] Quest %s: 수락되지 않음"), *QuestID.ToString());
+        return false;
+    }
+
+    const int32 CurrentIndex = QuestProgress.FindChecked(QuestID);
+    const bool bCompleted = StepIndex < CurrentIndex;
+
+    UE_LOG(LogTemp, Warning, TEXT("[IsStepCompleted] Quest: %s | StepIndex: %d | CurrentIndex: %d | Completed: %d"),
+        *QuestID.ToString(), StepIndex, CurrentIndex, bCompleted);
+
+    return bCompleted;
 }

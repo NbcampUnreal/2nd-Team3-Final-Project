@@ -13,6 +13,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "UI/EmberHpBarUserWidget.h"
 #include "UI/EmberWidgetComponent.h"
+#include "Quest/QuestSubsystem.h"
 
 ABaseAIAnimal::ABaseAIAnimal()
 {
@@ -133,6 +134,17 @@ void ABaseAIAnimal::OnBeginDeath()
 		BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Death"); 
 		AIController->BrainComponent->Cleanup();
 		AIController->BrainComponent->StopLogic(TEXT("HiddenInGame"));
+	}
+
+	if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
+	{
+		FGameplayTag EventTag = FGameplayTag::RequestGameplayTag("Quest.Animal.Kill");
+		FGameplayEventData Data;
+		Data.EventTag = EventTag;
+		Data.Target = this;
+		Data.TargetTags.AddTag(IdentityTag); // 예: Animal.Boar 또는 Animal.Wolf
+
+		QuestSubsystem->OnGameEvent(EventTag, Data);
 	}
 	
 	FGameplayEventData Payload;

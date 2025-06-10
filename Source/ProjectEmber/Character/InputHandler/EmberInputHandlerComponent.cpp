@@ -2,7 +2,7 @@
 #include "../EmberCharacter.h"
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputComponent.h"
-#include "AI_NPC/DialogueComponent.h"
+#include "AI_NPC/NPC_Component/DialogueComponent.h"
 #include "Character/EmberComponents/InteractionComponent.h"
 #include "UI/BaseWidget/GameMenuWidget.h"
 #include "UI/HUD/EmberMainHUD.h"
@@ -54,6 +54,8 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
         //Bind(ViewModeAction,      ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnViewMode);
         Bind(SwitchShoulderAction,ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnSwitchShoulder);
         Bind(GlideAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnGlide);
+        Bind(BuildAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnBuild);
+        
         
         UInteractionComponent* Comp = Character->InteractionComponent.Get();
         if (Comp)

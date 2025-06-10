@@ -27,3 +27,11 @@ namespace EmberEquipmentGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Ring);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Shield);
 }
+
+namespace EmberItemEffectGameplayTags
+{
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Effect_MaxHealth);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Effect_Damage);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Effect_DropRate);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Effect_DropBonus);
+}
