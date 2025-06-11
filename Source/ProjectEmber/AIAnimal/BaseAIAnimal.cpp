@@ -431,11 +431,11 @@ void ABaseAIAnimal::SetRoleTag(const FName InRoleTag)
 	
 		UNiagaraSystem* NiagaraSystem = LoadObject<UNiagaraSystem>(nullptr, TEXT("/Game/SoStylized/Effects/Systems/NS_ElectricBuildup.NS_ElectricBuildup"));
 		if (NiagaraSystem)
-		{
+		{ //올라가는 방향, 스피드 더 빠르게, 크기도 전체적으로 감싸는 느낌으로, 차라리 밑에 오오라 느김도 괜찮을 듯, 컬러 스테일이랑 다이나믹 머테리얼 파라미터 커브값이 0으로 되면서 안보인 듯
 			NiagaraComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
 		   NiagaraSystem,
 		   GetMesh(),
-		   TEXT("spine_04"), // 없으면 NAME_None
+		   NAME_None, // 없으면 NAME_None
 		   FVector::ZeroVector,
 		   FRotator::ZeroRotator,
 		   EAttachLocation::SnapToTarget,

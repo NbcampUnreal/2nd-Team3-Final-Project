@@ -8,6 +8,7 @@
 #include "GameFramework/Character.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
+#include "Character/EmberCharacter.h"
 
 const FName AAIAnimalController::IsShouldSleep = "IsShouldSleep";
 const FName AAIAnimalController::DistanceToTarget = "DistanceToTarget";
@@ -84,12 +85,12 @@ void AAIAnimalController::FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus)
     if (BlackboardComponent)
     {
         // 감지된게 플레이어면
-        // 월드에 플레이어가 없다면 터진다 ->당연
-        ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(),0);
+        AEmberCharacter* PlayerCharacter = Cast<AEmberCharacter>(Actor);
         if (!PlayerCharacter)
         {
             return;
         }
+        
         if (BlackboardComponent)
         {
             //--- 공격 확률 설정 --------------------------------------------------
