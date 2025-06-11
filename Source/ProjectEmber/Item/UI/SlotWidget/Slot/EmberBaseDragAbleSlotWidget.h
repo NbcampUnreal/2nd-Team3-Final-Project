@@ -22,6 +22,7 @@ public:
 	virtual bool DropAction_Implementation(const FGeometry& InGeometry, const FPointerEvent& InDragDropEvent,
 		UDragDropOperation* InOperation) override;
 
+	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slot")

@@ -41,9 +41,9 @@ void UEmberDropComponent::TryConsumeResource_Implementation(const TArray<FItemPa
 	IEmberResourceProvider::Execute_TryConsumeResource(DropManager, InRequireItems);
 }
 
-TArray<FItemPair> UEmberDropComponent::RemoveResourceUntilAble_Implementation(const TArray<FItemPair>& InRequireItems)
+void UEmberDropComponent::RemoveResourceUntilAble_Implementation(TArray<FItemPair>& InRequireItems)
 {
-	return IEmberResourceProvider::Execute_RemoveResourceUntilAble(DropManager, InRequireItems);
+	IEmberResourceProvider::Execute_RemoveResourceUntilAble(DropManager, InRequireItems);
 }
 
 bool UEmberDropComponent::bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems)

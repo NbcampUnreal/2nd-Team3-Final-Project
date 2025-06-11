@@ -6,6 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "AudioMixerDevice.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
+#include "Core/EmberTmpStruct.h"
 #include "Core/ItemGamePlayTags.h"
 #include "Core/ItemSystemLibrary.h"
 #include "EmberLog/EmberLog.h"
@@ -94,9 +95,19 @@ int32 UEmberEquipmentManager::AddDataInIndex(const FInstancedStruct& InItem, int
 					CurrentQuantity = FMath::Max(CurrentQuantity, 0);
 
 					Slot->Quantity += CurrentQuantity;
-                
-					FTotalItemInfo& Total = TotalData.FindOrAdd(Slot->ItemID);
-					Total.AddItem(CurrentQuantity, InSlotIndex);
+                					
+					FEmberItemKey ItemKey = FEmberItemKey(Slot->ItemID, Slot->EnchantEffects);
+					FInstancedStruct& Data = TotalData.FindOrAdd(ItemKey);
+					if (FEmberTotalSlot* ItemData = Data.GetMutablePtr<FEmberTotalSlot>())
+					{
+						ItemData->AddQuantity(CurrentQuantity);
+						ItemData->AddIndex(InSlotIndex);
+					}
+					else
+					{
+						FEmberTotalSlot NewData = FEmberTotalSlot(InSlot->ItemID, InSlot->Quantity, InSlot->EnchantEffects);
+						NewData.InitializeInstancedStruct(Data);
+					}
                 
 					OnDataChangedDelegate.Broadcast(InSlotIndex, DataSlots[InSlotIndex]);
 				}

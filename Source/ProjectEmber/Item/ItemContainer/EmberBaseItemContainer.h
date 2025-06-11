@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Item/Core/EmberItemStruct.h"
+#include "Item/Core/EmberTmpStruct.h"
 #include "StructUtils/InstancedStruct.h"
 #include "UObject/Object.h"
 #include "EmberBaseItemContainer.generated.h"

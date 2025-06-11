@@ -3,6 +3,7 @@
 
 #include "EmberQuickSlotsPanel.h"
 
+#include "Components/GridPanel.h"
 #include "EmberLog/EmberLog.h"
 #include "GameFramework/Character.h"
 #include "Item/UserItemManger.h"

@@ -32,7 +32,7 @@ public:
 	FEmberItemInfo GetQuickSlotInfo(int32 InIndex);
 	
 	UFUNCTION(BlueprintCallable)
-	void UseQuickSlotInfo(int32 InIndex);
+	void UseQuickSlot(int32 InIndex);
 	
 	UFUNCTION(BlueprintCallable)
 	FEmberItemInfo GetInventorySlotInfo(int32 InIndex);
@@ -45,6 +45,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void ClearDropProvider();
+	
+	UFUNCTION(BlueprintCallable)
+	FEmberMasterItemData DebugGetItemInfo(const FName& InSlotName);
 	/**
 	 * 
 	 * @param ItemID 넣을 아이템의 ID
@@ -73,10 +76,14 @@ public:
 	// --- IEmberResourceProvider ---
 	virtual TMap<FName, int32> GetAllItemInfos_Implementation() override;
 	
+	virtual void GetItemInfo_Implementation(FEmberItemEntry& InItemEntry, FInstancedStruct& OutItemInfo) override;
+	
+	virtual void GetItemInfos_Implementation(TArray<FEmberItemEntry>& InItemEntries, TMap<FEmberItemKey, FInstancedStruct>& OutItemInfos) override;
+
 	virtual void TryConsumeResource_Implementation(const TArray<FItemPair>& InRequireItems) override;
 
-	virtual TArray<FItemPair> RemoveResourceUntilAble_Implementation(const TArray<FItemPair>& InRequireItems) override;
-
+	virtual void RemoveResourceUntilAble_Implementation(TArray<FItemPair>& InRequireItems) override;
+	
 	virtual bool bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems) override;
 
 

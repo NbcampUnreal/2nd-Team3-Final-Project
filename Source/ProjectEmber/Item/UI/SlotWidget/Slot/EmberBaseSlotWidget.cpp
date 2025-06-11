@@ -9,6 +9,7 @@
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "EmberLog/EmberLog.h"
+#include "Item/ItemSubsystem.h"
 #include "Item/Core/ItemSystemLibrary.h"
 #include "Item/UI/DragDropOperation/EmberItemSlotDragDropOperation.h"
 #include "Item/UI/SlotWidget/ItemDetailWidget.h"
@@ -31,6 +32,7 @@ void UEmberBaseSlotWidget::InitSlot(int32 InSlotIndex, TScriptInterface<IEmberSl
 {
 	SlotIndex = InSlotIndex;
 	DataProvider = InDataProvider;
+	InitDetailWidget();
 	if (DataProvider)
 	{
 		SlotType = IEmberSlotDataProviderInterface::Execute_GetSlotType(DataProvider.GetObject());
@@ -42,6 +44,15 @@ void UEmberBaseSlotWidget::SetSlotData(const FInstancedStruct& InSlotData)
 	SlotData = FEmberWidgetSlotData(InSlotData);
 
 	UpdateSlot();
+}
+
+void UEmberBaseSlotWidget::InitDetailWidget()
+{
+
+	if (UItemSubsystem* ItemSubsystem = UItemSystemLibrary::GetItemSubsystem())
+	{
+		ItemDetailWidget = ItemSubsystem->GetItemDetailWidget();
+	}
 }
 
 void UEmberBaseSlotWidget::UpdateSlot()
@@ -94,15 +105,10 @@ void UEmberBaseSlotWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const
 {
 	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
 
-	if (ItemDetailWidgetClass && !SlotData.IsEmpty())
+	if (ItemDetailWidget && !SlotData.IsEmpty())
 	{
-		ItemDetailWidget = CreateWidget<UItemDetailWidget>(this->GetOwningPlayer(), ItemDetailWidgetClass, TEXT("DetailWidget"));
-		
-		if (ItemDetailWidget)
-		{
-			ItemDetailWidget->AddToViewport();
-			ItemDetailWidget->EmberWidgetSlotData = SlotData;
-		}
+		ItemDetailWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+		ItemDetailWidget->EmberWidgetSlotData = SlotData;
 	}
 }
 
@@ -111,7 +117,7 @@ void UEmberBaseSlotWidget::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
 	Super::NativeOnMouseLeave(InMouseEvent);
 	if (ItemDetailWidget)
 	{
-		ItemDetailWidget->RemoveFromParent();
+		ItemDetailWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 

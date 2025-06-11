@@ -7,6 +7,7 @@
 #include "Item/UI/SlotWidget/EmberSlotDataProviderInterface.h"
 #include "EmberBaseSlotsPanel.generated.h"
 
+class UItemDetailWidget;
 class UGridPanel;
 class UEmberBaseSlotWidget;
 /**
@@ -48,4 +49,7 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
 	TObjectPtr<UGridPanel> SlotsPanel;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UItemDetailWidget> ItemDetailWidget;
 };

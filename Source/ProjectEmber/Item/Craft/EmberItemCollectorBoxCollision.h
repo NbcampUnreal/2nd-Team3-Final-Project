@@ -42,8 +42,11 @@ protected:
 
 	virtual bool bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems) override;
 
-	virtual TArray<FItemPair> RemoveResourceUntilAble_Implementation(const TArray<FItemPair>& InRequireItems) override;
-
+	virtual void GetItemInfo_Implementation(FEmberItemEntry& InItemEntry, FInstancedStruct& OutItemInfo) override;
+	
+	virtual void GetItemInfos_Implementation(TArray<FEmberItemEntry>& InItemEntries, TMap<FEmberItemKey, FInstancedStruct>& OutItemInfos) override;
+	
+	virtual void RemoveResourceUntilAble_Implementation(TArray<FItemPair>& InRequireItems) override;
 public:
 	
 	UPROPERTY(Transient)

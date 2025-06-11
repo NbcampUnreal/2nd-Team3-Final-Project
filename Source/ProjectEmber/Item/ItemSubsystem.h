@@ -9,6 +9,7 @@
 #include "Engine/DataTable.h"
 #include "ItemSubsystem.generated.h"
 
+class UItemDetailWidget;
 class UAbilitySystemComponent;
 struct FItemMasterInfoRow;
 /**
@@ -26,6 +27,8 @@ public:
     const FItemMasterInfoRow* GetItemMasterInfoRow(FName ItemID) const;
 
 	TArray<FItemPair> GetDroppedItem(FName MonsterID, const UAbilitySystemComponent* AbilitySystemComponent = nullptr);
+	
+	TObjectPtr<UItemDetailWidget> GetItemDetailWidget();
 protected:
 	bool SelectWeightedItem(const TArray<FEmberDropItemGroup>& ItemsToSelectFrom, FEmberDropItemGroup& OutSelectedItem);
 	TArray<FItemEffectApplicationInfo> SetEnchantEquipment(const TObjectPtr<UDataTable>& EnchantDataTable);
@@ -69,4 +72,9 @@ protected:
     
     /** 데이터 테이블 로드를 위한 내부 헬퍼 함수 */
     TObjectPtr<UDataTable> LoadDataTable(const TSoftObjectPtr<UDataTable>& DataTablePtr, const FName& TableIdentifier) const;
+
+	UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category = "Item UI")
+	TSoftClassPtr<UItemDetailWidget> DetailWidgetClassPtr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item UI")
+	TObjectPtr<UItemDetailWidget> DetailWidget;
 };

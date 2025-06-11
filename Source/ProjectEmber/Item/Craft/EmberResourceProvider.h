@@ -27,13 +27,19 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	TMap<FName, int32> GetAllItemInfos();
+		
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void GetItemInfo(FEmberItemEntry& InItemEntry, FInstancedStruct& OutItemInfo);
+	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void GetItemInfos(TArray<FEmberItemEntry>& InItemEntry, TMap<FEmberItemKey, FInstancedStruct>& OutItemInfos);
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void TryConsumeResource(const TArray<FItemPair>& InRequireItems);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	TArray<FItemPair> RemoveResourceUntilAble(const TArray<FItemPair>& InRequireItems);
-
+	void RemoveResourceUntilAble(TArray<FItemPair>& InRequireItems);
+	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool bConsumeAbleResource(const TArray<FItemPair>& InRequireItems);
 
