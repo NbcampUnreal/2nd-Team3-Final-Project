@@ -8,6 +8,7 @@
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Components/BoxComponent.h"
+#include "GameInstance/GameplayEventSubsystem.h"
 
 
 AAnimalSpawner::AAnimalSpawner()
@@ -31,6 +32,12 @@ void AAnimalSpawner::BeginPlay()
 
 	// FName으로 키값(메세지) 지정하고 델리게이트 전달, 구독했으면 EndPlay에서 해제까지 꼭 하기
 	UMessageBus::GetInstance()->Subscribe(TEXT("HideAnimal"), MessageDelegateHandle);
+	}
+	
+	//시간 받아오는 델리게이트 구독
+	if (UGameplayEventSubsystem* EventSystem = UGameplayEventSubsystem::GetGameplayEvent(GetWorld()))
+	{
+		EventSystem->OnGameEvent.AddDynamic(this, &AAnimalSpawner::OnGameTimeChanged);
 	}
 }
 
@@ -56,6 +63,43 @@ void AAnimalSpawner::MessageMoveToDead(UObject* Payload)
 				return;
 			}
 		}
+	}
+}
+
+void AAnimalSpawner::OnGameTimeChanged(const FGameplayTag& EventTag, const FGameplayEventData& EventData)
+{
+	if (EventTag.MatchesTag(FGameplayTag::RequestGameplayTag(TEXT("Gameplay.Time.Day"))))
+	{
+		// 활동 시작
+		bIsDay = true;
+	}
+	else if (EventTag.MatchesTag(FGameplayTag::RequestGameplayTag(TEXT("Gameplay.Time.Night"))))
+	{
+		// 휴식 상태로 전환
+		bIsDay = false;
+		Weather = EventData.EventMagnitude; // 0.맑음, 1.흐린 2.비 3.천둥
+	}
+}
+
+void AAnimalSpawner::MakeRandomActiveAtNight()
+{
+	//--- 밤에 활동 확률 설정 --------------------------------------------------
+	int32 WeatherCopy = Weather;
+	float AttackProb = 0.15;          // 기본 15 %
+	
+	 // 날씨가 나쁠수록  0.25% =>  0, 0.25, 0.5, 0.75
+	WeatherCopy *= 0.25f;
+	AttackProb += WeatherCopy;           // 총합 ⇒ 0.15, 0.4, 0.65, 0.9
+	//--------------------------------------------------------------------
+
+	// 난수 뽑아서 결정
+	if (FMath::FRand() <= AttackProb)
+	{
+		bIsShouldSleep = false;
+	}
+	else
+	{
+		bIsShouldSleep = true;
 	}
 }
 
@@ -319,8 +363,10 @@ void AAnimalSpawner::TickCreateQueue(TQueue<FAnimalQueueInfo>& InQueue, bool& In
 		{
 			continue;
 		}
+		
+		MakeRandomActiveAtNight();
 		Spawned->SetRoleTag(PerAnimal.RoleTag);
-		Spawned->SetIdleState();
+		Spawned->SetIdleState(bIsShouldSleep);
 		AnimalsInfo[PerAnimal.SpawnInfoIndex].SpawnAnimals.Emplace(Spawned);
 		++SpawnedThisFrame;
 	}
@@ -476,6 +522,8 @@ void AAnimalSpawner::TickSpawnQueue()
 		{
 			continue;
 		}
+		MakeRandomActiveAtNight();
+		PerAnimal->SetIdleState(bIsShouldSleep);
 		PerAnimal->SetVisibleInGame();
 		
 		++SpawnedThisFrame;
@@ -599,8 +647,13 @@ FAnimalInitInfo AAnimalSpawner::GetRandomLocationInSpawnVolume(TSoftObjectPtr<AA
 
 void AAnimalSpawner::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	Super::EndPlay(EndPlayReason);
-
+	if (UGameplayEventSubsystem* EventSystem = UGameplayEventSubsystem::GetGameplayEvent(GetWorld()))
+	{
+		EventSystem->OnGameEvent.RemoveDynamic(this, &AAnimalSpawner::OnGameTimeChanged);
+	}
+	
 	GetWorldTimerManager().ClearTimer(DistanceTimerHandle);
 	UMessageBus::GetInstance()->Unsubscribe(TEXT("HideAnimal"), MessageDelegateHandle);
+
+	Super::EndPlay(EndPlayReason);
 }

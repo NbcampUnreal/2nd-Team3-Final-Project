@@ -75,6 +75,10 @@ void AAIAnimalController::InitBlackboard()
 
 void AAIAnimalController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
+    if (bool IsSleep = Cast<ABaseAIAnimal>(GetPawn())->GetIsShouldSleep())
+    {
+        return;
+    }
     //시각 청각적으로 감지됐을 때 -> 뒤에서 접근하면 감지 못하는 문제 있을 듯 ,근데 동물은 그게 맞아
     FindTargetAnimal(Actor, Stimulus);
     FindTargetPlayer(Actor, Stimulus);

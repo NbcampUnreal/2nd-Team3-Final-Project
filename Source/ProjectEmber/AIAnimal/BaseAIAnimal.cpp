@@ -115,10 +115,15 @@ void ABaseAIAnimal::BeginPlay()
 			const_cast<UEmberCharacterAttributeSet*>(Attribute)->OnHit.AddDynamic(this, &ABaseAIAnimal::OnHit);
 		}
 	}
+	//시간 받아오는 델리게이트 구독
+	if (UGameplayEventSubsystem* EventSystem = UGameplayEventSubsystem::GetGameplayEvent(GetWorld()))
+	{
+		EventSystem->OnGameEvent.AddDynamic(this, &ABaseAIAnimal::OnGameTimeChanged);
+	}
 	
 	GetWorldTimerManager().SetTimer(FullnessTimerHandle, this, &ABaseAIAnimal::DecreaseFullness, 5.0f, true);
-	//PatrolPoints.SetNum(4);
-
+	
+	
 	GetCharacterMovement()->bUseRVOAvoidance = true;
 	GetCharacterMovement()->AvoidanceConsiderationRadius = 800.0f; // AI가 다른 AI 감지할 반경
 	GetCharacterMovement()->AvoidanceWeight = 0.5f;
@@ -169,7 +174,6 @@ void ABaseAIAnimal::OnBeginDeath()
 	
 }
 
-
 void ABaseAIAnimal::ReceiveMessage(const FName MessageType, UObject* Payload)
 {
 	//파밍시간 종료 -> 어빌리티에서 메세지버스로 호출될 함수 -> 완전 죽음으로 숨김처리
@@ -208,7 +212,7 @@ void ABaseAIAnimal::SetVisibleInGame()
 		AIController->BrainComponent->StartLogic();
 		BlackboardComponent = AIController->GetBlackboardComponent();
 		BlackboardComponent->ClearValue("TargetObject");
-		BlackboardComponent->SetValueAsName("NStateTag","Animal.State.Idle");
+		//BlackboardComponent->SetValueAsName("NStateTag","Animal.State.Idle");
 		
 	}
 	
@@ -249,7 +253,7 @@ void ABaseAIAnimal::Tick(float DeltaTime)
 void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 {
 	//도망가는 상황에서만 속도 빨라졌다 감소 추가해야함->이팩트로 적용예정
-
+	bIsShouldSleep = false;
 	FGameplayEventData Payload;
 	Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.SpeedUp");
 	Payload.Instigator = this;
@@ -296,11 +300,12 @@ void ABaseAIAnimal::OnFullnessChanged(const FOnAttributeChangeData& OnAttributeC
 	{
 		bIsHungry = false;
 		BlackboardComponent->SetValueAsBool("IsHungry", bIsHungry);
-		BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
+		//BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
 		BlackboardComponent->SetValueAsObject("NTargetFood", nullptr);
 		BlackboardComponent->SetValueAsVector("NTargetFoodLocation", GetActorLocation());
 	}
 }
+
 
 void ABaseAIAnimal::GenerateRandom()
 {
@@ -446,13 +451,78 @@ void ABaseAIAnimal::SetRoleTag(const FName InRoleTag)
 	}
 }
 
-void ABaseAIAnimal::SetIdleState()
+void ABaseAIAnimal::SetIdleState(bool IsShouldSleep)
 {
 	if (!BlackboardComponent)
 	{
-		return; 
+		return;
 	}
-	BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
+	
+	// 생성, 리스폰 때 활동/비활동인지
+	bIsShouldSleep = IsShouldSleep;
+
+	if (bIsShouldSleep)
+	{
+		DeactiveSleep();
+	}
+	else
+	{
+		ActiveNonSleep();
+	}
+}
+
+void ABaseAIAnimal::OnGameTimeChanged(const FGameplayTag& EventTag, const FGameplayEventData& EventData)
+{
+	//월드에 있을 때 밤->낮 바뀔 때
+	if (EventTag.MatchesTag(FGameplayTag::RequestGameplayTag(TEXT("Gameplay.Time.Day"))))
+	{
+		// 활동 시작
+		ActiveNonSleep();
+	}
+	else if (EventTag.MatchesTag(FGameplayTag::RequestGameplayTag(TEXT("Gameplay.Time.Night"))))
+	{
+		// 휴식 상태로 전환
+		MakeRandomActiveAtNight(EventData.EventMagnitude); // 0.맑음, 1.흐린 2.비 3.천둥
+	}
+}
+
+void ABaseAIAnimal::MakeRandomActiveAtNight(int32 InWeather)
+{
+	//--- 밤에 활동 확률 설정 --------------------------------------------------
+	int32 WeatherCopy = InWeather;
+	float AttackProb = 0.15;          // 기본 15 %
+	
+	// 날씨가 나쁠수록  0.25% =>  0, 0.25, 0.5, 0.75
+	WeatherCopy *= 0.25f;
+	AttackProb += WeatherCopy;           // 총합 ⇒ 0.15, 0.4, 0.65, 0.9
+	//--------------------------------------------------------------------
+
+	// 난수 뽑아서 결정
+	if (FMath::FRand() <= AttackProb)
+	{
+		ActiveNonSleep();
+	}
+	else
+	{
+		DeactiveSleep();
+	}
+}
+
+void ABaseAIAnimal::ActiveNonSleep() 
+{
+	bIsShouldSleep = false;
+	BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle"); 
+}
+
+void ABaseAIAnimal::DeactiveSleep() 
+{
+	bIsShouldSleep = true;
+	BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Sleeping"); 
+}
+
+bool ABaseAIAnimal::GetIsShouldSleep() const
+{
+	return bIsShouldSleep;
 }
 
 bool ABaseAIAnimal::GetIsDead() const
@@ -474,6 +544,11 @@ void ABaseAIAnimal::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	// 타이머 해제
 	GetWorldTimerManager().ClearTimer(FullnessTimerHandle);
+
+	if (UGameplayEventSubsystem* EventSystem = UGameplayEventSubsystem::GetGameplayEvent(GetWorld()))
+	{
+		EventSystem->OnGameEvent.RemoveDynamic(this, &ABaseAIAnimal::OnGameTimeChanged);
+	}
 	
 	UMessageBus::GetInstance()->Unsubscribe(TEXT("HideAnimal"), MessageDelegateHandle);
 	UMessageBus::GetInstance()->Unsubscribe(TEXT("FixSpeed"), MessageDelegateHandle);

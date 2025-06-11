@@ -8,6 +8,7 @@
 #include "GameFramework/Character.h"
 #include "GameplayEffectTypes.h"
 #include "GameplayTagAssetInterface.h"
+#include "Abilities/GameplayAbilityTypes.h"
 #include "MessageBus/MessageBus.h"
 #include "BaseAIAnimal.generated.h"
 
@@ -50,6 +51,11 @@ public:
 
 	UFUNCTION()
 	void OnHit(AActor* InstigatorActor);
+	
+	UFUNCTION(BlueprintCallable)
+	void OnGameTimeChanged(const FGameplayTag& EventTag, const FGameplayEventData& EventData);
+	void MakeRandomActiveAtNight(int32 InWeather);
+
 	void OnWalkSpeedChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
@@ -76,7 +82,16 @@ public:
 	void SetRoleTag(FName InRoleTag);
 
 	UFUNCTION(BlueprintCallable)
-	void SetIdleState();
+	void SetIdleState(bool IsShouldSleep = true);
+
+	bool GetIsShouldSleep() const;
+	
+	//밤에 활동,비활동
+	UFUNCTION(BlueprintCallable)
+	void ActiveNonSleep();
+	
+	UFUNCTION(BlueprintCallable)
+	void DeactiveSleep();
 
 	UFUNCTION(BlueprintCallable, Category = AI)
 	bool GetIsDead() const;
