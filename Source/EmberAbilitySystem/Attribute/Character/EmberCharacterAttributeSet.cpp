@@ -12,6 +12,12 @@ UEmberCharacterAttributeSet::UEmberCharacterAttributeSet()
 	InitMaxHealth(100.0f);
 	
 	InitDamage(0.0f);
+
+	InitMana(100.0f);
+	InitMaxMana(100.0f);
+
+	InitShield(100.0f);
+	InitMaxShield(100.0f);
 	
 }
 

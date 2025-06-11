@@ -22,7 +22,10 @@ public:
 	void Input_ToggleInventory();
 	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="UI|Layer")
 	void Input_ToggleQuest();
-
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="UI|Layer")
+	void Input_ToggleSkill();
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent, Category="UI|Layer")
+	void Input_TogglePause();
     /** Quest 위젯 안의 QuestContents를 찾아 업데이트하는 함수 */
     UFUNCTION(BlueprintCallable)
     void UpdateQuestInfoViaWidgetTree();
