@@ -74,7 +74,7 @@ void UEmberGameInstance::RequestOpenLevel(FName MapName)
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this, MapName]()
 		{
 			UGameplayStatics::OpenLevel(this, MapName);
-		}, 30.0f, false);
+		}, 2.0f, false);
 }
 
 void UEmberGameInstance::TestPlaySFX(ESfxSoundType SoundType, const FName RowName, FVector Location)
@@ -144,4 +144,39 @@ void UEmberGameInstance::ApplySavedMoveBindingsToUserSettings()
     }
 
     UE_LOG(LogTemp, Warning, TEXT("=== UserSettings mapping complete ==="));
+}
+
+void UEmberGameInstance::ApplySavedActionKeyMappingsToUserSettings()
+{
+    if (SavedMappings.Num() == 0)
+        return;
+
+    APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+    if (!PC) return;
+
+    ULocalPlayer* LP = PC->GetLocalPlayer();
+    if (!LP) return;
+
+    UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(LP);
+    if (!Subsystem) return;
+
+    UEnhancedInputUserSettings* UserSettings = Subsystem->GetUserSettings();
+    if (!UserSettings) return;
+
+    for (const auto& Entry : SavedMappings)
+    {
+        FMapPlayerKeyArgs Args;
+        Args.MappingName = Entry.MappingName;
+        Args.NewKey = Entry.BoundKey;
+        Args.Slot = EPlayerMappableKeySlot::First;
+        FGameplayTagContainer FailureReason;
+        UserSettings->MapPlayerKey(Args, FailureReason);
+
+        UE_LOG(LogTemp, Warning, TEXT("[KeyRemap] Apply: %s -> %s | Fail: %s"),
+            *Entry.MappingName.ToString(),
+            *Entry.BoundKey.ToString(),
+            *FailureReason.ToString());
+    }
+    UserSettings->SaveSettings();
+
 }

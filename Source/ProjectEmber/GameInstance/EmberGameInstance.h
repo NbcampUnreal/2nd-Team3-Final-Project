@@ -45,6 +45,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ApplySavedMoveBindingsToUserSettings();
 
+	UFUNCTION(BlueprintCallable)
+	void ApplySavedActionKeyMappingsToUserSettings();
+
 	UPROPERTY(BlueprintReadWrite)
 	TArray<FEmberDirectionalMoveEntry> SavedMoveBindings;
 
