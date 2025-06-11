@@ -4,8 +4,6 @@
 #include "EmberDataContainer.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
-#include "Attribute/Character/EmberCharacterAttributeSet.h"
-#include "Character/EmberCharacter.h"
 #include "Core/EmberItemStruct.h"
 #include "Core/ItemSystemLibrary.h"
 #include "Containers/Queue.h"
@@ -27,6 +25,71 @@ void UEmberDataContainer::InitSlot(int32 InSlotMax, int32 InSlotMaxRow, TObjectP
     SlotMaxRow = InSlotMaxRow;
 
     InitializeInventorySlots();
+}
+
+void UEmberDataContainer::AddItem(FEmberItemEntry& InItemEntry, int32 InSlotIndex)
+{
+    if (InItemEntry.ItemID.IsNone() || InItemEntry.Quantity <= 0)
+    {
+        return ;
+    }
+
+    int32 QuantityAdded = 0;
+
+    FEmberSlotData CreateData = FEmberSlotData(InItemEntry.ItemID, InItemEntry.Quantity, InItemEntry.Enchants);
+    FInstancedStruct Data;
+    CreateData.InitializeInstancedStruct(Data);
+    AddItem(Data, InSlotIndex);
+    
+#if UE_BUILD_DEVELOPMENT
+    EMBER_LOG(LogEmberItem, Display, TEXT("ReturnRemainNum : %d"), QuantityAdded);
+#endif
+    
+}
+void UEmberDataContainer::AddItem(const FInstancedStruct& InItem, int32 InSlotIndex)
+{
+    FInstancedStruct TmpItem = InItem;
+    if (FEmberSlotData* InData = TmpItem.GetMutablePtr<FEmberSlotData>())
+    {
+        int QuantityAdded = 0;
+        if (DataSlots.IsValidIndex(InSlotIndex))
+        {
+            QuantityAdded = AddDataInIndex(TmpItem, InSlotIndex);
+
+            if (QuantityAdded > 0)
+            {
+                OnDataChangedDelegate.Broadcast(InSlotIndex, DataSlots[InSlotIndex]);
+            }
+        }
+    
+        TQueue<int32> TargetSlotIndexes;
+        FindSlotIndexesByItemID(InData->ItemID, TargetSlotIndexes, InSlotIndex);
+        FindEmptySlotIndexes(TargetSlotIndexes);
+    
+        if (TargetSlotIndexes.IsEmpty())
+        {
+            return ;
+        }
+        if (int32* SlotIndex = TargetSlotIndexes.Peek())
+        {
+            while (SlotIndex && InData->Quantity > 0 && DataSlots.IsValidIndex(*SlotIndex))
+            {
+                int32 CurrentAddedQuantity = AddDataInIndex(TmpItem, *SlotIndex);
+
+                QuantityAdded += CurrentAddedQuantity;
+                InData->Quantity -= CurrentAddedQuantity;
+
+                if (CurrentAddedQuantity > 0)
+                {
+                    OnDataChangedDelegate.Broadcast(*SlotIndex, DataSlots[*SlotIndex]);
+                }
+                if (!TargetSlotIndexes.Dequeue(*SlotIndex) || InData->Quantity <= 0)
+                {
+                    break;
+                }
+            }
+        }
+    }
 }
 
 void UEmberDataContainer::InitOwner(TObjectPtr<AActor> InOwner)
@@ -91,54 +154,36 @@ void UEmberDataContainer::SwapInventorySlots(int32 SlotIndex1, int32 SlotIndex2)
         EMBER_LOG(LogEmberItem, Error, TEXT("Invalid Index"));
         return;
     }
-
+    
+    if (const FEmberSlotData* SlotData1 = DataSlots[SlotIndex1].GetPtr<FEmberSlotData>())
+    {
+        FEmberItemKey ItemEntryKey1 = FEmberItemKey(SlotData1->ItemID, SlotData1->EnchantEffects);
+        FInstancedStruct& Slot1 = TotalData.FindOrAdd(ItemEntryKey1);
+        if (FEmberTotalSlot* Data1 = Slot1.GetMutablePtr<FEmberTotalSlot>())
+        {
+            Data1->RemoveIndex(SlotIndex1);
+            Data1->AddIndex(SlotIndex2);
+        }
+    }
+    if (const FEmberSlotData* SlotData2 = DataSlots[SlotIndex2].GetPtr<FEmberSlotData>())
+    {
+        FEmberItemKey ItemEntryKey2 = FEmberItemKey(SlotData2->ItemID, SlotData2->EnchantEffects);
+        FInstancedStruct& Slot2 = TotalData.FindOrAdd(ItemEntryKey2);
+        if (FEmberTotalSlot* Data2 = Slot2.GetMutablePtr<FEmberTotalSlot>())
+        {
+            Data2->RemoveIndex(SlotIndex2);
+            Data2->AddIndex(SlotIndex1);
+        }
+    }
     DataSlots.Swap(SlotIndex1, SlotIndex2);
+
+    
     OnDataChangedDelegate.Broadcast(SlotIndex1, DataSlots[SlotIndex1]);
     OnDataChangedDelegate.Broadcast(SlotIndex2, DataSlots[SlotIndex2]);
 #if UE_BUILD_DEVELOPMENT
     EMBER_LOG(LogEmberItem, Display, TEXT("SlotIndex1 : %d, SlotIndex2 : %d"), SlotIndex1, SlotIndex2);
 
 #endif
-}
-
-int32 UEmberDataContainer::AddDataInIndex(const FItemPair& InItem, int32 InSlotIndex)
-{
-    int32 CurrentQuantity = 0;
-    if (DataSlots.IsValidIndex(InSlotIndex))
-    {
-        if (FEmberSlotData* Slot = DataSlots[InSlotIndex].GetMutablePtr<FEmberSlotData>())
-        {
-            if (Slot->ItemID.IsNone())
-            {
-                *Slot = FEmberSlotData(InItem.ItemID);
-            }
-            
-            if (InItem.ItemID == Slot->ItemID)
-            {
-                CurrentQuantity = FMath::Min(Slot->MaxStackSize - Slot->Quantity, InItem.Quantity);
-                CurrentQuantity = FMath::Max(CurrentQuantity, 0);
-
-                Slot->Quantity += CurrentQuantity;
-
-                
-                Slot->EnchantEffects = InItem.Enchants;
-                
-                FTotalItemInfo& Total = TotalData.FindOrAdd(Slot->ItemID);
-                Total.AddItem(CurrentQuantity, InSlotIndex);
-                
-                OnDataChangedDelegate.Broadcast(InSlotIndex, DataSlots[InSlotIndex]);
-            }
-            
-        }
-    }
-
-#if UE_BUILD_DEVELOPMENT
-    EMBER_LOG(LogEmberItem, Display, TEXT("ReturnQuantity : %d"), CurrentQuantity);
-
-#endif
-
-    
-    return CurrentQuantity;
 }
 
 int32 UEmberDataContainer::AddDataInIndex(const FInstancedStruct& InItem, int32 InSlotIndex)
@@ -154,23 +199,40 @@ int32 UEmberDataContainer::AddDataInIndex(const FInstancedStruct& InItem, int32 
             {
                 if (Slot->ItemID.IsNone())
                 {
-                    InSlot->InitializeInstancedStruct(DataSlots[InSlotIndex]);
+                    FEmberSlotData NewSlot = FEmberSlotData(*InSlot);
+                    NewSlot.InitializeInstancedStruct(DataSlots[InSlotIndex]);
                     Slot = DataSlots[InSlotIndex].GetMutablePtr<FEmberSlotData>();
+
                     Slot->Quantity = 0;
                 }
                 
                 if (InSlot->ItemID == Slot->ItemID)
                 {
-
                     CurrentQuantity = FMath::Min(Slot->MaxStackSize - Slot->Quantity, InSlot->Quantity);
 
                     CurrentQuantity = FMath::Max(CurrentQuantity, 0);
-                    
+
                     Slot->Quantity += CurrentQuantity;
-                
-                    FTotalItemInfo& Total = TotalData.FindOrAdd(Slot->ItemID);
-                    Total.AddItem(CurrentQuantity, InSlotIndex);
-                
+
+                    if (CurrentQuantity > 0)
+                    {
+                        
+                        FEmberItemKey ItemKey = FEmberItemKey(Slot->ItemID, Slot->EnchantEffects);
+                        FInstancedStruct& Data = TotalData.FindOrAdd(ItemKey);
+
+                        if (FEmberTotalSlot* ItemData = Data.GetMutablePtr<FEmberTotalSlot>())
+                        {
+                            ItemData->AddQuantity(CurrentQuantity);
+                            ItemData->AddIndex(InSlotIndex);
+                        }
+                        else
+                        {
+                            FEmberTotalSlot NewData = FEmberTotalSlot(InSlot->ItemID, CurrentQuantity, InSlot->EnchantEffects);
+                            NewData.AddIndex(InSlotIndex);
+                            NewData.InitializeInstancedStruct(Data);
+                        }
+                    }
+                    
                     OnDataChangedDelegate.Broadcast(InSlotIndex, DataSlots[InSlotIndex]);
                 }
             }
@@ -278,109 +340,6 @@ void UEmberDataContainer::InitializeInventorySlots()
     
 }
 
-int32 UEmberDataContainer::AddItem_Implementation(const FItemPair& InItem, int32 InSlotIndex)
-{
-    if (InItem.ItemID.IsNone() || InItem.Quantity <= 0)
-    {
-        return 0;
-    }
-
-    const int32 QuantityActuallyAddedToSlots = TryAddItemsToSlots(InItem, InSlotIndex);
-
-    const int32 QuantityLeftToDrop = InItem.Quantity - QuantityActuallyAddedToSlots;
-
-    if (QuantityLeftToDrop > 0 && Owner)
-    {
-        EMBER_LOG(LogEmberItem, Log, TEXT("Inventory full or partial add. Dropping %d of %s"), QuantityLeftToDrop, *InItem.ItemID.ToString());
-        SpawnDroppedItem(InItem.ItemID, QuantityLeftToDrop, Owner->GetActorLocation(), FRotator::ZeroRotator);
-    }
-
-    
-#if UE_BUILD_DEVELOPMENT
-    EMBER_LOG(LogEmberItem, Display, TEXT("ReturnAmount : %d"), QuantityActuallyAddedToSlots);
-#endif
-    
-    return QuantityActuallyAddedToSlots;
-}
-
-TArray<FItemPair> UEmberDataContainer::AddItems_Implementation(const TArray<FItemPair>& Items)
-{
-    TArray<FItemPair> RemainItems;
-    for (const FItemPair& Item : Items)
-    {
-        int32 Remain = Item.Quantity - TryAddItemsToSlots(Item);
-        if (Remain > 0)
-        {
-            RemainItems.Add(FItemPair(Item.ItemID, Remain));
-        }
-    }
-
-    
-#if UE_BUILD_DEVELOPMENT
-    EMBER_LOG(LogEmberItem, Display, TEXT("ReturnRemainNum : %d"), RemainItems.Num());
-#endif
-    
-    
-    return RemainItems;
-}
-
-int32 UEmberDataContainer::TryAddItemsToSlots(const FItemPair& InItem, int32 InSlotIndex)
-{
-    
-    if (InItem.ItemID.IsNone() || InItem.Quantity <= 0)
-    {
-        return 0;
-    }
-
-    int32 QuantityAdded = 0;
-    FItemPair CurrentItem = InItem;
-
-    if (DataSlots.IsValidIndex(InSlotIndex))
-    {
-        QuantityAdded = AddDataInIndex(CurrentItem, InSlotIndex);
-
-        CurrentItem.Quantity -= QuantityAdded;
-        if (QuantityAdded > 0)
-        {
-            OnDataChangedDelegate.Broadcast(InSlotIndex, DataSlots[InSlotIndex]);
-        }
-    }
-    TQueue<int32> TargetSlotIndexes;
-    FindSlotIndexesByItemID(InItem.ItemID, TargetSlotIndexes, InSlotIndex);
-    FindEmptySlotIndexes(TargetSlotIndexes);
-    
-    if (TargetSlotIndexes.IsEmpty())
-    {
-        return 0;
-    }
-    if (int32* SlotIndex = TargetSlotIndexes.Peek())
-    {
-        while (SlotIndex && CurrentItem.Quantity > 0 && DataSlots.IsValidIndex(*SlotIndex))
-        {
-            int32 CurrentAddedQuantity = AddDataInIndex(CurrentItem, *SlotIndex);
-
-            QuantityAdded += CurrentAddedQuantity;
-            CurrentItem.Quantity -= CurrentAddedQuantity;
-
-            if (CurrentAddedQuantity > 0)
-            {
-                OnDataChangedDelegate.Broadcast(*SlotIndex, DataSlots[*SlotIndex]);
-            }
-            if (!TargetSlotIndexes.Dequeue(*SlotIndex) || CurrentItem.Quantity <= 0)
-            {
-                break;
-            }
-        }
-    }
-
-    
-#if UE_BUILD_DEVELOPMENT
-    EMBER_LOG(LogEmberItem, Display, TEXT("ReturnRemainNum : %d"), QuantityAdded);
-#endif
-    
-    return QuantityAdded;
-}
-
 int32 UEmberDataContainer::TryAddItems(const FInstancedStruct& InItem, int32 InSlotIndex)
 {
     int32 QuantityAdded = 0;
@@ -395,10 +354,8 @@ int32 UEmberDataContainer::TryAddItems(const FInstancedStruct& InItem, int32 InS
             {
                 QuantityAdded = AddDataInIndex(InCurrentItem, InSlotIndex);
 
-                DataSlots[InSlotIndex] = InItem;
                 CurrentItem->Quantity -= QuantityAdded;
 
-                
                 if (QuantityAdded > 0)
                 {
                     OnDataChangedDelegate.Broadcast(InSlotIndex, DataSlots[InSlotIndex]);
@@ -523,10 +480,13 @@ int32 UEmberDataContainer::RemoveItemAutomatic(const FItemPair& InItem)
     }
 
     int InRemoveQuantity = InItem.Quantity;
-    int RemovedQuantity = 0;   
-    if (FTotalItemInfo* TotalItemInfo = TotalData.Find(InItem.ItemID))
+    int RemovedQuantity = 0;
+
+    FInstancedStruct& InstancedStruct = TotalData.FindOrAdd(InItem.ItemID);
+
+    if (FEmberTotalSlot* TotalSlot = InstancedStruct.GetMutablePtr<FEmberTotalSlot>())
     {
-        TSet<int32> ItemIndexes = TotalItemInfo->ItemIndexes;
+        TSet<int32> ItemIndexes = TotalSlot->ItemIndexes;
         for (int32 Index : ItemIndexes)
         {
             RemovedQuantity = RemoveItemFromSlot_Implementation(Index, InRemoveQuantity);
@@ -537,6 +497,7 @@ int32 UEmberDataContainer::RemoveItemAutomatic(const FItemPair& InItem)
             }
         }
     }
+    
     return RemovedQuantity;
 }
 
@@ -564,6 +525,19 @@ void UEmberDataContainer::MoveItemByIndex(int32 IndexTo, int32 IndexForm, int32 
    
 }
 
+void UEmberDataContainer::AddItemByWidget_Implementation(FEmberItemEntry& InItem, int32 InSlotIndex)
+{
+    AddItem(InItem, InSlotIndex);
+}
+
+void UEmberDataContainer::AddItemsByWidget_Implementation(TArray<FEmberItemEntry>& InItems)
+{
+    for (FEmberItemEntry& InItem : InItems)
+    {
+        IEmberSlotDataProviderInterface::Execute_AddItemByWidget(this, InItem, -1);
+    }
+}
+
 int32 UEmberDataContainer::RemoveItemFromSlot_Implementation(int32 SlotIndex, int32 QuantityToRemove)
 {
     if (!DataSlots.IsValidIndex(SlotIndex))
@@ -584,16 +558,30 @@ int32 UEmberDataContainer::RemoveItemFromSlot_Implementation(int32 SlotIndex, in
 
         RemoveAmount = FMath::Min(QuantityToRemove, Slot->Quantity);
         Slot->Quantity -= RemoveAmount;
+
+        FEmberItemKey ItemKey = FEmberItemKey(Slot->ItemID, Slot->EnchantEffects);
+        FInstancedStruct& Data = TotalData.FindOrAdd(ItemKey);
+        if (FEmberTotalSlot* ItemData = Data.GetMutablePtr<FEmberTotalSlot>())
+        {
+            ItemData->RemoveQuantity(RemoveAmount);
+            if (ItemData->bIsEmpty())
+            {
+                TotalData.Remove(ItemKey);
+            }
+            
+            if (Slot->Quantity <= 0)
+            {
+                ItemData->RemoveIndex(SlotIndex);
+                Slot->Clear();
+                EMBER_LOG(LogEmberItem, Warning, TEXT("ABSDC"));
+            }
         
-        FTotalItemInfo& Total = TotalData.FindOrAdd(Slot->ItemID);
-        Total.RemoveItemQuantity(RemoveAmount);
+        }
 
         if (Slot->Quantity <= 0)
         {
             Slot->Clear();
-            Total.RemoveItemIndexes(SlotIndex);
         }
-        
         OnDataChangedDelegate.Broadcast(SlotIndex, DataSlots[SlotIndex]);
         
     }
@@ -660,7 +648,6 @@ void UEmberDataContainer::MovedInItemByAnotherProvider(int32 IndexTo,
     int32 AddItem = AddItemSlot(ItemInfo, IndexTo);
     IEmberSlotDataProviderInterface::Execute_RemoveItemFromSlot(AnotherProvider.GetObject(), IndexFrom, AddItem);
 
-      
 #if UE_BUILD_DEVELOPMENT
     EMBER_LOG(LogEmberItem, Display, TEXT("End Moved"));
 #endif
@@ -730,7 +717,13 @@ TMap<FName, int32> UEmberDataContainer::GetAllItemInfos_Implementation()
 
     for (auto& TotalItemInfo : TotalData)
     {
-        Items.FindOrAdd(TotalItemInfo.Key) += TotalItemInfo.Value.TotalQuantity;
+        const FEmberTotalSlot& TotalSlot = TotalItemInfo.Value.Get<FEmberTotalSlot>();
+
+        if (!TotalSlot.bIsEmpty())
+        {
+            Items.FindOrAdd(TotalSlot.ItemID) += TotalSlot.Quantity;
+        }
+        
     }
     return Items;
 }
@@ -741,25 +734,90 @@ bool UEmberDataContainer::bConsumeAbleResource_Implementation(const TArray<FItem
     {
         if (Item.ItemID.IsValid() && Item.Quantity > 0)
         {
-            if (const FTotalItemInfo* HasItem = TotalData.Find(Item.ItemID))
+            if (FInstancedStruct* InstancedStruct = TotalData.Find(Item.ItemID))
             {
-                if (HasItem->TotalQuantity < Item.Quantity)
+                if (const FEmberSlotData* HasItem = InstancedStruct->GetPtr<FEmberSlotData>())
                 {
-                    return false;
+                    if (HasItem->Quantity >= Item.Quantity)
+                    {
+                        continue;
+                    }
                 }
             }
-            else
-            {
-                return false;
-            }
         }
+        return false;
     }
     
     return true;
 }
 
-void UEmberDataContainer::TryConsumeResource_Implementation(TArray<FItemPair>& InRequireItems)
+void UEmberDataContainer::GetItemInfos_Implementation(TArray<FEmberItemEntry>& InItemEntries,
+    TMap<FEmberItemKey, FInstancedStruct>& OutItemInfos)
 {
+    for (FEmberItemEntry& ItemInfo : InItemEntries)
+    {
+        FInstancedStruct InstancedStruct;
+        IEmberResourceProvider::Execute_GetItemInfo(this, ItemInfo, InstancedStruct);
+
+        if (const FEmberMasterItemData* MasterItemData = InstancedStruct.GetPtr<FEmberMasterItemData>())
+        {
+            int32 AddCurrentQuantity = MasterItemData->Quantity;
+            FInstancedStruct& OutInstancedStruct = OutItemInfos.FindOrAdd(MasterItemData->CreateItemKey());
+
+            if (FEmberMasterItemData* OutItemInfo = OutInstancedStruct.GetMutablePtr<FEmberMasterItemData>())
+            {
+                OutItemInfo->AddQuantity(AddCurrentQuantity);
+            }
+            else
+            {
+                MasterItemData->InitializeInstancedStruct(OutInstancedStruct);
+            }
+        }
+    }
+}
+
+void UEmberDataContainer::GetItemInfo_Implementation(FEmberItemEntry& InItemEntry,
+    FInstancedStruct& OutItemInfo)
+{
+    if (InItemEntry.ItemID.IsNone())
+    {
+        return; 
+    }
+    
+    EMBER_LOG(LogTemp, Warning, TEXT("ABSD %d"), TotalData.Num());
+
+    for (auto& Item : TotalData)
+    {
+        if (const FEmberMasterItemData* D = Item.Value.GetPtr<FEmberMasterItemData>())
+        {
+            EMBER_LOG(LogTemp, Warning, TEXT("ABSD0 %s, %d"), *D->ItemID.ToString(), D->Quantity);
+        }
+
+    }
+    if (FInstancedStruct* InstancedStruct = TotalData.Find(InItemEntry.CreateItemKey()))
+    {
+        EMBER_LOG(LogTemp, Warning, TEXT("ABSD1"));
+
+        if (const FEmberMasterItemData* MasterItemData = InstancedStruct->GetPtr<FEmberMasterItemData>())
+        {
+            EMBER_LOG(LogTemp, Warning, TEXT("ABSD %d"), MasterItemData->Quantity);
+            if (FEmberMasterItemData* OutItem = OutItemInfo.GetMutablePtr<FEmberMasterItemData>())
+            {
+                if (OutItem->CreateItemKey() == MasterItemData->CreateItemKey())
+                {
+                    int32 AddQuantity = MasterItemData->Quantity;
+                    OutItem->AddQuantity(AddQuantity);
+                    return;
+                }
+            }
+        }
+        OutItemInfo = *InstancedStruct;
+    }
+}
+
+void UEmberDataContainer::TryConsumeResource_Implementation(const TArray<FItemPair>& InRequireItems)
+{
+    EMBER_LOG(LogTemp, Warning, TEXT("ABSDCd"));
     if (bConsumeAbleResource_Implementation(InRequireItems))
     {
         for (const FItemPair& Item : InRequireItems)
@@ -769,20 +827,18 @@ void UEmberDataContainer::TryConsumeResource_Implementation(TArray<FItemPair>& I
     }
 }
 
-TArray<FItemPair> UEmberDataContainer::RemoveResourceUntilAble_Implementation(const TArray<FItemPair>& InRequireItems)
+void UEmberDataContainer::RemoveResourceUntilAble_Implementation(TArray<FItemPair>& InRequireItems)
 {
-    TArray<FItemPair> RemainingRequireItems;
-    for (const FItemPair& RequireItem : InRequireItems)
+    for (FItemPair& RequireItem : InRequireItems)
     {
         int32 RemovedQuantity = RemoveItemAutomatic(RequireItem);
-        int RequiredQuantity = RequireItem.Quantity - RemovedQuantity;
-        RequiredQuantity = RequiredQuantity > 0 ? RequiredQuantity : 0;
-        if (RequireItem.Quantity - RemovedQuantity > 0)
-        {
-            RemainingRequireItems.Add(FItemPair(RequireItem.ItemID, RequiredQuantity));
-        }
+        RequireItem.Quantity -= RemovedQuantity;
     }
-    return RemainingRequireItems;
+    
+    InRequireItems.RemoveAll([](const FItemPair& Item)
+    {
+        return Item.Quantity <= 0;
+    });
 }
 
 

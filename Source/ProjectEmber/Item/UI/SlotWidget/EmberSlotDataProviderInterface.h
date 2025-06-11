@@ -40,10 +40,10 @@ public:
 	FGameplayTag GetSlotType() const;
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "SlotProvider")
-	int32 AddItem(const FItemPair& Item, int32 InSlotIndex = -1);
+	void AddItemByWidget(FEmberItemEntry& InItem, int32 InSlotIndex = -1);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "SlotProvider")
-	TArray<FItemPair> AddItems(const TArray<FItemPair>& Items);
+	void AddItemsByWidget(TArray<FEmberItemEntry>& InItems);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "SlotProvider")
 	int32 RemoveItemFromSlot(int32 SlotIndex, int32 QuantityToRemove);

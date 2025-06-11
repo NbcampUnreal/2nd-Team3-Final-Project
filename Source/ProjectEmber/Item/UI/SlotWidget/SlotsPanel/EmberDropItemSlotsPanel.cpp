@@ -34,6 +34,7 @@ FReply UEmberDropItemSlotsPanel::NativeOnFocusReceived(const FGeometry& InGeomet
 		Slots[Index]->InitSlot(Index, DataProvider);
 		BindToManagerDelegates_Implementation();
 	}
+
 	UpdateSlots();
 
 	return Reply.Handled();

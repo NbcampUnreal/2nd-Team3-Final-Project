@@ -20,15 +20,19 @@ UEmberCraftComponent::UEmberCraftComponent()
 FItemPair UEmberCraftComponent::CraftItem(const FName& InItemID)
 {
 	FItemPair ReturnItem;
-	
+	EMBER_LOG(LogTemp, Warning, TEXT("abcd"));
+
 	if (!CraftDataTable || !InItemID.IsValid() || InItemID.IsNone())
 	{
 		return ReturnItem;
 	}
 	FindOverlappingResourceComponent();
-	
+	EMBER_LOG(LogTemp, Warning, TEXT("abcd1"));
+
 	if (const FCraftInfoRow* CraftInfoRow = CraftDataTable->FindRow<FCraftInfoRow>(InItemID, TEXT("CraftInfo")))
 	{
+		EMBER_LOG(LogTemp, Warning, TEXT("abcd2"));
+
 		TArray<FItemPair> RequireItems;
 		FItemPair RequestItem;
 
@@ -43,9 +47,12 @@ FItemPair UEmberCraftComponent::CraftItem(const FName& InItemID)
 				RequireItems.Add(FItemPair(RequireItem.ItemData.RowName, RequireItem.Quantity));
 			}
 		}
+		EMBER_LOG(LogTemp, Warning, TEXT("abcd3"));
 
 		if (IEmberResourceProvider::Execute_bConsumeAbleResource(this, RequireItems))
 		{
+			EMBER_LOG(LogTemp, Warning, TEXT("abcd4"));
+
 			IEmberResourceProvider::Execute_TryConsumeResource(this, RequireItems);
 			
 			ReturnItem = RequestItem;

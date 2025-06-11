@@ -6,6 +6,7 @@
 #include "Item/Core/EmberCraftStruct.h"
 #include "UObject/Interface.h"
 #include "Item/Core/EmberItemStruct.h"
+#include "Item/Core/EmberTmpStruct.h"
 #include "EmberResourceProvider.generated.h"
 
 // This class does not need to be modified.
@@ -29,10 +30,16 @@ public:
 	TMap<FName, int32> GetAllItemInfos();
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void GetItemInfo(FEmberItemEntry& InItemEntry, FInstancedStruct& OutItemInfo);
+	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void GetItemInfos(TArray<FEmberItemEntry>& InItemEntry, TMap<FEmberItemKey, FInstancedStruct>& OutItemInfos);
+	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	void TryConsumeResource(const TArray<FItemPair>& InRequireItems);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	TArray<FItemPair> RemoveResourceUntilAble(const TArray<FItemPair>& InRequireItems);
+	void RemoveResourceUntilAble(TArray<FItemPair>& InRequireItems);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	bool bConsumeAbleResource(const TArray<FItemPair>& InRequireItems);

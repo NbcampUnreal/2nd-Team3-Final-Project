@@ -32,6 +32,9 @@ public:
 
 	void InitSlot(int32 SlotMax, int32 SlotMaxRow, TObjectPtr<AActor> InOwner);
 
+	virtual void AddItem(FEmberItemEntry& InItemEntry, int32 InSlotIndex = -1);
+	virtual void AddItem(const FInstancedStruct& InItemEntry, int32 InSlotIndex = -1);
+
 	// --- 인벤토리 정보 조회 함수들 ---
 
 	UFUNCTION(BlueprintPure, Category = "Inventory")
@@ -43,17 +46,21 @@ public:
 	// --- 크래프트 관련 함수 ---
 	virtual TMap<FName, int32> GetAllItemInfos_Implementation() override;
 	virtual bool bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems) override;
+	virtual void GetItemInfos_Implementation(TArray<FEmberItemEntry>& InItemEntries, TMap<FEmberItemKey, FInstancedStruct>& OutItemInfos) override;
+	virtual void GetItemInfo_Implementation(FEmberItemEntry& InItemEntry, FInstancedStruct& OutItemInfo) override;
+	
+	virtual void TryConsumeResource_Implementation(const TArray<FItemPair>& InRequireItems) override;
 
-	void TryConsumeResource_Implementation(TArray<FItemPair>& InRequireItems);
-	virtual TArray<FItemPair> RemoveResourceUntilAble_Implementation(const TArray<FItemPair>& InRequireItems) override;
+	virtual void RemoveResourceUntilAble_Implementation(TArray<FItemPair>& InRequireItems) override;
+
 	// --- 아이템 정리 관련 함수들 ---
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	virtual void MoveItemByIndex(int32 IndexTo, int32 IndexForm, int32 InQuantity);
 
 	// --- 정보 전달체 관련 인터페이스 구현 ---
-	virtual int32 AddItem_Implementation(const FItemPair& InItem, int32 InSlotIndex = -1) override;
+	virtual void AddItemByWidget_Implementation(FEmberItemEntry& InItem, int32 InSlotIndex = -1) override;
 
-	virtual TArray<FItemPair> AddItems_Implementation(const TArray<FItemPair>& Items) override;
+	virtual void AddItemsByWidget_Implementation(TArray<FEmberItemEntry>& InItems) override;
 	
 	virtual int32 RemoveItemFromSlot_Implementation(int32 SlotIndex, int32 QuantityToRemove = 0) override;
 
@@ -79,13 +86,6 @@ public:
 
 	void InitOwner(TObjectPtr<AActor> InOwner);
 protected:
-	/**
-	 * 
-	 * @param FItemPair 넣을 아이템ID , 수량
-	 * @param InSlotIndex -1인경우 있는곳에 넣고 못채운 나머지는 빈공간에 할당, 0 이상인경우 그 공간에 시도한다
-	 * @return 
-	 */
-	virtual int32 TryAddItemsToSlots(const FItemPair& InItem, int32 InSlotIndex = -1);
 	/**
 	 * 
 	 * @param FItemPair 넣을 아이템ID , 수량
@@ -126,8 +126,9 @@ protected:
 	 * Index를 지정해서 최대 스택만큼만 저장
 	 * @return 저장한 수량
 	 */
-	virtual int32 AddDataInIndex(const FItemPair& InItem, int32 InSlotIndex);
 	virtual int32 AddDataInIndex(const FInstancedStruct& InItem, int32 InSlotIndex);
+
+	
 	void FindSlotIndexesByItemID(const FName& ItemID,  TQueue<int32>& OutSlotIndexes, int32 InBeginIndex = 0);
 	void FindEmptySlotIndexes(TQueue<int32>& OutSlotIndexes) const;
 	int32 FindEmptyFirstSlot() const;
@@ -145,7 +146,7 @@ protected:
 	TArray<FInstancedStruct> DataSlots;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Slot", SaveGame) // SaveGame 필요시 추가
-	TMap<FName, FTotalItemInfo> TotalData;
+	TMap<FEmberItemKey, FInstancedStruct> TotalData;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Slot", meta = (ClampMin = "1"))
 	int32 SlotCapacity = 30;
