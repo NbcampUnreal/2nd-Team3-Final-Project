@@ -67,7 +67,7 @@ void UTargetSystemComponent::TickComponent(const float DeltaTime, const ELevelTi
 		TargetLockOff();
 	}
 
-	if (ShouldBreakLineOfSight() && !bIsBreakingLineOfSight)
+	/*if (ShouldBreakLineOfSight() && !bIsBreakingLineOfSight)
 	{
 		if (BreakLineOfSightDelay <= 0)
 		{
@@ -83,20 +83,20 @@ void UTargetSystemComponent::TickComponent(const float DeltaTime, const ELevelTi
 				BreakLineOfSightDelay
 			);
 		}
-	}
+	}*/
 }
 
-void UTargetSystemComponent::TargetActor()
+void UTargetSystemComponent::TargetActor(const TArray<AActor*> Actors)
 {
 	ClosestTargetDistance = MinimumDistanceToEnable;
 
-	if (bTargetLocked)
+	/*if (bTargetLocked)
 	{
 		TargetLockOff();
 	}
-	else
+	else*/
 	{
-		const TArray<AActor*> Actors = GetAllActorsOfClass(TargetableActors);
+		//const TArray<AActor*> Actors = GetAllActorsOfClass(TargetableActors);
 		LockedOnTargetActor = FindNearestTarget(Actors);
 		TargetLockOn(LockedOnTargetActor);
 	}
@@ -210,6 +210,11 @@ AActor* UTargetSystemComponent::GetLockedOnTargetActor() const
 bool UTargetSystemComponent::IsLocked() const
 {
 	return bTargetLocked && LockedOnTargetActor;
+}
+
+void UTargetSystemComponent::TargetWidgetDestroy()
+{
+	TargetLockedOnWidgetComponent->DestroyComponent();
 }
 
 TArray<AActor*> UTargetSystemComponent::FindTargetsInRange(TArray<AActor*> ActorsToLook, const float RangeMin, const float RangeMax) const
@@ -333,7 +338,7 @@ void UTargetSystemComponent::TargetLockOn(AActor* TargetToLockOn)
 		ControlRotation(true);
 	}
 
-	if (bAdjustPitchBasedOnDistanceToTarget || bIgnoreLookInput)
+	//if (bAdjustPitchBasedOnDistanceToTarget || bIgnoreLookInput)
 	{
 		if (IsValid(OwnerPlayerController))
 		{
@@ -347,7 +352,7 @@ void UTargetSystemComponent::TargetLockOn(AActor* TargetToLockOn)
 	}
 }
 
-void UTargetSystemComponent::TargetLockOff()
+void UTargetSystemComponent::TargetLockOff(const bool bIsBroadcast)
 {
 	// Recast PlayerController in case it wasn't already setup on Begin Play (local split screen)
 	SetupLocalPlayerController();
@@ -370,13 +375,13 @@ void UTargetSystemComponent::TargetLockOff()
 			OwnerPlayerController->ResetIgnoreLookInput();
 		}
 
-		if (OnTargetLockedOff.IsBound())
+		if (bIsBroadcast && OnTargetLockedOff.IsBound())
 		{
 			OnTargetLockedOff.Broadcast(LockedOnTargetActor);
 		}
-	}
 
-	LockedOnTargetActor = nullptr;
+		LockedOnTargetActor = nullptr;
+	}
 }
 
 void UTargetSystemComponent::CreateAndAttachTargetLockedOnWidgetComponent(AActor* TargetActor)
@@ -452,9 +457,9 @@ AActor* UTargetSystemComponent::FindNearestTarget(TArray<AActor*> Actors) const
 	// Find all actors we can line trace to
 	for (AActor* Actor : Actors)
 	{
-		TArray<AActor*> ActorsToIgnore;
-		const bool bHit = LineTraceForActor(Actor, ActorsToIgnore);
-		if (bHit && IsInViewport(Actor))
+		//TArray<AActor*> ActorsToIgnore;
+		//const bool bHit = LineTraceForActor(Actor, ActorsToIgnore);
+		//if (/*bHit &&*/ IsInViewport(Actor))
 		{
 			ActorsHit.Add(Actor);
 		}
@@ -657,5 +662,5 @@ bool UTargetSystemComponent::IsInViewport(const AActor* TargetActor) const
 	FVector2D ViewportSize;
 	GetWorld()->GetGameViewport()->GetViewportSize(ViewportSize);
 
-	return ScreenLocation.X > 0 && ScreenLocation.Y > 0 && ScreenLocation.X < ViewportSize.X && ScreenLocation.Y < ViewportSize.Y;
+	return true;//ScreenLocation.X > 0 && ScreenLocation.Y > 0 && ScreenLocation.X < ViewportSize.X && ScreenLocation.Y < ViewportSize.Y;
 }

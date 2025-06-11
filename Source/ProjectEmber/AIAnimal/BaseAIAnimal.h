@@ -8,9 +8,11 @@
 #include "GameFramework/Character.h"
 #include "GameplayEffectTypes.h"
 #include "GameplayTagAssetInterface.h"
+#include "TargetSystemTargetableInterface.h"
 #include "MessageBus/MessageBus.h"
 #include "BaseAIAnimal.generated.h"
 
+class UWidgetComponent;
 class UMeleeTraceComponent;
 class UBoxComponent;
 class UAISenseConfig_Hearing;
@@ -36,7 +38,8 @@ enum class EAnimalAIPersonality : uint8
 };
 
 UCLASS()
-class PROJECTEMBER_API ABaseAIAnimal : public ACharacter, public IAbilitySystemInterface, public IGameplayTagAssetInterface
+class PROJECTEMBER_API ABaseAIAnimal : public ACharacter, public IAbilitySystemInterface, public IGameplayTagAssetInterface,
+public ITargetSystemTargetableInterface
 {
 	GENERATED_BODY()
 
@@ -48,6 +51,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
 	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override; //어빌리티시스템 함수 오버라이드
+
+	virtual bool IsTargetable_Implementation() const override;
 	
 	void OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
@@ -198,4 +203,5 @@ protected:
 	TArray<FVector> PatrolPoints;
 	
 	FMessageDelegate MessageDelegateHandle;
+
 };

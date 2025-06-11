@@ -81,3 +81,9 @@ namespace AlsInputActionTags
 	ALS_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(LockMoveInput)
 	ALS_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(OverlayAction)
 }
+
+namespace AlsCharacterStateTags
+{
+	ALS_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Attack)
+	ALS_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(ComboAttack)
+}

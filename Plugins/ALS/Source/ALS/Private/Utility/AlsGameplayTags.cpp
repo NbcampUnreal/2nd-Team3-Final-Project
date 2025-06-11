@@ -80,3 +80,8 @@ namespace AlsInputActionTags
 	UE_DEFINE_GAMEPLAY_TAG(LockMoveInput, FName{TEXTVIEW("Character.State.LockMoveInput")})
 }
 
+namespace AlsCharacterStateTags
+{
+	UE_DEFINE_GAMEPLAY_TAG(Attack, FName{TEXTVIEW("Character.State.Attack")})
+	UE_DEFINE_GAMEPLAY_TAG(ComboAttack, FName{TEXTVIEW("Character.State.ComboAttack")})
+}

@@ -127,6 +127,19 @@ void ABaseAIAnimal::BeginPlay()
 void ABaseAIAnimal::OnBeginDeath()
 {
 	bIsDead = true;
+	/** EmberChararcter의 TargetSystem을 위한 브로드 캐스트 및 본인에게 달려있는 타겟위젯 지우기 */
+	UMessageBus::GetInstance()->BroadcastMessage(TEXT("DeathEnemy"), this);
+	TArray<UWidgetComponent*> WidgetComps;
+	GetComponents<UWidgetComponent>(WidgetComps);
+	for (UWidgetComponent* Comp : WidgetComps)
+	{
+		if (Comp && Comp != HpBarWidget)
+		{
+			Comp->DestroyComponent();
+		}
+	}
+	
+	
 	
 	SetActorTickEnabled(false);
 	if (AIController && AIController->BrainComponent && BlackboardComponent)
@@ -283,6 +296,12 @@ void ABaseAIAnimal::DecreaseFullness()
  {
  	TagContainer;
  }
+
+bool ABaseAIAnimal::IsTargetable_Implementation() const
+{
+	//ITargetSystemTargetableInterface::IsTargetable_Implementation();
+	return !bIsDead;
+}
 
 float ABaseAIAnimal::GetWildPower() const
 {

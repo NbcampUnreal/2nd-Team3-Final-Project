@@ -55,7 +55,32 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
         Bind(SwitchShoulderAction,ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnSwitchShoulder);
         Bind(GlideAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnGlide);
         Bind(BuildAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnBuild);
+
+        Bind(TargetAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnStartTarget);
+        Bind(TargetAction,         ETriggerEvent::Completed,  &AEmberCharacter::Input_OnSwitchTarget);
         
+        Bind(ThrowQuickAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnStartThrowQuick);
+        Bind(ThrowQuickAction,         ETriggerEvent::Canceled,  &AEmberCharacter::Input_OnCancelThrowQuick);
+
+        Bind(ThrowOverlayAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnSwitchThrowOverlay);
+
+        Bind(ItemQuickAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnStartItemQuick);
+        Bind(ItemQuickAction,         ETriggerEvent::Canceled,  &AEmberCharacter::Input_OnCancelItemQuick);
+        
+        Bind(ScanAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnStartScan);
+        
+        /*
+        UPROPERTY(EditAnywhere, Category="Input") 
+    TObjectPtr<UInputAction> TargetAction;
+    UPROPERTY(EditAnywhere, Category="Input") 
+    TObjectPtr<UInputAction> ThrowQuickAction;
+    UPROPERTY(EditAnywhere, Category="Input") 
+    TObjectPtr<UInputAction> ThrowOverlayAction;
+    UPROPERTY(EditAnywhere, Category="Input") 
+    TObjectPtr<UInputAction> ItemQuickAction;
+    UPROPERTY(EditAnywhere, Category="Input") 
+    TObjectPtr<UInputAction> ScanAction;
+         */
         
         UInteractionComponent* Comp = Character->InteractionComponent.Get();
         if (Comp)
