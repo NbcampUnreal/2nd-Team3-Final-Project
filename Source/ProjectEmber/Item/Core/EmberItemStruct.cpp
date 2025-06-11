@@ -6,7 +6,6 @@
 #include "ItemTypes.h"
 #include "EmberLog/EmberLog.h"
 #include "Item/ItemSubsystem.h"
-#include "Containers/Set.h"
 
 FEmberSlotData::FEmberSlotData(const FName& InItemID, const int32 InQuantity, const TArray<FItemEffectApplicationInfo>& InEnchantEffects)
 {
@@ -106,34 +105,4 @@ FEmberItemInfo::FEmberItemInfo(const FEmberSlotData& InItemInventorySlotData)
 		}
 	}
 	ActiveEffects = InActiveEffects;
-}
-
-FEmberItemKey::FEmberItemKey(const FName& InItemID, const TArray<FItemEffectApplicationInfo>& InEnchants)
-{
-	ItemID = InItemID;
-	for (auto& EnchantItem : InEnchants)
-	{
-		EnchantIDs.Add(EnchantItem.EffectName);
-	}
-}
-
-bool FEmberItemKey::operator==(const FEmberItemKey& Other) const
-{
-	if (ItemID != Other.ItemID)
-	{
-		return false;
-	}
-
-	if (EnchantIDs.Num() != Other.EnchantIDs.Num())
-	{
-		return false;
-	}
-	for (auto& EnchantItem : Other.EnchantIDs)
-	{
-		if (!EnchantIDs.Contains(EnchantItem))
-		{
-			return false;
-		}
-	}
-	return true;
 }

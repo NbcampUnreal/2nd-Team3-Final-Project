@@ -55,7 +55,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	bool IsQuestCompleted(FName QuestID) const;
 
-	const TMap<FName, UQuestDataAsset*>& GetAllLoadedQuests() const;
+	TMap<FName, TObjectPtr<UQuestDataAsset>>& GetAllLoadedQuests();
 
 	bool GetLastActiveQuestID(FName& OutQuestID) const;
 
@@ -70,7 +70,8 @@ public:
 
 private:
 	// 로드된 퀘스트 목록
-	TMap<FName, UQuestDataAsset*> LoadedQuests;
+	UPROPERTY(VisibleAnywhere, Category = "Quest", meta = (AllowPrivateAccess = "true"))
+	TMap<FName, TObjectPtr<UQuestDataAsset>> LoadedQuests;
 
 	// 현재 진행 중인 퀘스트 목록
 	TMap<FName, int32> QuestProgress;
@@ -83,6 +84,7 @@ private:
 		
 	// OnGameEvent가 호출되면 QuestProgress를 순회하면서 이 함수를 호출
 	void CheckQuestStepCompletion(const UQuestDataAsset* QuestAsset, const FGameplayTag& EventTag, const FGameplayEventData& EventData);
+	
 };
 
 inline bool UQuestSubsystem::IsQuestCompleted(FName QuestID) const

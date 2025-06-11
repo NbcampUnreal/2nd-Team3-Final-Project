@@ -5,12 +5,9 @@
 
 #include "AbilitySystemComponent.h"
 #include "Ability/EmberItemAttributeSet.h"
-#include "Blueprint/UserWidget.h"
 #include "Core/EmberDropStruct.h"
 #include "Core/ItemTypes.h"
 #include "EmberLog/EmberLog.h"
-#include "Kismet/GameplayStatics.h"
-#include "UI/SlotWidget/ItemDetailWidget.h"
 
 void UItemSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -165,20 +162,6 @@ TArray<FItemPair> UItemSubsystem::GetDroppedItem(FName MonsterID, const UAbility
     }
 
     return FinalDroppedItems;
-}
-
-TObjectPtr<UItemDetailWidget> UItemSubsystem::GetItemDetailWidget()
-{
-    if (!DetailWidget)
-    {
-        if (UClass* InDetailWidgetClass = DetailWidgetClassPtr.LoadSynchronous())
-        {
-            DetailWidget = CreateWidget<UItemDetailWidget>(UGameplayStatics::GetPlayerController(GetWorld(), 0), InDetailWidgetClass, TEXT("DetailWidget"));
-            DetailWidget->AddToViewport();
-            DetailWidget->SetVisibility(ESlateVisibility::Hidden);
-        }
-    }
-    return DetailWidget;
 }
 
 

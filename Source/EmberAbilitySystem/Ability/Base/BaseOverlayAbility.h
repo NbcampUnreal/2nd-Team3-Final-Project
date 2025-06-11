@@ -104,20 +104,6 @@ protected:
 	FGameplayTagContainer ForceGameplayTags;
 	
 	/**
-	 * Launch Character
-	 * 루트모션이 없어도 플레이어가 키를 누르고 있으면 몽타주 재생중에 앞으로 가는 느낌을
-	 * 줄려고 고안했음 하지만 제대로 작동안함 다른 방식을 취해야 할거같음
-	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability|Movement")
-	bool bEnableForwardMovementDuringMontage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability|Movement", meta = (EditCondition = "bEnableForwardMovementDuringMontage"))
-	float ForwardMovementDistance;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability|Movement", meta = (EditCondition = "bEnableForwardMovementDuringMontage"))
-	float ForwardMovementDuration;
-
-	/**
 	 * 특정 몽타주 재생 후 VelocityYawAngle 쪽이 틀어져서 반대방향을 바라보게 됨
 	 * AlsMovementComponent는 Tick마다 바라볼 다양한 YawAngle값으로 플레이어를 회전시켰고
 	 * 그로 인해 끝나고 난 뒤 플레이어가 무조건 뒤를 보며 회전하는걸 확인
@@ -127,6 +113,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability|Movement")
 	bool bMontageTickEnable{false};
 
+public: /* Motion Warping */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Warping")
+	bool bIsWarping{true};
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Warping", meta = (EditCondition = "bIsWarping",EditConditionHides))
+	float WarpDistance{ 100.0f};
+	
 protected:
 	UFUNCTION()
 	void OnMontageCompleted();
@@ -138,8 +131,9 @@ protected:
 	void OnMontageTick() const;
 	UFUNCTION()
 	void OnBlendOut();
+	
 private:
-	void LaunchCharacterForward(const FGameplayAbilityActorInfo* ActorInfo) const;
+	void SetUpdateWarping();
 	
 	UAnimMontage*					ChooseMontageByState();
 	TSubclassOf<UGameplayAbility>	ChooseAbilityByState();

@@ -33,8 +33,8 @@ void UEmberStorageComponent::AddItem(FName ItemID, int32 Quantity, int32 InSlotI
 {
 	if (InventoryManager)
 	{
-		FEmberItemEntry Entry = FEmberItemEntry(ItemID, Quantity);
-		InventoryManager->AddItem(Entry, InSlotIndex);
+		IEmberSlotDataProviderInterface::Execute_AddItem(InventoryManager, FItemPair(ItemID,Quantity), InSlotIndex);
+		
 	}
 }
 
@@ -56,13 +56,15 @@ void UEmberStorageComponent::TryConsumeResource_Implementation(const TArray<FIte
 	}
 }
 
-void UEmberStorageComponent::RemoveResourceUntilAble_Implementation(
-	TArray<FItemPair>& InRequireItems)
+TArray<FItemPair> UEmberStorageComponent::RemoveResourceUntilAble_Implementation(
+	const TArray<FItemPair>& InRequireItems)
 {
+	TArray<FItemPair> Items;
 	if (InventoryManager)
 	{
-		IEmberResourceProvider::Execute_RemoveResourceUntilAble(InventoryManager, InRequireItems);
+		Items = IEmberResourceProvider::Execute_RemoveResourceUntilAble(InventoryManager, InRequireItems);
 	}
+	return Items;
 }
 
 bool UEmberStorageComponent::bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems)

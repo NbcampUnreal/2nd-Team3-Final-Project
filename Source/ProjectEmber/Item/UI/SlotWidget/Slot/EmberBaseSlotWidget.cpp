@@ -5,8 +5,7 @@
 
 #include "Item/UI/SlotWidget/DragSlotImage.h"
 #include "EmberSlotDragAbleSlotInterface.h"
-#include "Blueprint/WidgetLayoutLibrary.h"
-#include "Item/ItemSubsystem.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "EmberLog/EmberLog.h"
@@ -32,19 +31,9 @@ void UEmberBaseSlotWidget::InitSlot(int32 InSlotIndex, TScriptInterface<IEmberSl
 {
 	SlotIndex = InSlotIndex;
 	DataProvider = InDataProvider;
-	InitDetailWidget();
 	if (DataProvider)
 	{
 		SlotType = IEmberSlotDataProviderInterface::Execute_GetSlotType(DataProvider.GetObject());
-	}
-}
-
-void UEmberBaseSlotWidget::InitDetailWidget()
-{
-
-	if (UItemSubsystem* ItemSubsystem = UItemSystemLibrary::GetItemSubsystem())
-	{
-		ItemDetailWidget = ItemSubsystem->GetItemDetailWidget();
 	}
 }
 
@@ -105,20 +94,24 @@ void UEmberBaseSlotWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const
 {
 	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
 
-	if (ItemDetailWidget && !SlotData.IsEmpty())
+	if (ItemDetailWidgetClass && !SlotData.IsEmpty())
 	{
-		ItemDetailWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
-		ItemDetailWidget->EmberWidgetSlotData = SlotData;
+		ItemDetailWidget = CreateWidget<UItemDetailWidget>(this->GetOwningPlayer(), ItemDetailWidgetClass, TEXT("DetailWidget"));
+		
+		if (ItemDetailWidget)
+		{
+			ItemDetailWidget->AddToViewport();
+			ItemDetailWidget->EmberWidgetSlotData = SlotData;
+		}
 	}
 }
 
 void UEmberBaseSlotWidget::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
 {
 	Super::NativeOnMouseLeave(InMouseEvent);
-
 	if (ItemDetailWidget)
 	{
-		ItemDetailWidget->SetVisibility(ESlateVisibility::Hidden);
+		ItemDetailWidget->RemoveFromParent();
 	}
 }
 

@@ -6,7 +6,6 @@
 #include "EmberCraftComponent.h"
 #include "EmberResourceProvider.h"
 #include "EmberLog/EmberLog.h"
-#include "EnvironmentQuery/EnvQueryGenerator.h"
 
 
 // Sets default values for this component's properties
@@ -115,7 +114,7 @@ void UEmberItemCollectorBoxCollision::TryConsumeResource_Implementation(const TA
 		{
 			if (ResourceProvider.Get())
 			{
-				IEmberResourceProvider::Execute_RemoveResourceUntilAble(ResourceProvider.Get(), RequireItems);
+				RequireItems = IEmberResourceProvider::Execute_RemoveResourceUntilAble(ResourceProvider.Get(), RequireItems);
 
 			}
 
@@ -125,83 +124,31 @@ void UEmberItemCollectorBoxCollision::TryConsumeResource_Implementation(const TA
 
 bool UEmberItemCollectorBoxCollision::bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems)
 {
-	TArray<FEmberItemEntry> RequiresEntries;
-	TMap<FEmberItemKey, FInstancedStruct> OutItemInfos;
-
+	TMap<FName, int32> AllItemInfos = GetAllItemInfos_Implementation();
 	for (FItemPair RequireItem : InRequireItems)
 	{
-		RequiresEntries.Add(FEmberItemEntry(RequireItem.ItemID, RequireItem.Quantity, RequireItem.Enchants));
-	}
-	
-	for (auto& ResourceProviderPtr : ResourceProviders)
-	{
-		if (UObject* ResourceProvider = ResourceProviderPtr.Get())
+		int32* Quantity = AllItemInfos.Find(RequireItem.ItemID);
+		if (!Quantity || *Quantity < RequireItem.Quantity)
 		{
-			IEmberResourceProvider::Execute_GetItemInfos(ResourceProvider, RequiresEntries, OutItemInfos);
+			return false;
 		}
-	}
-	EMBER_LOG(LogTemp, Warning, TEXT("abcd31 %d, %d"),ResourceProviders.Num(), OutItemInfos.Num() );
-
-	for (auto& Item : OutItemInfos)
-	{
-		EMBER_LOG(LogTemp, Warning, TEXT("abcd30 "));
-
-		if (const FEmberMasterItemData* Data = Item.Value.GetPtr<FEmberMasterItemData>())
-		EMBER_LOG(LogTemp, Warning, TEXT("abcd32 %s, %d"), *Item.Key.ItemID.ToString(), Data->Quantity);
-
-	}
-
-	for (auto& RequiresEntry : RequiresEntries)
-	{
-		if (FInstancedStruct* OutItemInstanced = OutItemInfos.Find(RequiresEntry.CreateItemKey()))
-		{
-			if (const FEmberMasterItemData* Data = OutItemInstanced->GetPtr<FEmberMasterItemData>())
-			{
-				if (Data->Quantity >= RequiresEntry.Quantity)
-				{
-					continue;
-				}
-			}
-		}
-		return false;
 	}
 	return true;
 }
 
-void UEmberItemCollectorBoxCollision::GetItemInfo_Implementation(FEmberItemEntry& InItemEntry,
-	FInstancedStruct& OutItemInfo)
+TArray<FItemPair> UEmberItemCollectorBoxCollision::RemoveResourceUntilAble_Implementation(
+   const TArray<FItemPair>& InRequireItems)
 {
-	for (TWeakObjectPtr<UObject>& ResourceProviderPtr : ResourceProviders)
-	{
-		if (UObject* ResourceProvider = ResourceProviderPtr.Get())
-		{
-			IEmberResourceProvider::Execute_GetItemInfo(ResourceProvider, InItemEntry, OutItemInfo);
-		}
-	}
-}
-
-void UEmberItemCollectorBoxCollision::GetItemInfos_Implementation(TArray<FEmberItemEntry>& InItemEntries,
-	TMap<FEmberItemKey, FInstancedStruct>& OutItemInfos)
-{
-	for (TWeakObjectPtr<UObject>& ResourceProviderPtr : ResourceProviders)
-	{
-		if (UObject* ResourceProvider = ResourceProviderPtr.Get())
-		{
-			IEmberResourceProvider::Execute_GetItemInfos(ResourceProvider, InItemEntries, OutItemInfos);
-		}
-	}
-}
-
-void UEmberItemCollectorBoxCollision::RemoveResourceUntilAble_Implementation(
-   TArray<FItemPair>& InRequireItems)
-{
+	TArray<FItemPair> RequireItems = InRequireItems;
 	for (TWeakObjectPtr<UObject>& ResourceProvider : ResourceProviders)
 	{
 		if (UObject* Object = ResourceProvider.Get())
 		{
-			IEmberResourceProvider::Execute_RemoveResourceUntilAble(Object, InRequireItems);
+			RequireItems = IEmberResourceProvider::Execute_RemoveResourceUntilAble(Object, RequireItems);
+			
 		}
 	}
+	return RequireItems;
 }
 int32 UEmberItemCollectorBoxCollision::DEBUG_GetResourceProviderNum()
 {

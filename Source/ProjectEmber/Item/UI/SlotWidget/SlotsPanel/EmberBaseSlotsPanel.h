@@ -7,7 +7,6 @@
 #include "Item/UI/SlotWidget/EmberSlotDataProviderInterface.h"
 #include "EmberBaseSlotsPanel.generated.h"
 
-class UItemDetailWidget;
 class UGridPanel;
 class UEmberBaseSlotWidget;
 /**
@@ -23,7 +22,7 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	virtual void InitializePanel();
-	
+
 	UFUNCTION(BlueprintNativeEvent, Category="Slots Panel", meta=(DisplayName="Setup Delegate Bindings"))
 	void BindToManagerDelegates();
 	
@@ -49,7 +48,4 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (BindWidget))
 	TObjectPtr<UGridPanel> SlotsPanel;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<UItemDetailWidget> ItemDetailWidget;
 };

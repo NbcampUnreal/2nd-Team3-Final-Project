@@ -128,7 +128,8 @@ void UEmberItemCollectorComponent::TryConsumeResource_Implementation(const TArra
 		{
 			if (ResourceProvider.Get())
 			{
-				IEmberResourceProvider::Execute_RemoveResourceUntilAble(ResourceProvider.Get(), RequireItems);
+				RequireItems = IEmberResourceProvider::Execute_RemoveResourceUntilAble(ResourceProvider.Get(), RequireItems);
+
 			}
 
 		}
@@ -149,16 +150,19 @@ bool UEmberItemCollectorComponent::bConsumeAbleResource_Implementation(const TAr
 	return true;
 }
 
-void UEmberItemCollectorComponent::RemoveResourceUntilAble_Implementation(
-   TArray<FItemPair>& InRequireItems)
+TArray<FItemPair> UEmberItemCollectorComponent::RemoveResourceUntilAble_Implementation(
+   const TArray<FItemPair>& InRequireItems)
 {
+	TArray<FItemPair> RequireItems = InRequireItems;
 	for (TWeakObjectPtr<UObject>& ResourceProvider : ResourceProviders)
 	{
 		if (UObject* Object = ResourceProvider.Get())
 		{
-			IEmberResourceProvider::Execute_RemoveResourceUntilAble(Object, InRequireItems);
+			RequireItems = IEmberResourceProvider::Execute_RemoveResourceUntilAble(Object, RequireItems);
+			
 		}
 	}
+	return RequireItems;
 }
 int32 UEmberItemCollectorComponent::DEBUG_GetResourceProviderNum()
 {

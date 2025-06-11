@@ -33,7 +33,8 @@ public class ProjectEmber : ModuleRules
             "CinematicCamera",
             "Slate",
             "SlateCore",
-            "MotionWarping"
+            "MotionWarping",
+            "TargetSystem"
         });
 
         //───────────────────────────────────────────────────────────────────────────────

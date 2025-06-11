@@ -32,7 +32,6 @@ void UEmberBaseSlotsPanel::InitializePanel()
 	}
 }
 
-
 void UEmberBaseSlotsPanel::SlotChanged(int32 InIndex, const FInstancedStruct& InSlotData)
 {	
 	if (Slots.IsValidIndex(InIndex))

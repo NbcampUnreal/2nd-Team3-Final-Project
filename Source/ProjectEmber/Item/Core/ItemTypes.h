@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Engine/DataTable.h"
-#include "StructUtils/InstancedStruct.h"
 #include "ItemTypes.generated.h"
 
 /**
@@ -45,10 +44,6 @@ struct FSlotInfoRow : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "SlotInfo", meta = (ClampMin = "1"))
     int32 MaxStackSize = 1;
 
-    void InitializeInstancedStruct(FInstancedStruct& OutInstancedStruct) const
-    {
-        OutInstancedStruct.InitializeAs<FSlotInfoRow>(*this);
-    }
     // (선택 사항) 인벤토리 정렬 순서, 무게 등
     
 };
@@ -75,10 +70,6 @@ struct FItemEffectApplicationInfo : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     float Magnitude = 0.0f;
 
-    void InitializeInstancedStruct(FInstancedStruct& OutInstancedStruct) const
-    {
-        OutInstancedStruct.InitializeAs<FItemEffectApplicationInfo>(*this);
-    }
 };
 
 // 소비 컴포넌트 정보 (DT_ConsumableComponent 용)
@@ -96,12 +87,6 @@ struct FConsumableInfoRow : public FTableRowBase
     // 소비 시 적용될 효과 목록 (GAS 연동)
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Consumable Component")
     TArray<FItemEffectApplicationInfo> EffectsToApplyOnConsume;
-    
-    
-    void InitializeInstancedStruct(FInstancedStruct& OutInstancedStruct) const
-    {
-        OutInstancedStruct.InitializeAs<FConsumableInfoRow>(*this);
-    }
 };
 
 // 장비 컴포넌트 정보 (DT_ConsumableComponent 용)
@@ -116,9 +101,5 @@ struct FEquipmentInfoRow : public FTableRowBase
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Equipment Component")
     TArray<FDataTableRowHandle> MainEffects;
     
-    void InitializeInstancedStruct(FInstancedStruct& OutInstancedStruct) const
-    {
-        OutInstancedStruct.InitializeAs<FEquipmentInfoRow>(*this);
-    }
 };
 
