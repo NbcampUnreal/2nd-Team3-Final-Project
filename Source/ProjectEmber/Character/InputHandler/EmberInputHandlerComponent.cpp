@@ -77,7 +77,8 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
     // Ability input
     InputComponent->BindAction(AttackAction, ETriggerEvent::Started, Character, &AEmberCharacter::AbilityInputPressed, 0);
 
-
+    // Bind Action Value
+    Character->MoveInputBinding = &InputComponent->BindActionValue(MoveAction);
 }
 
 void UEmberInputHandlerComponent::RegisterMapping(APlayerController* PC, int32 Priority, const FModifyContextOptions& Options)
@@ -109,5 +110,7 @@ void UEmberInputHandlerComponent::BindUIInput(UGameMenuWidget* Layer)
     {
         InputComp->BindAction(UIInventoryAction, ETriggerEvent::Started, Layer, &UGameMenuWidget::Input_ToggleInventory);
         InputComp->BindAction(UIQuestAction, ETriggerEvent::Started, Layer, &UGameMenuWidget::Input_ToggleQuest);
+        InputComp->BindAction(UIPauseAction, ETriggerEvent::Started, Layer, &UGameMenuWidget::Input_TogglePause);
+        InputComp->BindAction(UISkillAction, ETriggerEvent::Started, Layer, &UGameMenuWidget::Input_ToggleSkill);
     }
 }
