@@ -21,6 +21,7 @@ namespace AlsRotationModeTags
 	ALS_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(VelocityDirection)
 	ALS_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(ViewDirection)
 	ALS_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Aiming)
+	ALS_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Targeting)
 }
 
 namespace AlsStanceTags

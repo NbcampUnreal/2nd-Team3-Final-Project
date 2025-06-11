@@ -1,6 +1,9 @@
 // Copyright 2018-2021 Mickael Daniel. All Rights Reserved.
 
 #include "TargetSystemComponent.h"
+
+#include "AlsCharacter.h"
+#include "ALS/Public/Utility/AlsGameplayTags.h"
 #include "EngineUtils.h"
 #include "TargetSystemLog.h"
 #include "TargetSystemTargetableInterface.h"
@@ -50,12 +53,14 @@ void UTargetSystemComponent::TickComponent(const float DeltaTime, const ELevelTi
 
 	if (!bTargetLocked || !LockedOnTargetActor)
 	{
+		Cast<AAlsCharacter>(OwnerActor)->SetTargetMode(FGameplayTag());
 		return;
 	}
 
 	if (!TargetIsTargetable(LockedOnTargetActor))
 	{
 		TargetLockOff();
+		Cast<AAlsCharacter>(OwnerActor)->SetTargetMode(FGameplayTag());
 		return;
 	}
 
@@ -65,8 +70,11 @@ void UTargetSystemComponent::TickComponent(const float DeltaTime, const ELevelTi
 	if (GetDistanceFromCharacter(LockedOnTargetActor) > MinimumDistanceToEnable)
 	{
 		TargetLockOff();
+		Cast<AAlsCharacter>(OwnerActor)->SetTargetMode(FGameplayTag());
+		return;
 	}
 
+	Cast<AAlsCharacter>(OwnerActor)->SetTargetMode(AlsRotationModeTags::Targeting);
 	/*if (ShouldBreakLineOfSight() && !bIsBreakingLineOfSight)
 	{
 		if (BreakLineOfSightDelay <= 0)
