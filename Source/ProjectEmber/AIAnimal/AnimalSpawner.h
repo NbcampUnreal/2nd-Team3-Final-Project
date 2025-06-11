@@ -106,6 +106,14 @@ protected:
 	void ReceiveMessage(const FName MessageType, UObject* Payload);
 	void MessageMoveToDead(UObject* Payload);
 	FMessageDelegate MessageDelegateHandle;
+
+	//Day / Night
+	UFUNCTION(BlueprintCallable)
+	void OnGameTimeChanged(const FGameplayTag& EventTag, const FGameplayEventData& EventData);
+	void MakeRandomActiveAtNight(); //IsDay == true 일 때 확률적으로 D/N 결정하는 함수
+	
+	//밤->낮 됐을 때 동물들한테 브로드캐스트 -> 게임플레이이벤트 + 태그는 Gameplay.Time.WakeUp  
+
 	
 	//Filter
 	UFUNCTION(BlueprintCallable)
@@ -206,6 +214,12 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning", SaveGame)
 	TArray<FAnimalQueueInfo> SaveInfoArray;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="DayNight")
+	bool bIsDay = true;
+
+	int32 Weather =0;
+	bool bIsShouldSleep = true;
 	
 	TQueue<FAnimalQueueInfo>			  LoadInfoQueue; 
 	TQueue<FAnimalQueueInfo>			  CreateInfoQueue;  //매 tick 생성될, 큐에 담길 동물객체 하나마다의 정보를 담는 구조체
