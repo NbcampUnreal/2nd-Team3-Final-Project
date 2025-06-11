@@ -18,7 +18,7 @@
 #include "Utility/AlsVector.h"
 
 #include "AbilitySystemComponent.h"
-#include "../../../../../../../Program Files/Epic Games/UE_5.5/Engine/Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputComponent.h"
+#include "EnhancedInputComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(AlsCharacter)
 
