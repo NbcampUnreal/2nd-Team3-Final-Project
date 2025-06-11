@@ -2,6 +2,7 @@
 #include "GameInstance/AudioSubsystem.h"
 #include "GameInstance/LevelSubsystem.h"
 #include "UI/EmberKeySettingWidget.h"
+#include "UI/EmberLoadingWidget.h"
 #include "EnhancedInputSubsystems.h"
 #include "UserSettings/EnhancedInputUserSettings.h"
 #include "InputMappingContext.h"
@@ -39,11 +40,16 @@ void UEmberGameInstance::ShowLoadingScreen()
 		LoadingScreenWidget = CreateWidget<UUserWidget>(this, LoadingScreenClass.Get());
 	}
 
-	if (LoadingScreenWidget && !LoadingScreenWidget->IsInViewport())
-	{
-		LoadingScreenWidget->AddToViewport(100);
-		UE_LOG(LogTemp, Warning, TEXT("[Loading] Widget Added To Viewport"));
-	}
+    if (LoadingScreenWidget && !LoadingScreenWidget->IsInViewport())
+    {
+        LoadingScreenWidget->AddToViewport(100);
+        UE_LOG(LogTemp, Warning, TEXT("[Loading] Widget Added To Viewport"));
+
+        if (UEmberLoadingWidget* TypedLoading = Cast<UEmberLoadingWidget>(LoadingScreenWidget))
+        {
+            TypedLoading->Progress = 0.0f;
+        }
+    }
 
 	if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
 	{
@@ -68,7 +74,7 @@ void UEmberGameInstance::RequestOpenLevel(FName MapName)
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this, MapName]()
 		{
 			UGameplayStatics::OpenLevel(this, MapName);
-		}, 0.8f, false);
+		}, 30.0f, false);
 }
 
 void UEmberGameInstance::TestPlaySFX(ESfxSoundType SoundType, const FName RowName, FVector Location)

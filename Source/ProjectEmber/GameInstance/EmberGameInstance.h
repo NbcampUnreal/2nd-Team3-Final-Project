@@ -14,6 +14,7 @@
 class UAudioSubsystem;
 class ULevelSubsystem;
 class UUserWidget;
+class UEmberLoadingWidget;
 
 UCLASS()
 class PROJECTEMBER_API UEmberGameInstance : public UGameInstance
