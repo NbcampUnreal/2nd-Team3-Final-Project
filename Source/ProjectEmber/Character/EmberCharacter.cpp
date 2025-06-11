@@ -13,10 +13,12 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "EnhancedInputComponent.h"
 #include "GameInstance/EmberGameInstance.h"
+#include "TargetSystemComponent.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
 #include "MaterialHLSLTree.h"
 #include "Animation/AnimInstance.h"
+#include "UI/EmberHpBarUserWidget.h"
 #include "Build/AC_BuildComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Define/CharacterDefine.h"
@@ -33,6 +35,7 @@
 #include "UI/HUD/EmberMainHUD.h"
 #include "Utility/AlsVector.h"
 #include "MotionWarpingComponent.h"
+#include "UI/EmberHpBarUserWidget.h"
 
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(EmberCharacter)
@@ -89,11 +92,6 @@ AEmberCharacter::AEmberCharacter()
     BuildComponent = CreateDefaultSubobject<UAC_BuildComponent>(TEXT("BuildComponent"));
 
     MotionWarpComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpComponent"));
-    
-    /* Test */
-    HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
-    HpBarWidget->SetupAttachment(GetMesh());
-    HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 150.0f));
 }
 
 void AEmberCharacter::BeginPlay()
@@ -177,18 +175,11 @@ void AEmberCharacter::BeginPlay()
             MeleeTraceComponent->OnTraceHit.AddDynamic(this, &AEmberCharacter::HandleMeleeTraceHit);
         }*/
     }
-    
-    if (HpBarWidgetClass)
-    {
-        HpBarWidget->SetWidgetClass(HpBarWidgetClass);
-        HpBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
-        HpBarWidget->SetDrawSize(FVector2D(200.0f,20.0f));
-        HpBarWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-        
-        HpBarWidget->UpdateAbilitySystemComponent(this);
-    }
 
-    
+    if (HpBarWidget.IsValid())
+    {
+        HpBarWidget->SetAbilitySystemComponent(this);    
+    }
 }
 
 void AEmberCharacter::Tick(float DeltaSeconds)
@@ -399,6 +390,11 @@ void AEmberCharacter::TryAbilityFromOnAim(const bool bPressed)
 UMeleeTraceComponent* AEmberCharacter::GetMeleeTraceComponent() const
 {
     return MeleeTraceComponent;
+}
+
+void AEmberCharacter::SetHpBarWidget(UEmberHpBarUserWidget* InHpBarWidget)
+{
+    HpBarWidget = InHpBarWidget;
 }
 
 UNiagaraComponent* AEmberCharacter::GetWeaponTrailComponent() const

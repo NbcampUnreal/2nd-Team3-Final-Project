@@ -7,6 +7,8 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogEmber, Log, All);
 DECLARE_LOG_CATEGORY_EXTERN(LogEmberItem, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogEmberInteraction, Log, All);
 
 inline DEFINE_LOG_CATEGORY(LogEmber);
 inline DEFINE_LOG_CATEGORY(LogEmberItem);
+inline DEFINE_LOG_CATEGORY(LogEmberInteraction);
