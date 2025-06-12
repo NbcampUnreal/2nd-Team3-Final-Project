@@ -141,6 +141,7 @@ void ABaseAIAnimal::BeginPlay()
 void ABaseAIAnimal::OnBeginDeath()
 {
 	bIsDead = true;
+	bIsShouldSleep = false;
 	for (UActorComponent* Component : GetComponents())
 	{
 		if (UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(Component))
@@ -493,9 +494,8 @@ void ABaseAIAnimal::SetState(bool IsShouldSleep)
 	}
 	
 	// 생성, 리스폰 때 활동/비활동인지
-	bIsShouldSleep = IsShouldSleep;
 
-	if (bIsShouldSleep)
+	if (IsShouldSleep)
 	{
 		DeactiveSleep();
 	}
@@ -515,6 +515,14 @@ void ABaseAIAnimal::OnGameTimeChanged(const FGameplayTag& EventTag, const FGamep
 	}
 	else if (EventTag.MatchesTag(FGameplayTag::RequestGameplayTag(TEXT("Gameplay.Time.Night"))))
 	{
+		FName State = BlackboardComponent->GetValueAsName("NStateTag");
+		FGameplayTag StateTag = FGameplayTag::RequestGameplayTag(State);
+		if (StateTag == FGameplayTag::RequestGameplayTag("Animal.State.Attack")||
+			StateTag == FGameplayTag::RequestGameplayTag("Animal.State.Attacked"))
+		{
+			return;
+		}
+		
 		// 휴식 상태로 전환
 		MakeRandomActiveAtNight(EventData.EventMagnitude); // 0.맑음, 1.흐린 2.비 3.천둥
 	}
@@ -545,18 +553,24 @@ void ABaseAIAnimal::MakeRandomActiveAtNight(int32 InWeather)
 void ABaseAIAnimal::ActiveNonSleep() 
 {
 	bIsShouldSleep = false;
+	BlackboardComponent->SetValueAsBool("IsSleep",false);
 	BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle"); 
 }
 
 void ABaseAIAnimal::DeactiveSleep() 
 {
-	bIsShouldSleep = true;
+	//잠드는 것만 잘 곳 먼저 찾고 bIsShouldSleep 변경으로 애니메이션 재생
 	BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Sleeping"); 
 }
 
 bool ABaseAIAnimal::GetIsShouldSleep() const
 {
 	return bIsShouldSleep;
+}
+
+void ABaseAIAnimal::SetIsShouldSleep(bool InIsSleep)
+{
+	bIsShouldSleep = InIsSleep;
 }
 
 bool ABaseAIAnimal::GetIsDead() const

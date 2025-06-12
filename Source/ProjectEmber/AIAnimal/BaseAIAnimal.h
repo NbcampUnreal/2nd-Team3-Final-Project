@@ -91,7 +91,8 @@ public:
 	void SetState(bool IsShouldSleep = true);
 
 	bool GetIsShouldSleep() const;
-	
+	void SetIsShouldSleep(bool InIsSleep);
+
 	//밤에 활동,비활동
 	UFUNCTION(BlueprintCallable)
 	void ActiveNonSleep();
