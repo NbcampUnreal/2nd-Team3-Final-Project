@@ -11,9 +11,11 @@
 #include "AI/NavigationSystemBase.h"
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
+#include "Components/BrushComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "EmberLog/EmberLog.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/PhysicsVolume.h"
 #include "UI/EmberHpBarUserWidget.h"
 #include "UI/EmberWidgetComponent.h"
 #include "Quest/QuestSubsystem.h"
@@ -141,6 +143,7 @@ void ABaseAIAnimal::BeginPlay()
 void ABaseAIAnimal::OnBeginDeath()
 {
 	bIsDead = true;
+	bIsShouldSleep = false;
 	for (UActorComponent* Component : GetComponents())
 	{
 		if (UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(Component))
@@ -230,8 +233,6 @@ void ABaseAIAnimal::SetVisibleInGame()
 		AIController->BrainComponent->StartLogic();
 		BlackboardComponent = AIController->GetBlackboardComponent();
 		BlackboardComponent->ClearValue("TargetObject");
-		//BlackboardComponent->SetValueAsName("NStateTag","Animal.State.Idle");
-		
 	}
 	
 	if (CharacterAttributeSet)
@@ -261,6 +262,14 @@ void ABaseAIAnimal::Tick(float DeltaTime)
 	if (GetMovementComponent())
 	{
 		bIsShouldSwim = GetMovementComponent()->IsSwimming();
+		if (bIsShouldSwim)
+		{
+			ApplyWaterSurface(DeltaTime);
+		}
+		else
+		{
+			SwimTime = 0.f;
+		}
 	}
 	if (BlackboardComponent)
 	{
@@ -272,9 +281,6 @@ void ABaseAIAnimal::Tick(float DeltaTime)
 			FRotator NewRot = FMath::RInterpTo(GetActorRotation(), TargetRotation, DeltaTime, 5.0f);
 			SetActorRotation(NewRot);
 		}
-
-		//FName  state =  BlackboardComponent->GetValueAsName("NStateTag");
-		//UE_LOG(LogTemp, Warning, TEXT(" [UQuestSubsystem::OnGameEvent] Received EventTag: %s"),*state.ToString());
 	}
 }
 
@@ -328,7 +334,6 @@ void ABaseAIAnimal::OnFullnessChanged(const FOnAttributeChangeData& OnAttributeC
 	{
 		bIsHungry = false;
 		BlackboardComponent->SetValueAsBool("IsHungry", bIsHungry);
-		//BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
 		BlackboardComponent->SetValueAsObject("NTargetFood", nullptr);
 		BlackboardComponent->SetValueAsVector("NTargetFoodLocation", GetActorLocation());
 	}
@@ -338,10 +343,9 @@ void ABaseAIAnimal::OnFullnessChanged(const FOnAttributeChangeData& OnAttributeC
 void ABaseAIAnimal::GenerateRandom()
 {
 	int32 RandomPersonality = FMath::RandRange(0, static_cast<int32>(EAnimalAIPersonality::End) - 1);
-	//int32 RandomPersonality =3; //임시수정
 	Personality = static_cast<EAnimalAIPersonality>(RandomPersonality);
 	SetDetails();
-	Fullness = FMath::FRandRange(30.f, 40.f);
+	Fullness = FMath::FRandRange(70.f, 90.f);
 }
 
 void ABaseAIAnimal::DecreaseFullness()
@@ -418,11 +422,6 @@ void ABaseAIAnimal::SetDetails()
 			WalkSpeed *= 1.2f;
 			break;
 		}
-	case EAnimalAIPersonality::Cowardly:
-		{
-			WanderRange *= 1.2f;
-			break;
-		}
 	case EAnimalAIPersonality::Lazy:
 		{
 			WalkSpeed *= 0.8f;
@@ -493,9 +492,8 @@ void ABaseAIAnimal::SetState(bool IsShouldSleep)
 	}
 	
 	// 생성, 리스폰 때 활동/비활동인지
-	bIsShouldSleep = IsShouldSleep;
 
-	if (bIsShouldSleep)
+	if (IsShouldSleep)
 	{
 		DeactiveSleep();
 	}
@@ -515,7 +513,15 @@ void ABaseAIAnimal::OnGameTimeChanged(const FGameplayTag& EventTag, const FGamep
 	}
 	else if (EventTag.MatchesTag(FGameplayTag::RequestGameplayTag(TEXT("Gameplay.Time.Night"))))
 	{
-		// 휴식 상태로 전환
+		FName State = BlackboardComponent->GetValueAsName("NStateTag");
+		FGameplayTag StateTag = FGameplayTag::RequestGameplayTag(State);
+		if (StateTag == FGameplayTag::RequestGameplayTag("Animal.State.Attack")||
+			StateTag == FGameplayTag::RequestGameplayTag("Animal.State.Attacked")||bIsShouldSwim)
+		{
+			return;
+		}
+		
+		// 밤에 활동 확률 설정
 		MakeRandomActiveAtNight(EventData.EventMagnitude); // 0.맑음, 1.흐린 2.비 3.천둥
 	}
 }
@@ -545,18 +551,44 @@ void ABaseAIAnimal::MakeRandomActiveAtNight(int32 InWeather)
 void ABaseAIAnimal::ActiveNonSleep() 
 {
 	bIsShouldSleep = false;
+	BlackboardComponent->SetValueAsBool("IsSleep",false);
 	BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle"); 
 }
 
 void ABaseAIAnimal::DeactiveSleep() 
 {
-	bIsShouldSleep = true;
+	//잠드는 것만 잘 곳 먼저 찾고 bIsShouldSleep 변경으로 애니메이션 재생
 	BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Sleeping"); 
 }
+
+
+void ABaseAIAnimal::ApplyWaterSurface(float DeltaTime) 
+{
+	APhysicsVolume* PhysicsVolume = GetCharacterMovement()->GetPhysicsVolume();
+	FVector VolumeOrigin;
+	FVector VolumeExtent;
+	PhysicsVolume->GetActorBounds(false, VolumeOrigin, VolumeExtent);
+	
+	
+	WaterSurfaceZ = VolumeOrigin.Z;
+	SwimTime += DeltaTime;
+	float WaveOffsetZ = FMath::Sin(SwimTime * FloatFrequency * PI) * FloatAmplitude;
+
+	FVector NewLocation = GetActorLocation();
+	NewLocation.Z = WaterSurfaceZ + WaveOffsetZ;
+	SetActorLocation(NewLocation);
+	//DrawDebugBox(GetWorld(), VolumeOrigin, VolumeExtent, FColor::Blue, false, 2.0f);
+}
+
 
 bool ABaseAIAnimal::GetIsShouldSleep() const
 {
 	return bIsShouldSleep;
+}
+
+void ABaseAIAnimal::SetIsShouldSleep(bool InIsSleep)
+{
+	bIsShouldSleep = InIsSleep;
 }
 
 bool ABaseAIAnimal::GetIsDead() const
