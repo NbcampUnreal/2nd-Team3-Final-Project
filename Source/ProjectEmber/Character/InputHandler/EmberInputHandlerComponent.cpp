@@ -64,8 +64,8 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
 
         Bind(ThrowOverlayAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnSwitchThrowOverlay);
 
-        Bind(ItemQuickAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnStartItemQuick);
-        Bind(ItemQuickAction,         ETriggerEvent::Canceled,  &AEmberCharacter::Input_OnCancelItemQuick);
+        Bind(ItemQuickAction,         ETriggerEvent::Started,  &AEmberCharacter::Input_OnStartItemQuick);
+        Bind(ItemQuickAction,         ETriggerEvent::Completed,  &AEmberCharacter::Input_OnCancelItemQuick);
         
         Bind(ScanAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnStartScan);
         

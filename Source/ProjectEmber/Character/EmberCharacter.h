@@ -239,7 +239,7 @@ protected:
 
 	FGameplayTag PreOverlayTag;
 
-protected:
+protected: /* MeleeTrace */
 	UFUNCTION()
 	void HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, AActor* HitActor, const FVector& HitLocation, const FVector& HitNormal, FName HitBoneName, FMeleeTraceInstanceHandle TraceHandle);
 	
@@ -248,6 +248,13 @@ protected:
 
 	void ReceiveMessage(const FName MessageType, UObject* Payload);
 	FMessageDelegate MessageDelegateHandle;
+
+public:
+	void ShowQuickActionWidget();
+protected:
+	bool bShowQuickActionWidget{false};
+	FTimerHandle QuickActionTimerHandle;
+	
 public: /* Inventory */
 	UFUNCTION(BlueprintCallable, Category = "Item")
 	UUserItemManger* GetItemManager();
