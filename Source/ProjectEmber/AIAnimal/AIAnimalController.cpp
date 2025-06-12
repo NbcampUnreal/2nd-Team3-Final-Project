@@ -10,12 +10,6 @@
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
 #include "Character/EmberCharacter.h"
 
-const FName AAIAnimalController::IsShouldSleep = "IsShouldSleep";
-const FName AAIAnimalController::DistanceToTarget = "DistanceToTarget";
-const FName AAIAnimalController::TargetActor = "TargetActor";
-const FName AAIAnimalController::TargetLocation = "TargetLocation";
-const FName AAIAnimalController::SafeLocation = "SafeLocation"; 
-
 AAIAnimalController::AAIAnimalController()
 {
     PerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("PerceptionComp"));
@@ -54,8 +48,6 @@ void AAIAnimalController::OnPossess(APawn* InPawn)
         // 블랙보드 초기화 성공, 비헤이비어 트리 실행
         RunBehaviorTree(BehaviorTree);
     }
-    InitBlackboard();
-    //AnimalBindingEQS(InPawn);
     AbilitySystemComponent = CastChecked<ABaseAIAnimal>(InPawn)->GetAbilitySystemComponent();
 }
 
@@ -66,16 +58,11 @@ void AAIAnimalController::BeginPlay()
 
 }
 
-void AAIAnimalController::InitBlackboard()
-{
-    GetBlackboardComponent()->SetValueAsName("NStateTag", "Animal.State.Idle");
-    GetBlackboardComponent()->SetValueAsBool("NIsNeedToGeneratePP", true);
-    GetBlackboardComponent()->SetValueAsBool("IsShouldSleep",bIsShouldSleep);
-}
-
 void AAIAnimalController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
-    if (bool IsSleep = Cast<ABaseAIAnimal>(GetPawn())->GetIsShouldSleep())
+    bool IsSleep = Cast<ABaseAIAnimal>(GetPawn())->GetIsShouldSleep();
+    bool IsDead = Cast<ABaseAIAnimal>(GetPawn())->GetIsDead();
+    if (IsSleep || IsDead)
     {
         return;
     }

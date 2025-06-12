@@ -34,7 +34,7 @@ void AAnimalSpawner::BeginPlay()
 	UMessageBus::GetInstance()->Subscribe(TEXT("HideAnimal"), MessageDelegateHandle);
 	}
 	
-	//시간 받아오는 델리게이트 구독
+	//시간 받아오는 델리게이트 구독->저장해뒀다가 생성/스폰 시킬 때 사용
 	if (UGameplayEventSubsystem* EventSystem = UGameplayEventSubsystem::GetGameplayEvent(GetWorld()))
 	{
 		EventSystem->OnGameEvent.AddDynamic(this, &AAnimalSpawner::OnGameTimeChanged);
@@ -302,11 +302,7 @@ void AAnimalSpawner::TryCreateQueue(TArray<TSoftObjectPtr<AAnimalSpawnPoint>>& I
 		}
 		else
 		{
-			// if (SpawnPoint->GetAliveAnimalsInBox() < PermittedToSpawnLimit) //애들이 다 튀어나가서 포인트 영역안에 사냥하고 잇는 애만 남으면 -> 그녀석 죽이면 바로 재스폰 되버림  -> 영역 제한하거나 포인트가 그 포인트에서 생성된 애들 수나 포인터 들고 있거나
-			// {
-			// 	//타이머 기반 스폰 기능 넣으면 타이머에 TrySpawnDead(AnimalsInfo) 만 바인딩 해서 죽은 애들만 다시 스폰 가능 
-			// }
-
+			//스포너에서 생성된 총 동물 수 중 죽어서 리스폰대기열에 PermittedToSpawnLimit 이상 쌓이면 리스폰
 			TrySpawnEntire();
 				
 			
@@ -366,7 +362,7 @@ void AAnimalSpawner::TickCreateQueue(TQueue<FAnimalQueueInfo>& InQueue, bool& In
 		
 		MakeRandomActiveAtNight();
 		Spawned->SetRoleTag(PerAnimal.RoleTag);
-		Spawned->SetIdleState(bIsShouldSleep);
+		Spawned->SetState(bIsShouldSleep);
 		AnimalsInfo[PerAnimal.SpawnInfoIndex].SpawnAnimals.Emplace(Spawned);
 		++SpawnedThisFrame;
 	}
@@ -523,7 +519,7 @@ void AAnimalSpawner::TickSpawnQueue()
 			continue;
 		}
 		MakeRandomActiveAtNight();
-		PerAnimal->SetIdleState(bIsShouldSleep);
+		PerAnimal->SetState(bIsShouldSleep);
 		PerAnimal->SetVisibleInGame();
 		
 		++SpawnedThisFrame;

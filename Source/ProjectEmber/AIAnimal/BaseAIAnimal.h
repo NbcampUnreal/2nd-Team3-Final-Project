@@ -88,7 +88,7 @@ public:
 	void SetRoleTag(FName InRoleTag);
 
 	UFUNCTION(BlueprintCallable)
-	void SetIdleState(bool IsShouldSleep = true);
+	void SetState(bool IsShouldSleep = true);
 
 	bool GetIsShouldSleep() const;
 	
