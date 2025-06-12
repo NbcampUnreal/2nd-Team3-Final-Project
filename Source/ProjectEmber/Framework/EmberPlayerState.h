@@ -13,6 +13,7 @@ class PROJECTEMBER_API AEmberPlayerState : public APlayerState, public IAbilityS
 public:
 	AEmberPlayerState();
 
+	virtual void BeginPlay() override;
 	virtual class UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
 private:

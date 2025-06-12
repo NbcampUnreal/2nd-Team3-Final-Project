@@ -125,8 +125,7 @@ void AEmberCharacter::BeginPlay()
 			AbilitySystemComponent = EmberPlayerState->GetAbilitySystemComponent();
 			Super::SetAbilitySystemComponent(AbilitySystemComponent);
 			EmberItemManager->InitAbilitySystem();
-			if (const UEmberCharacterAttributeSet* CurrentAttributeSet = AbilitySystemComponent->GetSet<
-				UEmberCharacterAttributeSet>())
+			if (const UEmberCharacterAttributeSet* CurrentAttributeSet = AbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>())
 			{
 				CurrentAttributeSet->OnOutOfHealth.AddDynamic(this, &ThisClass::OnOutOfHealth);
 			}
