@@ -133,6 +133,7 @@ public:
 
 protected:
 	void ReceiveMessage(const FName MessageType, UObject* Payload);
+	void ApplyWaterSurface(float DeltaTime);
 	
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void SetDetails();
@@ -230,4 +231,16 @@ protected:
 	
 	FMessageDelegate MessageDelegateHandle;
 
+	//수영 변수 -> 과연 dx같은 이 방법이 맞는가
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swim")
+	float SwimTime = 0.0f; // 시간 누적용 변수
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swim")
+	float FloatAmplitude = 20.0f; // 진폭 (높이)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swim")
+	float FloatFrequency = 0.4f; // 주기 (1초당 오르내림)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swim")
+	float WaterSurfaceZ = 0.0f; // 기준 물 표면 높이
 };
