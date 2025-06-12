@@ -12,6 +12,10 @@ class PROJECTEMBER_API UInteractionFragment_Spawn : public UInteractionFragment
 	GENERATED_BODY()
 public:
 	virtual void ExecuteInteraction_Implementation(AActor* Interactor) override;
+	virtual void EndInteraction_Implementation() override;
 	
 	virtual void SpawnActors(UWorld* WorldContext) {}
+
+	UFUNCTION(BlueprintCallable, Category = "Spawn")
+	virtual void DestroySpawnedActors() {}
 };

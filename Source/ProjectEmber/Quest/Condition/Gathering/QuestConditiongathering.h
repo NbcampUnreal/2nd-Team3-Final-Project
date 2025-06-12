@@ -19,7 +19,7 @@ public:
 
     virtual FString GetConditionText_Implementation() const override;
 
-    //  ±âÁ¸ FName ¡æ FGameplayTag·Î º¯°æ
+    //  ï¿½ï¿½ï¿½ï¿½ FName ï¿½ï¿½ FGameplayTagï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest|Condition")
     FGameplayTag TargetItemTag;
 };
