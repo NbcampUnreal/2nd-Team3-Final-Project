@@ -31,6 +31,7 @@
 #include "Utility/AlsVector.h"
 #include "MotionWarpingComponent.h"
 #include "Components/WidgetComponent.h"
+#include "UI/Death/DeathScreenWidget.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(EmberCharacter)
 
@@ -245,11 +246,18 @@ UAbilitySystemComponent* AEmberCharacter::GetAbilitySystemComponent() const
 
 void AEmberCharacter::OnOutOfHealth()
 {
-	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		UUserWidget* DeathWidgetInstance = UUIFunctionLibrary::PushContentToLayer(PC, FGameplayTag::RequestGameplayTag("UI.Layer.Modal"), DeathWidgetClass);
+		Cast<UDeathScreenWidget>(DeathWidgetInstance)->SetOwner(this);
+		UUIFunctionLibrary::FocusUI(PC,DeathWidgetInstance,true,true,true);
+	}
+	
+	/*GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
 		DisableInput(PlayerController);
-	}
+	}*/
 }
 
 void AEmberCharacter::AbilityInputPressed(int32 InputID)

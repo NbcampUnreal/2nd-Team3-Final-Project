@@ -49,7 +49,9 @@ public: /* Character */
 	
 	UPROPERTY(EditAnywhere, Category = "InteractionSystem")
 	TObjectPtr<class UInteractionComponent> InteractionComponent;
-	
+
+	UPROPERTY(EditAnywhere, Category = "DeathWidget")
+	TSubclassOf<class UUserWidget> DeathWidgetClass;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
