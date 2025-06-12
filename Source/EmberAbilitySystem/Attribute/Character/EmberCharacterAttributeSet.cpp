@@ -14,7 +14,7 @@ UEmberCharacterAttributeSet::UEmberCharacterAttributeSet()
 	
 	InitDamage(0.0f);
 
-	InitMana(100.0f);
+	InitMana(10.0f);
 	InitMaxMana(100.0f);
 
 	InitShield(100.0f);
@@ -63,6 +63,11 @@ bool UEmberCharacterAttributeSet::PreGameplayEffectExecute(struct FGameplayEffec
 	
 	if (Data.EvaluatedData.Attribute == GetDamageAttribute())
 	{
+		/*
+		* 극한회피 슬로우 0.35초 페이드 인 0.12초
+		* 패링 슬로우 0.17초 이펙트가 끝나는 시간 0.17초
+		* 다시 행동가능한 시간으로 돌아오는 시간 0.15초? 0.17?
+		*/
 		UAbilitySystemComponent* AbilitySystemComponent = GetOwningAbilitySystemComponentChecked();
 		if (AbilitySystemComponent->HasMatchingGameplayTag(AlsCharacterStateTags::Parrying))
 		{
@@ -71,8 +76,7 @@ bool UEmberCharacterAttributeSet::PreGameplayEffectExecute(struct FGameplayEffec
 		}
 		else if (AbilitySystemComponent->HasMatchingGameplayTag(AlsCharacterStateTags::Blocking))
 		{
-			// 방어 상태라면 반으로 줄이기
-			Data.EvaluatedData.Magnitude *= 0.5f;
+			Data.EvaluatedData.Magnitude *= 0.8f;
 		}
 	}
 	
@@ -93,7 +97,19 @@ void UEmberCharacterAttributeSet::PostGameplayEffectExecute(const struct FGamepl
 	else if (Data.EvaluatedData.Attribute == GetDamageAttribute())
 	{
 		EMBER_LOG(LogEmber,Log,TEXT("Damage: %f"), GetDamage());
-		SetHealth(FMath::Clamp(GetHealth() - GetDamage(), MinimumHealth, GetMaxHealth()));
+
+		/* 테스트 코드
+		 * 포스트로 처리할지 이펙트로 처리할지 고민
+		 */
+		float Damage = GetDamage();
+		UAbilitySystemComponent* AbilitySystemComponent = GetOwningAbilitySystemComponentChecked();
+		if (AbilitySystemComponent->HasMatchingGameplayTag(AlsCharacterStateTags::Blocking))
+		{
+			Damage = FMath::Clamp(GetDamage() - GetShield(), MinimumHealth, GetMaxShield());
+			SetShield(FMath::Clamp(GetShield() - GetDamage(), MinimumHealth, GetMaxHealth()));
+		}
+		
+		SetHealth(FMath::Clamp(GetHealth() - Damage, MinimumHealth, GetMaxHealth()));
 		SetDamage(0.0f);
 		
 		OnHit.Broadcast(Data.EffectSpec.GetContext().GetInstigator());
