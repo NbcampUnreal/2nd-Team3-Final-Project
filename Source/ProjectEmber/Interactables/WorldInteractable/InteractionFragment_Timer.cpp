@@ -8,10 +8,11 @@
 void UInteractionFragment_Timer::ExecuteInteraction_Implementation(AActor* Interactor)
 {
 	Super::ExecuteInteraction_Implementation(Interactor);
-
+	
+	StopTimer(); // 기존 타이머 제거 (중복 방지)
+	
 	FTimerDelegate TimerDel;
-	TimerDel.BindUFunction(this, "OnTimerExpired", Interactor);
-
+	TimerDel.BindUFunction(this, GET_FUNCTION_NAME_CHECKED(UInteractionFragment_Timer, OnTimerExpired), Interactor);
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDel, Duration, false);
 }
 
@@ -23,18 +24,19 @@ void UInteractionFragment_Timer::EndInteraction_Implementation()
 
 void UInteractionFragment_Timer::StopTimer()
 {
-	if (GetWorld() && GetWorld()->GetTimerManager().IsTimerActive(TimerHandle))
+	if (UWorld* World = GetWorld())
 	{
-		GetWorld()->GetTimerManager().ClearTimer(TimerHandle);
+		FTimerManager& TimerManager = World->GetTimerManager();
+		if (TimerManager.IsTimerActive(TimerHandle))
+		{
+			TimerManager.ClearTimer(TimerHandle);
+		}
 	}
 }
 
 void UInteractionFragment_Timer::OnTimerExpired(AActor* Interactor)
 {
 	if (!Interactor) return;
-	AActor* Owner = GetOwner();
-	if (Owner && Owner->Implements<UInteractable>())
-	{
-		IInteractable::Execute_EndInteract(Owner);
-	}
+
+	OnTimerExpiredEvent.Broadcast(Interactor);
 }

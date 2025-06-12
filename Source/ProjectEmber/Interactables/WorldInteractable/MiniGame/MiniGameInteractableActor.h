@@ -30,23 +30,16 @@ public:
 protected:
 	void BeginMiniGame();
 	void EndMiniGame();
-	
-	virtual bool IsMiniGameCleared() const { return false; }
-	virtual void GiveReward(AActor* Receiver) {}
 
-	UFUNCTION(Category="Quest|Condition")
+	UFUNCTION(Category="Conditions")
 	void CheckConditionCompletion(const FGameplayTag& EventTag, const FGameplayEventData& EventData);
 	
-	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category="MiniGame")
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category="MiniGameFragment")
 	TArray<TObjectPtr<UMiniGameFragment>> MiniGameFragments;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest|Condition")
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category="Conditions")
 	TArray<TObjectPtr<UQuestCondition>> QuestConditions;
 	
-	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category="Quest|Condition")
-	TArray<TObjectPtr<UMiniGameCondition>> MiniGameConditions;
-	
-	bool bAllConditionsCleared = false;
 	bool bIsPlaying = false;
 };
 

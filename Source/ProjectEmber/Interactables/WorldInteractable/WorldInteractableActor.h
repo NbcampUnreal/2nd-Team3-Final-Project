@@ -9,6 +9,9 @@
 
 class UInteractionReceiverComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionStarted, AActor*, Interactor);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionEnded, AActor*, Interactor);
+
 UCLASS()
 class PROJECTEMBER_API AWorldInteractableActor : public ABaseInteractableActor
 {
@@ -22,8 +25,14 @@ public:
 	UFUNCTION()
 	virtual void EndInteract_Implementation() override;
 
+	UPROPERTY(BlueprintAssignable, Category="Interaction")
+	FOnInteractionStarted OnInteractionStarted;
+
+	UPROPERTY(BlueprintAssignable, Category="Interaction")
+	FOnInteractionEnded OnInteractionEnded;
+	
 protected:
 	
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction")
 	TObjectPtr<UInteractionReceiverComponent> ReceiverComponent;
 };

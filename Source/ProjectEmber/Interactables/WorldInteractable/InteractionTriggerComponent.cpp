@@ -28,6 +28,8 @@ void UInteractionTriggerComponent::ActivateInteractions()
 
 			AActor* CausingActor = GetOwner();
 
+			ReceiverComponent->OnInteractionCompleted.AddUniqueDynamic(this, &UInteractionTriggerComponent::OnTargetInteractionCompleted);
+			
 			switch (InteractionTargets[i].InteractionAction)
 			{
 			case EInteractionAction::Type::Action1:
@@ -88,3 +90,25 @@ void UInteractionTriggerComponent::AddInteractionTarget(FName InstanceName,
 	}
 }
 
+void UInteractionTriggerComponent::OnTargetInteractionCompleted(AActor* CompletedBy, bool bCanBeTriggeredAgain)
+{
+	UE_LOG(LogEmberInteraction, Warning, TEXT("Receiver %s Interaction Completed"), *GetNameSafe(CompletedBy));
+
+	if (!bCanBeTriggeredAgain)
+	{
+		// 해당 액터는 더 이상 활성화 대상 아님
+		for (int32 i = 0; i < InteractionTargets.Num(); ++i)
+		{
+			if (InteractionTargets[i].InteractionTarget == CompletedBy)
+			{
+				InteractionTargets.RemoveAt(i);
+				break;
+			}
+		}
+
+		if (InteractionTargets.Num() == 0)
+		{
+			OnAllReceiversDeactivated.Broadcast();
+		}
+	}
+}
