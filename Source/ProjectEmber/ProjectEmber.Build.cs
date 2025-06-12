@@ -34,7 +34,8 @@ public class ProjectEmber : ModuleRules
             "Slate",
             "SlateCore",
             "MotionWarping",
-            "TargetSystem"
+            "TargetSystem",
+            "EasyMultiSave"
         });
 
         //───────────────────────────────────────────────────────────────────────────────
