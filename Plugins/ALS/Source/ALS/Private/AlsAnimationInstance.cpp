@@ -128,6 +128,7 @@ void UAlsAnimationInstance::NativeUpdateAnimation(const float DeltaTime)
 	ViewMode = Character->GetViewMode();
 	LocomotionMode = Character->GetLocomotionMode();
 	RotationMode = Character->GetRotationMode();
+	TargetingMode = Character->GetTargetMode();
 	Stance = Character->GetStance();
 	Gait = Character->GetGait();
 	OverlayMode = Character->GetOverlayMode();
@@ -380,7 +381,7 @@ void UAlsAnimationInstance::RefreshView(const float DeltaTime)
 
 bool UAlsAnimationInstance::IsSpineRotationAllowed()
 {
-	return RotationMode == AlsRotationModeTags::Aiming;
+	return RotationMode == AlsRotationModeTags::Aiming || TargetingMode == AlsRotationModeTags::Targeting;
 }
 
 void UAlsAnimationInstance::RefreshSpine(const float SpineBlendAmount, const float DeltaTime)

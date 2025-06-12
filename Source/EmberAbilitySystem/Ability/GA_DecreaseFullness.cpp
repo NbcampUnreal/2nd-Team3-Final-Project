@@ -25,14 +25,14 @@ void UGA_DecreaseFullness::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 		}
 	}
 
-	AActor* Actor = GetAvatarActorFromActorInfo();
-	FGameplayCueParameters Param;
-	Param.SourceObject = this;
-	Param.Instigator = Actor;
-	Param.Location = Actor->GetActorLocation();
-
-	GetAbilitySystemComponentFromActorInfo_Ensured()->
-		ExecuteGameplayCue(FGameplayTag::RequestGameplayTag("GameplayCue.Animal.Decrease"), Param);
+	// AActor* Actor = GetAvatarActorFromActorInfo();
+	// FGameplayCueParameters Param;
+	// Param.SourceObject = this;
+	// Param.Instigator = Actor;
+	// Param.Location = Actor->GetActorLocation();
+	//
+	// GetAbilitySystemComponentFromActorInfo_Ensured()->
+	// 	ExecuteGameplayCue(FGameplayTag::RequestGameplayTag("GameplayCue.Animal.Decrease"), Param);
 
 	bool bReplicatedEndAbility = true;
 	bool bWasCancelled = false;

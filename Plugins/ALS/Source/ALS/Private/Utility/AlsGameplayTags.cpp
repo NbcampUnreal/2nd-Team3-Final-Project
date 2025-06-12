@@ -19,6 +19,7 @@ namespace AlsRotationModeTags
 	UE_DEFINE_GAMEPLAY_TAG(VelocityDirection, FName{TEXTVIEW("Als.RotationMode.VelocityDirection")})
 	UE_DEFINE_GAMEPLAY_TAG(ViewDirection, FName{TEXTVIEW("Als.RotationMode.ViewDirection")})
 	UE_DEFINE_GAMEPLAY_TAG(Aiming, FName{TEXTVIEW("Als.RotationMode.Aiming")})
+	UE_DEFINE_GAMEPLAY_TAG(Targeting, FName{TEXTVIEW("Als.RotationMode.Targeting")})
 }
 
 namespace AlsStanceTags
@@ -80,3 +81,8 @@ namespace AlsInputActionTags
 	UE_DEFINE_GAMEPLAY_TAG(LockMoveInput, FName{TEXTVIEW("Character.State.LockMoveInput")})
 }
 
+namespace AlsCharacterStateTags
+{
+	UE_DEFINE_GAMEPLAY_TAG(Attack, FName{TEXTVIEW("Character.State.Attack")})
+	UE_DEFINE_GAMEPLAY_TAG(ComboAttack, FName{TEXTVIEW("Character.State.ComboAttack")})
+}

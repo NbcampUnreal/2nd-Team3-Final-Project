@@ -6,7 +6,6 @@
 #include "AIController.h"
 #include "GameplayTagAssetInterface.h"
 #include "AIAnimal/BaseAIAnimal.h"
-#include "AIAnimal/TestFood.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
 #include "Kismet/GameplayStatics.h"
