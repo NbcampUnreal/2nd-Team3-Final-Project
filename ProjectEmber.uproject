@@ -13,7 +13,8 @@
 				"Engine",
 				"UMG",
 				"GameplayAbilities",
-				"EnhancedInput"
+				"EnhancedInput",
+				"EasyMultiSave"
 			]
 		},
 		{
