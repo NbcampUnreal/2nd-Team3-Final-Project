@@ -115,7 +115,7 @@ void ABaseAIAnimal::BeginPlay()
 			const_cast<UEmberCharacterAttributeSet*>(Attribute)->OnHit.AddDynamic(this, &ABaseAIAnimal::OnHit);
 		}
 	}
-	//시간 받아오는 델리게이트 구독
+	//시간 받아오는 델리게이트 구독-> 이미 스폰된 애들이 밤에 활동/비활동 결정
 	if (UGameplayEventSubsystem* EventSystem = UGameplayEventSubsystem::GetGameplayEvent(GetWorld()))
 	{
 		EventSystem->OnGameEvent.AddDynamic(this, &ABaseAIAnimal::OnGameTimeChanged);
@@ -141,7 +141,13 @@ void ABaseAIAnimal::BeginPlay()
 void ABaseAIAnimal::OnBeginDeath()
 {
 	bIsDead = true;
-	SetActorEnableCollision(false);
+	for (UActorComponent* Component : GetComponents())
+	{
+		if (UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(Component))
+			{
+				PrimComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			}
+	}
 	/** EmberChararcter의 TargetSystem을 위한 브로드 캐스트 및 본인에게 달려있는 타겟위젯 지우기 */
 	UMessageBus::GetInstance()->BroadcastMessage(TEXT("DeathEnemy"), this);
 	TArray<UWidgetComponent*> WidgetComps;
@@ -153,8 +159,6 @@ void ABaseAIAnimal::OnBeginDeath()
 			Comp->DestroyComponent();
 		}
 	}
-	
-	
 	
 	SetActorTickEnabled(false);
 	GetWorldTimerManager().PauseTimer(FullnessTimerHandle);
@@ -238,7 +242,14 @@ void ABaseAIAnimal::SetVisibleInGame()
 		//Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(ChangeData);
 	}
 	
-	SetActorEnableCollision(true);
+	for (UActorComponent* Component : GetComponents())
+	{
+		if (UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(Component))
+		{
+			PrimComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		}
+	}
+	
 	SetActorTickEnabled(true);
 	GetWorldTimerManager().UnPauseTimer(FullnessTimerHandle);
 	SetActorHiddenInGame(false);
@@ -261,6 +272,9 @@ void ABaseAIAnimal::Tick(float DeltaTime)
 			FRotator NewRot = FMath::RInterpTo(GetActorRotation(), TargetRotation, DeltaTime, 5.0f);
 			SetActorRotation(NewRot);
 		}
+
+		//FName  state =  BlackboardComponent->GetValueAsName("NStateTag");
+		//UE_LOG(LogTemp, Warning, TEXT(" [UQuestSubsystem::OnGameEvent] Received EventTag: %s"),*state.ToString());
 	}
 }
 
@@ -471,7 +485,7 @@ void ABaseAIAnimal::SetRoleTag(const FName InRoleTag)
 	}
 }
 
-void ABaseAIAnimal::SetIdleState(bool IsShouldSleep)
+void ABaseAIAnimal::SetState(bool IsShouldSleep)
 {
 	if (!BlackboardComponent)
 	{
