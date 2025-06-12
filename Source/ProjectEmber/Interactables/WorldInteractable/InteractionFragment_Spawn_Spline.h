@@ -17,12 +17,12 @@ class PROJECTEMBER_API UInteractionFragment_Spawn_Spline : public UInteractionFr
 public:
 	UInteractionFragment_Spawn_Spline();
 
+
 	virtual void OnRegister() override;
 	
 	virtual void SpawnActors(UWorld* World) override;
 
-	UFUNCTION(BlueprintCallable, Category = "Spawn")
-	void DestroySpawnedActors();
+	virtual void DestroySpawnedActors() override;
 	
 	UPROPERTY()
 	TObjectPtr<USplineComponent> TargetSpline; // Owner의 스플라인 참조

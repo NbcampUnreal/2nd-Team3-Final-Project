@@ -29,3 +29,17 @@ void AWorldInteractableActor::Interact_Implementation(AActor* Interactor)
 		}
 	}
 }
+
+void AWorldInteractableActor::EndInteract_Implementation()
+{
+	TArray<UInteractionFragment*> Fragments;
+	GetComponents<UInteractionFragment>(Fragments);
+
+	for (UInteractionFragment* Fragment : Fragments)
+	{
+		if (Fragment)
+		{
+			Fragment->EndInteraction();
+		}
+	}
+}

@@ -18,7 +18,10 @@ public:
 
 	UFUNCTION()
 	virtual void Interact_Implementation(AActor* Interactor) override;
-	
+
+	UFUNCTION()
+	virtual void EndInteract_Implementation() override;
+
 protected:
 	
 	UPROPERTY(VisibleAnywhere)

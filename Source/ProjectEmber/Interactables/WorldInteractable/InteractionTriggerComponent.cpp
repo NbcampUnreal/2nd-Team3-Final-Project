@@ -66,7 +66,7 @@ void UInteractionTriggerComponent::ActivateInteractions()
 }
 
 void UInteractionTriggerComponent::AddInteractionTarget(FName InstanceName,
-	TEnumAsByte<EInteractionAction::Type> InteractionAction)
+                                                        TEnumAsByte<EInteractionAction::Type> InteractionAction)
 {
 	if (!GetWorld()) return;
 

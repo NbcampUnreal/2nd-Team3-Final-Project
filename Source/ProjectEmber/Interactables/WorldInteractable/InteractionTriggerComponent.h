@@ -22,8 +22,18 @@ public:
 	void ActivateInteractions(); //등록된 액터들의 액션 실행
 
 	UFUNCTION(BlueprintCallable, Category="Interaction")
+	void ActivateTrigger() {bActivate = true;}
+	
+	UFUNCTION(BlueprintCallable, Category="Interaction")
+	void DeactivateTrigger() {bActivate = false;}
+	
+	UFUNCTION(BlueprintCallable, Category="Interaction")
 	void AddInteractionTarget(FName InstanceName, TEnumAsByte<EInteractionAction::Type> InteractionAction); //월드에 배치된 액터 등록. 인스턴스 이름으로 찾고 실행할 액션은 enum으로 결정
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction")
 	TArray<FInteractionTarget> InteractionTargets; // 자신에게 등록된 액터들
+
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction")
+	bool bActivate;
 };
