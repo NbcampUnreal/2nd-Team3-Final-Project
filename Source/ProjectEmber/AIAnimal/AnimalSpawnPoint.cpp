@@ -48,3 +48,13 @@ int32 AAnimalSpawnPoint::GetAliveAnimalsInBox() const
 	BoxComponent->GetOverlappingActors(OverlappingActors, ABaseAIAnimal::StaticClass());
 	return OverlappingActors.Num();
 }
+
+bool AAnimalSpawnPoint::GetIsCreated() const
+{
+	return bIsCreated;
+}
+
+void AAnimalSpawnPoint::SetIsCreated(bool Inbool)
+{
+	bIsCreated = Inbool;
+}

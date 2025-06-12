@@ -1,12 +1,18 @@
 ﻿
 #include "BaseOverlayAbility.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "AlsCharacter.h"
+#include "AlsCharacterMovementComponent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "EmberLog/EmberLog.h"
 #include "GameFramework/Character.h"
+#include "MessageBus/MessageBus.h"
+#include "MotionWarpingComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 UBaseOverlayAbility::UBaseOverlayAbility()
 {
@@ -26,12 +32,16 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 		return;
 	}
 
-	LaunchCharacterForward(ActorInfo);
+	if (!bLoopingMontage && bIsWarping)
+	{
+		SetUpdateWarping();
+	}
 
 	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
 	{
 		Character->SetForceGameplayTags(ForceGameplayTags);
-		PreLocomotionState = Character->GetLocomotionState();
+		//Character->ForceLastInputDirectionBlocked(true);
+		//PreLocomotionState = Character->GetLocomotionState();
 
 		if (bMontageTickEnable)
 		{
@@ -51,11 +61,11 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	{
 		SelectedMontage = DefaultMontage;
 	}
-
+	
 	UAbilityTask_PlayMontageAndWait* PlayMontageTask =
 		UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 			this, NAME_None, SelectedMontage);
-
+	
 	PlayMontageTask->OnCompleted.AddDynamic(this, &UBaseOverlayAbility::OnMontageCompleted);
 	PlayMontageTask->OnInterrupted.AddDynamic(this, &UBaseOverlayAbility::OnMontageInterrupted);
 	PlayMontageTask->OnCancelled.AddDynamic(this, &UBaseOverlayAbility::OnMontageInterrupted);
@@ -97,12 +107,19 @@ void UBaseOverlayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 		{
 			Character->SetDesiredGait(AlsGaitTags::Running);	
 		}
+
+		if (bMontageTickEnable)
+		{
+			Character->ForceLastInputDirectionBlocked(true);	
+		}
 	}
 
 	if (auto AbilityClass = ChooseAbilityByState())
 	{
 		AbilitySystemComponent->TryActivateAbilityByClass(AbilityClass,false);
 	}
+	
+	UMessageBus::GetInstance()->BroadcastMessage(TEXT("OverlayAbilityEnded"), GetAvatarActorFromActorInfo());
 }
 
 void UBaseOverlayAbility::InputPressed(const FGameplayAbilitySpecHandle Handle,
@@ -119,6 +136,11 @@ void UBaseOverlayAbility::InputReleased(const FGameplayAbilitySpecHandle Handle,
 	EndAbility(Handle, ActorInfo, ActivationInfo,true, true);
 }
 
+UAnimMontage* UBaseOverlayAbility::GetDefaultMontage() const
+{
+	return DefaultMontage;
+}
+
 
 void UBaseOverlayAbility::OnMontageCompleted()
 {
@@ -130,6 +152,9 @@ void UBaseOverlayAbility::OnMontageCompleted()
 		EMBER_LOG(LogEmber, Warning, TEXT("Changed TargetYawAngle : %f"), Character->GetLocomotionState().TargetYawAngle);
 		EMBER_LOG(LogEmber, Warning, TEXT("Changed InputYawAngle : %f"), Character->GetLocomotionState().InputYawAngle);*/
 		//Character->SetRotationInstant(StartMontageActorYaw, ETeleportType::None);
+		
+		auto* MoveComp = Cast<UAlsCharacterMovementComponent>(Character->GetCharacterMovement());
+		MoveComp->SetIsActiveOverlayAbility(false);
 	}
 	
 	bool bReplicatedEndAbility = true;
@@ -139,6 +164,12 @@ void UBaseOverlayAbility::OnMontageCompleted()
 
 void UBaseOverlayAbility::OnMontageInterrupted()
 {
+	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
+	{
+		auto* MoveComp = Cast<UAlsCharacterMovementComponent>(Character->GetCharacterMovement());
+		MoveComp->SetIsActiveOverlayAbility(false);
+	}
+	
 	bool bReplicatedEndAbility = true;
 	bool bWasCancelled = true;
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
@@ -159,32 +190,71 @@ void UBaseOverlayAbility::OnComboNotify(const FGameplayEventData Payload)
 	}
 }
 
-void UBaseOverlayAbility::LaunchCharacterForward(const FGameplayAbilityActorInfo* ActorInfo) const
-{
-	if (bEnableForwardMovementDuringMontage && ForwardMovementDistance > 0.f && ForwardMovementDuration > 0.f)
-	{
-		if (ACharacter* Character = Cast<ACharacter>(ActorInfo->AvatarActor.Get()))
-		{
-			const FVector Forward = Character->GetActorForwardVector();
-			const float Speed = ForwardMovementDistance / ForwardMovementDuration;
-			Character->LaunchCharacter(Forward * Speed, true, true);
-		}
-	}
-}
-
 void UBaseOverlayAbility::OnMontageTick() const
 {
 	if (bMontageTickEnable)
 	{
 		if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
 		{
-			Character->ForceVelocityYawAngle(PreLocomotionState);
+			Character->ForceLastInputDirectionBlocked(true);
+			//Character->GetCharacterMovement()->StopMovementImmediately();
+			//Character->ForceVelocityYawAngle(PreLocomotionState);
 		}	
 	}
 }
 
 void UBaseOverlayAbility::OnBlendOut()
 {
+}
+
+void UBaseOverlayAbility::SetUpdateWarping()
+{
+	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
+	{
+		FRotator CtrlRot = Character->GetController()->GetControlRotation();
+		CtrlRot.Pitch = 0.f;
+		CtrlRot.Roll  = 0.f;
+		const FVector Forward = CtrlRot.Vector();
+		const FVector Right   = FRotationMatrix(CtrlRot).GetScaledAxis(EAxis::Y);
+		
+		const FVector2D MoveInput = Character->GetMoveInput();
+		FVector MoveDir = (Forward * MoveInput.Y + Right * MoveInput.X).GetSafeNormal();
+		if (MoveDir.IsNearlyZero())
+		{
+			MoveDir = Forward;
+		}
+		
+		const FVector DesiredWarp = Character->GetActorLocation() + MoveDir * WarpDistance;
+		
+		FHitResult Hit;
+		FCollisionQueryParams Params(NAME_None, false, Character);
+		const bool bBlocked = Character->GetWorld()->LineTraceSingleByChannel(Hit,Character->GetActorLocation(),
+			DesiredWarp,
+			ECC_EngineTraceChannel5,
+			Params
+		);
+		
+		FVector FinalWarp = DesiredWarp;
+		if (bBlocked)
+		{
+			const float Radius = Character->GetCapsuleComponent()->GetScaledCapsuleRadius();
+			FinalWarp = Hit.ImpactPoint - Hit.ImpactNormal * Radius;
+		}
+
+		if (UMotionWarpingComponent* WarpComp = Character->FindComponentByClass<UMotionWarpingComponent>())
+		{
+			FMotionWarpingTarget WarpTarget;
+			WarpTarget.Name     = FName("AttackWarp");
+			WarpTarget.Location = FinalWarp;
+			WarpTarget.Rotation = MoveDir.Rotation();
+			WarpComp->AddOrUpdateWarpTarget(WarpTarget);
+		}
+
+		Character->ForceRoationTest(MoveDir.Rotation().Yaw);
+
+		auto* MoveComp = Cast<UAlsCharacterMovementComponent>(Character->GetCharacterMovement());
+		MoveComp->SetIsActiveOverlayAbility(true);
+	}
 }
 
 UAnimMontage* UBaseOverlayAbility::ChooseMontageByState()

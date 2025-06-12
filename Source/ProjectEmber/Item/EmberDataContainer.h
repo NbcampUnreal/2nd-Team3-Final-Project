@@ -63,6 +63,8 @@ public:
 	
 	virtual FName GetSlotItemID_Implementation(int32 InIndex) const override;
 	
+	virtual FInstancedStruct GetSlotItemInfo_Implementation(int32 InIndex) const override;
+	
 	virtual void MoveItemByWidget_Implementation(const FGameplayTag& SlotTag, int32 IndexTo, const TScriptInterface<UEmberSlotDataProviderInterface>& AnotherProvider, int32 IndexFrom, int32 Quantity) override;
 	
 	virtual int32 GetSlotCount_Implementation() const override;
@@ -74,7 +76,8 @@ public:
 	/*
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	void SortItem();*/
-	
+
+	void InitOwner(TObjectPtr<AActor> InOwner);
 protected:
 	/**
 	 * 
@@ -83,6 +86,14 @@ protected:
 	 * @return 
 	 */
 	virtual int32 TryAddItemsToSlots(const FItemPair& InItem, int32 InSlotIndex = -1);
+	/**
+	 * 
+	 * @param FItemPair 넣을 아이템ID , 수량
+	 * @param InSlotIndex -1인경우 있는곳에 넣고 못채운 나머지는 빈공간에 할당, 0 이상인경우 그 공간에 시도한다
+	 * @return 
+	 */
+	virtual int32 TryAddItems(const FInstancedStruct& InItem, int32 InSlotIndex = -1);
+	virtual int32 AddItemSlot(const FInstancedStruct& InItem, int32 InSlotIndex = -1);
 
 	/**
 	 * 보관하는 FStruct를 저장, 반드시 FEmberSlotData를 상속받은 FStruct로 저장할것
@@ -102,6 +113,7 @@ protected:
 	 * @return 슬롯에 채워진 양
 	 */
 	int32 AddItemSlotIndex(FEmberSlotData& Slot, int32 QuantityToAdd) const;
+	
 
 	/**
 	 * 
@@ -115,6 +127,7 @@ protected:
 	 * @return 저장한 수량
 	 */
 	virtual int32 AddDataInIndex(const FItemPair& InItem, int32 InSlotIndex);
+	virtual int32 AddDataInIndex(const FInstancedStruct& InItem, int32 InSlotIndex);
 	void FindSlotIndexesByItemID(const FName& ItemID,  TQueue<int32>& OutSlotIndexes, int32 InBeginIndex = 0);
 	void FindEmptySlotIndexes(TQueue<int32>& OutSlotIndexes) const;
 	int32 FindEmptyFirstSlot() const;

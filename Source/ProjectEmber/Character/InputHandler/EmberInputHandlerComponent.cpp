@@ -2,7 +2,7 @@
 #include "../EmberCharacter.h"
 #include "Engine/LocalPlayer.h"
 #include "EnhancedInputComponent.h"
-#include "AI_NPC/DialogueComponent.h"
+#include "AI_NPC/NPC_Component/DialogueComponent.h"
 #include "Character/EmberComponents/InteractionComponent.h"
 #include "UI/BaseWidget/GameMenuWidget.h"
 #include "UI/HUD/EmberMainHUD.h"
@@ -53,7 +53,35 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
         //Bind(RotationModeAction,  ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnRotationMode);
         //Bind(ViewModeAction,      ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnViewMode);
         Bind(SwitchShoulderAction,ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnSwitchShoulder);
+        Bind(GlideAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnGlide);
+        Bind(BuildAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnBuild);
 
+        Bind(TargetAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnStartTarget);
+        Bind(TargetAction,         ETriggerEvent::Completed,  &AEmberCharacter::Input_OnSwitchTarget);
+        
+        Bind(ThrowQuickAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnStartThrowQuick);
+        Bind(ThrowQuickAction,         ETriggerEvent::Canceled,  &AEmberCharacter::Input_OnCancelThrowQuick);
+
+        Bind(ThrowOverlayAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnSwitchThrowOverlay);
+
+        Bind(ItemQuickAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnStartItemQuick);
+        Bind(ItemQuickAction,         ETriggerEvent::Canceled,  &AEmberCharacter::Input_OnCancelItemQuick);
+        
+        Bind(ScanAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnStartScan);
+        
+        /*
+        UPROPERTY(EditAnywhere, Category="Input") 
+    TObjectPtr<UInputAction> TargetAction;
+    UPROPERTY(EditAnywhere, Category="Input") 
+    TObjectPtr<UInputAction> ThrowQuickAction;
+    UPROPERTY(EditAnywhere, Category="Input") 
+    TObjectPtr<UInputAction> ThrowOverlayAction;
+    UPROPERTY(EditAnywhere, Category="Input") 
+    TObjectPtr<UInputAction> ItemQuickAction;
+    UPROPERTY(EditAnywhere, Category="Input") 
+    TObjectPtr<UInputAction> ScanAction;
+         */
+        
         UInteractionComponent* Comp = Character->InteractionComponent.Get();
         if (Comp)
         {
@@ -74,7 +102,8 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
     // Ability input
     InputComponent->BindAction(AttackAction, ETriggerEvent::Started, Character, &AEmberCharacter::AbilityInputPressed, 0);
 
-
+    // Bind Action Value
+    Character->MoveInputBinding = &InputComponent->BindActionValue(MoveAction);
 }
 
 void UEmberInputHandlerComponent::RegisterMapping(APlayerController* PC, int32 Priority, const FModifyContextOptions& Options)
@@ -106,5 +135,7 @@ void UEmberInputHandlerComponent::BindUIInput(UGameMenuWidget* Layer)
     {
         InputComp->BindAction(UIInventoryAction, ETriggerEvent::Started, Layer, &UGameMenuWidget::Input_ToggleInventory);
         InputComp->BindAction(UIQuestAction, ETriggerEvent::Started, Layer, &UGameMenuWidget::Input_ToggleQuest);
+        InputComp->BindAction(UIPauseAction, ETriggerEvent::Started, Layer, &UGameMenuWidget::Input_TogglePause);
+        InputComp->BindAction(UISkillAction, ETriggerEvent::Started, Layer, &UGameMenuWidget::Input_ToggleSkill);
     }
 }

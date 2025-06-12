@@ -2,7 +2,7 @@
 #include "Character/EmberCharacter.h"
 #include "Interactables/BaseInteractableActor.h"
 #include "Interactables/BasePickupActor.h"
-#include "AI_NPC/DialogueComponent.h"
+#include "AI_NPC/NPC_Component/DialogueComponent.h"
 #include "Components/BoxComponent.h"
 #include "EmberLog/EmberLog.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -24,14 +24,7 @@ UInteractionComponent::UInteractionComponent()
 void UInteractionComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (AEmberCharacter* Character = Cast<AEmberCharacter>(GetOwner()))
-	{
-		if (Character->InteractMontage)
-		{
-			InteractMontage = Character->InteractMontage;
-		}
-	}
+	
 }
 
 void UInteractionComponent::OnRegister()

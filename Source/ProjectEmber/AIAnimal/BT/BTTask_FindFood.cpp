@@ -4,7 +4,6 @@
 #include "AIAnimal/BT/BTTask_FindFood.h"
 
 #include "AIController.h"
-#include "AIAnimal/TestFood.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "EnvironmentQuery/EnvQueryInstanceBlueprintWrapper.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
@@ -12,6 +11,7 @@
 UBTTask_FindFood::UBTTask_FindFood()
 {
 	NodeName = TEXT("FindFood");
+	bCreateNodeInstance = true;
 }
 
 EBTNodeResult::Type UBTTask_FindFood::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
@@ -58,6 +58,7 @@ void UBTTask_FindFood::OnFindFoodQueryFinished(UEnvQueryInstanceBlueprintWrapper
 	//성공하지 않았으면 리턴
 	if (EEnvQueryStatus::Success != QueryStatus)
 	{
+		
 		FinishLatentTask(*BTComp, EBTNodeResult::Failed);
 		return;
 	}
@@ -65,12 +66,19 @@ void UBTTask_FindFood::OnFindFoodQueryFinished(UEnvQueryInstanceBlueprintWrapper
 	if (BlackboardComp)
 	{
 		AActor* TargetItem = QueryInstance->GetQueryResult()->GetItemAsActor(0);
-		BlackboardComp->SetValueAsObject("NTargetFood", TargetItem);
-		BlackboardComp->SetValueAsVector("NTargetFoodLocation", TargetItem->GetActorLocation());
-		Cast<ATestFood>(TargetItem)->SetSelected(true);
+		if (TargetItem)
+		{
+			
+			BlackboardComp->SetValueAsObject("NTargetFood", TargetItem);
+			BlackboardComp->SetValueAsVector("NTargetFoodLocation", TargetItem->GetActorLocation());
+			FinishLatentTask(*BTComp, EBTNodeResult::Succeeded);
+			return;
+		}
+		FinishLatentTask(*BTComp, EBTNodeResult::Failed);
+		return;
 	}
 	
-	FinishLatentTask(*BTComp, EBTNodeResult::Succeeded);
+	FinishLatentTask(*BTComp, EBTNodeResult::Failed);
 }
 
 //{

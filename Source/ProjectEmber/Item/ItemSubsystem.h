@@ -3,10 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Core/EmberDropStruct.h"
+#include "Core/EmberItemStruct.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Engine/DataTable.h"
 #include "ItemSubsystem.generated.h"
 
+class UAbilitySystemComponent;
 struct FItemMasterInfoRow;
 /**
  * 
@@ -22,6 +25,10 @@ public:
 
     const FItemMasterInfoRow* GetItemMasterInfoRow(FName ItemID) const;
 
+	TArray<FItemPair> GetDroppedItem(FName MonsterID, const UAbilitySystemComponent* AbilitySystemComponent = nullptr);
+protected:
+	bool SelectWeightedItem(const TArray<FEmberDropItemGroup>& ItemsToSelectFrom, FEmberDropItemGroup& OutSelectedItem);
+	TArray<FItemEffectApplicationInfo> SetEnchantEquipment(const TObjectPtr<UDataTable>& EnchantDataTable);
 protected:
 
     UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category = "DataTables", meta = (AllowedClasses = "/Script/Engine.DataTable", DisplayName = "Item Base Data Table"))
@@ -36,6 +43,15 @@ protected:
     UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category = "DataTables", meta = (AllowedClasses = "/Script/Engine.DataTable", DisplayName = "Consumable Component Data Table"))
     TSoftObjectPtr<UDataTable> EquipmentComponentDataTablePtr;
 
+    UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category = "DataTables", meta = (AllowedClasses = "/Script/Engine.DataTable", DisplayName = "Consumable Component Data Table"))
+    TSoftObjectPtr<UDataTable> MonsterLootDataTablePtr;
+
+    UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category = "DataTables", meta = (AllowedClasses = "/Script/Engine.DataTable", DisplayName = "Consumable Component Data Table"))
+    TSoftObjectPtr<UDataTable> LootPoolDataTablePtr;
+
+    UPROPERTY(Config, EditDefaultsOnly, BlueprintReadOnly, Category = "DataTables", meta = (AllowedClasses = "/Script/Engine.DataTable", DisplayName = "Consumable Component Data Table"))
+    TSoftObjectPtr<UDataTable> EnchantDataTablePtr;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item DataTables")
     TObjectPtr<UDataTable> LoadedItemBaseDataTable = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item DataTables")
@@ -44,6 +60,12 @@ protected:
     TObjectPtr<UDataTable> LoadedConsumableComponentDataTable = nullptr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item DataTables")
     TObjectPtr<UDataTable> LoadedConsumableEquipmentDataTable = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item DataTables")
+    TObjectPtr<UDataTable> LoadedMonsterLootDataTable = nullptr;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item DataTables")
+    TObjectPtr<UDataTable> LoadedLootPoolDataTable = nullptr;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item DataTables")
+    TObjectPtr<UDataTable> EnchantDataTable = nullptr;
     
     /** 데이터 테이블 로드를 위한 내부 헬퍼 함수 */
     TObjectPtr<UDataTable> LoadDataTable(const TSoftObjectPtr<UDataTable>& DataTablePtr, const FName& TableIdentifier) const;

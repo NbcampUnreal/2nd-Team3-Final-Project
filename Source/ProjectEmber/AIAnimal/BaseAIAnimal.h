@@ -4,13 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "EMSActorSaveInterface.h"
 #include "GameFramework/Character.h"
 #include "GameplayEffectTypes.h"
-#include "EMSActorSaveInterface.h"
 #include "GameplayTagAssetInterface.h"
+#include "TargetSystemTargetableInterface.h"
+#include "Abilities/GameplayAbilityTypes.h"
 #include "MessageBus/MessageBus.h"
 #include "BaseAIAnimal.generated.h"
 
+class UWidgetComponent;
 class UMeleeTraceComponent;
 class UBoxComponent;
 class UAISenseConfig_Hearing;
@@ -25,18 +28,18 @@ class AAIController;
 UENUM(BlueprintType)
 enum class EAnimalAIPersonality : uint8
 {
-	Normal			UMETA(DisplayName = "Normal"),			//디폴트
-	Cowardly        UMETA(DisplayName = "Cowardly"),        // 기본 경계거리 증가
-	Curious			UMETA(DisplayName = "Curious"),			// 플레이어에 접근
-	Brave			UMETA(DisplayName = "Brave"),			// 위협받으면 반격
-	Outsider		UMETA(DisplayName = "Outsider"),		// 기본 어슬렁거리 증가
+	Normal			UMETA(DisplayName = "Normal"),			//인지 -> Idle, 피격-> 확정 도망
+	Cowardly        UMETA(DisplayName = "Cowardly"),        // 인지 -> 도망 확률 증가, 피격-> 확정 도망
+	Curious			UMETA(DisplayName = "Curious"),			// 인지 -> 접근 확률 증가, 피격-> 확정 도망
+	Brave			UMETA(DisplayName = "Brave"),			// 인지 -> 선공격 확률 증가, 피격-> 반격 확률 증가
 	Agile			UMETA(DisplayName = "Agile"),			// 기본 이동속도 증가
 	Lazy			UMETA(DisplayName = "Lazy"),			// 기본 이동속도 감소
 	End				UMETA(DisplayName = "End")
 };
 
 UCLASS()
-class PROJECTEMBER_API ABaseAIAnimal : public ACharacter, public IAbilitySystemInterface, public IEMSActorSaveInterface, public IGameplayTagAssetInterface
+class PROJECTEMBER_API ABaseAIAnimal : public ACharacter, public IAbilitySystemInterface, public IGameplayTagAssetInterface,
+public ITargetSystemTargetableInterface
 {
 	GENERATED_BODY()
 
@@ -47,11 +50,19 @@ public:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
+	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override; //어빌리티시스템 함수 오버라이드
+
+	virtual bool IsTargetable_Implementation() const override;
 	
-	virtual void ActorPreSave_Implementation() override;
-	virtual void ActorLoaded_Implementation() override;
-	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
+
+	UFUNCTION()
+	void OnHit(AActor* InstigatorActor);
 	
+	UFUNCTION(BlueprintCallable)
+	void OnGameTimeChanged(const FGameplayTag& EventTag, const FGameplayEventData& EventData);
+	void MakeRandomActiveAtNight(int32 InWeather);
+
+	void OnWalkSpeedChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnFullnessChanged(const FOnAttributeChangeData& OnAttributeChangeData);
@@ -60,13 +71,9 @@ public:
 	float GetWildPower() const;
 	float GetWanderRange() const;
 	UAnimMontage* GetMontage(FGameplayTag MontageTag);
-	TArray<FVector>& GetPatrolPoints();
 	
 	void GenerateRandom();
 	void DecreaseFullness();
-
-	UFUNCTION(BlueprintCallable)
-	FGameplayTagContainer& GetGameplayTagContainer();
 
 	UFUNCTION(BlueprintCallable, Category = AI)
 	FGameplayTag GetIdentityTag() const;
@@ -74,7 +81,35 @@ public:
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void SetIdentityTag(const FGameplayTag InIdentityTag);
 
-  /* Spawn */
+	UFUNCTION(BlueprintCallable, Category = AI)
+	FName GetRoleTag() const;
+	
+	UFUNCTION(BlueprintCallable, Category = AI)
+	void SetRoleTag(FName InRoleTag);
+
+	UFUNCTION(BlueprintCallable)
+	void SetState(bool IsShouldSleep = true);
+
+	bool GetIsShouldSleep() const;
+	
+	//밤에 활동,비활동
+	UFUNCTION(BlueprintCallable)
+	void ActiveNonSleep();
+	
+	UFUNCTION(BlueprintCallable)
+	void DeactiveSleep();
+
+	UFUNCTION(BlueprintCallable, Category = AI)
+	bool GetIsDead() const;
+	
+	UFUNCTION(BlueprintCallable, Category = AI)
+	void SetIsDead(const bool InIsDead);
+
+	UFUNCTION(BlueprintCallable, Category = SoundPitch)
+	int32 GetSoundIndex() const;
+	
+	
+	/* Spawn & Despawn*/
 	UFUNCTION()
 	void SetHiddenInGame();
 
@@ -83,7 +118,7 @@ public:
 
 	UFUNCTION()
 	void OnBeginDeath();
-	
+
  /* AbilitySystem */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
@@ -93,17 +128,24 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Attribute)
 	const class UEmberCharacterAttributeSet* GetCharacterAttributeSet() const;
 
-	UFUNCTION()
-	void OnHit(AActor* InstigatorActor);
+
 
 protected:
+	void ReceiveMessage(const FName MessageType, UObject* Payload);
+	
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void SetDetails();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UCapsuleComponent* RCapsuleComponent;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UCapsuleComponent* LCapsuleComponent;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UMeleeTraceComponent* MeleeTraceComponent;
 	
-	UPROPERTY(EditAnywhere, Category = "AbilitySystem", SaveGame)
+	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 	
 	UPROPERTY(SaveGame)
@@ -115,7 +157,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "HpBar")
 	TSubclassOf<class UUserWidget> HpBarWidgetClass;
 	
-	UPROPERTY(BlueprintReadOnly, SaveGame)
+	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class UEmberWidgetComponent> HpBarWidget;
 	
 	// Invoker 관련 변수
@@ -126,7 +168,7 @@ protected:
 	float NavGenerationRadius;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Navigation)
-	float NavRemovalRadius;
+	float NavRemoveRadius;
 
 	//
 	UPROPERTY()
@@ -136,9 +178,9 @@ protected:
 	UBlackboardComponent* BlackboardComponent;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Montage)
-	TMap<FGameplayTag, UAnimMontage*> MontageMap; //키로 태그 넘겨주면 몽타주 가져옴 -> TSet이나 TMap 으로 바꿀 것 
+	TMap<FGameplayTag, UAnimMontage*> MontageMap; //키로 태그 넘겨주면 몽타주 가져옴 
 	
-	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
+	UPROPERTY(EditAnywhere, Category = "12")
 	TArray<TSubclassOf<class UGameplayAbility>> StartAbilities;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AnimalEnum)
@@ -152,6 +194,9 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	bool bIsShouldSwim = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI") //스포너 조건에 필요한데, 스포너에서 애니멀 블랙보드 접근x 위함 
+	bool bIsDead = false;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	float Fullness = 40.0f; //포만감
@@ -165,19 +210,23 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	float WanderRange = 500.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	FGameplayTagContainer AnimalTagContainer;
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SoundPitch")
+	int32 SoundIndex = 0;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTag IdentityTag;
 
-	FTimerHandle TimerHandle;
-	TArray<FVector> PatrolPoints;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGameplayTag RoleTag;
 
-private:
-	void ReceiveMessage(const FName MessageType, UObject* Payload);
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TObjectPtr<UMaterialInterface>> MaterialInterface;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<class UNiagaraComponent> NiagaraComponent;
+	
+	FTimerHandle FullnessTimerHandle;
 	
 	FMessageDelegate MessageDelegateHandle;
+
 };
-
-

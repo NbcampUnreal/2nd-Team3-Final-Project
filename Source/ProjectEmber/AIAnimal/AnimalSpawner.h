@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "EMSActorSaveInterface.h"
+#include "Attribute/Animal/EmberAnimalAttributeSet.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/Actor.h"
 #include "MessageBus/MessageBus.h"
@@ -10,15 +12,6 @@
 
 class ABaseAIAnimal;
 class AAnimalSpawnPoint;
-
-UENUM(BlueprintType)
-enum class EAnimalSpawnerType : uint8
-{
-	Spwan UMETA(DisplayName = "Spawn"),
-	Despawn UMETA(DisplayName = "Despawn"),
-	Release UMETA(DisplayName = "Release"),
-	None UMETA(DisplayName = "None")
-};
 
 USTRUCT(BlueprintType)
 struct FAnimalInitInfo
@@ -61,7 +54,7 @@ struct FAnimalSpawnInfo
 	TSet<TSoftObjectPtr<ABaseAIAnimal>> SpawnAnimals; 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSet<TSoftObjectPtr<ABaseAIAnimal>> HiddenAnimals;
+	TSet<TSoftObjectPtr<ABaseAIAnimal>> DeadAnimals;
 	//HiddenAnimals는 특정 하나를 키로 꺼내는 용도가 아니라,
 	//동물 객체가 이 집합에 포함되어 있는지만 빠르게 검사하면 되기 때문에,
 	//중복 없이 빠른 검색/삽입/삭제가 가능한 TSet을 사용했습니다, 삽입삭제O(1)
@@ -83,11 +76,17 @@ struct FAnimalQueueInfo
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 SpawnInfoIndex = -1;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 SpawnPointIndex = -1;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString SavedId;
 };
 
 
 UCLASS()
-class PROJECTEMBER_API AAnimalSpawner : public AActor
+class PROJECTEMBER_API AAnimalSpawner : public AActor, public IEMSActorSaveInterface
 {
 	GENERATED_BODY()
 
@@ -98,11 +97,23 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
+	
+	//EMS
+	virtual void ActorPreSave_Implementation() override;
+	virtual void ActorLoaded_Implementation() override;
+	
 	//메세지버스
 	void ReceiveMessage(const FName MessageType, UObject* Payload);
-	void MessageMoveToHidden(UObject* Payload);
+	void MessageMoveToDead(UObject* Payload);
 	FMessageDelegate MessageDelegateHandle;
+
+	//Day / Night
+	UFUNCTION(BlueprintCallable)
+	void OnGameTimeChanged(const FGameplayTag& EventTag, const FGameplayEventData& EventData);
+	void MakeRandomActiveAtNight(); //IsDay == true 일 때 확률적으로 D/N 결정하는 함수
+	
+	//밤->낮 됐을 때 동물들한테 브로드캐스트 -> 게임플레이이벤트 + 태그는 Gameplay.Time.WakeUp  
+
 	
 	//Filter
 	UFUNCTION(BlueprintCallable)
@@ -120,15 +131,6 @@ protected:
 	//디스폰은 동물 마리 단위, 먼 순서대로 스폰되어 있는 모든 동물 정렬, 나중에 최적화? 시야범위 관련 사용자 설정에 쓰일 함수들
 	UFUNCTION(BlueprintCallable)
 	void SortFarthestAnimal();
-
-
-	//세이브 전처리 단계에서 호출할 함수들
-	UFUNCTION(BlueprintCallable)
-	void MoveToHiddenFromSpawned();
-
-	UFUNCTION(BlueprintCallable)
-	void MoveToSpawnedFromHidden();
-
 	
 	//Create
 	UFUNCTION(BlueprintCallable)
@@ -141,12 +143,11 @@ protected:
 	void TryCreateQueue(TArray<TSoftObjectPtr<AAnimalSpawnPoint>>& InSpawnPoints);
 
 	UFUNCTION(BlueprintCallable)
-	void AddCreateQueue(FAnimalSpawnInfo& Info, TSoftObjectPtr<AAnimalSpawnPoint>& SpawnPoint, FName RoleTag,
-	                   int32 Count);
+	void AddCreateQueue(FAnimalSpawnInfo& Info, TSoftObjectPtr<AAnimalSpawnPoint>& SpawnPoint, int32 Count, FName RoleTag);
+	
+	void TickCreateQueue(TQueue<FAnimalQueueInfo>& InQueue, bool& InIsLoading);
 
-	UFUNCTION(BlueprintCallable)
-	void TickCreateQueue();
-
+	
 	//일괄
 	UFUNCTION(BlueprintCallable)
 	void CreateAnimals(FAnimalSpawnInfo& Info,TSoftObjectPtr<AAnimalSpawnPoint>& InSpawnPoint);
@@ -179,8 +180,6 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void TryReleaseEntire();
 
-	
-
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning")
 	TArray<FAnimalSpawnInfo> AnimalsInfo;
@@ -200,13 +199,6 @@ protected:
 	//메모리 해제되는 기준 거리
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning")
 	float ReleaseDistance = 14000.0f;
-
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning")
-	//FAnimalQueueInfo PerAnimalQueueInfo; //지역변수로 변경, 테스트 필요
-
-	TQueue<FAnimalQueueInfo> CreateInfoQueue; //매 tick 생성될, 큐에 담길 동물객체 하나마다의 정보를 담는 구조체
-	TQueue<TSoftObjectPtr<ABaseAIAnimal>> SpawnQueue;
-	TQueue<TSoftObjectPtr<ABaseAIAnimal>> DespawnQueue;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning") //매 tick 생성될 동물 수
 	int32 MaxSpawnPerTick = 5;
@@ -214,14 +206,27 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning") //플레이어와 가까운 지점들 수
 	int32 BestSpawnPointsAmount = 3;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning") //해당 스폰 포인트에 스폰된 동물 수가 이 수치 이하일 경우에만 추가 스폰을 허용
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning") //해당 스폰너에서 한 종류의 죽은 동물이 이 수치 이상이면 스폰 허용
 	int32 PermittedToSpawnLimit = 3;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning") //매 tick 디스폰될 동물 수
 	int32 MaxDespawnPerTick = 5;
 	
-	FTimerHandle DistanceTimerHandle;
-	EAnimalSpawnerType PreDistResult = EAnimalSpawnerType::None;
-	EAnimalSpawnerType CurDistResult = EAnimalSpawnerType::None;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning", SaveGame)
+	TArray<FAnimalQueueInfo> SaveInfoArray;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="DayNight")
+	bool bIsDay = true;
+
+	int32 Weather =0;
+	bool bIsShouldSleep = true;
+	
+	TQueue<FAnimalQueueInfo>			  LoadInfoQueue; 
+	TQueue<FAnimalQueueInfo>			  CreateInfoQueue;  //매 tick 생성될, 큐에 담길 동물객체 하나마다의 정보를 담는 구조체
+	TQueue<TSoftObjectPtr<ABaseAIAnimal>> SpawnQueue;
+	TQueue<TSoftObjectPtr<ABaseAIAnimal>> DespawnQueue;
+	
+	FTimerHandle DistanceTimerHandle;
+
+	bool bIsLoading = false;
 };

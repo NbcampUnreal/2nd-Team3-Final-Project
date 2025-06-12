@@ -122,6 +122,24 @@ FSavedMovePtr FAlsNetworkPredictionData::AllocateNewMove()
 	return MakeShared<FAlsSavedMove>();
 }
 
+float UAlsCharacterMovementComponent::SlideAlongSurface(const FVector& Delta, float Time, const FVector& Normal,
+	FHitResult& Hit, bool bHandleImpact)
+{
+	if (bIsActiveOverlayAbility)
+	{
+		return 0.0f;
+	}
+	else
+	{
+		return Super::SlideAlongSurface(Delta, Time, Normal, Hit, bHandleImpact);	
+	}
+}
+
+void UAlsCharacterMovementComponent::SetIsActiveOverlayAbility(bool bNewIsActiveOverlayAbility)
+{
+	bIsActiveOverlayAbility = bNewIsActiveOverlayAbility;
+}
+
 UAlsCharacterMovementComponent::UAlsCharacterMovementComponent()
 {
 	SetNetworkMoveDataContainer(MoveDataContainer);

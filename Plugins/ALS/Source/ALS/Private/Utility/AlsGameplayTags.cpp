@@ -11,6 +11,7 @@ namespace AlsLocomotionModeTags
 	UE_DEFINE_GAMEPLAY_TAG(Grounded, FName{TEXTVIEW("Als.LocomotionMode.Grounded")})
 	UE_DEFINE_GAMEPLAY_TAG(InAir, FName{TEXTVIEW("Als.LocomotionMode.InAir")})
 	UE_DEFINE_GAMEPLAY_TAG(InWater, FName{TEXTVIEW("Als.LocomotionMode.InWater")})
+	UE_DEFINE_GAMEPLAY_TAG(Gliding,   FName{TEXTVIEW("Als.LocomotionMode.Gliding")})
 }
 
 namespace AlsRotationModeTags
@@ -18,6 +19,7 @@ namespace AlsRotationModeTags
 	UE_DEFINE_GAMEPLAY_TAG(VelocityDirection, FName{TEXTVIEW("Als.RotationMode.VelocityDirection")})
 	UE_DEFINE_GAMEPLAY_TAG(ViewDirection, FName{TEXTVIEW("Als.RotationMode.ViewDirection")})
 	UE_DEFINE_GAMEPLAY_TAG(Aiming, FName{TEXTVIEW("Als.RotationMode.Aiming")})
+	UE_DEFINE_GAMEPLAY_TAG(Targeting, FName{TEXTVIEW("Als.RotationMode.Targeting")})
 }
 
 namespace AlsStanceTags
@@ -51,6 +53,7 @@ namespace AlsOverlayModeTags
 	UE_DEFINE_GAMEPLAY_TAG(Sword, FName{TEXTVIEW("Als.OverlayMode.Sword")})
 	UE_DEFINE_GAMEPLAY_TAG(Hatchet, FName{TEXTVIEW("Als.OverlayMode.Hatchet")})
 	UE_DEFINE_GAMEPLAY_TAG(PickAxe, FName{TEXTVIEW("Als.OverlayMode.PickAxe")})
+	UE_DEFINE_GAMEPLAY_TAG(Hammer, FName{TEXTVIEW("Als.OverlayMode.Hammer")})
 	UE_DEFINE_GAMEPLAY_TAG(Spear, FName{TEXTVIEW("Als.OverlayMode.Spear")})
 	UE_DEFINE_GAMEPLAY_TAG(Dagger, FName{TEXTVIEW("Als.OverlayMode.Dagger")})
 	UE_DEFINE_GAMEPLAY_TAG(SwordTwoHanded, FName{TEXTVIEW("Als.OverlayMode.SwordTwoHanded")})
@@ -78,3 +81,8 @@ namespace AlsInputActionTags
 	UE_DEFINE_GAMEPLAY_TAG(LockMoveInput, FName{TEXTVIEW("Character.State.LockMoveInput")})
 }
 
+namespace AlsCharacterStateTags
+{
+	UE_DEFINE_GAMEPLAY_TAG(Attack, FName{TEXTVIEW("Character.State.Attack")})
+	UE_DEFINE_GAMEPLAY_TAG(ComboAttack, FName{TEXTVIEW("Character.State.ComboAttack")})
+}

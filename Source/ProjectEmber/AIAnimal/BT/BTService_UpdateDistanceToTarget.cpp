@@ -37,30 +37,25 @@ void UBTService_UpdateDistanceToTarget::TickNode(UBehaviorTreeComponent& OwnerCo
 	
 	if (AActor* Target = Cast<AActor>(BlackboardComp->GetValueAsObject("TargetActor")))
 	{
-		// 디버그 시각화 추가
-#if WITH_EDITOR
-		DrawDebugLine(
-			GetWorld(),
-			 AIPawn->GetActorLocation(),
-			Target->GetActorLocation(),
-			FColor::Red,
-			false,
-			-1.0f,
-			0,
-			10.0f
-		);
-#endif
+// 		// 디버그 시각화 추가
+// #if WITH_EDITOR
+// 		DrawDebugLine(
+// 			GetWorld(),
+// 			 AIPawn->GetActorLocation(),
+// 			Target->GetActorLocation(),
+// 			FColor::Red,
+// 			false,
+// 			-1.0f,
+// 			0,
+// 			10.0f
+// 		);
+// #endif
 		
 		if (AIPawn && Target)
 		{
 			float Distance = FVector::Dist(AIPawn->GetActorLocation(), Target->GetActorLocation());
-			UE_LOG(LogTemp, Warning, TEXT("Distance %f"), Distance);
 			BlackboardComp->SetValueAsFloat("DistanceToTarget", Distance);
 			BlackboardComp->SetValueAsVector("TargetLocation", Target->GetActorLocation());
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("AIPawn or Target is null!"));
 		}
 	}
 }

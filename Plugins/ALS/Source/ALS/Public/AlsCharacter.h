@@ -1,5 +1,6 @@
 #pragma once
 
+#include "EnhancedInputComponent.h"
 #include "GameFramework/Character.h"
 #include "State/AlsLocomotionState.h"
 #include "State/AlsMantlingState.h"
@@ -35,15 +36,29 @@ public:/* My Custom Function & Variable */
 	UFUNCTION(BlueprintCallable, Category = "ALS|Character")
 	void ResetForceGameplayTags();
 
+	UFUNCTION(BlueprintCallable, Category="ALS|Character")
+	void ForceLastInputDirectionBlocked(bool bBlocked);
+	
 	UFUNCTION(BlueprintCallable, Category="ALS|Tags")
 	void RemoveGameplayTagFromAsc(const FGameplayTag Tag) const;
 
 	void ForceVelocityYawAngle(const FAlsLocomotionState& NewLocomotionState);
+
+	void ForceRoationTest(float YawAngle);
+	
+	UFUNCTION(BlueprintCallable, Category = "ALS|Character")
+	FVector2D GetMoveInput() const;
+
+	void SetTargetMode(const FGameplayTag& InTargetMode);
+	const FGameplayTag& GetTargetMode() const;
+	FEnhancedInputActionValueBinding* MoveInputBinding{nullptr};
 	
 private:
 	TObjectPtr<UAbilitySystemComponent> AscInstance;
 	FGameplayTagContainer ForceGameplayTags;
 	
+	FGameplayTag TargetMode{FGameplayTag()};
+
 protected: /* AlsCharacter */
 	UPROPERTY(BlueprintReadOnly, Category = "Als Character")
 	TObjectPtr<UAlsCharacterMovementComponent> AlsCharacterMovement;

@@ -7,23 +7,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "DrawDebugHelpers.h"
-#include "EMSCompSaveInterface.h"
-#include "TestFood.h"
-#include "GameFramework/PawnMovementComponent.h"
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
-#include "EnvironmentQuery/EnvQueryManager.h"
-
-const FName AAIAnimalController::SleepTime = "SleepTime";
-const FName AAIAnimalController::IsShouldSleep = "IsShouldSleep";
-const FName AAIAnimalController::DistanceToTarget = "DistanceToTarget";
-const FName AAIAnimalController::CurrentState = "CurrentState";
-const FName AAIAnimalController::TargetActor = "TargetActor";
-const FName AAIAnimalController::TargetLocation = "TargetLocation";
-const FName AAIAnimalController::FleeRange = "FleeRange";
-const FName AAIAnimalController::WanderRange = "WanderRange"; 
-const FName AAIAnimalController::SafeLocation = "SafeLocation"; 
-const FName AAIAnimalController::IsHit = "IsHit";
+#include "Character/EmberCharacter.h"
 
 AAIAnimalController::AAIAnimalController()
 {
@@ -36,14 +21,14 @@ AAIAnimalController::AAIAnimalController()
     SightConfig->PeripheralVisionAngleDegrees = 120.0f;
     SightConfig->SetMaxAge(3.0f);
     SightConfig->DetectionByAffiliation.bDetectEnemies = true;
-    SightConfig->DetectionByAffiliation.bDetectFriendlies = false;
-    SightConfig->DetectionByAffiliation.bDetectNeutrals = false;
+    SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
+    SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
     
     HearingConfig->HearingRange = 1000.0f;
     HearingConfig->SetMaxAge(3.0f);
     HearingConfig->DetectionByAffiliation.bDetectEnemies = true;
-    HearingConfig->DetectionByAffiliation.bDetectFriendlies = false;
-    HearingConfig->DetectionByAffiliation.bDetectNeutrals = false;
+    HearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
+    HearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
 
     PerceptionComp->ConfigureSense(*SightConfig);
     PerceptionComp->ConfigureSense(*HearingConfig);
@@ -63,8 +48,6 @@ void AAIAnimalController::OnPossess(APawn* InPawn)
         // 블랙보드 초기화 성공, 비헤이비어 트리 실행
         RunBehaviorTree(BehaviorTree);
     }
-    InitBlackboard();
-    //AnimalBindingEQS(InPawn);
     AbilitySystemComponent = CastChecked<ABaseAIAnimal>(InPawn)->GetAbilitySystemComponent();
 }
 
@@ -75,89 +58,17 @@ void AAIAnimalController::BeginPlay()
 
 }
 
-// void AAIAnimalController::AnimalBindingEQS(APawn* InPawn)
-// {
-//     
-//
-//     
-//     QueryInstance = UEnvQueryManager::RunEQSQuery(
-//      GetWorld(),
-//     RandomQuery,
-//      InPawn,
-//      EEnvQueryRunMode::SingleResult,
-//      nullptr);
-//     
-//     if (QueryInstance)
-//     {
-//         QueryInstance->GetOnQueryFinishedEvent().AddDynamic(this, &AAIAnimalController::OnFindRandomPointQueryFinished);
-//     }
-//     
-//     //
-//     QueryInstance = UEnvQueryManager::RunEQSQuery(
-//      GetWorld(),
-//     SafePointQuery,
-//      InPawn,
-//      EEnvQueryRunMode::SingleResult,
-//      nullptr);
-//     
-//     if (QueryInstance)
-//     {
-//         QueryInstance->GetOnQueryFinishedEvent().AddDynamic(this, &AAIAnimalController::OnFindSafePointQueryFinished);
-//     }
-// }
-
-// void AAIAnimalController::OnFindFoodQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance,
-//     EEnvQueryStatus::Type QueryStatus)
-// {
-//     //성공하지 않았으면 리턴
-//     if (EEnvQueryStatus::Success != QueryStatus)
-//     {
-//         return;
-//     }
-//     
-//     if (BlackboardComponent)
-//     {
-//         AActor* TargetItem = QueryInstance->GetQueryResult()->GetItemAsActor(0);
-//         BlackboardComponent->SetValueAsObject("NTargetFood", TargetItem);
-//         BlackboardComponent->SetValueAsVector("NTargetFoodLocation", TargetItem->GetActorLocation());
-//         Cast<ATestFood>(TargetItem)->SetSelected(true);
-//     }
-// }
-
-// void AAIAnimalController::OnFindRandomPointQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance,
-//     EEnvQueryStatus::Type QueryStatus)
-// {
-// }
-//
-// void AAIAnimalController::OnFindSafePointQueryFinished(UEnvQueryInstanceBlueprintWrapper* QueryInstance,
-//     EEnvQueryStatus::Type QueryStatus)
-// {
-// }
-
-void AAIAnimalController::InitBlackboard()
-{
-    GetBlackboardComponent()->SetValueAsName("NStateTag", "Animal.State.Idle");
-    GetBlackboardComponent()->SetValueAsBool("NIsNeedToGeneratePP", true);
-    GetBlackboardComponent()->SetValueAsFloat("SleepTime", fSleepTime);
-    GetBlackboardComponent()->SetValueAsBool("IsShouldSleep",bIsShouldSleep);
-    GetBlackboardComponent()->SetValueAsEnum("Personality",
-                                            static_cast<uint8>(Cast<ABaseAIAnimal>(GetPawn())->GetPersonality()) );
-    GetBlackboardComponent()->SetValueAsFloat("WanderRange",500.0f);
-}
-
 void AAIAnimalController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
-    if (BlackboardComponent) //임시수정
+    bool IsSleep = Cast<ABaseAIAnimal>(GetPawn())->GetIsShouldSleep();
+    bool IsDead = Cast<ABaseAIAnimal>(GetPawn())->GetIsDead();
+    if (IsSleep || IsDead)
     {
-        FName State = BlackboardComponent->GetValueAsName("NStateTag");
-        if (State == "Animal.State.Attack")
-        {
-            return;
-        }
+        return;
     }
     //시각 청각적으로 감지됐을 때 -> 뒤에서 접근하면 감지 못하는 문제 있을 듯 ,근데 동물은 그게 맞아
-    FindTargetPlayer(Actor, Stimulus);
     FindTargetAnimal(Actor, Stimulus);
+    FindTargetPlayer(Actor, Stimulus);
 }
 
 void AAIAnimalController::FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus)
@@ -165,18 +76,38 @@ void AAIAnimalController::FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus)
     if (BlackboardComponent)
     {
         // 감지된게 플레이어면
-        // 월드에 플레이어가 없다면 터진다 ->당연
-        ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(),0);
+        AEmberCharacter* PlayerCharacter = Cast<AEmberCharacter>(Actor);
         if (!PlayerCharacter)
         {
             return;
         }
+        
         if (BlackboardComponent)
         {
-            // 감지된게 플레이어면
-            BlackboardComponent->SetValueAsName("NEnemyTag", "Player");
-            BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Warning");
-            BlackboardComponent->SetValueAsObject("TargetActor", Actor);
+            //--- 공격 확률 설정 --------------------------------------------------
+            float AttackProb = 0.00;          // 기본 0 %
+            if (Cast<ABaseAIAnimal>(GetPawn())->GetPersonality() == EAnimalAIPersonality::Brave) // 성격이 ‘용감’이라면 +5 %
+            {
+                AttackProb += 0.05f;           // 총합 ⇒ 5 %
+            }
+            if (Cast<ABaseAIAnimal>(GetPawn())->GetRoleTag() == "Animal.Role.Leader")
+            {
+                AttackProb += 0.5f;            // 총합 ⇒ 55 %
+            }
+            //--------------------------------------------------------------------
+
+            // 난수 뽑아서 결정
+            if (FMath::FRand() <= AttackProb)
+            {
+                BlackboardComponent->SetValueAsObject("TargetActor", Actor);
+                BlackboardComponent->SetValueAsVector("TargetLocation", Actor->GetActorLocation());
+                BlackboardComponent->SetValueAsName("NStateTag","Animal.State.Attack");
+            }
+            else
+            {
+                BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Warning");
+                BlackboardComponent->SetValueAsObject("TargetActor", Actor);
+            }
         }
     }
 }
@@ -188,6 +119,11 @@ void AAIAnimalController::FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus)
         // 감지된게 동물이면
         if (const ABaseAIAnimal* TargetAnimal = Cast<ABaseAIAnimal>(Actor))
         {
+            //같은 종이면 무시
+            if (TargetAnimal->GetIdentityTag() == Cast<ABaseAIAnimal>(GetPawn())->GetIdentityTag())
+            {
+                return;
+            }
             const UAbilitySystemComponent* TargetAsc = TargetAnimal->GetAbilitySystemComponent();
             const UAbilitySystemComponent* SourceAsc = Cast<ABaseAIAnimal>(GetPawn())->GetAbilitySystemComponent();
             const UEmberAnimalAttributeSet* TargetAttribute = TargetAsc->GetSet<UEmberAnimalAttributeSet>();
@@ -197,19 +133,32 @@ void AAIAnimalController::FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus)
             const float PawnWildPower = SourceAttribute->GetWildPower();
             const float TargetWildPower = TargetAttribute->GetWildPower();
             
-            if (PawnWildPower <= TargetWildPower) //우선순위가 높거나 같으면
+            if (PawnWildPower <= TargetWildPower) //this가 우선순위가 더 작다면(높다면)
             {
-                //성격이 용감하다면 Attack 확률 좀 더 증가
-                //절반의 확률로
-                BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
-                //또는 낮은 쪽을 공격 NStateTag
-               // BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Attack");
+                //--- 공격 확률 설정 --------------------------------------------------
+                float AttackProb = 0.05f;          // 기본 5 %
+                if (Cast<ABaseAIAnimal>(GetPawn())->GetPersonality() == EAnimalAIPersonality::Brave) // 성격이 ‘용감’이라면 +5 %
+                {
+                    AttackProb += 0.05f;           // ⇒ 10 %
+                }
+                //--------------------------------------------------------------------
+
+                // 난수 뽑아서 결정
+                if (FMath::FRand() <= AttackProb)
+                {
+                    BlackboardComponent->SetValueAsObject("TargetActor", Actor);
+                    BlackboardComponent->SetValueAsVector("TargetLocation", Actor->GetActorLocation());
+                    BlackboardComponent->SetValueAsName("NStateTag","Animal.State.Attack");
+                }
+                else
+                {
+                    BlackboardComponent->SetValueAsName("NStateTag","Animal.State.Idle");
+                }
             }
-            else
+            else //this가 우선순위가 더 크다면(낮다면) -> 도망
             {
-                BlackboardComponent->SetValueAsName("NEnemyTag", "Animal");
                 //여기서 인식되면 타겟, 거리 등록
-                BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Warning");
+                BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
                 BlackboardComponent->SetValueAsObject("TargetActor", Actor);
             }
         }

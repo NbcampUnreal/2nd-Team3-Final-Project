@@ -1,5 +1,6 @@
 #include "GA_AnimalDeath.h"
-#include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+
+#include "AbilitySystemComponent.h"
 #include "MessageBus/MessageBus.h"
 
 UGA_AnimalDeath::UGA_AnimalDeath()
@@ -8,56 +9,71 @@ UGA_AnimalDeath::UGA_AnimalDeath()
 }
 
 void UGA_AnimalDeath::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
-										  const FGameplayAbilityActorInfo* OwnerInfo, const FGameplayAbilityActivationInfo ActivationInfo,
-										  const FGameplayEventData* TriggerEventData)
+                                      const FGameplayAbilityActorInfo* OwnerInfo, const FGameplayAbilityActivationInfo ActivationInfo,
+                                      const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, OwnerInfo, ActivationInfo, TriggerEventData);
 	
-	/* Event를 통한 Activation만 허용 (TryActivateAbility~ 로 들어오면 TriggerEventData가 Nullptr이다)
-	 * HandleGameplayEvent 로 호출해야 파괴시킬 액터 담을 수 있음
-	 */
 	if (!TriggerEventData)
 	{
 		EndAbility(Handle, OwnerInfo, ActivationInfo, true, true);
 		return;
 	}
-	
-	//if (OwnerInfo->OwnerActor)// TWeakObjectPtr<AActor>를 if 조건문에 직접 사용하는 것이 금지되었음을 의미
-	
-	if (OwnerInfo->OwnerActor.IsValid())
-	{
-		Instigator = OwnerInfo->OwnerActor;
-	}
 
-	if (TriggerEventData->OptionalObject)
-	{
-		Montage = const_cast<UAnimMontage*>(Cast<const UAnimMontage>(TriggerEventData->OptionalObject.Get()));
-	}
-	ensure(Montage);
+	//시체 바닥에 쓰러지는 사운드 큐 재생 -> BP에서 처리
 	
-	// 몽타주 재생
-	UAbilityTask_PlayMontageAndWait* Task =	UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, TEXT("AnimalDeath"), Montage);
-	if (Task)
-	{
-		Task->OnCompleted.AddDynamic(this, &UGA_AnimalDeath::OnCompleteCallback);
-		Task->ReadyForActivation();
-	}
+	//타이머 걸기 -> 20초 정도 죽은 상태로 보이면서 대기
+	GetWorld()->GetTimerManager().SetTimer(WaitFarmingTimerHandle, this, &ThisClass::EndFarmingTime, 5.0f, false);
 }
 
-void UGA_AnimalDeath::OnCompleteCallback()
+
+void UGA_AnimalDeath::EndFarmingTime() //파밍시간 종료 되면 호출될 함수
 {
+	AActor* Actor = GetAvatarActorFromActorInfo();
+	FGameplayCueParameters Param;
+	Param.SourceObject = this;
+	Param.Instigator = Actor;
+	Param.Location = Actor->GetActorLocation();
+
+	/*
+	 *ExecuteGameplayCue : 한 번의 이펙트(연출)만 실행-> 태그는 ASC에 등록되지 않음. -> 태그의 Count는 변하지 않음.
+	 *그래서 EGameplayTagEventType(태그 카운트 변경) 이 되지 않아서 GameplayTagEvent 델리게이트는 호출되지 않았음.
+	 *델리게이트 등록 -> 큐 연출 실행 -> 태그를 추가 Count 변화 발생 (0 → 1)
+	 */
+
+	EndCueDelegateHandle = GetAbilitySystemComponentFromActorInfo_Ensured()->
+		RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag("GameplayCue.Animal.Death"),
+		EGameplayTagEventType::AnyCountChange).AddUObject(this, &UGA_AnimalDeath::CallEndAbility);
+	
+	GetAbilitySystemComponentFromActorInfo_Ensured()->
+	ExecuteGameplayCue(FGameplayTag::RequestGameplayTag("GameplayCue.Animal.Death"), Param);
+	
+	GetAbilitySystemComponentFromActorInfo_Ensured()->AddLooseGameplayTag(FGameplayTag::RequestGameplayTag("GameplayCue.Animal.Death"));
+}
+
+void UGA_AnimalDeath::CallEndAbility(const FGameplayTag Tag, int32 NewCount)
+{
+	GetAbilitySystemComponentFromActorInfo_Ensured()->RemoveLooseGameplayTag(FGameplayTag::RequestGameplayTag("GameplayCue.Animal.Death"));
+
 	bool bReplicatedEndAbility = true;
 	bool bWasCancelled = false;
-	
-	if (EffectToApply) //아직없음
-	{
-		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(EffectToApply, GetAbilityLevel());
-		if (SpecHandle.IsValid())
-		{
-			ApplyGameplayEffectSpecToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, SpecHandle);
-		}
-	}
-	UObject* HideAnimal = const_cast<UObject*>(Cast<const UObject>(Instigator.Get()));
-	UMessageBus::GetInstance()->BroadcastMessage(TEXT("HideAnimal"),HideAnimal);
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
+}
+
+void UGA_AnimalDeath::EndAbility(const FGameplayAbilitySpecHandle Handle,
+	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
+	bool bReplicateEndAbility, bool bWasCancelled)
+{
+	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+
+	if (UAbilitySystemComponent* ASC = GetAbilitySystemComponentFromActorInfo())
+	{
+		// 델리게이트 언바인딩 (메모리 누수 방지)
+		ASC->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag("GameplayCue.Animal.Death"), EGameplayTagEventType::AnyCountChange)
+		   .Remove(EndCueDelegateHandle);
+	}
+	
+	//어빌리티 끝나면 필드에서 숨김처리 시키기
+	UObject* HideAnimal = Cast<UObject>(GetAvatarActorFromActorInfo());
+	UMessageBus::GetInstance()->BroadcastMessage(TEXT("HideAnimal"), HideAnimal);
 }
