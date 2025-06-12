@@ -8,6 +8,7 @@
 #include "Character/EmberCharacter.h"
 #include "Components/SphereComponent.h"
 #include "AbilitySystemComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameInstance/EffectManagerSubsystem.h"
 
 AProjectileBase::AProjectileBase()
@@ -75,6 +76,11 @@ void AProjectileBase::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UP
     
     if (OtherActor && OtherActor != this)
     {
+        if (UCapsuleComponent* CapsuleComponent = Cast<UCapsuleComponent>(OtherComp))
+        {
+            return;
+        }
+        
         UGameInstance* GameInstance = GetWorld()->GetGameInstance();
         if (!GameInstance)
         {
@@ -105,6 +111,24 @@ void AProjectileBase::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UP
                     }
                 }
             }    
+        }
+    }
+
+    if (USkeletalMeshComponent* SkelMesh = Cast<USkeletalMeshComponent>(OtherComp))
+    {
+        FName BoneName = Hit.BoneName;
+        if (BoneName == NAME_None)
+        {
+            BoneName = SkelMesh->GetBoneName(0);
+        }
+        
+        if (USceneComponent* RootComp = GetRootComponent())
+        {
+            RootComp->AttachToComponent(
+                SkelMesh,
+                FAttachmentTransformRules::KeepWorldTransform,
+                BoneName
+            );
         }
     }
 }

@@ -113,8 +113,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ability|Movement")
 	bool bMontageTickEnable{false};
 
+public: /* Motion Warping */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Warping")
+	bool bIsWarping{true};
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Warping", meta = (EditCondition = "bIsWarping",EditConditionHides))
 	float WarpDistance{ 100.0f};
+	
 protected:
 	UFUNCTION()
 	void OnMontageCompleted();

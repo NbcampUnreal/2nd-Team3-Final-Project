@@ -4,7 +4,6 @@
 
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AIController.h"
-#include "AIAnimal/TestFood.h"
 #include "EnvironmentQuery/EnvQueryInstanceBlueprintWrapper.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
 

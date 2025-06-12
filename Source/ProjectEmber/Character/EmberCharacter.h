@@ -4,8 +4,11 @@
 #include "AlsCharacter.h"
 #include "AbilitySystemInterface.h"
 #include "EMSActorSaveInterface.h"
+#include "MessageBus/MessageBus.h"
 #include "EmberCharacter.generated.h"
 
+class UEmberHpBarUserWidget;
+class UTargetSystemComponent;
 class UEmberCraftComponent;
 class UUserItemManger;
 class UAC_BuildComponent;
@@ -33,6 +36,7 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void PossessedBy(AController* NewController) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
 private:
 	void SetupEmberInputComponent() const;
@@ -46,13 +50,38 @@ public: /* Character */
 	UPROPERTY(EditAnywhere, Category = "InteractionSystem")
 	TObjectPtr<class UInteractionComponent> InteractionComponent;
 
+	UPROPERTY(EditAnywhere, Category = "DeathWidget")
+	TSubclassOf<class UUserWidget> DeathWidgetClass;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UMeleeTraceComponent* MeleeTraceComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<class UMotionWarpingComponent> MotionWarpComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetSystem", meta=(AllowPrivateAccess = "true"))
+	TObjectPtr<UTargetSystemComponent> TargetSystemComponent;
+
+public: /* TargetSystem */
+	UFUNCTION(BlueprintCallable, Category = "TargetSystem")
+	UTargetSystemComponent* GetTargetSystemComponent() const;
+
+	UFUNCTION()
+	void OnTargetLockedOff(AActor* TargetActor);
 	
+	void DelayToSendHitActors();
+	
+	void ReceiveHitActorDeath(AActor* InstigatorActor);
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<AActor*> HitActors;
+
+	FTimerHandle HitTimerHandle;
+	FTimerHandle HitDeathTimerHandle;
+	FTimerHandle HitTimerInputHandle;
+	int32 HitActorsIndex{0};
+	bool bIsHitActorsInputReset{false};
 protected: /* Mesh */
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> VisualCharacterMesh;
@@ -66,12 +95,13 @@ protected: /* Mesh */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Overlay", meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> OverlaySkeletalMesh;
 
-protected: /* HpBar */
-	UPROPERTY(EditAnywhere, Category = "HpBar")
-	TSubclassOf<class UUserWidget> HpBarWidgetClass;
+public: /* HpBar */
+	UFUNCTION(BlueprintCallable, Category = "HpBar")
+	void SetHpBarWidget(UEmberHpBarUserWidget* InHpBarWidget);
 	
+protected:
 	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<class UEmberWidgetComponent> HpBarWidget;
+	TWeakObjectPtr<class UEmberHpBarUserWidget> HpBarWidget;
 	
 public:/* Build System */
 	
@@ -173,7 +203,19 @@ protected:
 	virtual void Input_OnSwitchShoulder();
 	virtual void Input_OnQuickSlot(int32 PressedIndex);
 	virtual void Input_OnBuild();
-
+	
+	virtual void Input_OnSwitchTarget(const FInputActionValue& ActionValue);
+	virtual void Input_OnStartTarget(const FInputActionValue& ActionValue);
+	virtual void OnResetTarget();
+	
+	virtual void Input_OnStartThrowQuick(const FInputActionValue& ActionValue);
+	virtual void Input_OnCancelThrowQuick(const FInputActionValue& ActionValue);
+	virtual void Input_OnSwitchThrowOverlay(const FInputActionValue& ActionValue);
+	virtual void Input_OnStartItemQuick(const FInputActionValue& ActionValue);
+	virtual void Input_OnCancelItemQuick(const FInputActionValue& ActionValue);
+	virtual void Input_OnStartScan(const FInputActionValue& ActionValue);
+	
+	FGameplayTag PreThrowOverlayTag;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "EmberCharacter")
 	TObjectPtr<UEmberInputHandlerComponent> InputHandler;
 
@@ -198,9 +240,14 @@ protected:
 	FGameplayTag PreOverlayTag;
 
 protected:
-	//UFUNCTION()
-	//void HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, AActor* HitActor, const FVector& HitLocation, const FVector& HitNormal, FName HitBoneName, FMeleeTraceInstanceHandle TraceHandle);
+	UFUNCTION()
+	void HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, AActor* HitActor, const FVector& HitLocation, const FVector& HitNormal, FName HitBoneName, FMeleeTraceInstanceHandle TraceHandle);
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat")
+	TSubclassOf<class UGameplayEffect> DamageGameplayEffectClass;
 
+	void ReceiveMessage(const FName MessageType, UObject* Payload);
+	FMessageDelegate MessageDelegateHandle;
 public: /* Inventory */
 	UFUNCTION(BlueprintCallable, Category = "Item")
 	UUserItemManger* GetItemManager();
@@ -213,5 +260,3 @@ protected:
 	TObjectPtr<UEmberCraftComponent> CraftCollision;
 	
 };
-
-
