@@ -4,8 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Camera/CameraComponent.h"
+#include "Camera/CameraComponent.h" 
+#include "EMSFunctionLibrary.h"
 #include "Build/BuildableData.h"
+#include "Build/BuildSaveData.h"
+#include "Build/BuildSaveGame.h"
 #include "AC_BuildComponent.generated.h"
 
 
@@ -59,6 +62,12 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Build")
     bool DetectBuildBoxes(FTransform& OutTransform);
 
+    UFUNCTION(BlueprintCallable, Category = "Build/Save")
+	void SaveBuilds();
+	UFUNCTION(BlueprintCallable, Category = "Build/Load")
+	void LoadBuilds();
+
+
 public:
     // Components
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
@@ -96,6 +105,9 @@ public:
     // ���๰ datatable
     UPROPERTY(EditAnywhere, Category = "Build")
     UDataTable* BuildData;
+
+    UPROPERTY(SaveGame, EditAnywhere, BlueprintReadWrite, Category = "Build")
+    TArray<FBuildSaveData> SavedBuildDataArray;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     bool Found;

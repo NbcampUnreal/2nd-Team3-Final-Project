@@ -14,4 +14,7 @@ class UInteractionFragment : public UActorComponent
 public:
 	UFUNCTION(BlueprintNativeEvent, Category="Interaction")
 	void ExecuteInteraction(AActor* Interactor);
+
+	UFUNCTION(BlueprintNativeEvent, Category="Interaction")
+	void EndInteraction();
 };
