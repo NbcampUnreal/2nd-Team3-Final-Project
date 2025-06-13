@@ -82,12 +82,12 @@ void UEmberBaseSlotsPanel::BP_CreateSlots_Implementation()
 
 void UEmberBaseSlotsPanel::BindToManagerDelegates_Implementation()
 {
-	
-	if (DataProvider)
-	{
-		if (TObjectPtr<UEmberDataContainer> ProviderManager = Cast<UEmberDataContainer>(DataProvider.GetObject()))
-		{
-			ProviderManager->OnDataChangedDelegate.AddDynamic(this, &UEmberBaseSlotsPanel::SlotChanged);
-		}
-	}
+		if (DataProvider && DataProvider.GetObject())
+    	{
+    		if (TObjectPtr<UEmberDataContainer> ProviderManager = Cast<UEmberDataContainer>(DataProvider.GetObject()))
+    		{
+    			ProviderManager->OnDataChangedDelegate.AddDynamic(this, &UEmberBaseSlotsPanel::SlotChanged);
+    		}
+    	}
+
 }

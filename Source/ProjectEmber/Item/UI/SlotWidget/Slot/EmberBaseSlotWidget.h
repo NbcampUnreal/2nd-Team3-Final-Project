@@ -32,12 +32,14 @@ public:
 	void InitDetailWidget();
 	
 	UFUNCTION(BlueprintCallable)
-	void SetSlotData(const FInstancedStruct& InSlotData);
-	
+	virtual void SetSlotData(const FInstancedStruct& InSlotData);
+
+	UFUNCTION(BlueprintCallable)
 	virtual void UpdateSlot();
 
 	virtual void NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent, UDragDropOperation*& OutOperation) override;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	virtual FReply NativeOnMouseButtonDoubleClick(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 
 	virtual bool NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent, UDragDropOperation* InOperation) override;
 	virtual void NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;

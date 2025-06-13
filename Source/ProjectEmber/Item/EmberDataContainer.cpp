@@ -605,9 +605,10 @@ void UEmberDataContainer::UseItemInSlot_Implementation(int32 SlotIndex)
 
     int32 UseQuantity = 0;
     FInstancedStruct& SlotInstance = DataSlots[SlotIndex];
+
     if (FEmberSlotData* Slot = SlotInstance.GetMutablePtr<FEmberSlotData>())
     {
-        if (Slot->bIsEmpty())
+        if (!Slot->bIsEmpty())
         {
             if (Slot->ConsumableData.IsSet())
             {
@@ -645,6 +646,7 @@ int32 UEmberDataContainer::GetSlotMaxRow_Implementation() const
 void UEmberDataContainer::MovedInItemByAnotherProvider(int32 IndexTo,
     TScriptInterface<UEmberSlotDataProviderInterface> AnotherProvider, int32 IndexFrom, int32 Quantity)
 {
+
     FInstancedStruct ItemInfo = IEmberSlotDataProviderInterface::Execute_GetSlotItemInfo(AnotherProvider.GetObject(), IndexFrom);
     int32 AddItem = AddItemSlot(ItemInfo, IndexTo);
     IEmberSlotDataProviderInterface::Execute_RemoveItemFromSlot(AnotherProvider.GetObject(), IndexFrom, AddItem);
@@ -786,23 +788,10 @@ void UEmberDataContainer::GetItemInfo_Implementation(FEmberItemEntry& InItemEntr
         return; 
     }
     
-    EMBER_LOG(LogTemp, Warning, TEXT("ABSD %d"), TotalData.Num());
-
-    for (auto& Item : TotalData)
-    {
-        if (const FEmberMasterItemData* D = Item.Value.GetPtr<FEmberMasterItemData>())
-        {
-            EMBER_LOG(LogTemp, Warning, TEXT("ABSD0 %s, %d"), *D->ItemID.ToString(), D->Quantity);
-        }
-
-    }
     if (FInstancedStruct* InstancedStruct = TotalData.Find(InItemEntry.CreateItemKey()))
     {
-        EMBER_LOG(LogTemp, Warning, TEXT("ABSD1"));
-
         if (const FEmberMasterItemData* MasterItemData = InstancedStruct->GetPtr<FEmberMasterItemData>())
         {
-            EMBER_LOG(LogTemp, Warning, TEXT("ABSD %d"), MasterItemData->Quantity);
             if (FEmberMasterItemData* OutItem = OutItemInfo.GetMutablePtr<FEmberMasterItemData>())
             {
                 if (OutItem->CreateItemKey() == MasterItemData->CreateItemKey())

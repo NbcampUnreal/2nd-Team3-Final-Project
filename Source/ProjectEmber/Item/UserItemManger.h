@@ -111,7 +111,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
 	TObjectPtr<UInventoryManager> InventoryManager;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
 	TObjectPtr<UQuickSlotManager> QuickSlotManager;
+	
 	TObjectPtr<UEmberEquipmentManager> EquipmentManager;
 	TObjectPtr<UEmberDropItemManager> DropItemManager;
 

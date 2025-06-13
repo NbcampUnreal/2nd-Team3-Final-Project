@@ -6,6 +6,7 @@
 #include "EmberBaseDragAbleSlotWidget.h"
 #include "EmberQuickSlotWidget.generated.h"
 
+class UEmberItemSlotDragDropOperation;
 /**
  * 
  */
@@ -14,6 +15,22 @@ class PROJECTEMBER_API UEmberQuickSlotWidget : public UEmberBaseDragAbleSlotWidg
 {
 	GENERATED_BODY()
 public:
+	virtual FEventReply StartDragDrop_Implementation(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	UFUNCTION(BlueprintCallable)
 	void UseQuickSlotItem(int32 InIndex) const;
+
+	UFUNCTION(BlueprintCallable)
+	void AddQuickSlotItem() const;
+	
+	UFUNCTION(BlueprintCallable)
+	void SetSlotOperation(UEmberItemSlotDragDropOperation* InSlotOperation);
+
+	virtual void UpdateSlot() override;
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void BP_UpdateUI();
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UEmberItemSlotDragDropOperation> StartSlotDropOperation;
 };
+

@@ -9,6 +9,7 @@
 #include "Engine/DataTable.h"
 #include "ItemSubsystem.generated.h"
 
+class UEmberQuickSlotsPanel;
 class UItemDetailWidget;
 class UAbilitySystemComponent;
 struct FItemMasterInfoRow;
@@ -29,6 +30,8 @@ public:
 	TArray<FItemPair> GetDroppedItem(FName MonsterID, const UAbilitySystemComponent* AbilitySystemComponent = nullptr);
 	
 	TObjectPtr<UItemDetailWidget> GetItemDetailWidget();
+	
+	TObjectPtr<UEmberQuickSlotsPanel> GetQuickSlotWidget();
 protected:
 	bool SelectWeightedItem(const TArray<FEmberDropItemGroup>& ItemsToSelectFrom, FEmberDropItemGroup& OutSelectedItem);
 	TArray<FItemEffectApplicationInfo> SetEnchantEquipment(const TObjectPtr<UDataTable>& EnchantDataTable);
@@ -77,4 +80,8 @@ protected:
 	TSoftClassPtr<UItemDetailWidget> DetailWidgetClassPtr;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item UI")
 	TObjectPtr<UItemDetailWidget> DetailWidget;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item UI")
+	TObjectPtr<UEmberQuickSlotsPanel> QuickSlotWidget;
+	
 };

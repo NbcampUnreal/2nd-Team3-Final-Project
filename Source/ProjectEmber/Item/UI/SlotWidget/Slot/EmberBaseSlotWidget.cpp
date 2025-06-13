@@ -33,7 +33,7 @@ void UEmberBaseSlotWidget::InitSlot(int32 InSlotIndex, TScriptInterface<IEmberSl
 	SlotIndex = InSlotIndex;
 	DataProvider = InDataProvider;
 	InitDetailWidget();
-	if (DataProvider)
+	if (DataProvider && DataProvider.GetObject())
 	{
 		SlotType = IEmberSlotDataProviderInterface::Execute_GetSlotType(DataProvider.GetObject());
 	}
@@ -42,7 +42,7 @@ void UEmberBaseSlotWidget::InitSlot(int32 InSlotIndex, TScriptInterface<IEmberSl
 void UEmberBaseSlotWidget::SetSlotData(const FInstancedStruct& InSlotData)
 {
 	SlotData = FEmberWidgetSlotData(InSlotData);
-
+	
 	UpdateSlot();
 }
 
@@ -57,7 +57,9 @@ void UEmberBaseSlotWidget::InitDetailWidget()
 
 void UEmberBaseSlotWidget::UpdateSlot()
 {
+
 	TObjectPtr<UTexture2D> LoadTexture = nullptr;
+
 	if (SlotData.ItemID.IsNone())
 	{
 		LoadTexture = DefaultSlotTexture.LoadSynchronous();
@@ -67,6 +69,7 @@ void UEmberBaseSlotWidget::UpdateSlot()
 		LoadTexture = SlotData.ItemIcon.LoadSynchronous();
 	}
 	SlotImage->SetBrushFromTexture(LoadTexture);
+
 
 	if (SlotData.Quantity > 1)
 	{
@@ -94,8 +97,20 @@ FReply UEmberBaseSlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry
 	return Reply;
 }
 
+FReply UEmberBaseSlotWidget::NativeOnMouseButtonDoubleClick(const FGeometry& InGeometry,
+	const FPointerEvent& InMouseEvent)
+{
+	FReply Reply = Super::NativeOnMouseButtonDoubleClick(InGeometry, InMouseEvent);
+	if (!SlotData.ItemID.IsNone() && DataProvider && DataProvider.GetObject())
+	{
+		IEmberSlotDataProviderInterface::Execute_UseItemInSlot(DataProvider.GetObject(), SlotIndex);
+		return UWidgetBlueprintLibrary::Handled().NativeReply;
+	}
+	return Reply;
+}
+
 bool UEmberBaseSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
-	UDragDropOperation* InOperation)
+                                        UDragDropOperation* InOperation)
 {
 	return IEmberSlotDragAbleSlotInterface::Execute_DropAction(this, InGeometry, InDragDropEvent, InOperation) ||
 		Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);

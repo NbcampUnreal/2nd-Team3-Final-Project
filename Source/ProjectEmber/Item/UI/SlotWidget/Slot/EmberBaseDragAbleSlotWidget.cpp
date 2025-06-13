@@ -13,6 +13,7 @@ void UEmberBaseDragAbleSlotWidget::CreateDragDropOperation_Implementation(const 
 {
 	if (TObjectPtr<UEmberItemSlotDragDropOperation> SlotOperation = NewObject<UEmberItemSlotDragDropOperation>(GetTransientPackage(), UEmberItemSlotDragDropOperation::StaticClass()))
 	{
+
 		SlotOperation->SlotIndex = SlotIndex;
 		SlotOperation->SlotType = SlotType;
 		SlotOperation->Pivot = EDragPivot::MouseDown;
@@ -20,7 +21,7 @@ void UEmberBaseDragAbleSlotWidget::CreateDragDropOperation_Implementation(const 
 		SlotOperation->Provider = DataProvider;
 		if (!SlotOperation->Provider)
 		{
-			EMBER_LOG(LogTemp, Warning, TEXT("SlotOperationProvider Is Null"));
+			EMBER_LOG(LogEmberItem, Warning, TEXT("SlotOperationProvider Is Null"));
 		}
 		if (DragSlotImageClass)
 		{
@@ -65,19 +66,4 @@ bool UEmberBaseDragAbleSlotWidget::DropAction_Implementation(const FGeometry& In
 		IEmberSlotDataProviderInterface::Execute_MoveItemByWidget(DataProvider.GetObject(), EmberDropOperation->SlotType, SlotIndex, EmberDropOperation->Provider.GetObject(), EmberDropOperation->SlotIndex, EmberDropOperation->DraggedQuantity);
 	}
 	return true;
-}
-
-FReply UEmberBaseDragAbleSlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry,
-	const FPointerEvent& InMouseEvent)
-{
-	FReply Reply = Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
-	if (InMouseEvent.GetEffectingButton() == EKeys::RightMouseButton)
-	{
-		EMBER_LOG(LogTemp, Display, TEXT("SlotIndex : %d"), SlotIndex);
-		return FReply::Handled();
-	}
-
-	// 오른쪽 클릭이 아니라면, 이벤트를 처리하지 않았음을 알립니다.
-	// 이렇게 해야 다른 기능(예: 드래그)이 정상적으로 동작할 수 있습니다.
-	return Reply;
 }

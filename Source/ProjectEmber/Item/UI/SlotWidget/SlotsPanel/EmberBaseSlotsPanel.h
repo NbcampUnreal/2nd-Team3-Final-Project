@@ -27,15 +27,15 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category="Slots Panel", meta=(DisplayName="Setup Delegate Bindings"))
 	void BindToManagerDelegates();
 	
-	UFUNCTION(BlueprintNativeEvent, Category="Slots Panel", meta=(DisplayName="CreateAndArrageSlots"))
+	UFUNCTION(BlueprintNativeEvent, Category="Slots Panel", meta=(DisplayName="CreateSlots"))
 	void BP_CreateSlots();
 	
-	UFUNCTION(BlueprintNativeEvent, Category="Slots Panel", meta=(DisplayName="CreateAndArrageSlots"))
+	UFUNCTION(BlueprintNativeEvent, Category="Slots Panel", meta=(DisplayName="SetProvider"))
 	void BP_SetProvider();
 
 	UFUNCTION()
 	virtual void SlotChanged(int32 InIndex, const FInstancedStruct& InSlotData);
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	virtual void UpdateSlots();
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Slots Panel")

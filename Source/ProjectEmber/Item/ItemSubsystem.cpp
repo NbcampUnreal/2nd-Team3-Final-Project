@@ -7,10 +7,12 @@
 #include "Ability/EmberItemAttributeSet.h"
 #include "Blueprint/UserWidget.h"
 #include "Core/EmberDropStruct.h"
+#include "Core/EmberItemDeveloperSetting.h"
 #include "Core/ItemTypes.h"
 #include "EmberLog/EmberLog.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/SlotWidget/ItemDetailWidget.h"
+#include "UI/SlotWidget/SlotsPanel/EmberQuickSlotsPanel.h"
 
 void UItemSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -179,6 +181,20 @@ TObjectPtr<UItemDetailWidget> UItemSubsystem::GetItemDetailWidget()
         }
     }
     return DetailWidget;
+}
+
+TObjectPtr<UEmberQuickSlotsPanel> UItemSubsystem::GetQuickSlotWidget()
+{
+    if (!QuickSlotWidget)
+    {
+        if (const UEmberItemDeveloperSetting* ItemSetting = UEmberItemDeveloperSetting::Get())
+        {
+            QuickSlotWidget = CreateWidget<UEmberQuickSlotsPanel>(UGameplayStatics::GetPlayerController(GetWorld(), 0), ItemSetting->QuickSlotWidgetClass);
+            QuickSlotWidget->AddToViewport();
+        }
+    }
+
+    return QuickSlotWidget;
 }
 
 
