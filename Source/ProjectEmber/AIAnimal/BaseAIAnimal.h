@@ -144,12 +144,6 @@ protected:
 	void SetDetails();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	USphereComponent* RSphereComponent;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	USphereComponent* LSphereComponent;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UMeleeTraceComponent* MeleeTraceComponent;
 	
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem")

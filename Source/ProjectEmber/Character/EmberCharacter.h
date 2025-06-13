@@ -232,7 +232,7 @@ protected:
 
 	/** 글라이드 시 중력 스케일 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Glide")
-	float GlideGravityScale = 0.f;
+	float GlideGravityScale = 0.1f;
 
 	/** 기본 낙하 */
 	float DefaultGravityScale = 1.0f;
