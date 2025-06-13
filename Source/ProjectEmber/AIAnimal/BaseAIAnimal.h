@@ -10,6 +10,7 @@
 #include "GameplayTagAssetInterface.h"
 #include "TargetSystemTargetableInterface.h"
 #include "Abilities/GameplayAbilityTypes.h"
+#include "Components/SphereComponent.h"
 #include "MessageBus/MessageBus.h"
 #include "BaseAIAnimal.generated.h"
 
@@ -143,10 +144,10 @@ protected:
 	void SetDetails();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UCapsuleComponent* RCapsuleComponent;
+	USphereComponent* RSphereComponent;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UCapsuleComponent* LCapsuleComponent;
+	USphereComponent* LSphereComponent;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UMeleeTraceComponent* MeleeTraceComponent;

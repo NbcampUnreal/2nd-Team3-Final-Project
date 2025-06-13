@@ -31,14 +31,12 @@ ABaseAIAnimal::ABaseAIAnimal()
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	CharacterAttributeSet = CreateDefaultSubobject<UEmberCharacterAttributeSet>(TEXT("CharacterAttributeSet"));
 	AnimalAttributeSet = CreateDefaultSubobject<UEmberAnimalAttributeSet>(TEXT("AnimalAttributeSet"));
-	RCapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("RCapsuleComponent"));
-	RCapsuleComponent->SetCapsuleHalfHeight(88.0f);
-	RCapsuleComponent->SetCapsuleRadius(44.0f);
-	LCapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("LCapsuleComponent"));
-	LCapsuleComponent->SetCapsuleHalfHeight(88.0f);
-	LCapsuleComponent->SetCapsuleRadius(44.0f);
-	RCapsuleComponent->SetupAttachment(RootComponent);
-	LCapsuleComponent->SetupAttachment(RootComponent);
+	RSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("RSphereComponent"));
+	RSphereComponent->SetSphereRadius(44.0f);
+	LSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("LSphereComponent"));
+	LSphereComponent->SetSphereRadius(44.0f);
+	RSphereComponent->SetupAttachment(RootComponent);
+	LSphereComponent->SetupAttachment(RootComponent);
 	
 	GenerateRandom();
 	FEmberAnimalAttributeData AttributeData;
@@ -275,13 +273,17 @@ void ABaseAIAnimal::Tick(float DeltaTime)
 	}
 	if (BlackboardComponent)
 	{
-		UObject* TargetObject = BlackboardComponent->GetValueAsObject("TargetActor");
-		if (AActor* Target = Cast<AActor>(TargetObject))
+		if (FName("Animal.Montage.Attack") == BlackboardComponent->GetValueAsName("NStateTag"))
 		{
-			FVector Direction = (Target->GetActorLocation()- GetActorLocation()).GetSafeNormal2D(); //z무시
-			FRotator TargetRotation = Direction.Rotation(); //얼마나 회전해야하는지
-			FRotator NewRot = FMath::RInterpTo(GetActorRotation(), TargetRotation, DeltaTime, 5.0f);
-			SetActorRotation(NewRot);
+			UObject* TargetObject = BlackboardComponent->GetValueAsObject("TargetActor");
+			
+			if (AActor* Target = Cast<AActor>(TargetObject))
+			{
+				FVector Direction = (Target->GetActorLocation()- GetActorLocation()).GetSafeNormal2D(); //z무시
+				FRotator TargetRotation = Direction.Rotation(); //얼마나 회전해야하는지
+				FRotator NewRot = FMath::RInterpTo(GetActorRotation(), TargetRotation, DeltaTime, 5.0f);
+				SetActorRotation(NewRot);
+			}
 		}
 	}
 }
@@ -301,7 +303,7 @@ void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 		if (AActor* TargetActor = Cast<AController>(InstigatorActor->GetOwner())->GetPawn())
 		{
 			//스폐셜공격 없으면 리턴
-			if (!MontageMap.Contains(FGameplayTag::RequestGameplayTag("Animal.Montage.Animal.Montage.AttackSpecial")))
+			if (!MontageMap.Contains(FGameplayTag::RequestGameplayTag("Animal.Montage.AttackSpecial")))
 			{
 				return;
 			}
@@ -332,7 +334,7 @@ void ABaseAIAnimal::OnAttackSpecial()
 	FGameplayEventData Payload;
 	Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.Attack");
 	Payload.Instigator = this;
-	Payload.OptionalObject = MontageMap[FGameplayTag::RequestGameplayTag("Animal.Montage.Animal.Montage.AttackSpecial")];
+	Payload.OptionalObject = MontageMap[FGameplayTag::RequestGameplayTag("Animal.Montage.AttackSpecial")];
 	AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
 }
 
