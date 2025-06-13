@@ -778,6 +778,7 @@ void AEmberCharacter::HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, A
 				}
 			}
 
+			EMBER_LOG(LogEmber, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
 			AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetAsc);
 			PlayHitEffectAtLocation(HitLocation);
 		}

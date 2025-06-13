@@ -13,4 +13,10 @@ class EMBERABILITYSYSTEM_API UEmberEffectHelper : public UObject
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect", Meta = (AllowPrivateAccess = true))
 	TSubclassOf<UGameplayEffect> ParryEffectClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect", Meta = (AllowPrivateAccess = true))
+	TSubclassOf<UGameplayAbility> EnemyParryAbilityClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect", Meta = (AllowPrivateAccess = true))
+	TSubclassOf<UGameplayAbility> ParryAbilityClass;
 };
