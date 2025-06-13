@@ -137,6 +137,7 @@ void ABaseAIAnimal::BeginPlay()
 	// FName으로 키값(메세지) 지정하고 델리게이트 전달
 	UMessageBus::GetInstance()->Subscribe(TEXT("HideAnimal"), MessageDelegateHandle);
 	UMessageBus::GetInstance()->Subscribe(TEXT("FixSpeed"), MessageDelegateHandle);
+	UMessageBus::GetInstance()->Subscribe(TEXT("SpecialAttack"), MessageDelegateHandle);
 	// 호출할 곳에서 
 }
 
@@ -175,7 +176,7 @@ void ABaseAIAnimal::OnBeginDeath()
 		BlackboardComponent->SetValueAsObject("NTargetFood",nullptr); 
 		BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Death"); 
 		AIController->BrainComponent->Cleanup();
-		AIController->BrainComponent->StopLogic(TEXT("HiddenInGame")); //스폰시 숨김처리
+		AIController->BrainComponent->StopLogic(TEXT("HiddenInGame"));
 	}
 
 	if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
@@ -211,6 +212,15 @@ void ABaseAIAnimal::ReceiveMessage(const FName MessageType, UObject* Payload)
 		if (Payload == this)
 		{
 			AnimalAttributeSet->SetWalkSpeed(WalkSpeed);
+		}
+	}
+
+	if (TEXT("SpecialAttack") == MessageType)
+	{
+		if (Payload == this)
+		{
+			bIsAbility = false;
+			BlackboardComponent->SetValueAsBool("IsAbility", false);
 		}
 	}
 }
@@ -314,9 +324,9 @@ void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 			float Dot = FVector::DotProduct(ForwardVector, Direction);
 			if (Dot<0)//뒤쪽이라면
 			{
+				BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
+				BlackboardComponent->SetValueAsBool("IsAbility", true);
 				OnAttackSpecial();
-				BlackboardComponent->SetValueAsObject("TargetActor", nullptr);
-				BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Attacked");
 				return;
 			}
 			BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Attacked"); 
@@ -332,7 +342,7 @@ void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 void ABaseAIAnimal::OnAttackSpecial()
 {
 	FGameplayEventData Payload;
-	Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.Attack");
+	Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.AttackSpecial");
 	Payload.Instigator = this;
 	Payload.OptionalObject = MontageMap[FGameplayTag::RequestGameplayTag("Animal.Montage.AttackSpecial")];
 	AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
@@ -652,7 +662,8 @@ void ABaseAIAnimal::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 	
 	UMessageBus::GetInstance()->Unsubscribe(TEXT("HideAnimal"), MessageDelegateHandle);
-	UMessageBus::GetInstance()->Unsubscribe(TEXT("FixSpeed"), MessageDelegateHandle);
+	UMessageBus::GetInstance()->Unsubscribe(TEXT("FixSpeed"), MessageDelegateHandle); 
+	UMessageBus::GetInstance()->Unsubscribe(TEXT("SpecialAttack"), MessageDelegateHandle);
 	if (NiagaraComponent)
 	{
 		NiagaraComponent->Deactivate();         

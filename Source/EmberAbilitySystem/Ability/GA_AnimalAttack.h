@@ -39,4 +39,5 @@ private:
 	
 	
 	TWeakObjectPtr<const AActor> Instigator;
+	bool IsSpecialAttack = false;
 };
