@@ -57,6 +57,9 @@ public:
 
 	UFUNCTION()
 	void OnHit(AActor* InstigatorActor);
+
+	UFUNCTION()
+	void OnAttackSpecial();
 	
 	UFUNCTION(BlueprintCallable)
 	void OnGameTimeChanged(const FGameplayTag& EventTag, const FGameplayEventData& EventData);
@@ -67,10 +70,11 @@ public:
 	void OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnFullnessChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	
+	
 	EAnimalAIPersonality GetPersonality();
 	float GetWildPower() const;
 	float GetWanderRange() const;
-	UAnimMontage* GetMontage(FGameplayTag MontageTag);
+	TObjectPtr<UAnimMontage> GetMontage(FGameplayTag MontageTag);
 	
 	void GenerateRandom();
 	void DecreaseFullness();
@@ -91,7 +95,8 @@ public:
 	void SetState(bool IsShouldSleep = true);
 
 	bool GetIsShouldSleep() const;
-	
+	void SetIsShouldSleep(bool InIsSleep);
+
 	//밤에 활동,비활동
 	UFUNCTION(BlueprintCallable)
 	void ActiveNonSleep();
@@ -132,6 +137,7 @@ public:
 
 protected:
 	void ReceiveMessage(const FName MessageType, UObject* Payload);
+	void ApplyWaterSurface(float DeltaTime);
 	
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void SetDetails();
@@ -178,7 +184,10 @@ protected:
 	UBlackboardComponent* BlackboardComponent;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Montage)
-	TMap<FGameplayTag, UAnimMontage*> MontageMap; //키로 태그 넘겨주면 몽타주 가져옴 
+	TMap<FGameplayTag, TObjectPtr<UAnimMontage>> MontageMap; //키로 태그 넘겨주면 몽타주 가져옴 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Montage)
+	TArray<TObjectPtr<UAnimMontage>> AttackMontages;
 	
 	UPROPERTY(EditAnywhere, Category = "12")
 	TArray<TSubclassOf<class UGameplayAbility>> StartAbilities;
@@ -229,4 +238,16 @@ protected:
 	
 	FMessageDelegate MessageDelegateHandle;
 
+	//수영 변수 -> 과연 dx같은 이 방법이 맞는가
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swim")
+	float SwimTime = 0.0f; // 시간 누적용 변수
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swim")
+	float FloatAmplitude = 20.0f; // 진폭 (높이)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swim")
+	float FloatFrequency = 0.4f; // 주기 (1초당 오르내림)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swim")
+	float WaterSurfaceZ = 0.0f; // 기준 물 표면 높이
 };

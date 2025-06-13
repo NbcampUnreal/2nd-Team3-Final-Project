@@ -32,6 +32,15 @@ EBTNodeResult::Type UBTTask_ChangeState::ExecuteTask(UBehaviorTreeComponent& Own
 		return EBTNodeResult::Failed;
 	}
 	
+	FName State = BlackboardComp->GetValueAsName("NStateTag");
+	FGameplayTag StateTag = FGameplayTag::RequestGameplayTag(State);
+	if (StateTag == FGameplayTag::RequestGameplayTag("Animal.State.Sleeping"))
+	{
+		Cast<ABaseAIAnimal>(AIPawn)->SetIsShouldSleep(true);
+		BlackboardComp->SetValueAsBool("IsSleep",true);
+		return Super::ExecuteTask(OwnerComp, NodeMemory);
+	}
+	
 	BlackboardComp->SetValueAsName("NStateTag", "Animal.State.Idle");
 	BlackboardComp->SetValueAsObject("TargetObject", nullptr);
 	
