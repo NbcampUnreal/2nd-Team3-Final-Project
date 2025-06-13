@@ -31,12 +31,6 @@ ABaseAIAnimal::ABaseAIAnimal()
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	CharacterAttributeSet = CreateDefaultSubobject<UEmberCharacterAttributeSet>(TEXT("CharacterAttributeSet"));
 	AnimalAttributeSet = CreateDefaultSubobject<UEmberAnimalAttributeSet>(TEXT("AnimalAttributeSet"));
-	RSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("RSphereComponent"));
-	RSphereComponent->SetSphereRadius(44.0f);
-	LSphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("LSphereComponent"));
-	LSphereComponent->SetSphereRadius(44.0f);
-	RSphereComponent->SetupAttachment(RootComponent);
-	LSphereComponent->SetupAttachment(RootComponent);
 	
 	GenerateRandom();
 	FEmberAnimalAttributeData AttributeData;
