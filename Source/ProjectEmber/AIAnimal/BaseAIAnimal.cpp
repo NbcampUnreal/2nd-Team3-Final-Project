@@ -37,6 +37,8 @@ ABaseAIAnimal::ABaseAIAnimal()
 	LCapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("LCapsuleComponent"));
 	LCapsuleComponent->SetCapsuleHalfHeight(88.0f);
 	LCapsuleComponent->SetCapsuleRadius(44.0f);
+	RCapsuleComponent->SetupAttachment(RootComponent);
+	LCapsuleComponent->SetupAttachment(RootComponent);
 	
 	GenerateRandom();
 	FEmberAnimalAttributeData AttributeData;
@@ -296,16 +298,42 @@ void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 	
 	if (BlackboardComponent)
 	{
-		BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Attacked"); 
 		if (AActor* TargetActor = Cast<AController>(InstigatorActor->GetOwner())->GetPawn())
 		{
-			BlackboardComponent->SetValueAsObject("TargetActor", TargetActor);
+			//스폐셜공격 없으면 리턴
+			if (!MontageMap.Contains(FGameplayTag::RequestGameplayTag("Animal.Montage.Animal.Montage.AttackSpecial")))
+			{
+				return;
+			}
+			//뒤에서 맞으면 스폐셜공격
+			FVector Direction = TargetActor->GetActorLocation() - GetActorLocation();
+			Direction.Normalize();
+			FVector ForwardVector = GetActorForwardVector();
+			float Dot = FVector::DotProduct(ForwardVector, Direction);
+			if (Dot<0)//뒤쪽이라면
+			{
+				OnAttackSpecial();
+				BlackboardComponent->SetValueAsObject("TargetActor", nullptr);
+				BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Attacked");
+				return;
+			}
+			BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Attacked"); 
 		}
 		if (Personality == EAnimalAIPersonality::Brave)
 		{
+			//맞았고 성격 == 용감이면 무조건 반격
 			BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Attack"); 
 		}
 	}
+}
+
+void ABaseAIAnimal::OnAttackSpecial()
+{
+	FGameplayEventData Payload;
+	Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.Attack");
+	Payload.Instigator = this;
+	Payload.OptionalObject = MontageMap[FGameplayTag::RequestGameplayTag("Animal.Montage.Animal.Montage.AttackSpecial")];
+	AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
 }
 
 void ABaseAIAnimal::OnWalkSpeedChanged(const FOnAttributeChangeData& OnAttributeChangeData)
@@ -382,8 +410,13 @@ float ABaseAIAnimal::GetWanderRange() const //아무데서도 안 쓰임
 	return WanderRange;
 }
 
-UAnimMontage* ABaseAIAnimal::GetMontage(FGameplayTag MontageTag)
+TObjectPtr<UAnimMontage> ABaseAIAnimal::GetMontage(FGameplayTag MontageTag)
 {
+	if (MontageTag == FGameplayTag::RequestGameplayTag("Animal.Montage.Attack"))
+	{
+		int32 NewIndex = FMath::RandRange(0,AttackMontages.Num()-1);
+		MontageMap[MontageTag] = AttackMontages[NewIndex];
+	}
 	return MontageMap[MontageTag];
 }
 
@@ -577,7 +610,7 @@ void ABaseAIAnimal::ApplyWaterSurface(float DeltaTime)
 	FVector NewLocation = GetActorLocation();
 	NewLocation.Z = WaterSurfaceZ + WaveOffsetZ;
 	SetActorLocation(NewLocation);
-	//DrawDebugBox(GetWorld(), VolumeOrigin, VolumeExtent, FColor::Blue, false, 2.0f);
+	DrawDebugBox(GetWorld(), VolumeOrigin, VolumeExtent, FColor::Blue, false, 2.0f);
 }
 
 
