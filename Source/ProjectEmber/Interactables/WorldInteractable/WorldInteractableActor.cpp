@@ -89,7 +89,7 @@ void AWorldInteractableActor::Interact_Implementation(AActor* Interactor)
 	{
 		if (Fragment)
 		{
-			Fragment->ExecuteInteraction(Interactor);
+			Fragment->TryExecuteInteraction(Interactor);
 		}
 	}
 }
