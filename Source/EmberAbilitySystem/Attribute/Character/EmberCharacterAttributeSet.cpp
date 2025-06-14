@@ -74,20 +74,30 @@ bool UEmberCharacterAttributeSet::PreGameplayEffectExecute(struct FGameplayEffec
 		if (AbilitySystemComponent->HasMatchingGameplayTag(AlsCharacterStateTags::Parrying))
 		{
 			EMBER_LOG(LogEmber, Warning, TEXT("Parrying!"));
-			// 1. 시간을 느리게
+			// 1. 시간을 느리게 
 			UCombatFunctionLibrary::ApplyGlobalTimeDilation(GetWorld(), 0.4f,0.17f);
 			// 2. 데미지 무효화
 			Data.EvaluatedData.Magnitude = 0.f;
+			
 			// 3. 패링 이펙트 적용 (마나회복만 일단 넣음)
-			ApplyGameplayEffectToSelf(AbilitySystemComponent, EffectHelperInstance->ParryEffectClass, 1.0f);
+			// 어빌리티 내부로 옮김
+			//ApplyGameplayEffectToSelf(AbilitySystemComponent, EffectHelperInstance->ParryEffectClass, 1.0f);
+			
 			// 4. 패링 카운터 어빌리티 발동 (상대에게)
 			const FGameplayEffectContextHandle& Context = Data.EffectSpec.GetContext();
 			if (UAbilitySystemComponent* SourceAsc = Context.GetInstigatorAbilitySystemComponent())
 			{
-				SourceAsc->TryActivateAbilityByClass(EffectHelperInstance->EnemyParryAbilityClass);
+				bool bCan = SourceAsc->TryActivateAbilityByClass(EffectHelperInstance->EnemyParryAbilityClass);
+				if (!bCan)
+				{
+					EMBER_LOG(LogEmber, Warning, TEXT("Failed to activate enemy parry ability"));
+				}
 			}
 			// 5. 패링 카운터 어빌리티 발동 (나에게)
 			AbilitySystemComponent->TryActivateAbilityByClass(EffectHelperInstance->ParryAbilityClass);
+			// 6. 카메라 셰이크
+			// 7. 이펙트 발동
+			// 8. 후처리
 			
 			
 		}

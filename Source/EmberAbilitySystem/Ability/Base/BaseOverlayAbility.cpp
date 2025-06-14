@@ -135,6 +135,7 @@ void UBaseOverlayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 
 	AbilitySystemComponent->RemoveLooseGameplayTag(AlsCharacterStateTags::Parrying);
 	//AbilitySystemComponent->RemoveLooseGameplayTag(AlsCharacterStateTags::Blocking);
+	
 	UMessageBus::GetInstance()->BroadcastMessage(TEXT("OverlayAbilityEnded"), GetAvatarActorFromActorInfo());
 }
 
