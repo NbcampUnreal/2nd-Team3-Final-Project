@@ -16,9 +16,12 @@ class PROJECTEMBER_API UEmberPauseWidget : public UUserWidget
 public:
 	virtual void NativeConstruct() override;
 
+	UFUNCTION(BlueprintCallable)
+	void SetParentGameMenuWidget(UUserWidget* InParentGameMenuWidget);
+	
 	UPROPERTY(BlueprintReadWrite, meta = (ExposeOnSpawn = true))
 	UUserWidget* ParentGameMenuWidget = nullptr;
-
+	
 	void HidePauseMenuAndShowEmpty();
 
 protected:

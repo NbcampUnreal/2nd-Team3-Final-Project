@@ -3,10 +3,12 @@
 #include "GameInstance/EmberGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 #include "EmberPauseWidget.h"
-//ÄÁÆ®·Ñ·¯
+//ï¿½ï¿½Æ®ï¿½Ñ·ï¿½
 #include "Components/Button.h"
 #include "Components/WidgetSwitcher.h"
 #include "EmberMainMenuWidget.h"
+#include "GameplayTagContainer.h"
+#include "FunctionLibrary/UIFunctionLibrary.h"
 
 void UEmberSettingWidget::NativeConstruct()
 {
@@ -79,9 +81,8 @@ void UEmberSettingWidget::OnBackButtonClicked()
     {
         if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
         {
-            ParentPauseWidget->AddToViewport();
-            PC->bShowMouseCursor = true;
-            PC->SetInputMode(FInputModeUIOnly());
+            UUIFunctionLibrary::PopContentToLayer(PC, FGameplayTag::RequestGameplayTag("UI.Layer.Modal"));
+            UUIFunctionLibrary::FocusGame(PC);
         }
     }
     else

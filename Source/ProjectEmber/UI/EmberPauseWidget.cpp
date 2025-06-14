@@ -1,9 +1,12 @@
 #include "EmberPauseWidget.h"
 #include "EmberSettingWidget.h"
+#include "GameplayTagContainer.h"
+#include "BaseWidget/GameMenuWidget.h"
 #include "Components/Button.h"
 #include "Components/WidgetSwitcher.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/UserWidget.h"
+#include "FunctionLibrary/UIFunctionLibrary.h"
 
 void UEmberPauseWidget::NativeConstruct()
 {
@@ -25,24 +28,17 @@ void UEmberPauseWidget::NativeConstruct()
 	}
 }
 
+void UEmberPauseWidget::SetParentGameMenuWidget(UUserWidget* InParentGameMenuWidget)
+{
+	ParentGameMenuWidget = InParentGameMenuWidget;
+}
+
 void UEmberPauseWidget::OnContinueClicked()
 {
 	if (ParentGameMenuWidget)
 	{
-		if (UWidgetSwitcher* Switcher = Cast<UWidgetSwitcher>(
-			ParentGameMenuWidget->GetWidgetFromName(TEXT("WidgetSwitcher"))))
-		{
-			Switcher->SetActiveWidgetIndex(0);
-		}
-	}
-
-	this->SetVisibility(ESlateVisibility::Collapsed);
-
-	if (APlayerController* PC = GetOwningPlayer())
-	{
-		PC->SetPause(false);
-		PC->SetInputMode(FInputModeGameOnly());
-		PC->bShowMouseCursor = false;
+		Cast<UGameMenuWidget>(ParentGameMenuWidget)->Input_TogglePause();
+		UUIFunctionLibrary::FocusGame(GetOwningLocalPlayer()->GetPlayerController(GetWorld()));
 	}
 }
 
@@ -52,12 +48,11 @@ void UEmberPauseWidget::OnSettingsClicked()
 
 	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
 	{
-		if (UEmberSettingWidget* Settings = CreateWidget<UEmberSettingWidget>(PC, SettingWidgetClass))
-		{
-			Settings->ParentPauseWidget = this;
-			RemoveFromParent();
-			Settings->AddToViewport();
-		}
+		Cast<UGameMenuWidget>(ParentGameMenuWidget)->Input_TogglePause();
+		
+		UUserWidget* SettingsWidgetInstance = UUIFunctionLibrary::PushContentToLayer(PC, FGameplayTag::RequestGameplayTag("UI.Layer.Modal"), SettingWidgetClass);
+		Cast<UEmberSettingWidget>(SettingsWidgetInstance)->ParentPauseWidget = this;
+		UUIFunctionLibrary::FocusUI(PC,SettingsWidgetInstance,true,true,true);
 	}
 }
 
