@@ -5,6 +5,7 @@
 #include "EmberPauseWidget.generated.h"
 
 class UButton;
+class UWidgetSwitcher;
 class UEmberSettingWidget;
 
 UCLASS()
@@ -14,6 +15,11 @@ class PROJECTEMBER_API UEmberPauseWidget : public UUserWidget
 
 public:
 	virtual void NativeConstruct() override;
+
+	UPROPERTY(BlueprintReadWrite, meta = (ExposeOnSpawn = true))
+	UUserWidget* ParentGameMenuWidget = nullptr;
+
+	void HidePauseMenuAndShowEmpty();
 
 protected:
 	UPROPERTY(meta = (BindWidget))

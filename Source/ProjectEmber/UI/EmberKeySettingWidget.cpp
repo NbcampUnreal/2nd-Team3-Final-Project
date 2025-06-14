@@ -257,6 +257,99 @@ void UEmberKeySettingWidget::LoadMappingsFromSave()
     CurrentMappings.Empty();
 
     UEmberGameInstance* GI = GetWorld()->GetGameInstance<UEmberGameInstance>();
+    if (GI) GI->LoadKeyMappingsWithEMS();
+
+    // --- MOVE (방향키) ---
+    if (GI && GI->SavedMoveBindings.Num() > 0)
+    {
+        CurrentMoveMappings = GI->SavedMoveBindings;
+    }
+    else
+    {
+        if (EditableIMC)
+        {
+            ClonedIMC = DuplicateObject<UInputMappingContext>(EditableIMC, this);
+            for (const FEnhancedActionKeyMapping& Mapping : ClonedIMC->GetMappings())
+            {
+                if (GI && Mapping.Action == GI->MoveAction)
+                {
+                    EMoveDirection Dir = GetDirectionFromModifiers(Mapping.Modifiers);
+                    if (Dir != EMoveDirection::Unknown)
+                    {
+                        FEmberDirectionalMoveEntry MoveEntry;
+                        MoveEntry.Direction = Dir;
+                        MoveEntry.BoundKey = Mapping.Key;
+                        MoveEntry.DefaultKey = Mapping.Key;
+                        CurrentMoveMappings.Add(MoveEntry);
+                    }
+                }
+            }
+        }
+    }
+
+    // --- ACTION KEY ---
+    static const TArray<FName> ActionNames = {
+        "IA_Als_Jump", "IA_Als_Sprint", "IA_Als_Walk", "IA_Als_Crouch", "IA_Als_Glide", "IA_Als_Build", "IA_Interact"
+    };
+
+    if (GI && GI->SavedMappings.Num() > 0)
+    {
+        CurrentMappings = GI->SavedMappings;
+        // 반드시 BoundKey로 UI 업데이트!
+        for (const FEmberKeyMappingEntry& Entry : CurrentMappings)
+        {
+            UpdateActionKeyText(Entry.MappingName);
+        }
+    }
+    else
+    {
+        UInputMappingContext* SourceIMC = EditableIMC ? EditableIMC : (GI ? GI->PlayerMappingContext.Get() : nullptr);
+        if (SourceIMC)
+        {
+            for (const FEnhancedActionKeyMapping& Mapping : SourceIMC->GetMappings())
+            {
+                if (Mapping.Action && ActionNames.Contains(Mapping.Action->GetFName()))
+                {
+                    FEmberKeyMappingEntry Entry;
+                    Entry.MappingName = Mapping.Action->GetFName();
+                    Entry.BoundKey = Mapping.Key;
+                    Entry.DefaultKey = Mapping.Key;
+                    Entry.InputAction = Mapping.Action;
+                    CurrentMappings.Add(Entry);
+                }
+            }
+            for (const FEmberKeyMappingEntry& Entry : CurrentMappings)
+            {
+                UpdateActionKeyText(Entry.MappingName);
+            }
+        }
+    }
+
+    if (GI && GI->SavedMappings.Num() > 0)
+    {
+        CurrentMappings = GI->SavedMappings;
+
+        UE_LOG(LogTemp, Warning, TEXT("=== CurrentMappings (after load) ==="));
+        for (const auto& Entry : CurrentMappings)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *Entry.MappingName.ToString(), *Entry.BoundKey.GetFName().ToString());
+        }
+
+        for (const FEmberKeyMappingEntry& Entry : CurrentMappings)
+        {
+            UpdateActionKeyText(Entry.MappingName);
+        }
+    }
+
+    UpdateKeyUI(); // 방향키도 UI 갱신
+}
+
+/*void UEmberKeySettingWidget::LoadMappingsFromSave()
+{
+    CurrentMoveMappings.Empty();
+    CurrentMappings.Empty();
+
+    UEmberGameInstance* GI = GetWorld()->GetGameInstance<UEmberGameInstance>();
 
     UInputMappingContext* SourceIMC = nullptr;
     if (EditableIMC)
@@ -325,17 +418,21 @@ void UEmberKeySettingWidget::LoadMappingsFromSave()
     }
 
     UpdateKeyUI();
-}
+}*/
 
 void UEmberKeySettingWidget::OnApplyClicked()
 {
+    for (const auto& Entry : CurrentMappings)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[APPLY] %s = %s"), *Entry.MappingName.ToString(), *Entry.BoundKey.GetFName().ToString());
+    }
+
     UEmberGameInstance* GI = GetWorld()->GetGameInstance<UEmberGameInstance>();
     if (GI) {
         GI->SavedMoveBindings = CurrentMoveMappings;
         GI->SavedMappings = CurrentMappings;
+        GI->SaveKeyMappingsWithEMS();
     }
-
-    GI->SavedMoveBindings = CurrentMoveMappings;
 
     APlayerController* PC = GetOwningPlayer();
     if (!PC) return;
@@ -408,6 +505,8 @@ void UEmberKeySettingWidget::UpdateKeyUI()
 void UEmberKeySettingWidget::UpdateActionKeyText(FName MappingName)
 {
     FKey Key = GetKeyForMapping(MappingName);
+
+    UE_LOG(LogTemp, Warning, TEXT("UpdateActionKeyText %s : %s"), *MappingName.ToString(), *Key.GetFName().ToString());
 
     if (MappingName == "IA_Als_Jump" && JumpButtonText)
     {

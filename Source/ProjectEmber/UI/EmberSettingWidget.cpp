@@ -2,6 +2,7 @@
 #include "EmberKeySettingWidget.h"
 #include "GameInstance/EmberGameInstance.h"
 #include "Kismet/GameplayStatics.h"
+#include "EmberPauseWidget.h"
 //컨트롤러
 #include "Components/Button.h"
 #include "Components/WidgetSwitcher.h"
@@ -74,21 +75,29 @@ void UEmberSettingWidget::OnBackButtonClicked()
 {
     RemoveFromParent();
 
-    if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+    if (ParentPauseWidget)
     {
-        if (MainMenuWidgetClass)
+        if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
         {
-            UUserWidget* MainMenu = CreateWidget<UUserWidget>(PC, MainMenuWidgetClass);
-            if (MainMenu)
-            {
-                MainMenu->AddToViewport();
-                PC->bShowMouseCursor = true;
-                PC->SetInputMode(FInputModeUIOnly());
-            }
+            ParentPauseWidget->AddToViewport();
+            PC->bShowMouseCursor = true;
+            PC->SetInputMode(FInputModeUIOnly());
         }
-        else
+    }
+    else
+    {
+        if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
         {
-            UE_LOG(LogTemp, Warning, TEXT("MainMenuWidgetClass not set!"));
+            if (MainMenuWidgetClass)
+            {
+                UUserWidget* MainMenu = CreateWidget<UUserWidget>(PC, MainMenuWidgetClass);
+                if (MainMenu)
+                {
+                    MainMenu->AddToViewport();
+                    PC->bShowMouseCursor = true;
+                    PC->SetInputMode(FInputModeUIOnly());
+                }
+            }
         }
     }
 }

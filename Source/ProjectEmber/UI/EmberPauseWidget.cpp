@@ -1,5 +1,7 @@
 #include "EmberPauseWidget.h"
+#include "EmberSettingWidget.h"
 #include "Components/Button.h"
+#include "Components/WidgetSwitcher.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/UserWidget.h"
 
@@ -25,9 +27,18 @@ void UEmberPauseWidget::NativeConstruct()
 
 void UEmberPauseWidget::OnContinueClicked()
 {
-	RemoveFromParent();
+	if (ParentGameMenuWidget)
+	{
+		if (UWidgetSwitcher* Switcher = Cast<UWidgetSwitcher>(
+			ParentGameMenuWidget->GetWidgetFromName(TEXT("WidgetSwitcher"))))
+		{
+			Switcher->SetActiveWidgetIndex(0);
+		}
+	}
 
-	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	this->SetVisibility(ESlateVisibility::Collapsed);
+
+	if (APlayerController* PC = GetOwningPlayer())
 	{
 		PC->SetPause(false);
 		PC->SetInputMode(FInputModeGameOnly());
@@ -41,10 +52,11 @@ void UEmberPauseWidget::OnSettingsClicked()
 
 	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
 	{
-		if (UUserWidget* SettingWidget = CreateWidget<UUserWidget>(PC, SettingWidgetClass))
+		if (UEmberSettingWidget* Settings = CreateWidget<UEmberSettingWidget>(PC, SettingWidgetClass))
 		{
+			Settings->ParentPauseWidget = this;
 			RemoveFromParent();
-			SettingWidget->AddToViewport();
+			Settings->AddToViewport();
 		}
 	}
 }

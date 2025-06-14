@@ -1,6 +1,10 @@
 #include "GameInstance/EmberGameInstance.h"
 #include "GameInstance/AudioSubsystem.h"
 #include "GameInstance/LevelSubsystem.h"
+#include "EasyMultiSave.h"
+#include "EMSFunctionLibrary.h"
+#include "GameInstance/EmberSaveGame.h"
+#include "GameFramework/GameUserSettings.h" 
 #include "UI/EmberKeySettingWidget.h"
 #include "UI/EmberLoadingWidget.h"
 #include "EnhancedInputSubsystems.h"
@@ -17,6 +21,13 @@ void UEmberGameInstance::Init()
 
 	AudioSubsystem = GetSubsystem<UAudioSubsystem>();
 	LevelSubsystem = GetSubsystem<ULevelSubsystem>();
+
+    if (UGameUserSettings* Settings = GEngine->GetGameUserSettings())
+    {
+        Settings->LoadSettings(true); // true = Apply immediately
+    }
+
+    LoadKeyMappingsWithEMS();
 }
 
 void UEmberGameInstance::TestPlaySound()
@@ -179,4 +190,32 @@ void UEmberGameInstance::ApplySavedActionKeyMappingsToUserSettings()
     }
     UserSettings->SaveSettings();
 
+}
+
+void UEmberGameInstance::SaveKeyMappingsWithEMS()
+{
+    UEmberSaveGame* SaveGameInstance = Cast<UEmberSaveGame>(
+        UEMSFunctionLibrary::GetCustomSave(this, UEmberSaveGame::StaticClass(), TEXT("KeyRemapSlot"), TEXT(""))
+    );
+    if (!SaveGameInstance)
+    {
+        SaveGameInstance = NewObject<UEmberSaveGame>(this, UEmberSaveGame::StaticClass());
+    }
+
+    SaveGameInstance->SavedMappings = SavedMappings;
+    SaveGameInstance->SavedMoveBindings = SavedMoveBindings;
+
+    UEMSFunctionLibrary::SaveCustom(this, SaveGameInstance);
+}
+
+void UEmberGameInstance::LoadKeyMappingsWithEMS()
+{
+    UEmberSaveGame* LoadedSave = Cast<UEmberSaveGame>(
+        UEMSFunctionLibrary::GetCustomSave(this, UEmberSaveGame::StaticClass(), TEXT("KeyRemapSlot"), TEXT(""))
+    );
+    if (LoadedSave)
+    {
+        SavedMappings = LoadedSave->SavedMappings;
+        SavedMoveBindings = LoadedSave->SavedMoveBindings;
+    }
 }

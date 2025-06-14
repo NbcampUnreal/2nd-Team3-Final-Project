@@ -9,6 +9,8 @@
 #include "UObject/SoftObjectPtr.h"
 #include "InputTriggers.h"
 #include "InputModifiers.h"
+#include "EasyMultiSave.h"
+#include "GameInstance/EmberSaveGame.h"
 #include "EmberGameInstance.generated.h"
 
 class UAudioSubsystem;
@@ -47,6 +49,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ApplySavedActionKeyMappingsToUserSettings();
+
+	void SaveKeyMappingsWithEMS();
+
+	void LoadKeyMappingsWithEMS();
 
 	UPROPERTY(BlueprintReadWrite)
 	TArray<FEmberDirectionalMoveEntry> SavedMoveBindings;
