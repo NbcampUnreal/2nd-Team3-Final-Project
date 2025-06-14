@@ -37,6 +37,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cue|PostProcess")
 	TObjectPtr<UMaterialInterface> PostProcessMaterial;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cue|PostProcess")
+	TObjectPtr<UMaterialInterface> PostProcessSpeedLineMaterial;
+	
 protected:
 	UPROPERTY(VisibleAnywhere, Category = "Cue|PostProcess")
 	TObjectPtr<UPostProcessComponent> PostProcessComp;

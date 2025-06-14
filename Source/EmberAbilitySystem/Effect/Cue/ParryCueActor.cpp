@@ -42,10 +42,11 @@ bool AParryCueActor::OnActive_Implementation(AActor* MyTarget, const FGameplayCu
         }
     }
 
-    if (PostProcessMaterial && PostProcessComp)
+    if (PostProcessMaterial && PostProcessSpeedLineMaterial && PostProcessComp)
     {
         // Add material to blendables with full weight
         PostProcessComp->Settings.WeightedBlendables.Array.Add(FWeightedBlendable(1.0f, PostProcessMaterial));
+        PostProcessComp->Settings.WeightedBlendables.Array.Add(FWeightedBlendable(1.0f, PostProcessSpeedLineMaterial));
         PostProcessComp->bEnabled = true;
     }
 

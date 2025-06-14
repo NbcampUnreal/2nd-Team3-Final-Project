@@ -742,6 +742,12 @@ void AEmberCharacter::HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, A
 	UAbilitySystemComponent* TargetAsc = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(HitActor);
 	if (!TargetAsc)
 	{
+		if (GetOverlayMode() == AlsOverlayModeTags::Hammer  ||
+			GetOverlayMode() == AlsOverlayModeTags::PickAxe ||
+			GetOverlayMode() == AlsOverlayModeTags::Hatchet)
+		{
+			PlayHitEffectAtLocation(HitLocation);
+		}
 		return;
 	}
 
