@@ -7,11 +7,17 @@
 
 class UButton;
 class UWidgetSwitcher;
+class UEmberPauseWidget;
 
 UCLASS()
 class PROJECTEMBER_API UEmberSettingWidget : public UUserWidget
 {
     GENERATED_BODY()
+
+public:
+
+    UPROPERTY()
+    UEmberPauseWidget* ParentPauseWidget = nullptr;
 
 protected:
     virtual void NativeConstruct() override;

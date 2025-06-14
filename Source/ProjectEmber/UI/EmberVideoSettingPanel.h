@@ -15,6 +15,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ApplyVideoSettings();
 
+    UFUNCTION()
+    void OnOverallSettingChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
+
 protected:
 	UPROPERTY(meta = (BindWidget))
 	class UComboBoxString* ScreenModeComboBox;

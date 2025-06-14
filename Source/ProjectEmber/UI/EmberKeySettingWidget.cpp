@@ -1,5 +1,6 @@
 #include "EmberKeySettingWidget.h"
 #include "EmberKeyCaptureWidget.h"
+#include "Character/EmberCharacter.h"
 #include "GameInstance/EmberGameInstance.h"
 #include "EnhancedInput/Public/InputMappingContext.h"
 #include "Character/InputHandler/EmberKeyMappingEntry.h"
@@ -37,6 +38,27 @@ void UEmberKeySettingWidget::NativeConstruct()
 
     if (ResetButton)
         ResetButton->OnClicked.AddDynamic(this, &ThisClass::OnResetClicked);
+
+    if (JumpKeyButton)
+        JumpKeyButton->OnClicked.AddDynamic(this, &ThisClass::OnJumpKeyButtonClicked);
+
+    if (GlideKeyButton)
+        GlideKeyButton->OnClicked.AddDynamic(this, &ThisClass::OnGlideKeyButtonClicked);
+
+    if (SprintKeyButton)
+        SprintKeyButton->OnClicked.AddDynamic(this, &ThisClass::OnSprintKeyButtonClicked);
+
+    if (WalkKeyButton)
+        WalkKeyButton->OnClicked.AddDynamic(this, &ThisClass::OnWalkKeyButtonClicked);
+
+    if (CrouchKeyButton)
+        CrouchKeyButton->OnClicked.AddDynamic(this, &ThisClass::OnCrouchKeyButtonClicked);
+
+    if (BuildKeyButton)
+        BuildKeyButton->OnClicked.AddDynamic(this, &ThisClass::OnBuildKeyButtonClicked);
+
+    if (InteractKeyButton)
+        InteractKeyButton->OnClicked.AddDynamic(this, &ThisClass::OnInteractKeyButtonClicked);
 
     LoadMappingsFromSave();
 }
@@ -146,6 +168,55 @@ void UEmberKeySettingWidget::OnRightwardKeyButtonClicked()
     ShowKeyCaptureWidget();
 }
 
+void UEmberKeySettingWidget::OnJumpKeyButtonClicked()
+{
+    PendingKeyChangeIndex = FindMappingIndexByName("IA_Als_Jump");
+    PendingKeyChangeDirection = EMoveDirection::Unknown;
+    ShowKeyCaptureWidget();
+}
+
+void UEmberKeySettingWidget::OnGlideKeyButtonClicked()
+{
+    PendingKeyChangeIndex = FindMappingIndexByName("IA_Als_Glide");
+    PendingKeyChangeDirection = EMoveDirection::Unknown;
+    ShowKeyCaptureWidget();
+}
+
+void UEmberKeySettingWidget::OnSprintKeyButtonClicked()
+{
+    PendingKeyChangeIndex = FindMappingIndexByName("IA_Als_Sprint");
+    PendingKeyChangeDirection = EMoveDirection::Unknown;
+    ShowKeyCaptureWidget();
+}
+
+void UEmberKeySettingWidget::OnWalkKeyButtonClicked()
+{
+    PendingKeyChangeIndex = FindMappingIndexByName("IA_Als_Walk");
+    PendingKeyChangeDirection = EMoveDirection::Unknown;
+    ShowKeyCaptureWidget();
+}
+
+void UEmberKeySettingWidget::OnCrouchKeyButtonClicked()
+{
+    PendingKeyChangeIndex = FindMappingIndexByName("IA_Als_Crouch");
+    PendingKeyChangeDirection = EMoveDirection::Unknown;
+    ShowKeyCaptureWidget();
+}
+
+void UEmberKeySettingWidget::OnBuildKeyButtonClicked()
+{
+    PendingKeyChangeIndex = FindMappingIndexByName("IA_Als_Build");
+    PendingKeyChangeDirection = EMoveDirection::Unknown;
+    ShowKeyCaptureWidget();
+}
+
+void UEmberKeySettingWidget::OnInteractKeyButtonClicked()
+{
+    PendingKeyChangeIndex = FindMappingIndexByName("IA_Interact");
+    PendingKeyChangeDirection = EMoveDirection::Unknown;
+    ShowKeyCaptureWidget();
+}
+
 void UEmberKeySettingWidget::ShowKeyCaptureWidget()
 {
     if (!KeyCaptureWidgetClass) return;
@@ -160,20 +231,133 @@ void UEmberKeySettingWidget::ShowKeyCaptureWidget()
 
 void UEmberKeySettingWidget::OnKeyCaptured(FKey NewKey)
 {
-    for (auto& Entry : CurrentMoveMappings)
+    if (PendingKeyChangeDirection != EMoveDirection::Unknown)
     {
-        if (Entry.Direction == PendingKeyChangeDirection)
+        for (auto& Entry : CurrentMoveMappings)
         {
-            Entry.BoundKey = NewKey;
-            break;
+            if (Entry.Direction == PendingKeyChangeDirection)
+            {
+                Entry.BoundKey = NewKey;
+                break;
+            }
         }
+        UpdateKeyUI();
     }
-    UpdateKeyUI();
+    else if (PendingKeyChangeIndex >= 0 && PendingKeyChangeIndex < CurrentMappings.Num())
+    {
+        CurrentMappings[PendingKeyChangeIndex].BoundKey = NewKey;
+        UpdateActionKeyText(CurrentMappings[PendingKeyChangeIndex].MappingName);
+    }
+
 }
 
 void UEmberKeySettingWidget::LoadMappingsFromSave()
 {
+    CurrentMoveMappings.Empty();
+    CurrentMappings.Empty();
+
     UEmberGameInstance* GI = GetWorld()->GetGameInstance<UEmberGameInstance>();
+    if (GI) GI->LoadKeyMappingsWithEMS();
+
+    // --- MOVE (방향키) ---
+    if (GI && GI->SavedMoveBindings.Num() > 0)
+    {
+        CurrentMoveMappings = GI->SavedMoveBindings;
+    }
+    else
+    {
+        if (EditableIMC)
+        {
+            ClonedIMC = DuplicateObject<UInputMappingContext>(EditableIMC, this);
+            for (const FEnhancedActionKeyMapping& Mapping : ClonedIMC->GetMappings())
+            {
+                if (GI && Mapping.Action == GI->MoveAction)
+                {
+                    EMoveDirection Dir = GetDirectionFromModifiers(Mapping.Modifiers);
+                    if (Dir != EMoveDirection::Unknown)
+                    {
+                        FEmberDirectionalMoveEntry MoveEntry;
+                        MoveEntry.Direction = Dir;
+                        MoveEntry.BoundKey = Mapping.Key;
+                        MoveEntry.DefaultKey = Mapping.Key;
+                        CurrentMoveMappings.Add(MoveEntry);
+                    }
+                }
+            }
+        }
+    }
+
+    // --- ACTION KEY ---
+    static const TArray<FName> ActionNames = {
+        "IA_Als_Jump", "IA_Als_Sprint", "IA_Als_Walk", "IA_Als_Crouch", "IA_Als_Glide", "IA_Als_Build", "IA_Interact"
+    };
+
+    if (GI && GI->SavedMappings.Num() > 0)
+    {
+        CurrentMappings = GI->SavedMappings;
+        // 반드시 BoundKey로 UI 업데이트!
+        for (const FEmberKeyMappingEntry& Entry : CurrentMappings)
+        {
+            UpdateActionKeyText(Entry.MappingName);
+        }
+    }
+    else
+    {
+        UInputMappingContext* SourceIMC = EditableIMC ? EditableIMC : (GI ? GI->PlayerMappingContext.Get() : nullptr);
+        if (SourceIMC)
+        {
+            for (const FEnhancedActionKeyMapping& Mapping : SourceIMC->GetMappings())
+            {
+                if (Mapping.Action && ActionNames.Contains(Mapping.Action->GetFName()))
+                {
+                    FEmberKeyMappingEntry Entry;
+                    Entry.MappingName = Mapping.Action->GetFName();
+                    Entry.BoundKey = Mapping.Key;
+                    Entry.DefaultKey = Mapping.Key;
+                    Entry.InputAction = Mapping.Action;
+                    CurrentMappings.Add(Entry);
+                }
+            }
+            for (const FEmberKeyMappingEntry& Entry : CurrentMappings)
+            {
+                UpdateActionKeyText(Entry.MappingName);
+            }
+        }
+    }
+
+    if (GI && GI->SavedMappings.Num() > 0)
+    {
+        CurrentMappings = GI->SavedMappings;
+
+        UE_LOG(LogTemp, Warning, TEXT("=== CurrentMappings (after load) ==="));
+        for (const auto& Entry : CurrentMappings)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("%s: %s"), *Entry.MappingName.ToString(), *Entry.BoundKey.GetFName().ToString());
+        }
+
+        for (const FEmberKeyMappingEntry& Entry : CurrentMappings)
+        {
+            UpdateActionKeyText(Entry.MappingName);
+        }
+    }
+
+    UpdateKeyUI(); // 방향키도 UI 갱신
+}
+
+/*void UEmberKeySettingWidget::LoadMappingsFromSave()
+{
+    CurrentMoveMappings.Empty();
+    CurrentMappings.Empty();
+
+    UEmberGameInstance* GI = GetWorld()->GetGameInstance<UEmberGameInstance>();
+
+    UInputMappingContext* SourceIMC = nullptr;
+    if (EditableIMC)
+        SourceIMC = EditableIMC;
+    else if (GI)
+        SourceIMC = GI->PlayerMappingContext.Get();
+    if (!SourceIMC) return;
+
     if (GI && GI->SavedMoveBindings.Num() > 0)
     {
         CurrentMoveMappings = GI->SavedMoveBindings;
@@ -202,15 +386,53 @@ void UEmberKeySettingWidget::LoadMappingsFromSave()
             }
         }
     }
+
+    CurrentMappings.Empty();
+    static const TArray<FName> ActionNames = {
+        "IA_Als_Jump", "IA_Als_Sprint", "IA_Als_Walk", "IA_Als_Crouch", "IA_Als_Glide", "IA_Als_Build", "IA_Interact"
+    };
+    if (GI && GI->SavedMappings.Num() > 0)
+    {
+        CurrentMappings = GI->SavedMappings;
+        for (const FEmberKeyMappingEntry& Entry : CurrentMappings)
+        {
+            UpdateActionKeyText(Entry.MappingName);
+        }
+    }
+    else
+    {
+        for (const FEnhancedActionKeyMapping& Mapping : SourceIMC->GetMappings())
+        {
+            if (Mapping.Action && ActionNames.Contains(Mapping.Action->GetFName()))
+            {
+                FEmberKeyMappingEntry Entry;
+                Entry.MappingName = Mapping.Action->GetFName();
+                Entry.BoundKey = Mapping.Key;
+                Entry.DefaultKey = Mapping.Key;
+                Entry.InputAction = Mapping.Action;
+                CurrentMappings.Add(Entry);
+
+                UpdateActionKeyText(Entry.MappingName);
+            }
+        }
+    }
+
     UpdateKeyUI();
-}
+}*/
 
 void UEmberKeySettingWidget::OnApplyClicked()
 {
-    UEmberGameInstance* GI = GetWorld()->GetGameInstance<UEmberGameInstance>();
-    if (!GI) return;
+    for (const auto& Entry : CurrentMappings)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[APPLY] %s = %s"), *Entry.MappingName.ToString(), *Entry.BoundKey.GetFName().ToString());
+    }
 
-    GI->SavedMoveBindings = CurrentMoveMappings;
+    UEmberGameInstance* GI = GetWorld()->GetGameInstance<UEmberGameInstance>();
+    if (GI) {
+        GI->SavedMoveBindings = CurrentMoveMappings;
+        GI->SavedMappings = CurrentMappings;
+        GI->SaveKeyMappingsWithEMS();
+    }
 
     APlayerController* PC = GetOwningPlayer();
     if (!PC) return;
@@ -234,6 +456,18 @@ void UEmberKeySettingWidget::OnApplyClicked()
         FGameplayTagContainer FailureReason;
         UserSettings->MapPlayerKey(Args, FailureReason);
     }
+
+    for (const auto& Entry : CurrentMappings)
+    {
+        FMapPlayerKeyArgs Args;
+        Args.MappingName = Entry.MappingName;
+        Args.NewKey = Entry.BoundKey;
+        Args.Slot = EPlayerMappableKeySlot::First;
+        FGameplayTagContainer FailureReason;
+        UserSettings->MapPlayerKey(Args, FailureReason);
+    }
+    UserSettings->SaveSettings();
+
 }
 
 void UEmberKeySettingWidget::OnResetClicked()
@@ -242,6 +476,7 @@ void UEmberKeySettingWidget::OnResetClicked()
     {
         Entry.BoundKey = Entry.DefaultKey;
     }
+    LoadMappingsFromSave();
     UpdateKeyUI();
 }
 
@@ -265,4 +500,60 @@ void UEmberKeySettingWidget::UpdateKeyUI()
             break;
         }
     }
+}
+
+void UEmberKeySettingWidget::UpdateActionKeyText(FName MappingName)
+{
+    FKey Key = GetKeyForMapping(MappingName);
+
+    UE_LOG(LogTemp, Warning, TEXT("UpdateActionKeyText %s : %s"), *MappingName.ToString(), *Key.GetFName().ToString());
+
+    if (MappingName == "IA_Als_Jump" && JumpButtonText)
+    {
+        JumpButtonText->SetText(FText::FromName(Key.GetFName()));
+    }
+    else if (MappingName == "IA_Als_Glide" && GlideButtonText)
+    {
+        GlideButtonText->SetText(FText::FromName(Key.GetFName()));
+    }
+    else if (MappingName == "IA_Als_Sprint" && SprintButtonText)
+    {
+        SprintButtonText->SetText(FText::FromName(Key.GetFName()));
+    }
+    else if (MappingName == "IA_Als_Walk" && WalkButtonText)
+    {
+        WalkButtonText->SetText(FText::FromName(Key.GetFName()));
+    }
+    else if (MappingName == "IA_Als_Crouch" && CrouchButtonText)
+    {
+        CrouchButtonText->SetText(FText::FromName(Key.GetFName()));
+    }
+    else if (MappingName == "IA_Als_Build" && BuildButtonText)
+    {
+        BuildButtonText->SetText(FText::FromName(Key.GetFName()));
+    }
+    else if (MappingName == "IA_Interact" && InteractButtonText)
+    {
+        InteractButtonText->SetText(FText::FromName(Key.GetFName()));
+    }
+}
+
+FKey UEmberKeySettingWidget::GetKeyForMapping(FName MappingName) const
+{
+    for (const FEmberKeyMappingEntry& Entry : CurrentMappings)
+    {
+        if (Entry.MappingName == MappingName)
+            return Entry.BoundKey;
+    }
+    return EKeys::Invalid;
+}
+
+int32 UEmberKeySettingWidget::FindMappingIndexByName(FName MappingName) const
+{
+    for (int32 i = 0; i < CurrentMappings.Num(); ++i)
+    {
+        if (CurrentMappings[i].MappingName == MappingName)
+            return i;
+    }
+    return INDEX_NONE;
 }
