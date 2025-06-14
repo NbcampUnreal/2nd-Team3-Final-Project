@@ -7,23 +7,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
 #include "BehaviorTree/BlackboardComponent.h"
-#include "DrawDebugHelpers.h"
-#include "EMSCompSaveInterface.h"
-#include "TestFood.h"
-#include "GameFramework/PawnMovementComponent.h"
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
-#include "EnvironmentQuery/EnvQueryManager.h"
-
-const FName AAIAnimalController::SleepTime = "SleepTime";
-const FName AAIAnimalController::IsShouldSleep = "IsShouldSleep";
-const FName AAIAnimalController::DistanceToTarget = "DistanceToTarget";
-const FName AAIAnimalController::CurrentState = "CurrentState";
-const FName AAIAnimalController::TargetActor = "TargetActor";
-const FName AAIAnimalController::TargetLocation = "TargetLocation";
-const FName AAIAnimalController::FleeRange = "FleeRange";
-const FName AAIAnimalController::WanderRange = "WanderRange"; 
-const FName AAIAnimalController::SafeLocation = "SafeLocation"; 
-const FName AAIAnimalController::IsHit = "IsHit";
+#include "Character/EmberCharacter.h"
 
 AAIAnimalController::AAIAnimalController()
 {
@@ -31,8 +16,8 @@ AAIAnimalController::AAIAnimalController()
     SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
     HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
 
-    SightConfig->SightRadius = 2000.0f;
-    SightConfig->LoseSightRadius = 2500.0f;
+    SightConfig->SightRadius = 1500.0f;
+    SightConfig->LoseSightRadius = 2000.0f;
     SightConfig->PeripheralVisionAngleDegrees = 120.0f;
     SightConfig->SetMaxAge(3.0f);
     SightConfig->DetectionByAffiliation.bDetectEnemies = true;
@@ -63,8 +48,6 @@ void AAIAnimalController::OnPossess(APawn* InPawn)
         // 블랙보드 초기화 성공, 비헤이비어 트리 실행
         RunBehaviorTree(BehaviorTree);
     }
-    InitBlackboard();
-    //AnimalBindingEQS(InPawn);
     AbilitySystemComponent = CastChecked<ABaseAIAnimal>(InPawn)->GetAbilitySystemComponent();
 }
 
@@ -75,22 +58,17 @@ void AAIAnimalController::BeginPlay()
 
 }
 
-void AAIAnimalController::InitBlackboard()
-{
-    GetBlackboardComponent()->SetValueAsName("NStateTag", "Animal.State.Idle");
-    GetBlackboardComponent()->SetValueAsBool("NIsNeedToGeneratePP", true);
-    GetBlackboardComponent()->SetValueAsFloat("SleepTime", fSleepTime);
-    GetBlackboardComponent()->SetValueAsBool("IsShouldSleep",bIsShouldSleep);
-    GetBlackboardComponent()->SetValueAsEnum("Personality",
-                                            static_cast<uint8>(Cast<ABaseAIAnimal>(GetPawn())->GetPersonality()) );
-    GetBlackboardComponent()->SetValueAsFloat("WanderRange",500.0f);
-}
-
 void AAIAnimalController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
+    bool IsSleep = Cast<ABaseAIAnimal>(GetPawn())->GetIsShouldSleep();
+    bool IsDead = Cast<ABaseAIAnimal>(GetPawn())->GetIsDead();
+    if (IsSleep || IsDead)
+    {
+        return;
+    }
     //시각 청각적으로 감지됐을 때 -> 뒤에서 접근하면 감지 못하는 문제 있을 듯 ,근데 동물은 그게 맞아
-    FindTargetPlayer(Actor, Stimulus);
     FindTargetAnimal(Actor, Stimulus);
+    FindTargetPlayer(Actor, Stimulus);
 }
 
 void AAIAnimalController::FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus)
@@ -98,19 +76,23 @@ void AAIAnimalController::FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus)
     if (BlackboardComponent)
     {
         // 감지된게 플레이어면
-        // 월드에 플레이어가 없다면 터진다 ->당연
-        ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(),0);
+        AEmberCharacter* PlayerCharacter = Cast<AEmberCharacter>(Actor);
         if (!PlayerCharacter)
         {
             return;
         }
+        
         if (BlackboardComponent)
         {
             //--- 공격 확률 설정 --------------------------------------------------
-            float AttackProb = 0.05;          // 기본 5 %
+            float AttackProb = 0.00;          // 기본 0 %
             if (Cast<ABaseAIAnimal>(GetPawn())->GetPersonality() == EAnimalAIPersonality::Brave) // 성격이 ‘용감’이라면 +5 %
             {
-                AttackProb += 0.05f;           // 총합 ⇒ 10 %
+                AttackProb += 0.05f;           // 총합 ⇒ 5 %
+            }
+            if (Cast<ABaseAIAnimal>(GetPawn())->GetRoleTag() == "Animal.Role.Leader")
+            {
+                AttackProb += 0.5f;            // 총합 ⇒ 55 %
             }
             //--------------------------------------------------------------------
 
@@ -123,7 +105,6 @@ void AAIAnimalController::FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus)
             }
             else
             {
-                BlackboardComponent->SetValueAsName("NEnemyTag", "Player");
                 BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Warning");
                 BlackboardComponent->SetValueAsObject("TargetActor", Actor);
             }
@@ -176,9 +157,8 @@ void AAIAnimalController::FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus)
             }
             else //this가 우선순위가 더 크다면(낮다면) -> 도망
             {
-                BlackboardComponent->SetValueAsName("NEnemyTag", "Animal");
                 //여기서 인식되면 타겟, 거리 등록
-                BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Warning");
+                BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
                 BlackboardComponent->SetValueAsObject("TargetActor", Actor);
             }
         }

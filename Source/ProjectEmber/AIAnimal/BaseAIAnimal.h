@@ -8,9 +8,13 @@
 #include "GameFramework/Character.h"
 #include "GameplayEffectTypes.h"
 #include "GameplayTagAssetInterface.h"
+#include "TargetSystemTargetableInterface.h"
+#include "Abilities/GameplayAbilityTypes.h"
+#include "Components/SphereComponent.h"
 #include "MessageBus/MessageBus.h"
 #include "BaseAIAnimal.generated.h"
 
+class UWidgetComponent;
 class UMeleeTraceComponent;
 class UBoxComponent;
 class UAISenseConfig_Hearing;
@@ -25,18 +29,18 @@ class AAIController;
 UENUM(BlueprintType)
 enum class EAnimalAIPersonality : uint8
 {
-	Normal			UMETA(DisplayName = "Normal"),			//디폴트
-	Cowardly        UMETA(DisplayName = "Cowardly"),        // 기본 경계거리 증가
-	Curious			UMETA(DisplayName = "Curious"),			// 플레이어에 접근
-	Brave			UMETA(DisplayName = "Brave"),			// 위협받으면 반격
-	Outsider		UMETA(DisplayName = "Outsider"),		// 기본 어슬렁거리 증가
+	Normal			UMETA(DisplayName = "Normal"),			//인지 -> Idle, 피격-> 확정 도망
+	Cowardly        UMETA(DisplayName = "Cowardly"),        // 인지 -> 도망 확률 증가, 피격-> 확정 도망
+	Curious			UMETA(DisplayName = "Curious"),			// 인지 -> 접근 확률 증가, 피격-> 확정 도망
+	Brave			UMETA(DisplayName = "Brave"),			// 인지 -> 선공격 확률 증가, 피격-> 반격 확률 증가
 	Agile			UMETA(DisplayName = "Agile"),			// 기본 이동속도 증가
 	Lazy			UMETA(DisplayName = "Lazy"),			// 기본 이동속도 감소
 	End				UMETA(DisplayName = "End")
 };
 
 UCLASS()
-class PROJECTEMBER_API ABaseAIAnimal : public ACharacter, public IAbilitySystemInterface, public IGameplayTagAssetInterface
+class PROJECTEMBER_API ABaseAIAnimal : public ACharacter, public IAbilitySystemInterface, public IGameplayTagAssetInterface,
+public ITargetSystemTargetableInterface
 {
 	GENERATED_BODY()
 
@@ -48,16 +52,30 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
 	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override; //어빌리티시스템 함수 오버라이드
+
+	virtual bool IsTargetable_Implementation() const override;
 	
+
+	UFUNCTION()
+	void OnHit(AActor* InstigatorActor);
+
+	UFUNCTION()
+	void OnAttackSpecial();
+	
+	UFUNCTION(BlueprintCallable)
+	void OnGameTimeChanged(const FGameplayTag& EventTag, const FGameplayEventData& EventData);
+	void MakeRandomActiveAtNight(int32 InWeather);
+
+	void OnWalkSpeedChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnFullnessChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	
+	
 	EAnimalAIPersonality GetPersonality();
 	float GetWildPower() const;
 	float GetWanderRange() const;
-	UAnimMontage* GetMontage(FGameplayTag MontageTag);
-	TArray<FVector>& GetPatrolPoints();
+	TObjectPtr<UAnimMontage> GetMontage(FGameplayTag MontageTag);
 	
 	void GenerateRandom();
 	void DecreaseFullness();
@@ -75,7 +93,17 @@ public:
 	void SetRoleTag(FName InRoleTag);
 
 	UFUNCTION(BlueprintCallable)
-	void SetIdleState();
+	void SetState(bool IsShouldSleep = true);
+
+	bool GetIsShouldSleep() const;
+	void SetIsShouldSleep(bool InIsSleep);
+
+	//밤에 활동,비활동
+	UFUNCTION(BlueprintCallable)
+	void ActiveNonSleep();
+	
+	UFUNCTION(BlueprintCallable)
+	void DeactiveSleep();
 
 	UFUNCTION(BlueprintCallable, Category = AI)
 	bool GetIsDead() const;
@@ -106,16 +134,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Attribute)
 	const class UEmberCharacterAttributeSet* GetCharacterAttributeSet() const;
 
-	UFUNCTION()
-	void OnHit(AActor* InstigatorActor);
+
 
 protected:
 	void ReceiveMessage(const FName MessageType, UObject* Payload);
+	void ApplyWaterSurface(float DeltaTime);
 	
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void SetDetails();
 
-	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UMeleeTraceComponent* MeleeTraceComponent;
 	
@@ -152,9 +179,12 @@ protected:
 	UBlackboardComponent* BlackboardComponent;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Montage)
-	TMap<FGameplayTag, UAnimMontage*> MontageMap; //키로 태그 넘겨주면 몽타주 가져옴 
+	TMap<FGameplayTag, TObjectPtr<UAnimMontage>> MontageMap; //키로 태그 넘겨주면 몽타주 가져옴 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Montage)
+	TArray<TObjectPtr<UAnimMontage>> AttackMontages;
 	
-	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
+	UPROPERTY(EditAnywhere, Category = "12")
 	TArray<TSubclassOf<class UGameplayAbility>> StartAbilities;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AnimalEnum)
@@ -190,12 +220,31 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGameplayTag IdentityTag;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability")
-	TSubclassOf<class UGameplayEffect> DecreaseFullnessEffect;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FGameplayTag RoleTag;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TObjectPtr<UMaterialInterface>> MaterialInterface;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<class UNiagaraComponent> NiagaraComponent;
+	
 	FTimerHandle FullnessTimerHandle;
 	
-	TArray<FVector> PatrolPoints;
-	
 	FMessageDelegate MessageDelegateHandle;
+
+	//수영 변수 -> 과연 dx같은 이 방법이 맞는가
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swim")
+	float SwimTime = 0.0f; // 시간 누적용 변수
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swim")
+	float FloatAmplitude = 20.0f; // 진폭 (높이)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swim")
+	float FloatFrequency = 0.4f; // 주기 (1초당 오르내림)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swim")
+	float WaterSurfaceZ = 0.0f; // 기준 물 표면 높이
+
+	bool bIsAbility = false;
 };

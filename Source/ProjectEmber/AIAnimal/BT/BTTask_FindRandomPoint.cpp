@@ -4,7 +4,6 @@
 
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AIController.h"
-#include "AIAnimal/TestFood.h"
 #include "EnvironmentQuery/EnvQueryInstanceBlueprintWrapper.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
 
@@ -70,7 +69,7 @@ void UBTTask_FindRandomPoint::OnFindRandomPointQueryFinished(UEnvQueryInstanceBl
 	if (BlackboardComp)
 	{
 		int Index = FMath::RandRange(0, Locations.Num()-1);
-		BlackboardComp->SetValueAsVector("TargetLocation", Locations[Index]);
+		BlackboardComp->SetValueAsVector("SafeLocation", Locations[Index]);
 	}
 	
 	FinishLatentTask(*BTComp, EBTNodeResult::Succeeded);

@@ -6,3 +6,7 @@
 void UInteractionFragment::ExecuteInteraction_Implementation(AActor* Interactor)
 {
 }
+
+void UInteractionFragment::EndInteraction_Implementation()
+{
+}

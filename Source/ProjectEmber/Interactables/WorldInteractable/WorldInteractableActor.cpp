@@ -17,6 +17,8 @@ AWorldInteractableActor::AWorldInteractableActor()
 void AWorldInteractableActor::Interact_Implementation(AActor* Interactor)
 {
 	Super::Interact_Implementation(Interactor);
+	
+	OnInteractionStarted.Broadcast(Interactor);
 
 	TArray<UInteractionFragment*> Fragments;
 	GetComponents<UInteractionFragment>(Fragments);
@@ -28,4 +30,25 @@ void AWorldInteractableActor::Interact_Implementation(AActor* Interactor)
 			Fragment->ExecuteInteraction(Interactor);
 		}
 	}
+}
+
+void AWorldInteractableActor::EndInteract_Implementation()
+{
+	TArray<UInteractionFragment*> Fragments;
+	GetComponents<UInteractionFragment>(Fragments);
+
+	for (UInteractionFragment* Fragment : Fragments)
+	{
+		if (Fragment)
+		{
+			Fragment->EndInteraction();
+		}
+	}
+
+	if (ReceiverComponent)
+	{
+		ReceiverComponent->BroadCastInteractionCompleted(this);
+	}
+
+	OnInteractionEnded.Broadcast(this);
 }

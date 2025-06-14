@@ -4,6 +4,7 @@
 #include "GA_AnimalAttack.h"
 
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "MessageBus/MessageBus.h"
 
 UGA_AnimalAttack::UGA_AnimalAttack()
 {
@@ -27,6 +28,15 @@ void UGA_AnimalAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		Instigator = OwnerInfo->OwnerActor;
 	}
 
+	if (TriggerEventData->EventTag == FGameplayTag::RequestGameplayTag("Trigger.Animal.AttackSpecial"))
+	{
+		IsSpecialAttack = true;
+	}
+	else
+	{
+		IsSpecialAttack= false;
+	}
+
 	if (TriggerEventData->OptionalObject)
 	{
 		Montage = const_cast<UAnimMontage*>(Cast<const UAnimMontage>(TriggerEventData->OptionalObject.Get()));
@@ -38,6 +48,8 @@ void UGA_AnimalAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	if (Task)
 	{
 		Task->OnCompleted.AddDynamic(this, &UGA_AnimalAttack::OnCompleteCallback);
+		Task->OnInterrupted.AddDynamic(this, &UGA_AnimalAttack::OnMontageInterrupted);
+		Task->OnCancelled.AddDynamic(this, &UGA_AnimalAttack::OnMontageInterrupted);
 		Task->ReadyForActivation();
 	}
 }
@@ -46,6 +58,24 @@ void UGA_AnimalAttack::OnCompleteCallback()
 {
 	bool bReplicatedEndAbility = true;
 	bool bWasCancelled = false;
+	if (IsSpecialAttack)
+	{
+		UObject* Animal = Cast<UObject>(GetAvatarActorFromActorInfo());
+		UMessageBus::GetInstance()->BroadcastMessage(TEXT("SpecialAttack"), Animal);
+	}
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
+}
+
+void UGA_AnimalAttack::OnMontageInterrupted()
+{
+	bool bReplicatedEndAbility = true;
+	bool bWasCancelled = false;
+
+	if (IsSpecialAttack)
+	{
+		UObject* Animal = Cast<UObject>(GetAvatarActorFromActorInfo());
+		UMessageBus::GetInstance()->BroadcastMessage(TEXT("SpecialAttack"), Animal);
+	}
 	
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
 }

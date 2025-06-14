@@ -18,7 +18,7 @@
 #include "Utility/AlsVector.h"
 
 #include "AbilitySystemComponent.h"
-#include "../../../../../../../Program Files/Epic Games/UE_5.5/Engine/Plugins/EnhancedInput/Source/EnhancedInput/Public/EnhancedInputComponent.h"
+#include "EnhancedInputComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(AlsCharacter)
 
@@ -92,6 +92,16 @@ void AAlsCharacter::ForceRoationTest(float YawAngle)
 FVector2D AAlsCharacter::GetMoveInput() const
 {
 	return MoveInputBinding->GetValue().Get<FVector2D>();
+}
+
+void AAlsCharacter::SetTargetMode(const FGameplayTag& InTargetMode)
+{
+	TargetMode = InTargetMode;
+}
+
+const FGameplayTag& AAlsCharacter::GetTargetMode() const
+{
+	return TargetMode;
 }
 
 void AAlsCharacter::ForceLastInputDirectionBlocked(bool bBlocked)
@@ -1802,11 +1812,21 @@ void AAlsCharacter::RefreshGroundedRotation(const float DeltaTime)
 
 bool AAlsCharacter::RefreshCustomGroundedMovingRotation(const float DeltaTime)
 {
+	if (TargetMode == AlsRotationModeTags::Targeting)
+	{
+		RefreshGroundedAimingRotation(DeltaTime);
+		return true;
+	}
 	return false;
 }
 
 bool AAlsCharacter::RefreshCustomGroundedNotMovingRotation(const float DeltaTime)
 {
+	if (TargetMode == AlsRotationModeTags::Targeting)
+	{
+		RefreshGroundedAimingRotation(DeltaTime);
+		return true;
+	}
 	return false;
 }
 
@@ -1998,6 +2018,11 @@ void AAlsCharacter::RefreshInAirRotation(const float DeltaTime)
 
 bool AAlsCharacter::RefreshCustomInAirRotation(const float DeltaTime)
 {
+	if (TargetMode == AlsRotationModeTags::Targeting)
+	{
+		RefreshInAirAimingRotation(DeltaTime);
+		return true;
+	}
 	return false;
 }
 

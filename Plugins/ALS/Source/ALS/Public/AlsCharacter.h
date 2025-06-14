@@ -49,11 +49,15 @@ public:/* My Custom Function & Variable */
 	UFUNCTION(BlueprintCallable, Category = "ALS|Character")
 	FVector2D GetMoveInput() const;
 
+	void SetTargetMode(const FGameplayTag& InTargetMode);
+	const FGameplayTag& GetTargetMode() const;
 	FEnhancedInputActionValueBinding* MoveInputBinding{nullptr};
 	
 private:
 	TObjectPtr<UAbilitySystemComponent> AscInstance;
 	FGameplayTagContainer ForceGameplayTags;
+	
+	FGameplayTag TargetMode{FGameplayTag()};
 
 protected: /* AlsCharacter */
 	UPROPERTY(BlueprintReadOnly, Category = "Als Character")

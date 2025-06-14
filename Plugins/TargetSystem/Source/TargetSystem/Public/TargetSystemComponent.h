@@ -136,11 +136,11 @@ public:
 
 	// Function to call to target a new actor.
 	UFUNCTION(BlueprintCallable, Category = "Target System")
-	void TargetActor();
+	void TargetActor(const TArray<AActor*> Actors);
 
 	// Function to call to manually untarget.
 	UFUNCTION(BlueprintCallable, Category = "Target System")
-	void TargetLockOff();
+	void TargetLockOff(const bool bIsBroadcast = true);
 
 	/**
 	* Function to call to switch with X-Axis mouse / controller stick movement.
@@ -177,6 +177,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Target System")
 	bool IsLocked() const;
 
+	void TargetWidgetDestroy();
 private:
 	UPROPERTY()
 	AActor* OwnerActor;

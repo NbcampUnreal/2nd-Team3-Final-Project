@@ -34,6 +34,10 @@ protected:
 private:
 	UFUNCTION()
 	void OnCompleteCallback();
+	UFUNCTION()
+	void OnMontageInterrupted();
+	
 	
 	TWeakObjectPtr<const AActor> Instigator;
+	bool IsSpecialAttack = false;
 };
