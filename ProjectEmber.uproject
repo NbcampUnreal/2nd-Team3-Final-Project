@@ -14,6 +14,7 @@
 				"UMG",
 				"GameplayAbilities",
 				"EnhancedInput",
+				"EasyMultiSave",
 				"CoreUObject"
 			]
 		},

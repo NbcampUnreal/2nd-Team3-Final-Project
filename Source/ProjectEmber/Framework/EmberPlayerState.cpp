@@ -15,6 +15,16 @@ AEmberPlayerState::AEmberPlayerState()
 	
 }
 
+void AEmberPlayerState::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	if (AttributeSet)
+	{
+		AttributeSet->Initialize(AbilitySystemComponent);
+	}
+}
+
 class UAbilitySystemComponent* AEmberPlayerState::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;

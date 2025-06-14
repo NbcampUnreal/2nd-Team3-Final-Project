@@ -125,8 +125,7 @@ void AEmberCharacter::BeginPlay()
 			AbilitySystemComponent = EmberPlayerState->GetAbilitySystemComponent();
 			Super::SetAbilitySystemComponent(AbilitySystemComponent);
 			EmberItemManager->InitAbilitySystem();
-			if (const UEmberCharacterAttributeSet* CurrentAttributeSet = AbilitySystemComponent->GetSet<
-				UEmberCharacterAttributeSet>())
+			if (const UEmberCharacterAttributeSet* CurrentAttributeSet = AbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>())
 			{
 				CurrentAttributeSet->OnOutOfHealth.AddDynamic(this, &ThisClass::OnOutOfHealth);
 			}
@@ -779,6 +778,7 @@ void AEmberCharacter::HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, A
 				}
 			}
 
+			EMBER_LOG(LogEmber, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
 			AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetAsc);
 			PlayHitEffectAtLocation(HitLocation);
 		}
@@ -967,10 +967,12 @@ void AEmberCharacter::Input_OnSwitchTarget(const FInputActionValue& ActionValue)
 
 void AEmberCharacter::Input_OnStartThrowQuick(const FInputActionValue& ActionValue)
 {
+	// 오버레이랑 통합시켜야됨
 }
 
 void AEmberCharacter::Input_OnCancelThrowQuick(const FInputActionValue& ActionValue)
 {
+	// 오버레이랑 통합시켜야됨
 }
 
 void AEmberCharacter::Input_OnSwitchThrowOverlay(const FInputActionValue& ActionValue)
@@ -994,12 +996,39 @@ void AEmberCharacter::Input_OnSwitchThrowOverlay(const FInputActionValue& Action
 	}
 }
 
+void AEmberCharacter::ShowQuickActionWidget()
+{
+	//퀵슬롯 위젯 보이게 하기
+
+	EMBER_LOG(LogEmber, Warning, TEXT("QuickActionTimerHandle ShowQuickActionWidget!"));
+	bShowQuickActionWidget = true;
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+	TimerManager.ClearTimer(QuickActionTimerHandle);
+}
+
 void AEmberCharacter::Input_OnStartItemQuick(const FInputActionValue& ActionValue)
 {
+	EMBER_LOG(LogEmber, Warning, TEXT("QuickActionTimerHandle TimerSet!"));
+	GetWorld()->GetTimerManager().SetTimer(QuickActionTimerHandle, this, &ThisClass::ShowQuickActionWidget, 1.0f, false);
 }
 
 void AEmberCharacter::Input_OnCancelItemQuick(const FInputActionValue& ActionValue)
 {
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+	// 타이머가 발동중이면 (1초가 안지났다는 뜻)
+	if (TimerManager.IsTimerActive(QuickActionTimerHandle))
+	{
+		// 포커스 중인 아이템 사용
+		EMBER_LOG(LogEmber, Warning, TEXT("QuickActionTimerHandle is active, using focused item."));
+		TimerManager.ClearTimer(QuickActionTimerHandle);
+	}
+	// 퀵슬롯 위젯이 노출 중이면
+	else if (bShowQuickActionWidget)
+	{
+		// 포커스 중인 슬롯으로 세팅 후 Widget 닫기
+		EMBER_LOG(LogEmber, Warning, TEXT("QuickActionWidget is showing, setting focused slot and closing widget."));
+		bShowQuickActionWidget = false;
+	}
 }
 
 void AEmberCharacter::Input_OnStartScan(const FInputActionValue& ActionValue)
