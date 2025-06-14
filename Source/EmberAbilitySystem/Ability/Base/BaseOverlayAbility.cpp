@@ -46,17 +46,18 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 		);	
 	}
 	
-	if (!bLoopingMontage && bIsWarping)
-	{
-		SetUpdateWarping();
-	}
-
 	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
 	{
 		Character->SetForceGameplayTags(ForceGameplayTags);
 		//Character->ForceLastInputDirectionBlocked(true);
 		//PreLocomotionState = Character->GetLocomotionState();
 
+	
+		if (!bLoopingMontage && bIsWarping && Character->GetLocomotionMode() != AlsLocomotionModeTags::InAir)
+		{
+			SetUpdateWarping();
+		}
+		
 		if (bMontageTickEnable)
 		{
 			Character->GetWorld()->GetTimerManager().SetTimer(

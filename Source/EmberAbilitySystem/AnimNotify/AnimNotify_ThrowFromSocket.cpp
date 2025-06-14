@@ -3,7 +3,9 @@
 
 #include "AnimNotify_ThrowFromSocket.h"
 
+#include "AlsCharacter.h"
 #include "EmberLog/EmberLog.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
 void UAnimNotify_ThrowFromSocket::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation,
@@ -39,45 +41,85 @@ void UAnimNotify_ThrowFromSocket::Notify(USkeletalMeshComponent* MeshComp, UAnim
 		EMBER_LOG(LogEmber, Warning, TEXT("ThrowNotify: SK_LittleBoyRyan component not found."));
 		return;
 	}
-
-	// 소켓 위치
+	
+	/*const FVector SocketLocation = VisualMesh->GetSocketLocation(SocketName);
+	UWorld* World = Owner->GetWorld();
+	APlayerController* PC = Cast<APlayerController>(Cast<ACharacter>(Owner)->GetController());
+	FVector ViewLoc;
+	FRotator ViewRot;
+	if (PC && Cast<AAlsCharacter>(Owner)->GetRotationMode() == AlsRotationModeTags::Aiming)
+	{*/
+	// 1) 소켓(어깨) 위치
 	const FVector SocketLocation = VisualMesh->GetSocketLocation(SocketName);
 
-	// 발사 방향 회전 계산
-	const FVector Forward = Owner->GetActorForwardVector();
-	const FRotator SpawnRotation = Forward.Rotation();
+	// 2) 카메라 위치·회전 (뷰포인트) 얻기
+	APlayerController* PC = Cast<APlayerController>(Cast<ACharacter>(Owner)->GetController());
+	FVector CameraLoc;
+	FRotator CameraRot;
+	if (PC && Cast<AAlsCharacter>(Owner)->GetRotationMode() == AlsRotationModeTags::Aiming)
+	{
+		PC->GetPlayerViewPoint(CameraLoc, CameraRot);
+	}
+	else
+	{
+		// 폴백
+		CameraLoc  = SocketLocation;
+		CameraRot  = Owner->GetActorRotation();
+	}
 
-	// 위치를 약간 앞쪽으로 오프셋
-	const FVector SpawnLocation = SocketLocation + Forward * 20.f;
+	// 3) 화면 중앙 방향 벡터
+	FVector CamForward = CameraRot.Vector();
 
+	// 4) 라인 트레이스: 카메라에서 화면 중앙 방향으로 쏴서 충돌점 찾기
 	UWorld* World = Owner->GetWorld();
-	if (!World)
-	{
-		return;
-	}
-	
-	// 4) 스폰
-	FActorSpawnParameters Params;
-	Params.Owner = Owner;
-	Params.Instigator = Cast<APawn>(Owner);
+	if (!World) return;
 
-	AActor* Spawned = World->SpawnActor<AActor>(ProjectileClass,SpawnLocation,SpawnRotation,Params);
-	if (!Spawned)
+	FHitResult Hit;
+	FVector TraceStart = CameraLoc;
+	FVector TraceEnd   = TraceStart + CamForward * 10000.f;  // 충분히 먼 거리
+	FCollisionQueryParams Params(NAME_None, /*bTraceComplex=*/true, Owner);
+	Params.bReturnPhysicalMaterial = false;
+
+	FVector TargetPoint;
+	if (World->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_Visibility, Params))
 	{
-		return;
+		TargetPoint = Hit.Location;
 	}
-	
-	// 5) Velocity 세팅
-	if (UProjectileMovementComponent* ProjMov = Spawned->FindComponentByClass<UProjectileMovementComponent>())
+	else
 	{
-		Spawned->SetActorRotation(Forward.Rotation());
-		ProjMov->Velocity = Forward * ThrowSpeed;
+		TargetPoint = TraceEnd;
 	}
-	else if (UStaticMeshComponent* SM = Spawned->FindComponentByClass<UStaticMeshComponent>())
+
+	// 5) 진짜 발사 방향: 소켓 위치 → 타겟 포인트
+	FVector ShootDir = (TargetPoint - SocketLocation).GetSafeNormal();
+
+	// 6) 회전·위치 재계산
+	FRotator SpawnRot      = ShootDir.Rotation();
+	FVector   SpawnLoc      = SocketLocation + ShootDir * 20.f;
+
+	// 7) 스폰
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner     = Owner;
+	SpawnParams.Instigator= Cast<APawn>(Owner);
+
+	AActor* Projectile = World->SpawnActor<AActor>(
+		ProjectileClass,
+		SpawnLoc,
+		SpawnRot,
+		SpawnParams
+	);
+	if (!Projectile) return;
+
+	// 8) 초기 속도 세팅
+	if (auto* ProjMov = Projectile->FindComponentByClass<UProjectileMovementComponent>())
+	{
+		ProjMov->Velocity = ShootDir * ThrowSpeed;
+	}
+	else if (auto* SM = Projectile->FindComponentByClass<UStaticMeshComponent>())
 	{
 		if (SM->IsSimulatingPhysics())
 		{
-			SM->AddImpulse(Forward * ThrowSpeed, NAME_None, true);
+			SM->AddImpulse(ShootDir * ThrowSpeed, NAME_None, true);
 		}
 	}
 }
