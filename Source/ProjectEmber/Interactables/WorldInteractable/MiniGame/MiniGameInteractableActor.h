@@ -6,6 +6,9 @@
 #include "Interactables/WorldInteractable/WorldInteractableActor.h"
 #include "MiniGameInteractableActor.generated.h"
 
+class UMiniGameCondition;
+struct FGameplayEventData;
+class UQuestCondition;
 class AMiniGameInteractableActor;
 
 UCLASS(Abstract, Blueprintable, EditInlineNew)
@@ -23,15 +26,20 @@ class PROJECTEMBER_API AMiniGameInteractableActor : public AWorldInteractableAct
 	GENERATED_BODY()
 public:
 	virtual void Interact_Implementation(AActor* Interactor) override;
-
+	virtual void EndInteract_Implementation() override;
 protected:
 	void BeginMiniGame();
 	void EndMiniGame();
-	
-	virtual bool IsMiniGameCleared() const { return false; }
-	virtual void GiveReward(AActor* Receiver) {}
 
-	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category="MiniGame")
-	TArray<UMiniGameFragment*> MiniGameFragments;
+	UFUNCTION(Category="Conditions")
+	void CheckConditionCompletion(const FGameplayTag& EventTag, const FGameplayEventData& EventData);
+	
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category="MiniGameFragment")
+	TArray<TObjectPtr<UMiniGameFragment>> MiniGameFragments;
+
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category="Conditions")
+	TArray<TObjectPtr<UQuestCondition>> QuestConditions;
+	
+	bool bIsPlaying = false;
 };
 

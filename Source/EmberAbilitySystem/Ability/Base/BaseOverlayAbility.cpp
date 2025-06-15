@@ -24,7 +24,7 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
+	
 	/* 모든 행동에대한 코스트, 쿨타임 등을 한번에 처리하고 bool 리턴해줌 */
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
@@ -32,17 +32,32 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 		return;
 	}
 
-	if (!bLoopingMontage && bIsWarping)
+	if (bIsBlockAbility)
 	{
-		SetUpdateWarping();
-	}
+		UAbilitySystemComponent* Asc = GetAbilitySystemComponentFromActorInfo();
+		
+		//Asc->AddLooseGameplayTag(AlsCharacterStateTags::Blocking);
+		Asc->AddLooseGameplayTag(AlsCharacterStateTags::Parrying);
 
+		GetAvatarActorFromActorInfo()->GetWorld()->GetTimerManager().SetTimer(ParryingTimerHandle,
+		FTimerDelegate::CreateUObject(this, &UBaseOverlayAbility::OnParryEnded),
+		/* 추후 어트리뷰트에서 패링판정 시간을 가져와서 세팅해주기 */ 0.7f, 
+		false
+		);	
+	}
+	
 	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
 	{
 		Character->SetForceGameplayTags(ForceGameplayTags);
 		//Character->ForceLastInputDirectionBlocked(true);
 		//PreLocomotionState = Character->GetLocomotionState();
 
+	
+		if (!bLoopingMontage && bIsWarping && Character->GetLocomotionMode() != AlsLocomotionModeTags::InAir)
+		{
+			SetUpdateWarping();
+		}
+		
 		if (bMontageTickEnable)
 		{
 			Character->GetWorld()->GetTimerManager().SetTimer(
@@ -118,6 +133,9 @@ void UBaseOverlayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	{
 		AbilitySystemComponent->TryActivateAbilityByClass(AbilityClass,false);
 	}
+
+	AbilitySystemComponent->RemoveLooseGameplayTag(AlsCharacterStateTags::Parrying);
+	//AbilitySystemComponent->RemoveLooseGameplayTag(AlsCharacterStateTags::Blocking);
 	
 	UMessageBus::GetInstance()->BroadcastMessage(TEXT("OverlayAbilityEnded"), GetAvatarActorFromActorInfo());
 }
@@ -205,6 +223,14 @@ void UBaseOverlayAbility::OnMontageTick() const
 
 void UBaseOverlayAbility::OnBlendOut()
 {
+}
+
+void UBaseOverlayAbility::OnParryEnded()
+{
+	if (UAbilitySystemComponent* Asc = GetAbilitySystemComponentFromActorInfo_Ensured())
+	{
+		Asc->RemoveLooseGameplayTag(AlsCharacterStateTags::Parrying);
+	}
 }
 
 void UBaseOverlayAbility::SetUpdateWarping()

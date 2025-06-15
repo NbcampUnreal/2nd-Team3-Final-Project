@@ -2,10 +2,13 @@
 #include "EmberKeySettingWidget.h"
 #include "GameInstance/EmberGameInstance.h"
 #include "Kismet/GameplayStatics.h"
-//ÄÁÆ®·Ñ·¯
+#include "EmberPauseWidget.h"
+//ï¿½ï¿½Æ®ï¿½Ñ·ï¿½
 #include "Components/Button.h"
 #include "Components/WidgetSwitcher.h"
 #include "EmberMainMenuWidget.h"
+#include "GameplayTagContainer.h"
+#include "FunctionLibrary/UIFunctionLibrary.h"
 
 void UEmberSettingWidget::NativeConstruct()
 {
@@ -74,21 +77,28 @@ void UEmberSettingWidget::OnBackButtonClicked()
 {
     RemoveFromParent();
 
-    if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+    if (ParentPauseWidget)
     {
-        if (MainMenuWidgetClass)
+        if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
         {
-            UUserWidget* MainMenu = CreateWidget<UUserWidget>(PC, MainMenuWidgetClass);
-            if (MainMenu)
-            {
-                MainMenu->AddToViewport();
-                PC->bShowMouseCursor = true;
-                PC->SetInputMode(FInputModeUIOnly());
-            }
+            UUIFunctionLibrary::PopContentToLayer(PC, FGameplayTag::RequestGameplayTag("UI.Layer.Modal"));
+            UUIFunctionLibrary::FocusGame(PC);
         }
-        else
+    }
+    else
+    {
+        if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
         {
-            UE_LOG(LogTemp, Warning, TEXT("MainMenuWidgetClass not set!"));
+            if (MainMenuWidgetClass)
+            {
+                UUserWidget* MainMenu = CreateWidget<UUserWidget>(PC, MainMenuWidgetClass);
+                if (MainMenu)
+                {
+                    MainMenu->AddToViewport();
+                    PC->bShowMouseCursor = true;
+                    PC->SetInputMode(FInputModeUIOnly());
+                }
+            }
         }
     }
 }

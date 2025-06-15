@@ -16,8 +16,8 @@ AAIAnimalController::AAIAnimalController()
     SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
     HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
 
-    SightConfig->SightRadius = 2000.0f;
-    SightConfig->LoseSightRadius = 2500.0f;
+    SightConfig->SightRadius = 1500.0f;
+    SightConfig->LoseSightRadius = 2000.0f;
     SightConfig->PeripheralVisionAngleDegrees = 120.0f;
     SightConfig->SetMaxAge(3.0f);
     SightConfig->DetectionByAffiliation.bDetectEnemies = true;
