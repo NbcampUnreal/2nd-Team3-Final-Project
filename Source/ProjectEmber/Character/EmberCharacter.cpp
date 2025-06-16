@@ -902,7 +902,7 @@ void AEmberCharacter::OnResetTarget()
 
 void AEmberCharacter::Input_OnStartTarget(const FInputActionValue& ActionValue)
 {
-	GetWorld()->GetTimerManager().SetTimer(HitTimerInputHandle, this, &ThisClass::OnResetTarget, 1.0f, false);
+	GetWorld()->GetTimerManager().SetTimer(HitTimerInputHandle, this, &ThisClass::OnResetTarget, 0.5f, false);
 }
 
 void AEmberCharacter::Input_OnSwitchTarget(const FInputActionValue& ActionValue)
