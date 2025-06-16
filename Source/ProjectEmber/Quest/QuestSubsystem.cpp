@@ -171,7 +171,7 @@ bool UQuestSubsystem::AdvanceQuestStep(FName QuestID)
         if (UQuestGiverComponent* GiverComp = GiverActor->FindComponentByClass<UQuestGiverComponent>())
         {
             // 여기서 npc 상호작용 가능하게 키기
-            /*if (!GiverComp->ExclamationMarkComponent)
+            /*f (!GiverComp->ExclamationMarkComponent)
             {
                 GiverComp->ExclamationMarkComponent = NewObject<UStaticMeshComponent>(GiverActor);
                 GiverComp->ExclamationMarkComponent->SetupAttachment(GiverComp->GetRootComponent());

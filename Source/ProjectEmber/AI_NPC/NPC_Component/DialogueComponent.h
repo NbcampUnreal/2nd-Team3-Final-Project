@@ -38,6 +38,7 @@ public:
     void ShowQuestCompleteWidget(const UQuestDataAsset* InQuestAsset, bool bIsQuestComplete);
     void AdvanceDialogue();
     void Interact();
+    void ShowQuestTracker(bool bIsComplete, int32 StepIndex);
     void ShowQuestUI();
     void LoadDialogueFromDataTable(bool bResetDialogueIndex, FName InObjectiveTag = NAME_None);
 
@@ -47,15 +48,14 @@ public:
     UPROPERTY()
     bool bDialogueFinished = false;
     bool IsDialogueActive() const;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest")
-    UQuestDataAsset* QuestAsset;
+    UPROPERTY()
+    int32 AcceptedStepIndex = 0;
 
 
     UFUNCTION(BlueprintCallable, Category = "Dialogue")
     void SetCustomDialogueLines(const TArray<FText>& InLines);
 
-    /** ��ȭ ������ ǥ���ϰ� ��� ��� ���� */
+
     UFUNCTION(BlueprintCallable, Category = "Dialogue")
     void StartDialogue();
 
@@ -91,8 +91,14 @@ protected:
     UUserWidget* DialogueWidget;
 
 
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest")
+    UQuestDataAsset* QuestAsset;
+
     UPROPERTY(EditDefaultsOnly, Category = "Quest")
     TSubclassOf<class UQuestWidget> QuestCompleteWidgetClass;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Quest")
+    TSubclassOf<class UQuestTracker> QuestTrackerClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<FText> LinesOfDialogue;
@@ -132,7 +138,6 @@ protected:
 
     UPROPERTY()
     UQuestWidget* QuestWidgetInstance;
-
 
 
 };

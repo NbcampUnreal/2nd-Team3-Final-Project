@@ -205,8 +205,12 @@ void ABaseAIAnimal::ReceiveMessage(const FName MessageType, UObject* Payload)
 	{
 		if (Payload == this)
 		{
-			AnimalAttributeSet->SetWalkSpeed(WalkSpeed);
+			if (AnimalAttributeSet) 
+			{
+				AnimalAttributeSet->SetWalkSpeed(WalkSpeed);
+			}
 		}
+		
 	}
 
 	if (TEXT("SpecialAttack") == MessageType)
