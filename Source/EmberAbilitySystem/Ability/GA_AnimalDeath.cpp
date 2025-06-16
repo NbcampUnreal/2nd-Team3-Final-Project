@@ -23,7 +23,7 @@ void UGA_AnimalDeath::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	//시체 바닥에 쓰러지는 사운드 큐 재생 -> BP에서 처리
 	
 	//타이머 걸기 -> 20초 정도 죽은 상태로 보이면서 대기
-	GetWorld()->GetTimerManager().SetTimer(WaitFarmingTimerHandle, this, &ThisClass::EndFarmingTime, 5.0f, false);
+	GetWorld()->GetTimerManager().SetTimer(WaitFarmingTimerHandle, this, &ThisClass::EndFarmingTime, 20.0f, false);
 }
 
 

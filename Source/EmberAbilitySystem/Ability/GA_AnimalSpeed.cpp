@@ -32,7 +32,7 @@ void UGA_AnimalSpeed::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	{
 		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(StartEffect, GetAbilityLevel());
 		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle,
-			FGameplayTag::RequestGameplayTag("Trigger.Animal.SpeedUp"),OriginSpeed*1.2f);
+			FGameplayTag::RequestGameplayTag("Trigger.Animal.SpeedUp"),OriginSpeed*1.5f);
 		if (SpecHandle.IsValid())
 		{
 			ApplyGameplayEffectSpecToOwner(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, SpecHandle);
@@ -48,7 +48,7 @@ void UGA_AnimalSpeed::DownSpeedTime()
 {
 	//스피드 다운 게임플레이이팩트
 	if (EndEffect)
-	{	float Boostspeed = OriginSpeed * 1.2f;
+	{	float Boostspeed = OriginSpeed * 1.5f;
 		FGameplayEffectSpecHandle SpecHandle = MakeOutgoingGameplayEffectSpec(EndEffect, GetAbilityLevel());
 		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle,
 			FGameplayTag::RequestGameplayTag("Trigger.Animal.SpeedDown"),-(Boostspeed-OriginSpeed)/20);
