@@ -21,6 +21,9 @@ struct FEmberKeyMappingEntry
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    FName MappingName;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TObjectPtr<const UInputAction> InputAction = nullptr;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)

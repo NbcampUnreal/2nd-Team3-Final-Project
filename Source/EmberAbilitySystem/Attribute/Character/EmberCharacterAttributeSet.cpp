@@ -65,29 +65,38 @@ bool UEmberCharacterAttributeSet::PreGameplayEffectExecute(struct FGameplayEffec
 	
 	if (Data.EvaluatedData.Attribute == GetDamageAttribute())
 	{
+		UAbilitySystemComponent* AbilitySystemComponent = GetOwningAbilitySystemComponentChecked();
+		if (AbilitySystemComponent->HasMatchingGameplayTag(AlsCharacterStateTags::Invincibility))
+		{
+			Data.EvaluatedData.Magnitude = 0.f;
+			return true;
+		}
 		/*
 		* 극한회피 슬로우 0.35초 페이드 인 0.12초
 		* 패링 슬로우 0.17초 이펙트가 끝나는 시간 0.17초
 		* 다시 행동가능한 시간으로 돌아오는 시간 0.15초? 0.17?
 		*/
-		UAbilitySystemComponent* AbilitySystemComponent = GetOwningAbilitySystemComponentChecked();
+		
 		if (AbilitySystemComponent->HasMatchingGameplayTag(AlsCharacterStateTags::Parrying))
 		{
 			EMBER_LOG(LogEmber, Warning, TEXT("Parrying!"));
-			// 1. 시간을 느리게
+			// 1. 시간을 느리게 
 			UCombatFunctionLibrary::ApplyGlobalTimeDilation(GetWorld(), 0.4f,0.17f);
 			// 2. 데미지 무효화
 			Data.EvaluatedData.Magnitude = 0.f;
-			// 3. 패링 이펙트 적용 (마나회복만 일단 넣음)
-			ApplyGameplayEffectToSelf(AbilitySystemComponent, EffectHelperInstance->ParryEffectClass, 1.0f);
 			// 4. 패링 카운터 어빌리티 발동 (상대에게)
 			const FGameplayEffectContextHandle& Context = Data.EffectSpec.GetContext();
 			if (UAbilitySystemComponent* SourceAsc = Context.GetInstigatorAbilitySystemComponent())
 			{
-				SourceAsc->TryActivateAbilityByClass(EffectHelperInstance->EnemyParryAbilityClass);
+				bool bCan = SourceAsc->TryActivateAbilityByClass(EffectHelperInstance->EnemyParryAbilityClass);
+				if (!bCan)
+				{
+					EMBER_LOG(LogEmber, Warning, TEXT("Failed to activate enemy parry ability"));
+				}
 			}
 			// 5. 패링 카운터 어빌리티 발동 (나에게)
 			AbilitySystemComponent->TryActivateAbilityByClass(EffectHelperInstance->ParryAbilityClass);
+
 			
 			
 		}
