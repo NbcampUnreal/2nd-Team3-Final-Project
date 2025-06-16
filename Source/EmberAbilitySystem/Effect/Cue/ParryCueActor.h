@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameplayCueNotify_Actor.h"
 #include "Components/PostProcessComponent.h"
+#include "Engine/PointLight.h"
 #include "ParryCueActor.generated.h"
 
 class UNiagaraSystem;
@@ -43,4 +44,5 @@ public:
 protected:
 	UPROPERTY(VisibleAnywhere, Category = "Cue|PostProcess")
 	TObjectPtr<UPostProcessComponent> PostProcessComp;
+	
 };
