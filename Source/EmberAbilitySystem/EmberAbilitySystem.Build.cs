@@ -26,7 +26,8 @@ public class EmberAbilitySystem : ModuleRules
                 "SlateCore",
                 "GameplayTasks",
                 "GameplayTags", "EasyMultiSave", "UMG", "ALS",
-                "MotionWarping", "Niagara"
+                "MotionWarping", "Niagara",
+                "SkillSystem"
             }
         );
     }
