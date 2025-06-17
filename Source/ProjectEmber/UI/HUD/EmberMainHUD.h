@@ -45,6 +45,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
 	void PushInitialWidget();
 
+	UFUNCTION(BlueprintCallable, Category = "UI|HUD")
 	UEmberLayerBase* GetLayer(const FGameplayTag& LayerTag) const;
 	
 	UFUNCTION(BlueprintCallable)
