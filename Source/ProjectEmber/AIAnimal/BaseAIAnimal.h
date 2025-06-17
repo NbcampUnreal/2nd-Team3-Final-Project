@@ -52,12 +52,9 @@ public:
 	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override; //어빌리티시스템 함수 오버라이드
 
 	virtual bool IsTargetable_Implementation() const override;
-
-	//태완님 여기요
-	UFUNCTION(BlueprintNativeEvent)
-	void NativeEventFunction();
-	virtual void NativeEventFunction_Implementation();
-	////
+	
+	UFUNCTION(BlueprintImplementableEvent, Category= "OnBeginDeath")
+	void BP_OnBeginDeath();
 	
 	UFUNCTION()
 	void OnHit(AActor* InstigatorActor);

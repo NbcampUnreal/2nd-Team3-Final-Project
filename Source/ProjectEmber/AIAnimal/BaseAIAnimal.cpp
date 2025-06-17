@@ -136,18 +136,12 @@ void ABaseAIAnimal::BeginPlay()
 void ABaseAIAnimal::OnAbilityEnd(const FAbilityEndedData& AbilityEndedData)
 {
 	UGameplayAbility* EndedAbility = AbilityEndedData.AbilityThatEnded.Get();
-		if (EndedAbility->IsA(StartAbilities[0]) && bHasToken) // 토큰 공격이 끝나면
-		{
-			FVector BestLocation = GetGameInstance()->GetSubsystem<UTokenRaidSubsystem>()->GetBestLocation(*this);
-			BlackboardComponent->SetValueAsVector("SafeLocation", BestLocation);
-		}
+	if (EndedAbility->IsA(StartAbilities[0]) && bHasToken) // 토큰 공격이 끝나면
+	{
+		FVector BestLocation = GetGameInstance()->GetSubsystem<UTokenRaidSubsystem>()->GetBestLocation(*this);
+		BlackboardComponent->SetValueAsVector("SafeLocation", BestLocation);
+	}
 }
-
-//태완님 여기요
-void ABaseAIAnimal::NativeEventFunction_Implementation()
-{
-}
-
 
 void ABaseAIAnimal::OnBeginDeath()
 {
@@ -202,8 +196,8 @@ void ABaseAIAnimal::OnBeginDeath()
 	Payload.Instigator = this;
 	AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
 
-	//태완님 여기요
-	NativeEventFunction();
+	
+	BP_OnBeginDeath();
 }
 
 void ABaseAIAnimal::ReceiveMessage(const FName MessageType, UObject* Payload)
