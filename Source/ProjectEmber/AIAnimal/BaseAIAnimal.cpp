@@ -129,17 +129,20 @@ void ABaseAIAnimal::BeginPlay()
 	// FName으로 키값(메세지) 지정하고 델리게이트 전달
 	UMessageBus::GetInstance()->Subscribe(TEXT("HideAnimal"), MessageDelegateHandle);
 	UMessageBus::GetInstance()->Subscribe(TEXT("FixSpeed"), MessageDelegateHandle);
-	UMessageBus::GetInstance()->Subscribe(TEXT("SpecialAttack"), MessageDelegateHandle);
 	// 호출할 곳에서 
 }
 
 void ABaseAIAnimal::OnAbilityEnd(const FAbilityEndedData& AbilityEndedData)
 {
 	UGameplayAbility* EndedAbility = AbilityEndedData.AbilityThatEnded.Get();
-	if (EndedAbility->IsA(StartAbilities[0]) && bHasToken) // 토큰 공격이 끝나면
+	if (EndedAbility->IsA(StartAbilities[0])) // 토큰 공격이 끝나면
 	{
-		FVector BestLocation = GetGameInstance()->GetSubsystem<UTokenRaidSubsystem>()->GetBestLocation(*this);
-		BlackboardComponent->SetValueAsVector("SafeLocation", BestLocation);
+		BlackboardComponent->SetValueAsBool("IsAbility", false);
+		if (bHasToken)
+		{
+			FVector BestLocation = GetGameInstance()->GetSubsystem<UTokenRaidSubsystem>()->GetBestLocation(*this);
+			BlackboardComponent->SetValueAsVector("SafeLocation", BestLocation);
+		}
 	}
 }
 
@@ -219,16 +222,6 @@ void ABaseAIAnimal::ReceiveMessage(const FName MessageType, UObject* Payload)
 			{
 				AnimalAttributeSet->SetWalkSpeed(WalkSpeed);
 			}
-		}
-		
-	}
-
-	if (TEXT("SpecialAttack") == MessageType)
-	{
-		if (Payload == this)
-		{
-			bIsAbility = false;
-			BlackboardComponent->SetValueAsBool("IsAbility", false);
 		}
 	}
 }
@@ -337,8 +330,6 @@ void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 			float Dot = FVector::DotProduct(ForwardVector, Direction);
 			if (Dot<0)//뒤쪽이라면
 			{
-				BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
-				BlackboardComponent->SetValueAsBool("IsAbility", true);
 				OnAttackSpecial();
 				return;
 			}
@@ -354,6 +345,8 @@ void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 
 void ABaseAIAnimal::OnAttackSpecial()
 {
+	BlackboardComponent->SetValueAsBool("IsAbility", true);
+
 	FGameplayEventData Payload;
 	Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.AttackSpecial");
 	Payload.Instigator = this;
@@ -561,8 +554,12 @@ void ABaseAIAnimal::SetState(bool IsShouldSleep)
 	}
 }
 
-void ABaseAIAnimal::OnGameTimeChanged(const FGameplayTag& EventTag, const FGameplayEventData& EventData)
+void ABaseAIAnimal::OnGameTimeChanged(const FGameplayTag& EventTag, const FGameplayEventData& EventData) 
 {
+	if (bIsDead)
+	{
+		return;
+	}
 	//월드에 있을 때 밤->낮 바뀔 때
 	if (EventTag.MatchesTag(FGameplayTag::RequestGameplayTag(TEXT("Gameplay.Time.Day"))))
 	{
@@ -686,8 +683,8 @@ void ABaseAIAnimal::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 	
 	UMessageBus::GetInstance()->Unsubscribe(TEXT("HideAnimal"), MessageDelegateHandle);
-	UMessageBus::GetInstance()->Unsubscribe(TEXT("FixSpeed"), MessageDelegateHandle); 
-	UMessageBus::GetInstance()->Unsubscribe(TEXT("SpecialAttack"), MessageDelegateHandle);
+	UMessageBus::GetInstance()->Unsubscribe(TEXT("FixSpeed"), MessageDelegateHandle);
+	
 	if (NiagaraComponent)
 	{
 		NiagaraComponent->Deactivate();         

@@ -253,8 +253,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swim")
 	float WaterSurfaceZ = 0.0f; // 기준 물 표면 높이
-
-	bool bIsAbility = false;
-
+	
 	bool bHasToken = false;
 };
