@@ -1,7 +1,12 @@
 #include "GameInstance/EmberGameInstance.h"
 #include "GameInstance/AudioSubsystem.h"
 #include "GameInstance/LevelSubsystem.h"
+#include "EasyMultiSave.h"
+#include "EMSFunctionLibrary.h"
+#include "GameInstance/EmberSaveGame.h"
+#include "GameFramework/GameUserSettings.h" 
 #include "UI/EmberKeySettingWidget.h"
+#include "UI/EmberLoadingWidget.h"
 #include "EnhancedInputSubsystems.h"
 #include "UserSettings/EnhancedInputUserSettings.h"
 #include "InputMappingContext.h"
@@ -16,6 +21,13 @@ void UEmberGameInstance::Init()
 
 	AudioSubsystem = GetSubsystem<UAudioSubsystem>();
 	LevelSubsystem = GetSubsystem<ULevelSubsystem>();
+
+    if (UGameUserSettings* Settings = GEngine->GetGameUserSettings())
+    {
+        Settings->LoadSettings(true); // true = Apply immediately
+    }
+
+    LoadKeyMappingsWithEMS();
 }
 
 void UEmberGameInstance::TestPlaySound()
@@ -39,11 +51,16 @@ void UEmberGameInstance::ShowLoadingScreen()
 		LoadingScreenWidget = CreateWidget<UUserWidget>(this, LoadingScreenClass.Get());
 	}
 
-	if (LoadingScreenWidget && !LoadingScreenWidget->IsInViewport())
-	{
-		LoadingScreenWidget->AddToViewport(100);
-		UE_LOG(LogTemp, Warning, TEXT("[Loading] Widget Added To Viewport"));
-	}
+    if (LoadingScreenWidget && !LoadingScreenWidget->IsInViewport())
+    {
+        LoadingScreenWidget->AddToViewport(100);
+        UE_LOG(LogTemp, Warning, TEXT("[Loading] Widget Added To Viewport"));
+
+        if (UEmberLoadingWidget* TypedLoading = Cast<UEmberLoadingWidget>(LoadingScreenWidget))
+        {
+            TypedLoading->Progress = 0.0f;
+        }
+    }
 
 	if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
 	{
@@ -68,7 +85,7 @@ void UEmberGameInstance::RequestOpenLevel(FName MapName)
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this, MapName]()
 		{
 			UGameplayStatics::OpenLevel(this, MapName);
-		}, 0.8f, false);
+		}, 2.0f, false);
 }
 
 void UEmberGameInstance::TestPlaySFX(ESfxSoundType SoundType, const FName RowName, FVector Location)
@@ -138,4 +155,67 @@ void UEmberGameInstance::ApplySavedMoveBindingsToUserSettings()
     }
 
     UE_LOG(LogTemp, Warning, TEXT("=== UserSettings mapping complete ==="));
+}
+
+void UEmberGameInstance::ApplySavedActionKeyMappingsToUserSettings()
+{
+    if (SavedMappings.Num() == 0)
+        return;
+
+    APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+    if (!PC) return;
+
+    ULocalPlayer* LP = PC->GetLocalPlayer();
+    if (!LP) return;
+
+    UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(LP);
+    if (!Subsystem) return;
+
+    UEnhancedInputUserSettings* UserSettings = Subsystem->GetUserSettings();
+    if (!UserSettings) return;
+
+    for (const auto& Entry : SavedMappings)
+    {
+        FMapPlayerKeyArgs Args;
+        Args.MappingName = Entry.MappingName;
+        Args.NewKey = Entry.BoundKey;
+        Args.Slot = EPlayerMappableKeySlot::First;
+        FGameplayTagContainer FailureReason;
+        UserSettings->MapPlayerKey(Args, FailureReason);
+
+        UE_LOG(LogTemp, Warning, TEXT("[KeyRemap] Apply: %s -> %s | Fail: %s"),
+            *Entry.MappingName.ToString(),
+            *Entry.BoundKey.ToString(),
+            *FailureReason.ToString());
+    }
+    UserSettings->SaveSettings();
+
+}
+
+void UEmberGameInstance::SaveKeyMappingsWithEMS()
+{
+    UEmberSaveGame* SaveGameInstance = Cast<UEmberSaveGame>(
+        UEMSFunctionLibrary::GetCustomSave(this, UEmberSaveGame::StaticClass(), TEXT("KeyRemapSlot"), TEXT(""))
+    );
+    if (!SaveGameInstance)
+    {
+        SaveGameInstance = NewObject<UEmberSaveGame>(this, UEmberSaveGame::StaticClass());
+    }
+
+    SaveGameInstance->SavedMappings = SavedMappings;
+    SaveGameInstance->SavedMoveBindings = SavedMoveBindings;
+
+    UEMSFunctionLibrary::SaveCustom(this, SaveGameInstance);
+}
+
+void UEmberGameInstance::LoadKeyMappingsWithEMS()
+{
+    UEmberSaveGame* LoadedSave = Cast<UEmberSaveGame>(
+        UEMSFunctionLibrary::GetCustomSave(this, UEmberSaveGame::StaticClass(), TEXT("KeyRemapSlot"), TEXT(""))
+    );
+    if (LoadedSave)
+    {
+        SavedMappings = LoadedSave->SavedMappings;
+        SavedMoveBindings = LoadedSave->SavedMoveBindings;
+    }
 }

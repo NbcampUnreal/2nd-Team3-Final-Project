@@ -9,11 +9,14 @@
 #include "UObject/SoftObjectPtr.h"
 #include "InputTriggers.h"
 #include "InputModifiers.h"
+#include "EasyMultiSave.h"
+#include "GameInstance/EmberSaveGame.h"
 #include "EmberGameInstance.generated.h"
 
 class UAudioSubsystem;
 class ULevelSubsystem;
 class UUserWidget;
+class UEmberLoadingWidget;
 
 UCLASS()
 class PROJECTEMBER_API UEmberGameInstance : public UGameInstance
@@ -43,6 +46,13 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ApplySavedMoveBindingsToUserSettings();
+
+	UFUNCTION(BlueprintCallable)
+	void ApplySavedActionKeyMappingsToUserSettings();
+
+	void SaveKeyMappingsWithEMS();
+
+	void LoadKeyMappingsWithEMS();
 
 	UPROPERTY(BlueprintReadWrite)
 	TArray<FEmberDirectionalMoveEntry> SavedMoveBindings;

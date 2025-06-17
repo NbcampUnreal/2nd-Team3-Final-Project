@@ -6,9 +6,6 @@
 #include "Abilities/GameplayAbility.h"
 #include "GA_AnimalAttack.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class EMBERABILITYSYSTEM_API UGA_AnimalAttack : public UGameplayAbility
 {

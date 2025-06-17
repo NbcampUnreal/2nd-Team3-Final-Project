@@ -101,8 +101,6 @@ void AEmberCharacter::BeginPlay()
 	}
 	if (UEmberGameInstance* GI = GetGameInstance<UEmberGameInstance>())
 	{
-		GI->ApplySavedMoveBindingsToUserSettings();
-
 		APlayerController* PC = Cast<APlayerController>(GetController());
 		if (PC && PC->IsLocalController())
 		{
@@ -114,6 +112,9 @@ void AEmberCharacter::BeginPlay()
 				Subsystem->AddMappingContext(GI->UI_ALS_MappingContext, 1);
 				Subsystem->AddMappingContext(GI->UIMappingContext, 2);
 				UE_LOG(LogTemp, Warning, TEXT("[Character::BeginPlay] MappingContext applied!"));
+
+				GI->ApplySavedMoveBindingsToUserSettings();
+				GI->ApplySavedActionKeyMappingsToUserSettings();
 			}
 		}
 	}
@@ -741,6 +742,12 @@ void AEmberCharacter::HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, A
 	UAbilitySystemComponent* TargetAsc = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(HitActor);
 	if (!TargetAsc)
 	{
+		if (GetOverlayMode() == AlsOverlayModeTags::Hammer  ||
+			GetOverlayMode() == AlsOverlayModeTags::PickAxe ||
+			GetOverlayMode() == AlsOverlayModeTags::Hatchet)
+		{
+			PlayHitEffectAtLocation(HitLocation);
+		}
 		return;
 	}
 
@@ -895,7 +902,7 @@ void AEmberCharacter::OnResetTarget()
 
 void AEmberCharacter::Input_OnStartTarget(const FInputActionValue& ActionValue)
 {
-	GetWorld()->GetTimerManager().SetTimer(HitTimerInputHandle, this, &ThisClass::OnResetTarget, 1.0f, false);
+	GetWorld()->GetTimerManager().SetTimer(HitTimerInputHandle, this, &ThisClass::OnResetTarget, 0.5f, false);
 }
 
 void AEmberCharacter::Input_OnSwitchTarget(const FInputActionValue& ActionValue)
