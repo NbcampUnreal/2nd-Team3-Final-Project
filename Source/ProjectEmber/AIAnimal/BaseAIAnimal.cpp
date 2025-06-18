@@ -24,18 +24,10 @@ ABaseAIAnimal::ABaseAIAnimal()
 	NavGenerationRadius = 4000.0f; //시각,청각 인지 버뮈보다 인보커 생성 범위가 커야함
 	NavRemoveRadius = 4300.0f;
 	NavInvokerComponent = CreateDefaultSubobject<UNavigationInvokerComponent>(TEXT("NavInvokerComponent"));
+	NavInvokerComponent->SetGenerationRadii(NavGenerationRadius, NavRemoveRadius);
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	CharacterAttributeSet = CreateDefaultSubobject<UEmberCharacterAttributeSet>(TEXT("CharacterAttributeSet"));
 	AnimalAttributeSet = CreateDefaultSubobject<UEmberAnimalAttributeSet>(TEXT("AnimalAttributeSet"));
-	
-	GenerateRandom();
-	FEmberAnimalAttributeData AttributeData;
-	AttributeData.Fullness = Fullness;
-	AttributeData.WalkSpeed = WalkSpeed;
-	AttributeData.WanderRange = WanderRange;
-	AttributeData.WildPower = WildPower;
-	AnimalAttributeSet->InitFromData(AttributeData);
-
 	MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
 
 	// HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
@@ -55,10 +47,22 @@ void ABaseAIAnimal::PossessedBy(AController* NewController)
 void ABaseAIAnimal::BeginPlay()
 {
 	Super::BeginPlay();
-
-	AIController = Cast<AAIAnimalController>(GetController());
-	NavInvokerComponent->SetGenerationRadii(NavGenerationRadius, NavRemoveRadius);
 	
+	GetCharacterMovement()->bUseRVOAvoidance = true;
+	GetCharacterMovement()->AvoidanceConsiderationRadius = 800.0f; // AI가 다른 AI 감지할 반경
+	GetCharacterMovement()->AvoidanceWeight = 0.5f;
+	WalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
+	GenerateRandom();
+	if (AnimalAttributeSet)
+	{
+		FEmberAnimalAttributeData AttributeData;
+		AttributeData.Fullness = Fullness;
+		AttributeData.WalkSpeed = WalkSpeed;
+		AttributeData.WildPower = WildPower;
+		AnimalAttributeSet->InitFromData(AttributeData);
+	}
+	
+	AIController = Cast<AAIAnimalController>(GetController());
 	if (AIController)
 	{
 		BlackboardComponent = AIController->GetBlackboardComponent();
@@ -117,10 +121,6 @@ void ABaseAIAnimal::BeginPlay()
 	
 	GetWorldTimerManager().SetTimer(FullnessTimerHandle, this, &ABaseAIAnimal::DecreaseFullness, 5.0f, true);
 	
-	
-	GetCharacterMovement()->bUseRVOAvoidance = true;
-	GetCharacterMovement()->AvoidanceConsiderationRadius = 800.0f; // AI가 다른 AI 감지할 반경
-	GetCharacterMovement()->AvoidanceWeight = 0.5f;
 	
 	/* 메세지버스 사용 예시 */
 	// 함수 바인딩
@@ -198,7 +198,6 @@ void ABaseAIAnimal::OnBeginDeath()
 	Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.Death");
 	Payload.Instigator = this;
 	AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
-
 	
 	BP_OnBeginDeath();
 }
@@ -312,6 +311,7 @@ void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 {
 	//도망가는 상황에서만 속도 빨라졌다 감소 추가해야함->이팩트로 적용예정
 	bIsShouldSleep = false;
+	HitCount++;
 	TriggerSpeedUp();
 	
 	if (BlackboardComponent)
@@ -385,12 +385,10 @@ void ABaseAIAnimal::OnFullnessChanged(const FOnAttributeChangeData& OnAttributeC
 	}
 }
 
-
 void ABaseAIAnimal::GenerateRandom()
 {
 	int32 RandomPersonality = FMath::RandRange(0, static_cast<int32>(EAnimalAIPersonality::End) - 1);
 	Personality = static_cast<EAnimalAIPersonality>(RandomPersonality);
-	SetDetails();
 	Fullness = FMath::FRandRange(70.f, 90.f);
 }
 
@@ -421,11 +419,6 @@ bool ABaseAIAnimal::IsTargetable_Implementation() const
 float ABaseAIAnimal::GetWildPower() const
 {
 	return WildPower;
-}
-
-float ABaseAIAnimal::GetWanderRange() const //아무데서도 안 쓰임
-{
-	return WanderRange;
 }
 
 TObjectPtr<UAnimMontage> ABaseAIAnimal::GetMontage(FGameplayTag MontageTag)
@@ -462,29 +455,6 @@ const class UEmberAnimalAttributeSet* ABaseAIAnimal::GetAnimalAttributeSet() con
 EAnimalAIPersonality ABaseAIAnimal::GetPersonality()
 {
 	return Personality;
-}
-
-void ABaseAIAnimal::SetDetails()
-{
-	switch (Personality)
-	{
-	case EAnimalAIPersonality::Agile:
-		{
-			WalkSpeed *= 1.2f;
-			break;
-		}
-	case EAnimalAIPersonality::Lazy:
-		{
-			WalkSpeed *= 0.8f;
-			break;
-		}
-	default:
-		{
-			WalkSpeed = 300.0f;
-			WanderRange = 500.0f;
-		}
-		break;
-	}
 }
 
 void ABaseAIAnimal::SetIdentityTag(const FGameplayTag InIdentityTag)
@@ -543,7 +513,6 @@ void ABaseAIAnimal::SetState(bool IsShouldSleep)
 	}
 	
 	// 생성, 리스폰 때 활동/비활동인지
-
 	if (IsShouldSleep)
 	{
 		DeactiveSleep();
@@ -646,6 +615,16 @@ void ABaseAIAnimal::SetIsShouldSleep(bool InIsSleep)
 	bIsShouldSleep = InIsSleep;
 }
 
+int32 ABaseAIAnimal::GetHitCount() const
+{
+	return HitCount;
+}
+
+void ABaseAIAnimal::SetHitCount(int32 InHitCount)
+{
+	HitCount = InHitCount;
+}
+
 bool ABaseAIAnimal::GetIsDead() const
 {
 	return bIsDead;
@@ -694,7 +673,6 @@ void ABaseAIAnimal::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	
 	Super::EndPlay(EndPlayReason);
 }
-
 
 void ABaseAIAnimal::SwitchBehaviorTree()
 {

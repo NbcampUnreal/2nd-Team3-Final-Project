@@ -45,9 +45,16 @@ EBTNodeResult::Type UBTTask_AttackTarget::ExecuteTask(UBehaviorTreeComponent& Ow
 	ABaseAIAnimal* AIAnimal = Cast<ABaseAIAnimal>(AIPawn);
 	if (AIAnimal)
 	{
-		UObject* TargetObject = BlackboardComp->GetValueAsObject("TargetObject");
+		AIAnimal->SetHitCount(0);
+		UObject* TargetObject = BlackboardComp->GetValueAsObject("TargetActor");
 		if (ABaseAIAnimal* TargetActor = Cast<ABaseAIAnimal>(TargetObject))//가져왔는데 동물이면
 		{
+			if (TargetActor->GetIsDead())
+			{
+				Cast<AAIController>(AIAnimal->GetController())->GetBlackboardComponent()->SetValueAsName("NStateTag", "Animal.State.Idle");
+				Cast<AAIController>(AIAnimal->GetController())->GetBlackboardComponent()->SetValueAsObject("TargetActor", nullptr);
+				return EBTNodeResult::Failed;
+			}
 			if (Cast<ABaseAIAnimal>(AIPawn)->GetIdentityTag() == TargetActor->GetIdentityTag())
 			{
 				return EBTNodeResult::Failed;
