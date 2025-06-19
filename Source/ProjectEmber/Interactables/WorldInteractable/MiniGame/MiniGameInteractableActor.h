@@ -11,15 +11,6 @@ struct FGameplayEventData;
 class UQuestCondition;
 class AMiniGameInteractableActor;
 
-UCLASS(Abstract, Blueprintable, EditInlineNew)
-class PROJECTEMBER_API UMiniGameFragment : public UObject
-{
-	GENERATED_BODY()
-public:
-	virtual void OnMiniGameStart(AMiniGameInteractableActor* Owner) {}
-	virtual void OnMiniGameEnd() {}
-};
-
 UCLASS()
 class PROJECTEMBER_API AMiniGameInteractableActor : public AWorldInteractableActor
 {
@@ -33,9 +24,6 @@ protected:
 
 	UFUNCTION(Category="Conditions")
 	void CheckConditionCompletion(const FGameplayTag& EventTag, const FGameplayEventData& EventData);
-	
-	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category="MiniGameFragment")
-	TArray<TObjectPtr<UMiniGameFragment>> MiniGameFragments;
 
 	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category="Conditions")
 	TArray<TObjectPtr<UQuestCondition>> QuestConditions;

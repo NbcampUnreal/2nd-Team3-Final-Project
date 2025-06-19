@@ -21,6 +21,8 @@ private:
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 
 	UPROPERTY()
+	TObjectPtr<class UEmberPlayerAttributeSet> PlayerAttributeSet;
+	UPROPERTY()
 	TObjectPtr<class UEmberCharacterAttributeSet> AttributeSet;
 	UPROPERTY()
 	TObjectPtr<class UEmberItemAttributeSet> ItemAttributeSet;

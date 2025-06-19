@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "GameplayAbilitySpec.h"
+#include "GameplayEffect.h"
 #include "SkillTreeDataAsset.generated.h"
 
 USTRUCT(BlueprintType)
@@ -30,6 +31,9 @@ struct FSkillNode
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill")
 	TSubclassOf<UGameplayAbility> AbilityClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill")
+	TSubclassOf<UGameplayEffect> EffectClass;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Skill")
 	TArray<FName> NextSkillIDs;
