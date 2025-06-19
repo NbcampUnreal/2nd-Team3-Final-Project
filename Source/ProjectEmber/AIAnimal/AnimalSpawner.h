@@ -40,24 +40,16 @@ struct FAnimalSpawnInfo
 	int32 LeaderCount = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 PatrolCount = 0;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 FollowCount = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 AloneCount = 0;
-
-	// 팔로워 수는 TotalCount - LeaderCount - PatrolCount
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSet<TSoftObjectPtr<ABaseAIAnimal>> SpawnAnimals; 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSet<TSoftObjectPtr<ABaseAIAnimal>> DeadAnimals;
-	//HiddenAnimals는 특정 하나를 키로 꺼내는 용도가 아니라,
-	//동물 객체가 이 집합에 포함되어 있는지만 빠르게 검사하면 되기 때문에,
-	//중복 없이 빠른 검색/삽입/삭제가 가능한 TSet을 사용했습니다, 삽입삭제O(1)
 };
 
 USTRUCT(BlueprintType)
@@ -93,11 +85,27 @@ class PROJECTEMBER_API AAnimalSpawner : public AActor, public IEMSActorSaveInter
 public:
 	AAnimalSpawner();
 
+	
+	//토근식 공격을 위한
+	UFUNCTION(BlueprintCallable)
+	void OnTokenRaidEvent(int32 InGroupsPerWave, int32 inUnitsPerGroup, TSubclassOf<ABaseAIAnimal> InClass);
+	void AddCreateQueueByLocation(TArray<FAnimalSpawnInfo>& InfoByTokenArray);
+	void TickCreateQueueByToken(TQueue<FAnimalQueueInfo>& InQueue);
+	FAnimalInitInfo GetRandomLocationByToken(FVector PlayerLocation);
+	TQueue<FAnimalQueueInfo>			  CreateInfoQueueByToken;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning") //전투를 위한 애들
+	TArray<FAnimalSpawnInfo> AnimalsInfoByToken;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) //Gameplay.Region.Ocean0
+	FGameplayTag IdentityTag;
+	UFUNCTION(BlueprintCallable, Category = AI)
+	FGameplayTag GetIdentityTag() const;
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	
+
+
 	//EMS
 	virtual void ActorPreSave_Implementation() override;
 	virtual void ActorLoaded_Implementation() override;
@@ -111,9 +119,6 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void OnGameTimeChanged(const FGameplayTag& EventTag, const FGameplayEventData& EventData);
 	void MakeRandomActiveAtNight(); //IsDay == true 일 때 확률적으로 D/N 결정하는 함수
-	
-	//밤->낮 됐을 때 동물들한테 브로드캐스트 -> 게임플레이이벤트 + 태그는 Gameplay.Time.WakeUp  
-
 	
 	//Filter
 	UFUNCTION(BlueprintCallable)
@@ -146,6 +151,8 @@ protected:
 	void AddCreateQueue(FAnimalSpawnInfo& Info, TSoftObjectPtr<AAnimalSpawnPoint>& SpawnPoint, int32 Count, FName RoleTag);
 	
 	void TickCreateQueue(TQueue<FAnimalQueueInfo>& InQueue, bool& InIsLoading);
+	
+	
 
 	
 	//일괄
@@ -181,7 +188,7 @@ protected:
 	void TryReleaseEntire();
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning") //일반적인 애들 
 	TArray<FAnimalSpawnInfo> AnimalsInfo;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning")
@@ -217,16 +224,16 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="DayNight")
 	bool bIsDay = true;
-
-	int32 Weather =0;
-	bool bIsShouldSleep = true;
 	
 	TQueue<FAnimalQueueInfo>			  LoadInfoQueue; 
 	TQueue<FAnimalQueueInfo>			  CreateInfoQueue;  //매 tick 생성될, 큐에 담길 동물객체 하나마다의 정보를 담는 구조체
+	
 	TQueue<TSoftObjectPtr<ABaseAIAnimal>> SpawnQueue;
 	TQueue<TSoftObjectPtr<ABaseAIAnimal>> DespawnQueue;
 	
 	FTimerHandle DistanceTimerHandle;
 
+	int32 Weather =0;
+	bool bIsShouldSleep = true;
 	bool bIsLoading = false;
 };

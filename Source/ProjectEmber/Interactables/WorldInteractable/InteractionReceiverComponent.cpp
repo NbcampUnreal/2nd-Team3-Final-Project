@@ -3,32 +3,40 @@
 
 #include "Interactables/WorldInteractable/InteractionReceiverComponent.h"
 
-// Sets default values for this component's properties
+#include "Condition/InteractionCondition.h"
+
 UInteractionReceiverComponent::UInteractionReceiverComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
+}
 
-	// ...
+void UInteractionReceiverComponent::EvaluateDeactivationConditions(const TArray<UInteractionCondition*>& Conditions)
+{
+	bCanBeTriggeredAgain = true;
+
+	if (Conditions.Num() == 0)
+	{
+		// 조건이 없으면 기본 true 유지
+		return;
+	}
+
+	for (const UInteractionCondition* Condition : Conditions)
+	{
+		if (!Condition || !Condition->IsFulfilled())
+		{
+			// 하나라도 실패하면 다시 사용 가능 상태 유지
+			bCanBeTriggeredAgain = true;
+			return;
+		}
+	}
+
+	// 모두 충족된 경우만 false
+	bCanBeTriggeredAgain = false;
 }
 
 
-// Called when the game starts
-void UInteractionReceiverComponent::BeginPlay()
+void UInteractionReceiverComponent::BroadCastInteractionCompleted(AActor* CompletedBy)
 {
-	Super::BeginPlay();
-
-	// ...
-	
-}
-
-
-// Called every frame
-void UInteractionReceiverComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
+	OnInteractionCompleted.Broadcast(CompletedBy, bCanBeTriggeredAgain);
 }
 

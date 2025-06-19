@@ -4,6 +4,7 @@
 #include "AttributeSet.h"
 #include "AbilitySystemComponent.h"
 #include "EMSActorSaveInterface.h"
+#include "Attribute/EffectHelper/EmberEffectHelper.h"
 #include "EmberCharacterAttributeSet.generated.h"
 
 #define ATTRIBUTE_ACCESSORS(ClassName, PropertyName)	   \
@@ -16,18 +17,21 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOutOfHealthDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHitMulticastDelegate, AActor*, Instigator);
 
 
-UCLASS()
+UCLASS(Config = Engine, DefaultConfig, Blueprintable)
 class EMBERABILITYSYSTEM_API UEmberCharacterAttributeSet : public UAttributeSet, public IEMSActorSaveInterface
 {
 	GENERATED_BODY()
 public:
 	UEmberCharacterAttributeSet();
+	void Initialize(UAbilitySystemComponent* InAsc);
 
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 	virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
 	virtual bool PreGameplayEffectExecute(struct FGameplayEffectModCallbackData& Data) override;
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 
+protected:
+	
 public:
 	ATTRIBUTE_ACCESSORS(UEmberCharacterAttributeSet, AttackRate);
 	ATTRIBUTE_ACCESSORS(UEmberCharacterAttributeSet, MaxAttackRate);
@@ -72,4 +76,15 @@ protected:
 	FGameplayAttributeData MaxShield;
 
 	bool bOutOfHealth{false};
+
+protected: /* State Effects */
+
+	void ApplyGameplayEffectToSelf(UAbilitySystemComponent* AbilitySystemComponent, const TSubclassOf<UGameplayEffect>& EffectClass, float Level = 1.0f);
+	
+	UPROPERTY(Config)
+	TSubclassOf<UEmberEffectHelper> EffectHelperClass;
+
+	UPROPERTY()
+	UEmberEffectHelper* EffectHelperInstance;
 };
+

@@ -101,8 +101,6 @@ void AEmberCharacter::BeginPlay()
 	}
 	if (UEmberGameInstance* GI = GetGameInstance<UEmberGameInstance>())
 	{
-		GI->ApplySavedMoveBindingsToUserSettings();
-
 		APlayerController* PC = Cast<APlayerController>(GetController());
 		if (PC && PC->IsLocalController())
 		{
@@ -114,6 +112,9 @@ void AEmberCharacter::BeginPlay()
 				Subsystem->AddMappingContext(GI->UI_ALS_MappingContext, 1);
 				Subsystem->AddMappingContext(GI->UIMappingContext, 2);
 				UE_LOG(LogTemp, Warning, TEXT("[Character::BeginPlay] MappingContext applied!"));
+
+				GI->ApplySavedMoveBindingsToUserSettings();
+				GI->ApplySavedActionKeyMappingsToUserSettings();
 			}
 		}
 	}
@@ -125,8 +126,7 @@ void AEmberCharacter::BeginPlay()
 			AbilitySystemComponent = EmberPlayerState->GetAbilitySystemComponent();
 			Super::SetAbilitySystemComponent(AbilitySystemComponent);
 			EmberItemManager->InitAbilitySystem();
-			if (const UEmberCharacterAttributeSet* CurrentAttributeSet = AbilitySystemComponent->GetSet<
-				UEmberCharacterAttributeSet>())
+			if (const UEmberCharacterAttributeSet* CurrentAttributeSet = AbilitySystemComponent->GetSet<UEmberCharacterAttributeSet>())
 			{
 				CurrentAttributeSet->OnOutOfHealth.AddDynamic(this, &ThisClass::OnOutOfHealth);
 			}
@@ -152,7 +152,14 @@ void AEmberCharacter::BeginPlay()
 				StartAbilitySpec.InputID = StartInputAbility.Key;
 				AbilitySystemComponent->GiveAbility(StartAbilitySpec);
 			}
-
+			for (const auto& StartInputAbility : StartBlockInputAbilities)
+			{
+				FGameplayAbilitySpec StartAbilitySpec(StartInputAbility.Value);
+				StartAbilitySpec.InputID = StartInputAbility.Key;
+				AbilitySystemComponent->GiveAbility(StartAbilitySpec);
+			}
+			
+			
 			/*TArray<FGameplayAbilitySpec> Specs = AbilitySystemComponent->GetActivatableAbilities();
 			UE_LOG(LogEmber, Warning, TEXT("→ Specs 개수: %d"), Specs.Num());
 			for (const FGameplayAbilitySpec& Spec : Specs)
@@ -269,7 +276,7 @@ void AEmberCharacter::AbilityInputPressed(int32 InputID)
 
 	bool bActive = false;
 
-	if (InputID == 0)
+	if (InputID == 0 && !AbilitySystemComponent->HasMatchingGameplayTag(AlsCharacterStateTags::HeavyAttack))
 	{
 		if (FGameplayAbilitySpec* Spec = GetSpecFromOverlayMode())
 		{
@@ -285,7 +292,23 @@ void AEmberCharacter::AbilityInputPressed(int32 InputID)
 			}
 		}
 	}
-	else
+	else if (InputID == 1 && !AbilitySystemComponent->HasMatchingGameplayTag(AlsCharacterStateTags::WeakAttack))
+	{
+		if (FGameplayAbilitySpec* Spec = GetSpecFromOverlayMode(true))
+		{
+			Spec->InputPressed = true;
+			if (Spec->IsActive())
+			{
+				AbilitySystemComponent->AbilitySpecInputPressed(*Spec);
+				bActive = true;
+			}
+			else
+			{
+				bActive = AbilitySystemComponent->TryActivateAbility(Spec->Handle);
+			}
+		}
+	}
+	/*else
 	{
 		if (FGameplayAbilitySpec* Spec = AbilitySystemComponent->FindAbilitySpecFromInputID(InputID))
 		{
@@ -300,13 +323,28 @@ void AEmberCharacter::AbilityInputPressed(int32 InputID)
 				bActive = AbilitySystemComponent->TryActivateAbility(Spec->Handle);
 			}
 		}
-	}
+	}*/
 
 	/* 콤보 공격을 이어주기 위함. 기존 Input Ability 들은 인식되지만
 	 * 콤보 공격은 Input으로 이어지는게 아니다 보니 찾아서 호출시켜줘야됨
 	 */
 	if (bActive == false)
 	{
+		/** LMB, RMB가 서로 간섭하는걸 막기 위함 */
+		if ((InputID == 1 && AbilitySystemComponent->HasMatchingGameplayTag(AlsCharacterStateTags::WeakAttack)) ||
+			(InputID == 0 && AbilitySystemComponent->HasMatchingGameplayTag(AlsCharacterStateTags::HeavyAttack)))
+		{
+			return;
+		}
+		if (InputID == 1 && AbilitySystemComponent->HasMatchingGameplayTag(AlsCharacterStateTags::WeakAttack))
+		{
+			EMBER_LOG(LogEmber, Warning, TEXT("InputID: %d , Tag: %s "), InputID, *AlsCharacterStateTags::WeakAttack.GetTag().ToString());	
+		}
+		else if (InputID == 0 && AbilitySystemComponent->HasMatchingGameplayTag(AlsCharacterStateTags::HeavyAttack))
+		{
+			EMBER_LOG(LogEmber, Warning, TEXT("InputID: %d , Tag: %s "), InputID, *AlsCharacterStateTags::HeavyAttack.GetTag().ToString());	
+		}
+		
 		for (auto& Spec : AbilitySystemComponent->GetActivatableAbilities())
 		{
 			if (Spec.InputID == INDEX_NONE && Spec.IsActive())
@@ -373,9 +411,76 @@ FGameplayAbilitySpec* AEmberCharacter::GetSpecFromOverlayMode(const bool IsRight
 	return AbilitySystemComponent->FindAbilitySpecFromInputID(InputID);
 }
 
+FGameplayAbilitySpec* AEmberCharacter::GetBlockSpecFromOverlayMode() const
+{
+	int32 InputID = 0;
+	if (OverlayMode == AlsOverlayModeTags::Default)
+	{
+		InputID = static_cast<int32>(EAimInputID::Default);
+	}
+	else if (OverlayMode == AlsOverlayModeTags::Sword)
+	{
+		InputID = static_cast<int32>(EAimInputID::Sword);
+	}
+	else if (OverlayMode == AlsOverlayModeTags::Hatchet)
+	{
+		InputID = static_cast<int32>(EAimInputID::Hatchet);
+	}
+	else if (OverlayMode == AlsOverlayModeTags::PickAxe)
+	{
+		InputID = static_cast<int32>(EAimInputID::PickAxe);
+	}
+	else if (OverlayMode == AlsOverlayModeTags::Spear)
+	{
+		InputID = static_cast<int32>(EAimInputID::Spear);
+	}
+	else if (OverlayMode == AlsOverlayModeTags::Dagger)
+	{
+		InputID = static_cast<int32>(EAimInputID::Dagger);
+	}
+	else if (OverlayMode == AlsOverlayModeTags::SwordTwoHanded)
+	{
+		InputID = static_cast<int32>(EAimInputID::SwordTwoHanded);
+	}
+	else if (OverlayMode == AlsOverlayModeTags::Throw)
+	{
+		InputID = static_cast<int32>(EAimInputID::Throw);
+	}
+	else if (OverlayMode == AlsOverlayModeTags::Hammer)
+	{
+		InputID = static_cast<int32>(EAimInputID::Hammer);
+	}
+
+	return AbilitySystemComponent->FindAbilitySpecFromInputID(InputID);
+}
+
 void AEmberCharacter::TryAbilityFromOnAim(const bool bPressed)
 {
 	if (FGameplayAbilitySpec* Spec = GetSpecFromOverlayMode(true))
+	{
+		Spec->InputPressed = bPressed;
+
+		if (Spec->IsActive())
+		{
+			if (bPressed)
+			{
+				AbilitySystemComponent->AbilitySpecInputPressed(*Spec);
+			}
+			else
+			{
+				AbilitySystemComponent->AbilitySpecInputReleased(*Spec);
+			}
+		}
+		else if (bPressed)
+		{
+			AbilitySystemComponent->TryActivateAbility(Spec->Handle);
+		}
+	}
+}
+
+void AEmberCharacter::TryAbilityFromOnBlock(const bool bPressed)
+{
+	if (FGameplayAbilitySpec* Spec = GetBlockSpecFromOverlayMode())
 	{
 		Spec->InputPressed = bPressed;
 
@@ -606,16 +711,22 @@ void AEmberCharacter::Input_OnJump(const FInputActionValue& ActionValue)
 
 void AEmberCharacter::Input_OnAim(const FInputActionValue& ActionValue)
 {
-	TryAbilityFromOnAim(ActionValue.Get<bool>());
-
-	if (OverlayMode == AlsOverlayModeTags::Default)
+	
+	
+	/*if (OverlayMode == AlsOverlayModeTags::Default)
 	{
 	}
-	else if (OverlayMode == AlsOverlayModeTags::Bow ||
+	else */if (OverlayMode == AlsOverlayModeTags::Bow ||
 		OverlayMode == AlsOverlayModeTags::Throw)
 	{
+		TryAbilityFromOnAim(ActionValue.Get<bool>());
 		SetDesiredAiming(ActionValue.Get<bool>());
 	}
+}
+
+void AEmberCharacter::Input_OnBlock(const FInputActionValue& ActionValue)
+{
+	TryAbilityFromOnBlock(ActionValue.Get<bool>());
 }
 
 void AEmberCharacter::Input_OnGlide()
@@ -742,6 +853,12 @@ void AEmberCharacter::HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, A
 	UAbilitySystemComponent* TargetAsc = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(HitActor);
 	if (!TargetAsc)
 	{
+		if (GetOverlayMode() == AlsOverlayModeTags::Hammer  ||
+			GetOverlayMode() == AlsOverlayModeTags::PickAxe ||
+			GetOverlayMode() == AlsOverlayModeTags::Hatchet)
+		{
+			PlayHitEffectAtLocation(HitLocation);
+		}
 		return;
 	}
 
@@ -779,6 +896,7 @@ void AEmberCharacter::HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, A
 				}
 			}
 
+			EMBER_LOG(LogEmber, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
 			AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetAsc);
 			PlayHitEffectAtLocation(HitLocation);
 		}
@@ -895,7 +1013,7 @@ void AEmberCharacter::OnResetTarget()
 
 void AEmberCharacter::Input_OnStartTarget(const FInputActionValue& ActionValue)
 {
-	GetWorld()->GetTimerManager().SetTimer(HitTimerInputHandle, this, &ThisClass::OnResetTarget, 1.0f, false);
+	GetWorld()->GetTimerManager().SetTimer(HitTimerInputHandle, this, &ThisClass::OnResetTarget, 0.5f, false);
 }
 
 void AEmberCharacter::Input_OnSwitchTarget(const FInputActionValue& ActionValue)
@@ -967,10 +1085,12 @@ void AEmberCharacter::Input_OnSwitchTarget(const FInputActionValue& ActionValue)
 
 void AEmberCharacter::Input_OnStartThrowQuick(const FInputActionValue& ActionValue)
 {
+	// 오버레이랑 통합시켜야됨
 }
 
 void AEmberCharacter::Input_OnCancelThrowQuick(const FInputActionValue& ActionValue)
 {
+	// 오버레이랑 통합시켜야됨
 }
 
 void AEmberCharacter::Input_OnSwitchThrowOverlay(const FInputActionValue& ActionValue)
@@ -994,12 +1114,39 @@ void AEmberCharacter::Input_OnSwitchThrowOverlay(const FInputActionValue& Action
 	}
 }
 
+void AEmberCharacter::ShowQuickActionWidget()
+{
+	//퀵슬롯 위젯 보이게 하기
+
+	EMBER_LOG(LogEmber, Warning, TEXT("QuickActionTimerHandle ShowQuickActionWidget!"));
+	bShowQuickActionWidget = true;
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+	TimerManager.ClearTimer(QuickActionTimerHandle);
+}
+
 void AEmberCharacter::Input_OnStartItemQuick(const FInputActionValue& ActionValue)
 {
+	EMBER_LOG(LogEmber, Warning, TEXT("QuickActionTimerHandle TimerSet!"));
+	GetWorld()->GetTimerManager().SetTimer(QuickActionTimerHandle, this, &ThisClass::ShowQuickActionWidget, 1.0f, false);
 }
 
 void AEmberCharacter::Input_OnCancelItemQuick(const FInputActionValue& ActionValue)
 {
+	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
+	// 타이머가 발동중이면 (1초가 안지났다는 뜻)
+	if (TimerManager.IsTimerActive(QuickActionTimerHandle))
+	{
+		// 포커스 중인 아이템 사용
+		EMBER_LOG(LogEmber, Warning, TEXT("QuickActionTimerHandle is active, using focused item."));
+		TimerManager.ClearTimer(QuickActionTimerHandle);
+	}
+	// 퀵슬롯 위젯이 노출 중이면
+	else if (bShowQuickActionWidget)
+	{
+		// 포커스 중인 슬롯으로 세팅 후 Widget 닫기
+		EMBER_LOG(LogEmber, Warning, TEXT("QuickActionWidget is showing, setting focused slot and closing widget."));
+		bShowQuickActionWidget = false;
+	}
 }
 
 void AEmberCharacter::Input_OnStartScan(const FInputActionValue& ActionValue)

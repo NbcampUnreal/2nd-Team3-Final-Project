@@ -34,7 +34,11 @@ public class ProjectEmber : ModuleRules
             "Slate",
             "SlateCore",
             "MotionWarping",
-            "TargetSystem"
+            "TargetSystem",
+            "EasyMultiSave",
+            "LevelSequence",
+            "MovieScene",
+            "MovieSceneTracks"
         });
 
         //───────────────────────────────────────────────────────────────────────────────
@@ -47,7 +51,7 @@ public class ProjectEmber : ModuleRules
             "EmberAbilitySystem",
             "EmberUtils",
             "MeleeTrace",
-            "EasyMultiSave"
+            "EasyMultiSave", "SkillSystem"
         });
 
         //───────────────────────────────────────────────────────────────────────────────

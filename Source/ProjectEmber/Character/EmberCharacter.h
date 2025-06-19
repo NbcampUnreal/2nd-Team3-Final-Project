@@ -143,7 +143,10 @@ protected:
 
 	void AbilityInputPressed(int32 InputID);
 	FGameplayAbilitySpec* GetSpecFromOverlayMode(const bool IsRightInput = false) const;
+	FGameplayAbilitySpec* GetBlockSpecFromOverlayMode() const;
 	void TryAbilityFromOnAim(const bool bPressed);
+	void TryAbilityFromOnBlock(bool bPressed);
+
 protected:
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
@@ -156,6 +159,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
 	TMap<int32, TSubclassOf<class UGameplayAbility>> StartRightInputAbilities;
+
+	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
+	TMap<int32, TSubclassOf<class UGameplayAbility>> StartBlockInputAbilities;
 	
 	bool bClientAbility{false};
 	
@@ -195,6 +201,7 @@ protected:
 	virtual void Input_OnCrouch();
 	virtual void Input_OnJump(const FInputActionValue& ActionValue);
 	virtual void Input_OnAim(const FInputActionValue& ActionValue);
+	virtual void Input_OnBlock(const FInputActionValue& ActionValue);
 	virtual void Input_OnGlide();
 	virtual void Input_OnRagdoll();
 	virtual void Input_OnRoll();
@@ -232,14 +239,14 @@ protected:
 
 	/** 글라이드 시 중력 스케일 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Glide")
-	float GlideGravityScale = 0.f;
+	float GlideGravityScale = 0.1f;
 
 	/** 기본 낙하 */
 	float DefaultGravityScale = 1.0f;
 
 	FGameplayTag PreOverlayTag;
 
-protected:
+protected: /* MeleeTrace */
 	UFUNCTION()
 	void HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, AActor* HitActor, const FVector& HitLocation, const FVector& HitNormal, FName HitBoneName, FMeleeTraceInstanceHandle TraceHandle);
 	
@@ -248,6 +255,13 @@ protected:
 
 	void ReceiveMessage(const FName MessageType, UObject* Payload);
 	FMessageDelegate MessageDelegateHandle;
+
+public:
+	void ShowQuickActionWidget();
+protected:
+	bool bShowQuickActionWidget{false};
+	FTimerHandle QuickActionTimerHandle;
+	
 public: /* Inventory */
 	UFUNCTION(BlueprintCallable, Category = "Item")
 	UUserItemManger* GetItemManager();

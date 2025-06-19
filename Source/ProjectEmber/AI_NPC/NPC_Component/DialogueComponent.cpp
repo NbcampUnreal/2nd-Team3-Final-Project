@@ -20,6 +20,7 @@
 #include "Quest/QuestSubsystem.h"
 #include "Quest/Condition/Dialogue/DialogueQuestCondition.h"
 #include "AI_NPC/Widget/QuestWidget.h"
+#include "AI_NPC/Widget/QuestTracker.h"
 
 UDialogueComponent::UDialogueComponent()
 {
@@ -292,6 +293,17 @@ void UDialogueComponent::StartDialogue()
 
 void UDialogueComponent::Interact()
 {
+    if (QuestAsset)
+    {
+        if (UQuestSubsystem* Subsystem = GetWorld()->GetGameInstance()->GetSubsystem<UQuestSubsystem>())
+        {
+            if (Subsystem->IsQuestCompleted(QuestAsset->QuestID))
+            {
+                UE_LOG(LogTemp, Warning, TEXT("[Interact] 퀘스트가 이미 완료됨 → 상호작용 차단"));
+                return;
+            }
+        }
+    }
     UE_LOG(LogTemp, Warning, TEXT("[Interact] bDialogueOverriddenByCondition: %d, NumLines: %d"), bDialogueOverriddenByCondition, LinesOfDialogue.Num());
 
     if (!bPlayerInRange || !DialogueWidgetClass || bDialogueFinished)
@@ -343,7 +355,6 @@ void UDialogueComponent::Interact()
 
     bDialogueFinished = false;
     CurrentDialogueIndex = 0;
-    RepositionNPCForDialogue();
     PositionDetachedCamera();
 
     ACharacter* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
@@ -576,8 +587,15 @@ void UDialogueComponent::ShowQuestUI()
             if (UQuestSubsystem* Subsystem = GetWorld()->GetGameInstance()->GetSubsystem<UQuestSubsystem>())
             {
                 Subsystem->TryStartQuest(QuestAsset->QuestID, true);
-        
+
+                AcceptedStepIndex = Subsystem->GetCurrentStepIndexForQuest(QuestAsset->QuestID);
+                if (AcceptedStepIndex == INDEX_NONE)
+                {
+                    AcceptedStepIndex = 0;
+                }
             }
+            ShowQuestTracker(false, AcceptedStepIndex);
+
             QuestUI->RemoveFromParent();
             bDialogueFinished = false;
             this->bIsAccepteing = true;
@@ -617,7 +635,15 @@ void UDialogueComponent::ShowQuestCompleteWidget(const UQuestDataAsset* InQuestA
                 //  완료 버튼 클릭 시 다음 퀘스트 스텝으로 진행
                 Subsystem->AdvanceQuestStep(CapturedQuestAsset->QuestID);
             }
-
+            if (PC && QuestTrackerClass)
+            {
+                UQuestTracker* Tracker = CreateWidget<UQuestTracker>(PC, QuestTrackerClass);
+                if (Tracker)
+                {
+                    Tracker->AddToViewport();
+                    ShowQuestTracker(true, AcceptedStepIndex);
+                }
+            }
             //  UI 제거
             if (CompleteWidget && CompleteWidget->IsInViewport())
             {
@@ -639,24 +665,6 @@ void UDialogueComponent::ShowQuestCompleteWidget(const UQuestDataAsset* InQuestA
     }
 
     InitializeAndDisplayWidget(CompleteWidget);
-}
-
-
-void UDialogueComponent::RepositionNPCForDialogue()
-{
-    AActor* NPC = GetOwner();
-    if (!NPC) return;
-
-    UAttatchAIDialogueCamera* DialogueCam = NPC->FindComponentByClass<UAttatchAIDialogueCamera>();
-    if (!DialogueCam) return;
-
-    FVector DirectionToCamera = DialogueCam->GetComponentLocation() - NPC->GetActorLocation();
-    DirectionToCamera.Z = 0.0f;
-
-    FRotator LookAtRotation = DirectionToCamera.Rotation();
-    LookAtRotation.Pitch = 0.0f;
-    LookAtRotation.Roll = 0.0f;
-    NPC->SetActorRotation(LookAtRotation);
 }
 
 void UDialogueComponent::PositionDetachedCamera()
@@ -714,6 +722,28 @@ void UDialogueComponent::UpdateQuestLogWidgetFromAsset(const UQuestDataAsset* In
             QuestLogWidget->SetQuestInfoFromDataAsset(InQuestAsset, bIsComplete, bIsAccepted, bShowStepComplete, StepIndex);
         }
     }
+}
+void UDialogueComponent::ShowQuestTracker(bool bIsComplete, int32 StepIndex)
+{
+    APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+    if (!PC || !QuestTrackerClass || !QuestAsset) return;
+
+    UQuestTracker* Tracker = CreateWidget<UQuestTracker>(PC, QuestTrackerClass);
+    if (!Tracker) return;
+
+    Tracker->AddToViewport();
+
+    const FQuestStep& Step = QuestAsset->Steps[StepIndex];
+    FText StepType = Step.StepQuesttype;
+    FText StepName = Step.StepName;
+
+    UQuestCondition* FirstCondition = nullptr;
+    if (Step.Conditions.Num() > 0)
+    {
+        FirstCondition = Step.Conditions[0];
+    }
+
+    Tracker->ShowTracker(StepType, StepName, FirstCondition, bIsComplete);
 }
 
 

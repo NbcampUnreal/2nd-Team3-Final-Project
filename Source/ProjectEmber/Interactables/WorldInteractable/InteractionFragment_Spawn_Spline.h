@@ -21,9 +21,9 @@ public:
 	
 	virtual void SpawnActors(UWorld* World) override;
 
-	UFUNCTION(BlueprintCallable, Category = "Spawn")
-	void DestroySpawnedActors();
-	
+	virtual void DestroySpawnedActors() override;
+
+protected:
 	UPROPERTY()
 	TObjectPtr<USplineComponent> TargetSpline; // Owner의 스플라인 참조
 

@@ -13,12 +13,15 @@ class PROJECTEMBER_API AEmberPlayerState : public APlayerState, public IAbilityS
 public:
 	AEmberPlayerState();
 
+	virtual void BeginPlay() override;
 	virtual class UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AbilitySystem", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 
+	UPROPERTY()
+	TObjectPtr<class UEmberPlayerAttributeSet> PlayerAttributeSet;
 	UPROPERTY()
 	TObjectPtr<class UEmberCharacterAttributeSet> AttributeSet;
 	UPROPERTY()

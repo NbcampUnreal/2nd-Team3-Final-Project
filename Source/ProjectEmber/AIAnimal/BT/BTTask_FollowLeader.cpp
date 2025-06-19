@@ -74,10 +74,10 @@ void UBTTask_FollowLeader::OnFindLeaderOrPatrolQueryFinished(UEnvQueryInstanceBl
 	
 	if (BlackboardComp)
 	{
-		FVector TargetLocation = QueryInstance->GetQueryResult()->GetItemAsLocation(0);
+		FVector SafeLocation = QueryInstance->GetQueryResult()->GetItemAsLocation(0);
 		AActor*  TargetActor = QueryInstance->GetQueryResult()->GetItemAsActor(0);
 		BlackboardComp->SetValueAsObject("TargetActor", TargetActor);
-		BlackboardComp->SetValueAsVector("TargetLocation", TargetLocation);
+		BlackboardComp->SetValueAsVector("SafeLocation", SafeLocation);
 	}
 	
 	FinishLatentTask(*BTComp, EBTNodeResult::Succeeded);

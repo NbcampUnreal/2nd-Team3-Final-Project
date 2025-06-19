@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
-#include "EMSActorSaveInterface.h"
 #include "GameFramework/Character.h"
 #include "GameplayEffectTypes.h"
 #include "GameplayTagAssetInterface.h"
@@ -19,11 +18,11 @@ class UBoxComponent;
 class UAISenseConfig_Hearing;
 class UAISenseConfig_Sight;
 class UAIPerceptionComponent;
-enum class EAnimalAIPersonality : uint8;
 class UBlackboardComponent;
 class AAIAnimalController;
 class UNavigationInvokerComponent;
 class AAIController;
+
 
 UENUM(BlueprintType)
 enum class EAnimalAIPersonality : uint8
@@ -54,9 +53,16 @@ public:
 
 	virtual bool IsTargetable_Implementation() const override;
 	
-
+	UFUNCTION(BlueprintImplementableEvent, Category= "OnBeginDeath")
+	void BP_OnBeginDeath();
+	
 	UFUNCTION()
 	void OnHit(AActor* InstigatorActor);
+
+	UFUNCTION()
+	void OnAttackSpecial();
+	UFUNCTION()
+	void OnAbilityEnd(const FAbilityEndedData& AbilityEndedData);
 	
 	UFUNCTION(BlueprintCallable)
 	void OnGameTimeChanged(const FGameplayTag& EventTag, const FGameplayEventData& EventData);
@@ -67,13 +73,15 @@ public:
 	void OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnFullnessChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	
+	void TriggerSpeedUp();
 	EAnimalAIPersonality GetPersonality();
 	float GetWildPower() const;
 	float GetWanderRange() const;
-	UAnimMontage* GetMontage(FGameplayTag MontageTag);
+	TObjectPtr<UAnimMontage> GetMontage(FGameplayTag MontageTag);
 	
 	void GenerateRandom();
 	void DecreaseFullness();
+	void SwitchBehaviorTree();
 
 	UFUNCTION(BlueprintCallable, Category = AI)
 	FGameplayTag GetIdentityTag() const;
@@ -91,7 +99,8 @@ public:
 	void SetState(bool IsShouldSleep = true);
 
 	bool GetIsShouldSleep() const;
-	
+	void SetIsShouldSleep(bool InIsSleep);
+
 	//밤에 활동,비활동
 	UFUNCTION(BlueprintCallable)
 	void ActiveNonSleep();
@@ -107,6 +116,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = SoundPitch)
 	int32 GetSoundIndex() const;
+
+	UFUNCTION(BlueprintCallable)
+	void SetHasToken(const bool InHasToken);
+
+	UFUNCTION(BlueprintCallable)
+	bool GetHasToken() const;
+
 	
 	
 	/* Spawn & Despawn*/
@@ -128,20 +144,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Attribute)
 	const class UEmberCharacterAttributeSet* GetCharacterAttributeSet() const;
 
-
-
 protected:
 	void ReceiveMessage(const FName MessageType, UObject* Payload);
+	void ApplyWaterSurface(float DeltaTime);
 	
 	UFUNCTION(BlueprintCallable, Category = AI)
 	void SetDetails();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UCapsuleComponent* RCapsuleComponent;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UCapsuleComponent* LCapsuleComponent;
-	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UMeleeTraceComponent* MeleeTraceComponent;
 	
@@ -178,7 +187,10 @@ protected:
 	UBlackboardComponent* BlackboardComponent;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Montage)
-	TMap<FGameplayTag, UAnimMontage*> MontageMap; //키로 태그 넘겨주면 몽타주 가져옴 
+	TMap<FGameplayTag, TObjectPtr<UAnimMontage>> MontageMap; //키로 태그 넘겨주면 몽타주 가져옴 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Montage)
+	TArray<TObjectPtr<UAnimMontage>> AttackMontages;
 	
 	UPROPERTY(EditAnywhere, Category = "12")
 	TArray<TSubclassOf<class UGameplayAbility>> StartAbilities;
@@ -229,4 +241,20 @@ protected:
 	
 	FMessageDelegate MessageDelegateHandle;
 
+	//수영 변수 -> 과연 dx같은 이 방법이 맞는가
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swim")
+	float SwimTime = 0.0f; // 시간 누적용 변수
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swim")
+	float FloatAmplitude = 20.0f; // 진폭 (높이)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swim")
+	float FloatFrequency = 0.4f; // 주기 (1초당 오르내림)
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swim")
+	float WaterSurfaceZ = 0.0f; // 기준 물 표면 높이
+
+	bool bIsAbility = false;
+
+	bool bHasToken = false;
 };

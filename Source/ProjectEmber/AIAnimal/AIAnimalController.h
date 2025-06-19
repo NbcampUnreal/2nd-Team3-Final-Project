@@ -33,14 +33,16 @@ class PROJECTEMBER_API AAIAnimalController : public AAIController, public IEMSAc
 public:
 	AAIAnimalController();
 
-	UPROPERTY(BlueprintReadWrite, Category = "AI", SaveGame)
+	void SwitchToBehaviorTree(int32 NewIndex);
+	
+	UPROPERTY(BlueprintReadWrite, Category = "AI", SaveGame)  // 실행중인 컴포넌트
 	UBehaviorTreeComponent* BehaviorTreeComponent;
 
 	UPROPERTY(BlueprintReadWrite, Category = "AI", SaveGame)
 	UBlackboardComponent* BlackboardComponent;
 	
 	UPROPERTY(EditAnywhere, Category = "AI")
-	UBehaviorTree* BehaviorTree;
+	TArray<TObjectPtr<UBehaviorTree>> BehaviorTrees;
 
 	FVector SafePoint;
 	

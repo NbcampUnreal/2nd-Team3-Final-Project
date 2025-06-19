@@ -11,6 +11,8 @@ UInteractionFragment_Spawn_Spline::UInteractionFragment_Spawn_Spline()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
+
+
 void UInteractionFragment_Spawn_Spline::OnRegister()
 {
 	Super::OnRegister();
@@ -38,7 +40,8 @@ void UInteractionFragment_Spawn_Spline::SpawnActors(UWorld* World)
 	{
 		FVector SpawnLocation = TargetSpline->GetLocationAtSplinePoint(i, ESplineCoordinateSpace::World);
 		FRotator SpawnRotation = TargetSpline->GetRotationAtSplinePoint(i, ESplineCoordinateSpace::World);
-
+		SpawnRotation += FRotator(0.f, 90.f, 0.f); // 오프셋 원인 찾으면 지우기
+		
 		// 클래스 선택: SpawnList 안에서 순환 없으면 DefaultActorClass
 		TSubclassOf<AActor> SpawnClass = SpawnList.Num() > 0
 		? SpawnList[i % SpawnList.Num()]
@@ -49,6 +52,7 @@ void UInteractionFragment_Spawn_Spline::SpawnActors(UWorld* World)
 		AActor* SpawnedActor = World->SpawnActor<AActor>(SpawnClass, SpawnLocation, SpawnRotation, SpawnParams);
 		if (IsValid(SpawnedActor))
 		{
+			SpawnedActor->SetOwner(GetOwner());
 			SpawnedList.Add(SpawnedActor);
 		}
 	}

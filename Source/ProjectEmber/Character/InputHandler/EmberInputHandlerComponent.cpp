@@ -55,7 +55,10 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
         Bind(SwitchShoulderAction,ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnSwitchShoulder);
         Bind(GlideAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnGlide);
         Bind(BuildAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnBuild);
-
+        
+        Bind(BlockAction,           ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnBlock);
+        Bind(BlockAction,           ETriggerEvent::Canceled,   &AEmberCharacter::Input_OnBlock);
+        
         Bind(TargetAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnStartTarget);
         Bind(TargetAction,         ETriggerEvent::Completed,  &AEmberCharacter::Input_OnSwitchTarget);
         
@@ -64,8 +67,8 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
 
         Bind(ThrowOverlayAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnSwitchThrowOverlay);
 
-        Bind(ItemQuickAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnStartItemQuick);
-        Bind(ItemQuickAction,         ETriggerEvent::Canceled,  &AEmberCharacter::Input_OnCancelItemQuick);
+        Bind(ItemQuickAction,         ETriggerEvent::Started,  &AEmberCharacter::Input_OnStartItemQuick);
+        Bind(ItemQuickAction,         ETriggerEvent::Completed,  &AEmberCharacter::Input_OnCancelItemQuick);
         
         Bind(ScanAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnStartScan);
         
@@ -101,7 +104,7 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
     }
     // Ability input
     InputComponent->BindAction(AttackAction, ETriggerEvent::Started, Character, &AEmberCharacter::AbilityInputPressed, 0);
-
+    InputComponent->BindAction(AimAction, ETriggerEvent::Started, Character, &AEmberCharacter::AbilityInputPressed, 1);
     // Bind Action Value
     Character->MoveInputBinding = &InputComponent->BindActionValue(MoveAction);
 }

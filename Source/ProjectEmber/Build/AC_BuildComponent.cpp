@@ -5,6 +5,7 @@
 #include "BuildInterface.h"
 #include "Character/EmberCharacter.h"
 #include "ALSCamera/Public/AlsCameraComponent.h"
+
 #include "Components/BoxComponent.h"
 #include "EmberLog/EmberLog.h"
 
@@ -300,6 +301,18 @@ void UAC_BuildComponent::SpwanBuild()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Spawned actor does not implement BuildInterface"));
 	}
+	if (SpawnedActor)
+	{
+
+		// 저장용 구조체 구성
+		FBuildSaveData SaveData;
+		SaveData.ActorClassPath = Data.Actor->GetClass()->GetPathName();  // 경로 저장
+		SaveData.Location = SpawnedActor->GetActorLocation();
+		SaveData.Rotation = SpawnedActor->GetActorRotation();
+		SaveData.Scale = SpawnedActor->GetActorScale3D();
+
+		SavedBuildDataArray.Add(SaveData);
+	}
 }
 void UAC_BuildComponent::ChangeMesh()
 {
@@ -348,4 +361,55 @@ bool UAC_BuildComponent::DetectBuildBoxes(FTransform& OutTransform)
 
 	// 5. �� ã�� ���
 	return false; // LocalFound = false
+}
+
+void UAC_BuildComponent::SaveBuilds()
+{
+	FString SaveSlot = TEXT("BuildSlot");
+
+	// SaveGame 오브젝트 생성
+	UBuildSaveGame* SaveObject = Cast<UBuildSaveGame>(
+		UEMSFunctionLibrary::GetCustomSave(this, UBuildSaveGame::StaticClass(), SaveSlot, TEXT("BuildData"))
+	);
+
+	if (SaveObject)
+	{
+		SaveObject->SavedBuilds = SavedBuildDataArray; // 현재 저장된 건물 배열 복사
+		UEMSFunctionLibrary::SaveCustom(this, SaveObject); // 실제 저장 수행
+	}
+}
+
+void UAC_BuildComponent::LoadBuilds()
+{
+	FString SaveSlot = TEXT("BuildSlot");
+
+	UBuildSaveGame* SaveObject = Cast<UBuildSaveGame>(
+		UEMSFunctionLibrary::GetCustomSave(this, UBuildSaveGame::StaticClass(), SaveSlot, TEXT("BuildData"))
+	);
+
+	if (SaveObject)
+	{
+		SavedBuildDataArray = SaveObject->SavedBuilds;
+
+		// 배열을 바탕으로 액터 재배치
+		for (const FBuildSaveData& Data : SavedBuildDataArray)
+		{
+			FActorSpawnParameters Params;
+			UClass* BuildClass = LoadClass<AActor>(nullptr, *Data.ActorClassPath);
+			if (BuildClass)
+			{
+				AActor* SpawnedActor = GetWorld()->SpawnActor<AActor>(
+					BuildClass,
+					Data.Location,
+					Data.Rotation,
+					Params
+				);
+
+				if (SpawnedActor)
+				{
+					SpawnedActor->SetActorScale3D(Data.Scale);
+				}
+			}
+		}
+	}
 }

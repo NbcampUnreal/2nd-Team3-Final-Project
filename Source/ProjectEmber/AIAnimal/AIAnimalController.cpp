@@ -16,8 +16,8 @@ AAIAnimalController::AAIAnimalController()
     SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
     HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
 
-    SightConfig->SightRadius = 2000.0f;
-    SightConfig->LoseSightRadius = 2500.0f;
+    SightConfig->SightRadius = 1500.0f;
+    SightConfig->LoseSightRadius = 2000.0f;
     SightConfig->PeripheralVisionAngleDegrees = 120.0f;
     SightConfig->SetMaxAge(3.0f);
     SightConfig->DetectionByAffiliation.bDetectEnemies = true;
@@ -41,12 +41,13 @@ void AAIAnimalController::OnPossess(APawn* InPawn)
     Super::OnPossess(InPawn);
     
     // 비헤이비어 트리 실행
-    if (BehaviorTree)
+    if (BehaviorTrees[0])
     {
         // 이전까지 멤버변수 BlackboardComponent = nullptr일 가능성 높음
-        UseBlackboard(BehaviorTree->BlackboardAsset, BlackboardComponent); 
+        UseBlackboard(BehaviorTrees[0]->BlackboardAsset, BlackboardComponent); 
         // 블랙보드 초기화 성공, 비헤이비어 트리 실행
-        RunBehaviorTree(BehaviorTree);
+        RunBehaviorTree(BehaviorTrees[0]);
+        BehaviorTreeComponent = Cast<UBehaviorTreeComponent>(BrainComponent);
     }
     AbilitySystemComponent = CastChecked<ABaseAIAnimal>(InPawn)->GetAbilitySystemComponent();
 }
@@ -136,7 +137,7 @@ void AAIAnimalController::FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus)
             if (PawnWildPower <= TargetWildPower) //this가 우선순위가 더 작다면(높다면)
             {
                 //--- 공격 확률 설정 --------------------------------------------------
-                float AttackProb = 0.05f;          // 기본 5 %
+                float AttackProb = 0.45f;          // 기본 5 %
                 if (Cast<ABaseAIAnimal>(GetPawn())->GetPersonality() == EAnimalAIPersonality::Brave) // 성격이 ‘용감’이라면 +5 %
                 {
                     AttackProb += 0.05f;           // ⇒ 10 %
@@ -177,4 +178,26 @@ void AAIAnimalController::SenseInteractionWithUI(const FAIStimulus& Stimulus)
     {
         //청각적으로 알아챈 ui를 넣는다던가
     }
+}
+
+void AAIAnimalController::SwitchToBehaviorTree(int32 NewIndex)
+{
+    if (!BehaviorTrees.IsValidIndex(NewIndex))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Invalid BehaviorTreeComponent index: %d"), NewIndex);
+        return;
+    }
+
+    // 현재 실행 중인 BT 중지
+    if (BehaviorTreeComponent && BehaviorTreeComponent->IsRunning())
+    {
+        BehaviorTreeComponent->StopTree(EBTStopMode::Safe);
+    }
+    PerceptionComp->DestroyComponent();
+    
+    // 새 BTComponent 실행
+    UseBlackboard(BehaviorTrees[NewIndex]->BlackboardAsset, BlackboardComponent);
+    RunBehaviorTree(BehaviorTrees[NewIndex]);
+    
+    BehaviorTreeComponent = Cast<UBehaviorTreeComponent>(BrainComponent);
 }
