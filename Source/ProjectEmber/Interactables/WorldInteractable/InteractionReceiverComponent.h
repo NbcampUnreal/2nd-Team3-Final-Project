@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "InteractionReceiverComponent.generated.h"
 
+class UInteractionCondition;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FActivateAction1, AActor*, CausingActor);  
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FActivateAction2, AActor*, CausingActor);  
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FActivateAction3, AActor*, CausingActor);  
@@ -26,6 +27,9 @@ class PROJECTEMBER_API UInteractionReceiverComponent : public UActorComponent
 
 public:	
 	UInteractionReceiverComponent();
+
+	UFUNCTION(BlueprintCallable, Category="Interaction")
+	void EvaluateDeactivationConditions(const TArray<UInteractionCondition*>& Conditions);
 
 	UFUNCTION(BlueprintCallable, Category="Interaction")
 	void BroadCastInteractionCompleted(AActor* CompletedBy);
