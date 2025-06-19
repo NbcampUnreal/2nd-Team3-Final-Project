@@ -198,8 +198,6 @@ void ABaseAIAnimal::OnBeginDeath()
 	Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.Death");
 	Payload.Instigator = this;
 	AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
-	
-	BP_OnBeginDeath();
 }
 
 void ABaseAIAnimal::ReceiveMessage(const FName MessageType, UObject* Payload)

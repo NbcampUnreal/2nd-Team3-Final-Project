@@ -105,9 +105,9 @@ void UTokenRaidSubsystem::MovementStart()
 {
 	APawn* Player = GetWorld()->GetFirstPlayerController()->GetPawn();
 	FVector PlayerLocation = Player->GetActorLocation();
-	for (auto Querier : FoundQueriers)
+	int32 index =0;
+	for (TTuple<int32,ABaseAIAnimal*> Querier : FoundQueriers)
 	{
-		int32 index =0;
 		for (auto& Animal : WaitingArray[Querier.Key].SpawnAnimals)
 		{
 			Cast<AAIAnimalController>(Animal->GetController())->GetBlackboardComponent()->SetValueAsVector("SafeLocation", FoundLocations[index]);
@@ -129,7 +129,6 @@ void UTokenRaidSubsystem::OnFirstMovementComplete(AActor* InUnit, bool InResult)
 	FVector PlayerLocation = Player->GetActorLocation();
 	Cast<AAIAnimalController>(Unit->GetController())->GetBlackboardComponent()->SetValueAsName("NStateTag","Animal.State.Attack");
 	Cast<AAIAnimalController>(Unit->GetController())->GetBlackboardComponent()->SetValueAsObject("TargetActor",Player);
-	//Cast<AAIAnimalController>(Unit->GetController())->GetBrainComponent()->StopLogic(TEXT("WaitOthers"));
 	if (ReadyUnits.Num() == 3 && CanActiveTokens != 0)
 	{
 		GiveTokenToRandom();
@@ -147,7 +146,6 @@ void UTokenRaidSubsystem::OnMovementComplete(AActor* InUnit, bool InResult)
 	APawn* Player = GetWorld()->GetFirstPlayerController()->GetPawn();
 	FVector PlayerLocation = Player->GetActorLocation();
 	Cast<AAIAnimalController>(Unit->GetController())->GetBlackboardComponent()->SetValueAsName("NStateTag","Animal.State.Attack");
-	//Cast<AAIAnimalController>(Unit->GetController())->GetBrainComponent()->StopLogic(TEXT("WaitOthers"));
 }
 
 void UTokenRaidSubsystem::GiveTokenToRandom()
@@ -162,7 +160,6 @@ void UTokenRaidSubsystem::GiveTokenToRandom()
 	int32 RandomIndex = FMath::RandRange(0, ReadyUnits.Num() - 1);
 
 	ABaseAIAnimal* SelectedUnit = ReadyUnits[RandomIndex];
-	//Cast<AAIAnimalController>(SelectedUnit->GetController())->GetBrainComponent()->StartLogic();
 	if (!IsValid(SelectedUnit))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Selected unit is invalid."));
@@ -201,7 +198,11 @@ FVector UTokenRaidSubsystem::GetBestLocation(ABaseAIAnimal& Animal)
 {
 	if (!OriLocation.Find(&Animal))
 	{
-		return Animal.GetActorLocation();
+		if (IsValid(&Animal))
+		{
+			return Animal.GetActorLocation();
+		}
+		return FVector::ZeroVector;
 	}
 	return *OriLocation.Find(&Animal);
 }

@@ -55,10 +55,10 @@ public:
 	
 
 	UPROPERTY(EditAnywhere)
-	int32 MaxActiveTokens = 1;
+	int32 MaxActiveTokens = 2;
 
 	UPROPERTY(EditAnywhere)
-	int32 CanActiveTokens = 1;
+	int32 CanActiveTokens = 2;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EQS") //실행시킬 eqs
 	TSoftObjectPtr<UEnvQuery> EQSQuery;

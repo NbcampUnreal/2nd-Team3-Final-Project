@@ -321,8 +321,6 @@ void AAnimalSpawner::TryCreateQueue(TArray<TSoftObjectPtr<AAnimalSpawnPoint>>& I
 		{
 			//스포너에서 생성된 총 동물 수 중 죽어서 리스폰대기열에 PermittedToSpawnLimit 이상 쌓이면 리스폰
 			TrySpawnEntire(AnimalsInfo);
-				
-			
 		}
 	}
 }
@@ -533,8 +531,6 @@ void AAnimalSpawner::TryReleaseEntire()
 	// {
 	// 	GetWorld()->GetTimerManager().PauseTimer(DistanceTimerHandle);
 	// }
-	
-
 	
 	//큐 정리
 	LoadInfoQueue.Empty();
