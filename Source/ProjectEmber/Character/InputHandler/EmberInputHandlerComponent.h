@@ -101,6 +101,9 @@ public: /* Base Input */
 
 	UPROPERTY(EditAnywhere, Category="Input") 
 	TObjectPtr<UInputAction> ScanAction;
+
+	UPROPERTY(EditAnywhere, Category="Input") 
+	TObjectPtr<UInputAction> BlockAction;
 	
 	UPROPERTY(EditAnywhere, Category="Input") 
 	TArray<TObjectPtr<UInputAction>> QuickSlotActions;
