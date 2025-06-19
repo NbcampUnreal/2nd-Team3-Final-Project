@@ -4,13 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
-#include "EMSActorSaveInterface.h"
 #include "GameFramework/Character.h"
 #include "GameplayEffectTypes.h"
 #include "GameplayTagAssetInterface.h"
 #include "TargetSystemTargetableInterface.h"
 #include "Abilities/GameplayAbilityTypes.h"
-#include "Components/SphereComponent.h"
 #include "MessageBus/MessageBus.h"
 #include "BaseAIAnimal.generated.h"
 
@@ -20,11 +18,11 @@ class UBoxComponent;
 class UAISenseConfig_Hearing;
 class UAISenseConfig_Sight;
 class UAIPerceptionComponent;
-enum class EAnimalAIPersonality : uint8;
 class UBlackboardComponent;
 class AAIAnimalController;
 class UNavigationInvokerComponent;
 class AAIController;
+
 
 UENUM(BlueprintType)
 enum class EAnimalAIPersonality : uint8
@@ -55,12 +53,16 @@ public:
 
 	virtual bool IsTargetable_Implementation() const override;
 	
-
+	UFUNCTION(BlueprintImplementableEvent, Category= "OnBeginDeath")
+	void BP_OnBeginDeath();
+	
 	UFUNCTION()
 	void OnHit(AActor* InstigatorActor);
 
 	UFUNCTION()
 	void OnAttackSpecial();
+	UFUNCTION()
+	void OnAbilityEnd(const FAbilityEndedData& AbilityEndedData);
 	
 	UFUNCTION(BlueprintCallable)
 	void OnGameTimeChanged(const FGameplayTag& EventTag, const FGameplayEventData& EventData);
@@ -71,7 +73,7 @@ public:
 	void OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnFullnessChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	
-	
+	void TriggerSpeedUp();
 	EAnimalAIPersonality GetPersonality();
 	float GetWildPower() const;
 	float GetWanderRange() const;
@@ -79,6 +81,7 @@ public:
 	
 	void GenerateRandom();
 	void DecreaseFullness();
+	void SwitchBehaviorTree();
 
 	UFUNCTION(BlueprintCallable, Category = AI)
 	FGameplayTag GetIdentityTag() const;
@@ -113,6 +116,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = SoundPitch)
 	int32 GetSoundIndex() const;
+
+	UFUNCTION(BlueprintCallable)
+	void SetHasToken(const bool InHasToken);
+
+	UFUNCTION(BlueprintCallable)
+	bool GetHasToken() const;
+
 	
 	
 	/* Spawn & Despawn*/
@@ -133,8 +143,6 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = Attribute)
 	const class UEmberCharacterAttributeSet* GetCharacterAttributeSet() const;
-
-
 
 protected:
 	void ReceiveMessage(const FName MessageType, UObject* Payload);
@@ -247,4 +255,6 @@ protected:
 	float WaterSurfaceZ = 0.0f; // 기준 물 표면 높이
 
 	bool bIsAbility = false;
+
+	bool bHasToken = false;
 };

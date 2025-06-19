@@ -5,10 +5,17 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Components/PostProcessComponent.h"
 #include "Camera/CameraShakeBase.h"
+#include "Components/LightComponent.h"
+#include "Components/PointLightComponent.h"
 #include "EmberLog/EmberLog.h"
 
 AParryCueActor::AParryCueActor()
 {
+    if (!GetRootComponent())
+    {
+        RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+    }
+    
     PostProcessComp = CreateDefaultSubobject<UPostProcessComponent>(TEXT("PostProcessComp"));
     PostProcessComp->SetupAttachment(GetRootComponent());
     PostProcessComp->bEnabled = false;
@@ -17,21 +24,27 @@ AParryCueActor::AParryCueActor()
 
 bool AParryCueActor::OnActive_Implementation(AActor* MyTarget, const FGameplayCueParameters& Parameters)
 {
-    if (CueEffect && MyTarget)
+    if (!MyTarget)
+    {
+        EMBER_LOG(LogEmber, Error, TEXT("ParryCueActor: MyTarget is null"));
+        return false;
+    }
+    
+    if (CueEffect)
     {
         UGameplayStatics::SpawnEmitterAttached(CueEffect, MyTarget->GetRootComponent(), NAME_None, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTargetIncludingScale);
     }
-    if (CueNiagara && MyTarget)
+    if (CueNiagara)
     {
         //UNiagaraFunctionLibrary::SpawnSystemAttached(CueNiagara, MyTarget->GetRootComponent(), NAME_None, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTargetIncludingScale);
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(),CueNiagara, MyTarget->GetActorLocation(),FRotator::ZeroRotator, FVector(1.f, 1.f, 1.f), true);
     }
-    if (CueSound && MyTarget)
+    if (CueSound)
     {
         UGameplayStatics::PlaySoundAtLocation(MyTarget, CueSound, MyTarget->GetActorLocation());
     }
 
-    if (CueCameraShake && MyTarget)
+    if (CueCameraShake)
     {
         if (APawn* Pawn = Cast<APawn>(MyTarget))
         {

@@ -11,6 +11,7 @@
 #include "GameFramework/Character.h"
 #include "MessageBus/MessageBus.h"
 #include "MotionWarpingComponent.h"
+#include "SkillManagerSubsystem.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -197,9 +198,15 @@ void UBaseOverlayAbility::OnComboNotify(const FGameplayEventData Payload)
 {
 	if (bCanCombo && bComboInputReceived)
 	{
-		if (!AbilitySystemComponent->TryActivateAbilityByClass(NextComboAbility,false))
+		USkillManagerSubsystem* SkillManagerSubsystem = GetAvatarActorFromActorInfo()->GetGameInstance()->GetSubsystem<USkillManagerSubsystem>();
+		auto Abilities = SkillManagerSubsystem->GetNextComboAbilities(ThisClass::GetClass());
+		// 나중에 좌클릭눌렷는지 우클릭눌렷는지 Received에서 판단해서 나누자
+		if (Abilities.Num() > 0)
 		{
-			EMBER_LOG(LogEmber,Warning, TEXT("Failed to activate next combo ability: %s"), *NextComboAbility->GetName());
+			if (!AbilitySystemComponent->TryActivateAbilityByClass(Abilities[0],false))
+			{
+				EMBER_LOG(LogEmber,Warning, TEXT("Failed to activate next combo ability: %s"), *NextComboAbility->GetName());
+			}	
 		}
 		
 		bool bReplicatedEndAbility = true;

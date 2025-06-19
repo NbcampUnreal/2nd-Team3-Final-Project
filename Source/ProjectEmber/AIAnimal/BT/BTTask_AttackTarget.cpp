@@ -65,7 +65,6 @@ EBTNodeResult::Type UBTTask_AttackTarget::ExecuteTask(UBehaviorTreeComponent& Ow
 		Payload.Instigator = AICharacter;
 		Payload.OptionalObject = AICharacter->GetMontage(FGameplayTag::RequestGameplayTag("Animal.Montage.Attack"));
 		AICharacter->GetAbilitySystemComponent()->HandleGameplayEvent(Payload.EventTag, &Payload);
-		
 		return Super::ExecuteTask(OwnerComp, NodeMemory);
 	}
 	return EBTNodeResult::Failed;
