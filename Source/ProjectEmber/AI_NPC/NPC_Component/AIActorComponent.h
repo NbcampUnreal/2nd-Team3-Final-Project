@@ -23,11 +23,6 @@ protected:
     // 거리 체크 및 타겟 지정
     UFUNCTION()
     void CheckPlayerDistance();
-
-    // 플레이어를 바라보는 회전
-    UFUNCTION()
-    void FacePlayer();
-
     // 타이머 핸들
     FTimerHandle DistanceCheckTimerHandle;
     FTimerHandle FacePlayerTimerHandle;

@@ -15,28 +15,32 @@ void UTokenRaidSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 	EQSQuery = LoadObject<UEnvQuery>(nullptr, TEXT("/Game/_Blueprints/AI/Animal/EQS_BestPointQuery.EQS_BestPointQuery"));
-	UE_LOG(LogTemp, Warning, TEXT("TokenRaidSubsystem Initialized."));
-}
-
-void UTokenRaidSubsystem::OnStartRaid(FGameplayTag InRegion, FGameplayTag InDifficulty)
-{
-	UE_LOG(LogTemp, Warning, TEXT("Subsystem Address = %p"), this);
- //지역과 난이도에 맞는 row 정하고
-	CurrentRegion = InRegion;
-	CurrentDifficulty = InDifficulty;
-	FromTableGetRaidInfo();
-	
- //지역에 맞는 스포너 호출 OnTokenRaidEvent
-	TArray<AActor*> FoundActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AAnimalSpawner::StaticClass(), FoundActors);
-	for (auto Actor : FoundActors)
+	TokenRaidDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Game/_Blueprints/AI/Animal/DT_TokenRaidInfo.DT_TokenRaidInfo"));
+	if (TokenRaidDataTable)
 	{
-		AAnimalSpawner* Spawner = Cast<AAnimalSpawner>(Actor);
-		if ( CurrentRow.Region == Spawner->GetIdentityTag())
+		TArray<FTokenRaidInfo*> AllRows;
+		TokenRaidDataTable->GetAllRows(TEXT("TokenRaidContext"), AllRows);
+
+		for (FTokenRaidInfo* Row : AllRows)
 		{
-			Spawner->OnTokenRaidEvent(CurrentRow.GroupsPerWave, CurrentRow.UnitsPerGroup, CurrentRow.AnimalClass); // 스포너에서 생성, 랜덤 배치 상태로 Array 반환 -> WaitingArray
+			if (Row)
+			{
+				CurrentRowArray.Add(*Row);
+			}
 		}
 	}
+}
+
+FTokenRaidInfo UTokenRaidSubsystem::GetRaidInfoRow(FGameplayTag Region)
+{
+	for (auto Row : CurrentRowArray)
+	{
+		if (Row.Region == Region)
+		{
+			return Row;
+		}
+	}
+	return FTokenRaidInfo();
 }
 
 void UTokenRaidSubsystem::RegisterWaitingArray(TArray<FAnimalSpawnInfo>& InArray)
@@ -190,28 +194,6 @@ void UTokenRaidSubsystem::ReturnToken(ABaseAIAnimal* Unit)
 	if (CanActiveTokens != 0) 
 	{
 		GiveTokenToRandom(); // 다음 단계 진행
-	}
-}
-
-void UTokenRaidSubsystem::FromTableGetRaidInfo()
-{
-	if (!TokenRaidDataTable)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("TokenRaidDataTable is not set."));
-		return;
-	}
-	
-	TArray<FTokenRaidInfo*> AllRows;
-	TokenRaidDataTable->GetAllRows(TEXT("TokenRaidContext"), AllRows);
-	
-	for (const FTokenRaidInfo* Row : AllRows)
-	{
-		if (Row->Region == CurrentRegion &&
-			Row->Difficulty == CurrentDifficulty)
-		{
-			CurrentRow = *Row;
-			return;
-		}
 	}
 }
 
