@@ -293,6 +293,17 @@ void UDialogueComponent::StartDialogue()
 
 void UDialogueComponent::Interact()
 {
+    if (QuestAsset)
+    {
+        if (UQuestSubsystem* Subsystem = GetWorld()->GetGameInstance()->GetSubsystem<UQuestSubsystem>())
+        {
+            if (Subsystem->IsQuestCompleted(QuestAsset->QuestID))
+            {
+                UE_LOG(LogTemp, Warning, TEXT("[Interact] 퀘스트가 이미 완료됨 → 상호작용 차단"));
+                return;
+            }
+        }
+    }
     UE_LOG(LogTemp, Warning, TEXT("[Interact] bDialogueOverriddenByCondition: %d, NumLines: %d"), bDialogueOverriddenByCondition, LinesOfDialogue.Num());
 
     if (!bPlayerInRange || !DialogueWidgetClass || bDialogueFinished)
@@ -344,7 +355,6 @@ void UDialogueComponent::Interact()
 
     bDialogueFinished = false;
     CurrentDialogueIndex = 0;
-    RepositionNPCForDialogue();
     PositionDetachedCamera();
 
     ACharacter* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
@@ -655,24 +665,6 @@ void UDialogueComponent::ShowQuestCompleteWidget(const UQuestDataAsset* InQuestA
     }
 
     InitializeAndDisplayWidget(CompleteWidget);
-}
-
-
-void UDialogueComponent::RepositionNPCForDialogue()
-{
-    AActor* NPC = GetOwner();
-    if (!NPC) return;
-
-    UAttatchAIDialogueCamera* DialogueCam = NPC->FindComponentByClass<UAttatchAIDialogueCamera>();
-    if (!DialogueCam) return;
-
-    FVector DirectionToCamera = DialogueCam->GetComponentLocation() - NPC->GetActorLocation();
-    DirectionToCamera.Z = 0.0f;
-
-    FRotator LookAtRotation = DirectionToCamera.Rotation();
-    LookAtRotation.Pitch = 0.0f;
-    LookAtRotation.Roll = 0.0f;
-    NPC->SetActorRotation(LookAtRotation);
 }
 
 void UDialogueComponent::PositionDetachedCamera()

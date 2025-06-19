@@ -5,7 +5,7 @@
 #include "Quest/Condition/Dialogue/DialogueQuestCondition.h"
 #include "Quest/Condition/Kill/QuestConditionKillAnimal.h"
 #include "Quest/Condition/Gathering/QuestConditiongathering.h"
-
+#include "Kismet/GameplayStatics.h"
 
 void UQuestTracker::NativeConstruct()
 {
@@ -22,14 +22,14 @@ void UQuestTracker::ShowTracker(FText NewStepType, FText NewStepName, UQuestCond
     UTextBlock* StepTypeText = Cast<UTextBlock>(GetWidgetFromName(TEXT("Step_Type")));
     UTextBlock* StepNameText = Cast<UTextBlock>(GetWidgetFromName(TEXT("Step_Name")));
 
-    //   무조건 CompleteText는 초기 상태에서 숨김으로 시작!
+    //  CompleteText는 무조건 초기 숨김
     if (CompleteText)
     {
         CompleteText->SetVisibility(ESlateVisibility::Hidden);
         CompleteText->SetText(FText::GetEmpty());
     }
 
-    //   StepType / StepName은 항상 표시
+    //  StepType, StepName 표시
     if (StepTypeText)
     {
         StepTypeText->SetVisibility(ESlateVisibility::Visible);
@@ -42,7 +42,7 @@ void UQuestTracker::ShowTracker(FText NewStepType, FText NewStepName, UQuestCond
         StepNameText->SetText(NewStepName);
     }
 
-    //  Condition 따라 아이콘 표시 (동일)
+    //  Condition 따라 아이콘 표시
     UImage* DialogueImg = Cast<UImage>(GetWidgetFromName(TEXT("DialogueImage")));
     UImage* HuntingImg = Cast<UImage>(GetWidgetFromName(TEXT("HuntingImage")));
     UImage* CollectingImg = Cast<UImage>(GetWidgetFromName(TEXT("CollectingImage")));
@@ -75,17 +75,37 @@ void UQuestTracker::ShowTracker(FText NewStepType, FText NewStepName, UQuestCond
         }
     }
 
-    //   Complete 모드라면 CompleteText 추가로 표시 + 텍스트 설정
+    //  Complete라면 CompleteText 표시
     if (bIsComplete && CompleteText)
     {
         CompleteText->SetVisibility(ESlateVisibility::Visible);
         CompleteText->SetText(FText::FromString(TEXT("Complete")));
     }
 
-    //  트래커 보이기
+    //  AcceptSound 무조건 먼저 재생
+    float AcceptDuration = 0.0f;
+    if (AcceptSound)
+    {
+        UGameplayStatics::PlaySound2D(this, AcceptSound);
+        AcceptDuration = AcceptSound->GetDuration();
+    }
+
+    //  CompleteSound는 AcceptSound 끝나고 +1.5초 뒤에 재생
+    if (bIsComplete && CompleteSound)
+    {
+        float Delay = 1.6f; //
+
+        FTimerHandle CompleteSoundTimerHandle;
+        GetWorld()->GetTimerManager().SetTimer(CompleteSoundTimerHandle, [this]()
+            {
+                UGameplayStatics::PlaySound2D(this, CompleteSound);
+            }, Delay, false);
+    }
+
+    //  Tracker 보이기
     SetVisibility(ESlateVisibility::Visible);
 
-    //   3초 후 자동 숨김
+    //  3초 후 자동 숨김
     FTimerHandle TimerHandle;
     GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
         {
