@@ -24,9 +24,6 @@ struct FEmberAnimalAttributeData
     float WalkSpeed = 300.f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float WanderRange = 500.f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float WildPower = 0.f;
 };
 
@@ -47,7 +44,6 @@ public:
 public: /* Behavior Tree Variable */
     ATTRIBUTE_ACCESSORS(UEmberAnimalAttributeSet, Fullness)
     ATTRIBUTE_ACCESSORS(UEmberAnimalAttributeSet, WalkSpeed)
-    ATTRIBUTE_ACCESSORS(UEmberAnimalAttributeSet, WanderRange)
     ATTRIBUTE_ACCESSORS(UEmberAnimalAttributeSet, WildPower)
     
 protected: 
@@ -56,9 +52,6 @@ protected:
     
     UPROPERTY(BlueprintReadOnly, Category = "Animal", Meta = (AllowPrivateAccess = true), SaveGame)
     FGameplayAttributeData WalkSpeed;
-    
-    UPROPERTY(BlueprintReadOnly, Category = "Animal", Meta = (AllowPrivateAccess = true), SaveGame)
-    FGameplayAttributeData WanderRange;
     
     UPROPERTY(BlueprintReadOnly, Category = "Animal", Meta = (AllowPrivateAccess = true), SaveGame)
     FGameplayAttributeData WildPower;

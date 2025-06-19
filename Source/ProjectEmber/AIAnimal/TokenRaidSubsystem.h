@@ -27,7 +27,7 @@ public:
 	
 	//이벤트 발생했을 때 호출될 시작 함수
 	UFUNCTION(BlueprintCallable)
-	void OnStartRaid(FGameplayTag CurrentRegion, FGameplayTag CurrentDifficulty);
+	FTokenRaidInfo GetRaidInfoRow(FGameplayTag Region);
 	
 	void RegisterWaitingArray(TArray<FAnimalSpawnInfo>& InArray);
 	void OnFirstMovementComplete(AActor* InUnit, bool InResult);
@@ -46,22 +46,13 @@ public:
 	void RequestToken(ABaseAIAnimal* Unit);
 	void SpawnWave(int32 WaveIndex);
 	
-	// 특정 웨이브의 정보를 가져옴
-	UFUNCTION(BlueprintCallable, Category = "Raid")
-	void FromTableGetRaidInfo();
-	
 	// 데이터 테이블 참조
 	UPROPERTY(EditDefaultsOnly, Category = "Raid")
-	TObjectPtr<UDataTable> TokenRaidDataTable;
-	UPROPERTY()
-	FTokenRaidInfo CurrentRow;
-	
-	// 현재 설정된 조건
-	UPROPERTY(BlueprintReadOnly, Category = "Raid")
-	FGameplayTag CurrentRegion;
+	TSoftObjectPtr<UDataTable> TokenRaidDataTable;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Raid")
-	FGameplayTag CurrentDifficulty;
+	UPROPERTY()
+	TArray<FTokenRaidInfo> CurrentRowArray;
+	
 
 	UPROPERTY(EditAnywhere)
 	int32 MaxActiveTokens = 1;

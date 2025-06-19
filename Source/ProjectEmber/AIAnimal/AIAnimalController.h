@@ -66,6 +66,9 @@ protected:
 	//움직이는 대상 -> 플레이어, 다른 종족은 시각, 청각으로 탐지
 	UFUNCTION()
 	void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+
+	UFUNCTION()
+	void OnTargetPerceptionForgotten(AActor* Actor);
 	
 	void FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus);
 	void FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus);

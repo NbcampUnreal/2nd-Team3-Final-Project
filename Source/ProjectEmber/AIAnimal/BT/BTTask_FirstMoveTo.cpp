@@ -15,6 +15,13 @@ UBTTask_FirstMoveTo::UBTTask_FirstMoveTo()
 EBTNodeResult::Type UBTTask_FirstMoveTo::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	EBTNodeResult::Type Result = Super::ExecuteTask(OwnerComp, NodeMemory);
+	AAIController* AIController = OwnerComp.GetAIOwner();
+	ABaseAIAnimal* Animal = Cast<ABaseAIAnimal>(AIController->GetPawn());
+
+	if (Animal->GetPersonality() ==  EAnimalAIPersonality::Agile)
+	{
+		Animal->TriggerSpeedUp();
+	}
 	return Result;
 }
 
