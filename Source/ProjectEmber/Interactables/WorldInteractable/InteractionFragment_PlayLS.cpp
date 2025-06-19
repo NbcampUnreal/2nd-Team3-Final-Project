@@ -6,6 +6,7 @@
 #include "LevelSequenceActor.h"
 #include "LevelSequencePlayer.h"
 #include "MovieSceneSequencePlaybackSettings.h"
+#include "Kismet/GameplayStatics.h"
 
 
 UInteractionFragment_PlayLS::UInteractionFragment_PlayLS()
@@ -28,6 +29,7 @@ void UInteractionFragment_PlayLS::ExecuteInteraction_Implementation(AActor* Inte
 
 	FMovieSceneSequencePlaybackSettings Settings;
 	Settings.bAutoPlay = false;
+	Settings.bDisableCameraCuts = false;
 
 	ALevelSequenceActor* RawActor = nullptr;
 	
@@ -39,9 +41,16 @@ void UInteractionFragment_PlayLS::ExecuteInteraction_Implementation(AActor* Inte
 		);
 	
 	SequenceActor = RawActor;
+	
 
 	if (SequencePlayer && SequenceActor)
 	{
+		APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+		if (PC)
+		{
+			PC->bAutoManageActiveCameraTarget = false;
+		}
+		
 		SequenceActor->SetActorTransform(Target->GetActorTransform());
 		SequencePlayer->Play();
 
@@ -52,6 +61,13 @@ void UInteractionFragment_PlayLS::ExecuteInteraction_Implementation(AActor* Inte
 
 void UInteractionFragment_PlayLS::OnSequenceFinished()
 {
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (PC)
+	{
+		PC->bAutoManageActiveCameraTarget = true; // 복구
+		PC->SetViewTargetWithBlend(PC->GetPawn(), 0.3f); // 플레이어로 복귀
+	}
+	
 	SequencePlayer = nullptr;
 	SequenceActor = nullptr;
 	OnSequenceFinishedEvent.Broadcast();
