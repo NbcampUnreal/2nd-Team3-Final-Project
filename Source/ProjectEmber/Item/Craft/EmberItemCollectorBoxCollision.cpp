@@ -105,16 +105,28 @@ TMap<FName, int32> UEmberItemCollectorBoxCollision::GetAllItemInfos_Implementati
 	return AllItemInfos;
 }
 
-void UEmberItemCollectorBoxCollision::TryConsumeResource_Implementation(const TArray<FItemPair>& InRequireItems)
+void UEmberItemCollectorBoxCollision::TryConsumeResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems)
 {
-	TArray<FItemPair> RequireItems = InRequireItems;
+	TArray<FEmberItemEntry> RequireItems = InRequireItems;
+	EMBER_LOG(LogTemp, Warning, TEXT("ABCDE5"));
 
 	if (bConsumeAbleResource_Implementation(RequireItems))
 	{
+		EMBER_LOG(LogTemp, Warning, TEXT("ABCDE51"));
+
 		for (TWeakObjectPtr<UObject>& ResourceProvider : ResourceProviders)
 		{
+			EMBER_LOG(LogTemp, Warning, TEXT("ABCDE52"));
+
 			if (ResourceProvider.Get())
-			{
+			{	EMBER_LOG(LogTemp, Warning, TEXT("ABCDE53"));
+
+				for (auto& a : RequireItems)
+				{
+					EMBER_LOG(LogTemp, Warning, TEXT("ABCDE5 %s, %d"), *a.ItemID.ToString(), a.Quantity);
+
+				}
+
 				IEmberResourceProvider::Execute_RemoveResourceUntilAble(ResourceProvider.Get(), RequireItems);
 			}
 
@@ -122,11 +134,11 @@ void UEmberItemCollectorBoxCollision::TryConsumeResource_Implementation(const TA
 	}
 }
 
-bool UEmberItemCollectorBoxCollision::bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems)
+bool UEmberItemCollectorBoxCollision::bConsumeAbleResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems)
 {
 	TArray<FEmberItemEntry> RequiresEntries;
 	TMap<FEmberItemKey, FInstancedStruct> OutItemInfos;
-	for (FItemPair RequireItem : InRequireItems)
+	for (FEmberItemEntry RequireItem : InRequireItems)
 	{
 		RequiresEntries.Add(FEmberItemEntry(RequireItem.ItemID, RequireItem.Quantity, RequireItem.Enchants));
 	}
@@ -181,7 +193,7 @@ void UEmberItemCollectorBoxCollision::GetItemInfos_Implementation(TArray<FEmberI
 }
 
 void UEmberItemCollectorBoxCollision::RemoveResourceUntilAble_Implementation(
-   TArray<FItemPair>& InRequireItems)
+   TArray<FEmberItemEntry>& InRequireItems)
 {
 	for (TWeakObjectPtr<UObject>& ResourceProvider : ResourceProviders)
 	{

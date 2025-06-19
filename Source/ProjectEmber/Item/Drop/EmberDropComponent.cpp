@@ -36,17 +36,17 @@ TMap<FName, int32> UEmberDropComponent::GetAllItemInfos_Implementation()
 	return IEmberResourceProvider::Execute_GetAllItemInfos(DropManager);
 }
 
-void UEmberDropComponent::TryConsumeResource_Implementation(const TArray<FItemPair>& InRequireItems)
+void UEmberDropComponent::TryConsumeResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems)
 {
 	IEmberResourceProvider::Execute_TryConsumeResource(DropManager, InRequireItems);
 }
 
-void UEmberDropComponent::RemoveResourceUntilAble_Implementation(TArray<FItemPair>& InRequireItems)
+void UEmberDropComponent::RemoveResourceUntilAble_Implementation(TArray<FEmberItemEntry>& InRequireItems)
 {
 	IEmberResourceProvider::Execute_RemoveResourceUntilAble(DropManager, InRequireItems);
 }
 
-bool UEmberDropComponent::bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems)
+bool UEmberDropComponent::bConsumeAbleResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems)
 {
 	return IEmberResourceProvider::Execute_bConsumeAbleResource(DropManager, InRequireItems);
 }

@@ -80,11 +80,11 @@ public:
 	
 	virtual void GetItemInfos_Implementation(TArray<FEmberItemEntry>& InItemEntries, TMap<FEmberItemKey, FInstancedStruct>& OutItemInfos) override;
 
-	virtual void TryConsumeResource_Implementation(const TArray<FItemPair>& InRequireItems) override;
+	virtual void TryConsumeResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems) override;
 
-	virtual void RemoveResourceUntilAble_Implementation(TArray<FItemPair>& InRequireItems) override;
+	virtual void RemoveResourceUntilAble_Implementation(TArray<FEmberItemEntry>& InRequireItems) override;
 	
-	virtual bool bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems) override;
+	virtual bool bConsumeAbleResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems) override;
 
 
 	void InitAbilitySystem();
@@ -113,7 +113,7 @@ public:
 	TObjectPtr<UInventoryManager> InventoryManager;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
 	TObjectPtr<UQuickSlotManager> QuickSlotManager;
-	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
 	TObjectPtr<UEmberEquipmentManager> EquipmentManager;
 	TObjectPtr<UEmberDropItemManager> DropItemManager;
 

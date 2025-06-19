@@ -54,6 +54,8 @@ struct FEmberSlotData
         OutInstancedStruct.InitializeAs<FEmberSlotData>(*this);
     }
     
+    virtual void AddQuantity(int32& InQuantity);
+    virtual void RemoveQuantity(int32& InQuantity);
     virtual bool bIsEmpty() const { return ItemID.IsNone() || Quantity <= 0; }
     
     virtual bool bIsFull() const { return Quantity >= MaxStackSize; }

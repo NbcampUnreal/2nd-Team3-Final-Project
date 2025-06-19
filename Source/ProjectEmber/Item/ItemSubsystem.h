@@ -32,6 +32,7 @@ public:
 	TObjectPtr<UItemDetailWidget> GetItemDetailWidget();
 	
 	TObjectPtr<UEmberQuickSlotsPanel> GetQuickSlotWidget();
+
 protected:
 	bool SelectWeightedItem(const TArray<FEmberDropItemGroup>& ItemsToSelectFrom, FEmberDropItemGroup& OutSelectedItem);
 	TArray<FItemEffectApplicationInfo> SetEnchantEquipment(const TObjectPtr<UDataTable>& EnchantDataTable);

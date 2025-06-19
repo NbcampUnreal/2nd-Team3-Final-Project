@@ -45,13 +45,13 @@ public:
 
 	// --- 크래프트 관련 함수 ---
 	virtual TMap<FName, int32> GetAllItemInfos_Implementation() override;
-	virtual bool bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems) override;
+	virtual bool bConsumeAbleResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems) override;
 	virtual void GetItemInfos_Implementation(TArray<FEmberItemEntry>& InItemEntries, TMap<FEmberItemKey, FInstancedStruct>& OutItemInfos) override;
 	virtual void GetItemInfo_Implementation(FEmberItemEntry& InItemEntry, FInstancedStruct& OutItemInfo) override;
 	
-	virtual void TryConsumeResource_Implementation(const TArray<FItemPair>& InRequireItems) override;
+	virtual void TryConsumeResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems) override;
 
-	virtual void RemoveResourceUntilAble_Implementation(TArray<FItemPair>& InRequireItems) override;
+	virtual void RemoveResourceUntilAble_Implementation(TArray<FEmberItemEntry>& InRequireItems) override;
 	
 	// --- 아이템 정리 관련 함수들 ---
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
@@ -77,7 +77,7 @@ public:
 
 	virtual FGameplayTag GetSlotType_Implementation() const override;
 	
-	int32 RemoveItemAutomatic(const FItemPair& InItem);
+	int32 RemoveItemAutomatic(const FEmberItemEntry& InItem);
 
 	/*
 	UFUNCTION(BlueprintCallable, Category = "Inventory")

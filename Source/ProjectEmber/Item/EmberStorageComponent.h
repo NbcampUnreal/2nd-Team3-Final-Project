@@ -37,11 +37,11 @@ public:
 	// --- IEmberResourceProvider ---
 	virtual TMap<FName, int32> GetAllItemInfos_Implementation() override;
 	
-	virtual void TryConsumeResource_Implementation(const TArray<FItemPair>& InRequireItems) override;
+	virtual void TryConsumeResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems) override;
 
-	virtual void RemoveResourceUntilAble_Implementation(TArray<FItemPair>& InRequireItems) override;
+	virtual void RemoveResourceUntilAble_Implementation(TArray<FEmberItemEntry>& InRequireItems) override;
 	
-	virtual bool bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems) override;
+	virtual bool bConsumeAbleResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems) override;
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

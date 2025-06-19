@@ -263,12 +263,12 @@ void UUserItemManger::GetItemInfos_Implementation(TArray<FEmberItemEntry>& InIte
 	}
 }
 
-void UUserItemManger::TryConsumeResource_Implementation(const TArray<FItemPair>& InRequireItems)
+void UUserItemManger::TryConsumeResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems)
 {
 
 	if (bConsumeAbleResource_Implementation(InRequireItems))
 	{
-		TArray<FItemPair> RequireItems = InRequireItems;
+		TArray<FEmberItemEntry> RequireItems = InRequireItems;
 		if (InventoryManager)
 		{
 			IEmberResourceProvider::Execute_RemoveResourceUntilAble(InventoryManager, RequireItems);
@@ -284,10 +284,10 @@ void UUserItemManger::TryConsumeResource_Implementation(const TArray<FItemPair>&
 	}
 }
 
-bool UUserItemManger::bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems)
+bool UUserItemManger::bConsumeAbleResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems)
 {
 	TMap<FName, int32> Items = GetAllItemInfos();
-	for (const FItemPair& RequireItem : InRequireItems)
+	for (const FEmberItemEntry& RequireItem : InRequireItems)
 	{
 		if (RequireItem.ItemID.IsValid() && RequireItem.Quantity > 0)
 		{
@@ -302,7 +302,7 @@ bool UUserItemManger::bConsumeAbleResource_Implementation(const TArray<FItemPair
 	return true;
 }
 
-void UUserItemManger::RemoveResourceUntilAble_Implementation(TArray<FItemPair>& InRequireItems)
+void UUserItemManger::RemoveResourceUntilAble_Implementation(TArray<FEmberItemEntry>& InRequireItems)
 {
 	if (InventoryManager)
 	{

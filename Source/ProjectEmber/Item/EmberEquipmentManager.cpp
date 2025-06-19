@@ -26,6 +26,7 @@ UEmberEquipmentManager::UEmberEquipmentManager()
 	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Belt);
 	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Ring);
 	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Shield);
+	DataSlots.SetNum(12);
 }
 
 int32 UEmberEquipmentManager::GetSlotCount_Implementation() const
@@ -171,32 +172,14 @@ void UEmberEquipmentManager::RemoveEffect(int32 InSlotIndex)
 {
 	if (DataSlots.IsValidIndex(InSlotIndex))
 	{
-		if (FEmberSlotData* InSlot = DataSlots[InSlotIndex].GetMutablePtr<FEmberSlotData>())
+		for (FActiveGameplayEffectHandle& Effect : EquipmentEffects[InSlotIndex])
 		{
-			FGameplayEffectQuery Query;
-			if (OwnerAbilitySystemComponent)
+			if (Effect.IsValid())
 			{
-				for (FItemEffectApplicationInfo& Info : InSlot->EnchantEffects)
-				{
-					Query.EffectDefinition = Info.GameplayEffectClass;
-						
-					for (auto& Effect : OwnerAbilitySystemComponent->GetActiveEffects(Query))
-					{
-						if (Effect.IsValid())
-						{
-							if (const FActiveGameplayEffect* ActiveGameplayEffect = OwnerAbilitySystemComponent->GetActiveGameplayEffect(Effect))
-							{
-								float FoundValue = ActiveGameplayEffect->Spec.GetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(Info.MagnitudeSetByCallerTag.GetTagName()));
-								if (FMath::IsNearlyEqual(FoundValue, Info.Magnitude))
-								{
-									OwnerAbilitySystemComponent->RemoveActiveGameplayEffect(Effect, 1);
-								}
-							}
-						}
-					}
-				}
+				OwnerAbilitySystemComponent->RemoveActiveGameplayEffect(Effect);
 			}
 		}
+		EquipmentEffects[InSlotIndex].Reset();
 	}
 }
 
@@ -204,12 +187,12 @@ void UEmberEquipmentManager::ActiveEffect(int32 InSlotIndex)
 {
 	if (DataSlots.IsValidIndex(InSlotIndex) && OwnerAbilitySystemComponent)
 	{
-
 		if (FEquipmentSlotData* InSlot = DataSlots[InSlotIndex].GetMutablePtr<FEquipmentSlotData>())
 		{
-			UItemSystemLibrary::ApplyEffectInfoList(OwnerAbilitySystemComponent, InSlot->MainEffect, Owner);
-			UItemSystemLibrary::ApplyEffectInfoList(OwnerAbilitySystemComponent, InSlot->EnchantEffects, Owner);
-
+			TArray<FActiveGameplayEffectHandle> EffectHandles;
+			EffectHandles.Append(UItemSystemLibrary::ApplyEffectInfoList(OwnerAbilitySystemComponent, InSlot->MainEffect, Owner));
+			EffectHandles.Append(UItemSystemLibrary::ApplyEffectInfoList(OwnerAbilitySystemComponent, InSlot->EnchantEffects, Owner));
+			EquipmentEffects.Add(EffectHandles);
 		}
 	}
 }

@@ -3,6 +3,9 @@
 
 #include "EmberCraftStruct.h"
 
+#include "EmberTmpStruct.h"
+#include "ItemCraftType.h"
+
 void FTotalItemInfo::AddItem(const int32 InQuantity, const int32 InIndex)
 {
 	if (InQuantity > 0)
@@ -27,4 +30,11 @@ int32 FTotalItemInfo::RemoveItemQuantity(const int32 InQuantity)
 void FTotalItemInfo::RemoveItemIndexes(const int32 InIndex)
 {
 	ItemIndexes.Remove(InIndex);
+}
+
+
+FCraftSelectInfo::FCraftSelectInfo(const FCraftInfoRow& InCraftInfoRow)
+{
+	RequestItemData = FEmberMasterItemData(InCraftInfoRow.RequestItem.ItemData.RowName, InCraftInfoRow.RequestItem.Quantity);
+	RequiredItemDataHandles = InCraftInfoRow.RequireItems;
 }

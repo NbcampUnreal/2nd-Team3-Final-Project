@@ -45,4 +45,3 @@ TArray<FItemPair> UEmberInteractableItemDropComponent::GetDropItemName(const FNa
     
 	return DropItems;
 }
-

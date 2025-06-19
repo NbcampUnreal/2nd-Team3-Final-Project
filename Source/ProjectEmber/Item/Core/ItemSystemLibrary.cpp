@@ -29,13 +29,13 @@ UItemSubsystem* UItemSystemLibrary::GetItemSubsystem()
 	return nullptr;
 }
 
-void UItemSystemLibrary::ApplyEffectInfoList(UAbilitySystemComponent* TargetASC,
+TArray<FActiveGameplayEffectHandle> UItemSystemLibrary::ApplyEffectInfoList(UAbilitySystemComponent* TargetASC,
 	const TArray<FItemEffectApplicationInfo>& EffectInfos, UObject* SourceObject, float SourceLevel)
 {
-
+	TArray<FActiveGameplayEffectHandle> EffectHandles;
 	if (!TargetASC || EffectInfos.Num() == 0)
 	{
-		return;
+		return EffectHandles;
 	}
 
 	for (const FItemEffectApplicationInfo& EffectInfo : EffectInfos)
@@ -57,7 +57,8 @@ void UItemSystemLibrary::ApplyEffectInfoList(UAbilitySystemComponent* TargetASC,
 				SpecHandle.Data->SetSetByCallerMagnitude(EffectInfo.MagnitudeSetByCallerTag, EffectInfo.Magnitude);
 			}
 			
-			TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+			EffectHandles.Add(TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get()));
 		}
 	}
+	return EffectHandles;
 }

@@ -35,12 +35,12 @@ public:
 	void GetItemInfos(TArray<FEmberItemEntry>& InItemEntry, TMap<FEmberItemKey, FInstancedStruct>& OutItemInfos);
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void TryConsumeResource(const TArray<FItemPair>& InRequireItems);
+	void TryConsumeResource(const TArray<FEmberItemEntry>& InRequireItems);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	void RemoveResourceUntilAble(TArray<FItemPair>& InRequireItems);
+	void RemoveResourceUntilAble(TArray<FEmberItemEntry>& InRequireItems);
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
-	bool bConsumeAbleResource(const TArray<FItemPair>& InRequireItems);
+	bool bConsumeAbleResource(const TArray<FEmberItemEntry>& InRequireItems);
 
 };

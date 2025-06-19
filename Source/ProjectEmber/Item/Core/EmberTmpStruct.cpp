@@ -61,7 +61,7 @@ FEmberItemKey FEmberMasterItemData::CreateItemKey() const
 
 void FEmberMasterItemData::RemoveQuantity(int32& InQuantity)
 {
-	int32 CurrentQuantity = FMath::Max(Quantity, InQuantity);
+	int32 CurrentQuantity = FMath::Min(Quantity, InQuantity);
 	Quantity -= CurrentQuantity;
 	if (Quantity <= 0)
 	{

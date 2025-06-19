@@ -49,7 +49,7 @@ TMap<FName, int32> UEmberStorageComponent::GetAllItemInfos_Implementation()
 	return Items;
 }
 
-void UEmberStorageComponent::TryConsumeResource_Implementation(const TArray<FItemPair>& InRequireItems)
+void UEmberStorageComponent::TryConsumeResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems)
 {
 	if (InventoryManager)
 	{
@@ -58,7 +58,7 @@ void UEmberStorageComponent::TryConsumeResource_Implementation(const TArray<FIte
 }
 
 void UEmberStorageComponent::RemoveResourceUntilAble_Implementation(
-	TArray<FItemPair>& InRequireItems)
+	TArray<FEmberItemEntry>& InRequireItems)
 {
 	if (InventoryManager)
 	{
@@ -66,7 +66,7 @@ void UEmberStorageComponent::RemoveResourceUntilAble_Implementation(
 	}
 }
 
-bool UEmberStorageComponent::bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems)
+bool UEmberStorageComponent::bConsumeAbleResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems)
 {
 	if (InventoryManager)
 	{

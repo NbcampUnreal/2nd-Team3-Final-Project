@@ -48,7 +48,6 @@ void UEmberBaseSlotWidget::SetSlotData(const FInstancedStruct& InSlotData)
 
 void UEmberBaseSlotWidget::InitDetailWidget()
 {
-
 	if (UItemSubsystem* ItemSubsystem = UItemSystemLibrary::GetItemSubsystem())
 	{
 		ItemDetailWidget = ItemSubsystem->GetItemDetailWidget();
@@ -57,8 +56,9 @@ void UEmberBaseSlotWidget::InitDetailWidget()
 
 void UEmberBaseSlotWidget::UpdateSlot()
 {
-
 	TObjectPtr<UTexture2D> LoadTexture = nullptr;
+
+	EMBER_LOG(LogTemp, Warning, TEXT("ABCDSE %s %d"), *SlotData.ItemID.ToString(), SlotData.Quantity);
 
 	if (SlotData.ItemID.IsNone())
 	{
@@ -85,15 +85,22 @@ void UEmberBaseSlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, con
 	UDragDropOperation*& OutOperation)
 {
 	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
-
-	IEmberSlotDragAbleSlotInterface::Execute_CreateDragDropOperation(this, InGeometry, InMouseEvent, OutOperation);
+	if (Cast<IEmberSlotDragAbleSlotInterface>(this))
+	{
+		IEmberSlotDragAbleSlotInterface::Execute_CreateDragDropOperation(this, InGeometry, InMouseEvent, OutOperation);
+	}
 }
 
 FReply UEmberBaseSlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	
 	FReply Reply = Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
-	Reply = IEmberSlotDragAbleSlotInterface::Execute_StartDragDrop(this, InGeometry, InMouseEvent).NativeReply;
+
+	if (Cast<IEmberSlotDragAbleSlotInterface>(this))
+	{
+		Reply = IEmberSlotDragAbleSlotInterface::Execute_StartDragDrop(this, InGeometry, InMouseEvent).NativeReply;
+
+	}
 	return Reply;
 }
 
@@ -103,7 +110,10 @@ FReply UEmberBaseSlotWidget::NativeOnMouseButtonDoubleClick(const FGeometry& InG
 	FReply Reply = Super::NativeOnMouseButtonDoubleClick(InGeometry, InMouseEvent);
 	if (!SlotData.ItemID.IsNone() && DataProvider && DataProvider.GetObject())
 	{
-		IEmberSlotDataProviderInterface::Execute_UseItemInSlot(DataProvider.GetObject(), SlotIndex);
+		if (Cast<IEmberSlotDragAbleSlotInterface>(this))
+		{
+			IEmberSlotDataProviderInterface::Execute_UseItemInSlot(DataProvider.GetObject(), SlotIndex);
+		}
 		return UWidgetBlueprintLibrary::Handled().NativeReply;
 	}
 	return Reply;

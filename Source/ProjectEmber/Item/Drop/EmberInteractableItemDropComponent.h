@@ -19,7 +19,7 @@ public:
 	// Sets default values for this component's properties
 	UEmberInteractableItemDropComponent();
 	UFUNCTION(BlueprintCallable)
-	void DropItem(AActor* Actor);
+	virtual void DropItem(AActor* Actor);
 
 protected:
 	TArray<FItemPair> GetDropItemName(const FName& MonsterID, const UAbilitySystemComponent* AbilitySystemComponent = nullptr);

@@ -176,7 +176,7 @@ TObjectPtr<UItemDetailWidget> UItemSubsystem::GetItemDetailWidget()
         if (UClass* InDetailWidgetClass = DetailWidgetClassPtr.LoadSynchronous())
         {
             DetailWidget = CreateWidget<UItemDetailWidget>(UGameplayStatics::GetPlayerController(GetWorld(), 0), InDetailWidgetClass, TEXT("DetailWidget"));
-            DetailWidget->AddToViewport();
+            DetailWidget->AddToViewport(100);
             DetailWidget->SetVisibility(ESlateVisibility::Hidden);
         }
     }

@@ -474,7 +474,7 @@ FGameplayTag UEmberDataContainer::GetSlotType_Implementation() const
     return SlotTag;
 }
 
-int32 UEmberDataContainer::RemoveItemAutomatic(const FItemPair& InItem)
+int32 UEmberDataContainer::RemoveItemAutomatic(const FEmberItemEntry& InItem)
 {
     if (InItem.Quantity <= 0 || InItem.ItemID.IsNone())
     {
@@ -486,7 +486,7 @@ int32 UEmberDataContainer::RemoveItemAutomatic(const FItemPair& InItem)
     int RemovedQuantity = 0;
     
     FInstancedStruct& InstancedStruct = TotalData.FindOrAdd(InItem.ItemID);
-    
+
     if (FEmberTotalSlot* TotalSlot = InstancedStruct.GetMutablePtr<FEmberTotalSlot>())
     {
         TSet<int32> ItemIndexes = TotalSlot->ItemIndexes;
@@ -731,9 +731,9 @@ TMap<FName, int32> UEmberDataContainer::GetAllItemInfos_Implementation()
     return Items;
 }
 
-bool UEmberDataContainer::bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems)
+bool UEmberDataContainer::bConsumeAbleResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems)
 {
-    for (const FItemPair& Item : InRequireItems)
+    for (const FEmberItemEntry& Item : InRequireItems)
     {
         if (Item.ItemID.IsValid() && Item.Quantity > 0)
         {
@@ -787,7 +787,7 @@ void UEmberDataContainer::GetItemInfo_Implementation(FEmberItemEntry& InItemEntr
     {
         return; 
     }
-    
+
     if (FInstancedStruct* InstancedStruct = TotalData.Find(InItemEntry.CreateItemKey()))
     {
         if (const FEmberMasterItemData* MasterItemData = InstancedStruct->GetPtr<FEmberMasterItemData>())
@@ -806,26 +806,26 @@ void UEmberDataContainer::GetItemInfo_Implementation(FEmberItemEntry& InItemEntr
     }
 }
 
-void UEmberDataContainer::TryConsumeResource_Implementation(const TArray<FItemPair>& InRequireItems)
+void UEmberDataContainer::TryConsumeResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems)
 {
     if (bConsumeAbleResource_Implementation(InRequireItems))
     {
-        for (const FItemPair& Item : InRequireItems)
+        for (const FEmberItemEntry& Item : InRequireItems)
         {
             RemoveItemAutomatic(Item);
         }
     }
 }
 
-void UEmberDataContainer::RemoveResourceUntilAble_Implementation(TArray<FItemPair>& InRequireItems)
+void UEmberDataContainer::RemoveResourceUntilAble_Implementation(TArray<FEmberItemEntry>& InRequireItems)
 {
-    TArray<FItemPair> RemainingRequireItems;
-    for (FItemPair& RequireItem : InRequireItems)
+    for (FEmberItemEntry& RequireItem : InRequireItems)
     {
         int32 RemovedQuantity = RemoveItemAutomatic(RequireItem);
         RequireItem.Quantity -= RemovedQuantity;
     }
-    InRequireItems.RemoveAll([](const FItemPair& Item)
+    
+    InRequireItems.RemoveAll([](const FEmberItemEntry& Item)
         {
             return Item.Quantity <= 0;
         });

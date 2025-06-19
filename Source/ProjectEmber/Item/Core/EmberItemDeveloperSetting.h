@@ -15,11 +15,11 @@ class PROJECTEMBER_API UEmberItemDeveloperSetting : public UDeveloperSettings
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Item", meta = (DisplayName = "Item QuickSlot"))
-	TSubclassOf<UUserWidget> QuickSlotWidgetClass;
-
 	static TObjectPtr<const UEmberItemDeveloperSetting> Get()
 	{
 		return GetDefault<UEmberItemDeveloperSetting>();
 	}
+	
+	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Item", meta = (DisplayName = "Item QuickSlot"))
+	TSubclassOf<UUserWidget> QuickSlotWidgetClass;
 };

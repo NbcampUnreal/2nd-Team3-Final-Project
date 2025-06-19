@@ -16,7 +16,7 @@ FEmberSlotData::FEmberSlotData(const FName& InItemID, const int32 InQuantity, co
 		{
 			ItemID = InItemID;
 			Quantity = InQuantity;
-			ItemDisplayName = InItemMasterInfo->ItemDescription;
+			ItemDisplayName = InItemMasterInfo->ItemDisplayName;
 			ItemDescription = InItemMasterInfo->ItemDescription;
 			
 			for (const FDataTableRowHandle& Handle : InItemMasterInfo->ItemData)
@@ -48,6 +48,25 @@ FEmberSlotData::FEmberSlotData(const FName& InItemID, const int32 InQuantity, co
 		}
 	}
 	EnchantEffects = InEnchantEffects;
+}
+
+void FEmberSlotData::AddQuantity(int32& InQuantity)
+{
+	int32 AbleAddedQuantity = FMath::Min(MaxStackSize - Quantity, InQuantity);
+	AbleAddedQuantity = FMath::Max(AbleAddedQuantity, 0);
+	Quantity += AbleAddedQuantity;
+	InQuantity -= AbleAddedQuantity;
+}
+
+void FEmberSlotData::RemoveQuantity(int32& InQuantity)
+{
+	int32 AbleRemoveQuantity = FMath::Max(Quantity, InQuantity);
+	Quantity -= AbleRemoveQuantity;
+	InQuantity -= AbleRemoveQuantity;
+	if (Quantity <= 0)
+	{
+		Clear();
+	}
 }
 
 FEquipmentSlotData::FEquipmentSlotData(const FEmberSlotData& InEmberSlot) : FEmberSlotData(InEmberSlot)

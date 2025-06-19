@@ -4,6 +4,7 @@
 #include "EmberWidgetSlotData.h"
 
 #include "EmberItemStruct.h"
+#include "EmberTmpStruct.h"
 
 
 FEmberWidgetSlotData::FEmberWidgetSlotData(const FInstancedStruct& InSlotData)

@@ -7,6 +7,8 @@
 #include "EmberEquipmentManager.generated.h"
 
 
+struct FActiveGameplayEffectHandle;
+
 UCLASS(ClassGroup=(Custom))
 class PROJECTEMBER_API UEmberEquipmentManager : public UEmberDataContainer
 {
@@ -35,4 +37,6 @@ protected:
 
 protected:
 	FGameplayTagContainer SlotGameplayTags;
+
+	TArray<TArray<FActiveGameplayEffectHandle>> EquipmentEffects = TArray<TArray<FActiveGameplayEffectHandle>>();
 };
