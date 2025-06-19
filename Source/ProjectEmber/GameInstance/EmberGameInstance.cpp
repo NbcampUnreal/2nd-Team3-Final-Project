@@ -76,6 +76,19 @@ void UEmberGameInstance::TestPlaySFX(ESfxSoundType SoundType, const FName RowNam
 	AudioSubsystem->PlaySFX(SoundType, RowName, Location);
 }
 
+void UEmberGameInstance::ClearDungeon(int DungeonIndex)
+{
+	if (!IsClearDungeon(DungeonIndex))
+	{
+		bIsDungeonClear[DungeonIndex] = true;
+	}
+}
+
+bool UEmberGameInstance::IsClearDungeon(int DungeonIndex)
+{
+	return bIsDungeonClear[DungeonIndex];
+}
+
 static FString GetMoveDirectionMappingName(EMoveDirection Dir)
 {
     switch (Dir)

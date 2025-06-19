@@ -37,6 +37,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void TestPlaySFX(ESfxSoundType SoundType, const FName RowName, FVector Location = FVector::ZeroVector);
+
+	UFUNCTION(BlueprintCallable)
+	void ClearDungeon(int DungeonIndex);
+
+	UFUNCTION(BlueprintCallable)
+	bool IsClearDungeon(int DungeonIndex);
 	
 	UPROPERTY(BlueprintReadWrite)
 	TArray<FEmberKeyMappingEntry> SavedMappings;
@@ -76,4 +82,7 @@ private:
 	UUserWidget* LoadingScreenWidget;
 
 	FStreamableManager AssetLoader;
+
+	UPROPERTY(EditDefaultsOnly, Category = "DungeonClear")
+	TArray<bool> bIsDungeonClear;
 };
