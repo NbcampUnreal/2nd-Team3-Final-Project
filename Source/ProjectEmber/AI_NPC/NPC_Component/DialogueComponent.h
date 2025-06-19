@@ -25,9 +25,6 @@ public:
     virtual void Interact_Implementation(AActor* Caller) override;
     virtual float GetGatherTime_Implementation() override;
 
-    UFUNCTION(BlueprintCallable, Category = "Quest")
-    void UpdateQuestLogWidgetFromAsset(const UQuestDataAsset* InQuestAsset);
-
     UFUNCTION()
     void PositionDetachedCamera();
     void ShowQuestCompleteWidget(const UQuestDataAsset* InQuestAsset, bool bIsQuestComplete);
@@ -46,13 +43,6 @@ public:
     UPROPERTY()
     int32 AcceptedStepIndex = 0;
 
-
-    UFUNCTION(BlueprintCallable, Category = "Dialogue")
-    void SetCustomDialogueLines(const TArray<FText>& InLines);
-
-
-    UFUNCTION(BlueprintCallable, Category = "Dialogue")
-    void StartDialogue();
 
     UPROPERTY()
     bool bDialogueOverriddenByCondition = false;

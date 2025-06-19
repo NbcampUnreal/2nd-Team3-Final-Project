@@ -32,6 +32,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	bool IsQuestAccepted(FName QuestID) const;
 
+	UFUNCTION(BlueprintCallable, Category = "Quest")
+	void AcceptStep(FName QuestID);
+
 	//마지막으로 수락한 퀘스트
 	UPROPERTY()
 	FName LastAcceptedQuestID = NAME_None;
@@ -64,8 +67,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	bool IsStepCompleted(FName QuestID, int32 StepIndex) const;
 
-
-
+	TMap<FName, bool> StepAcceptance;
 
 private:
 	// 로드된 퀘스트 목록
