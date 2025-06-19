@@ -18,6 +18,21 @@ enum class EInputID : int32
 enum class EAimInputID : int32
 {
 	Attack  = 0,
+	Default = 2001, 
+	Sword	= 2002,       
+	Bow		= 2003,
+	Hatchet = 2004,
+	PickAxe	= 2005,
+	Spear	= 2006,
+	Dagger	= 2007,
+	SwordTwoHanded	= 2008,
+	Throw	= 2009,
+	Hammer	= 2010
+};
+
+enum class ERightInputID : int32
+{
+	Attack  = 0,
 	Default = 1001, 
 	Sword	= 1002,       
 	Bow		= 1003,

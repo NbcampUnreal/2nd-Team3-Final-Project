@@ -18,6 +18,8 @@ public:
 
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
+	UFUNCTION()
+	void OnAllActorsLoaded();
 public:
 	UFUNCTION(BlueprintCallable, Category = "Skill")
 	void UnlockSkill(FName SkillID);

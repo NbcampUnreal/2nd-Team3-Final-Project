@@ -12,6 +12,7 @@
 #include "MessageBus/MessageBus.h"
 #include "MotionWarpingComponent.h"
 #include "SkillManagerSubsystem.h"
+#include "Attribute/Player/EmberPlayerAttributeSet.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -37,14 +38,16 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	{
 		UAbilitySystemComponent* Asc = GetAbilitySystemComponentFromActorInfo();
 		
-		//Asc->AddLooseGameplayTag(AlsCharacterStateTags::Blocking);
 		Asc->AddLooseGameplayTag(AlsCharacterStateTags::Parrying);
 
-		GetAvatarActorFromActorInfo()->GetWorld()->GetTimerManager().SetTimer(ParryingTimerHandle,
-		FTimerDelegate::CreateUObject(this, &UBaseOverlayAbility::OnParryEnded),
-		/* 추후 어트리뷰트에서 패링판정 시간을 가져와서 세팅해주기 */ 0.7f, 
-		false
-		);	
+		if (const UEmberPlayerAttributeSet* PlayerAttributesSet = Asc->GetSet<UEmberPlayerAttributeSet>())
+		{
+			GetAvatarActorFromActorInfo()->GetWorld()->GetTimerManager().SetTimer(ParryingTimerHandle,
+			FTimerDelegate::CreateUObject(this, &UBaseOverlayAbility::OnParryEnded),
+			/* 추후 어트리뷰트에서 패링판정 시간을 가져와서 세팅해주기 */ PlayerAttributesSet->GetParryDuration(), 
+			false
+			);		
+		}
 	}
 	
 	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
@@ -205,7 +208,7 @@ void UBaseOverlayAbility::OnComboNotify(const FGameplayEventData Payload)
 		{
 			if (!AbilitySystemComponent->TryActivateAbilityByClass(Abilities[0],false))
 			{
-				EMBER_LOG(LogEmber,Warning, TEXT("Failed to activate next combo ability: %s"), *NextComboAbility->GetName());
+				EMBER_LOG(LogEmber,Warning, TEXT("Failed to activate next combo ability: %s"), *Abilities[0]->GetName());
 			}	
 		}
 		

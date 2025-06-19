@@ -1,5 +1,6 @@
 ﻿#include "SkillManagerSubsystem.h"
 
+#include "AbilitySystemComponent.h"
 #include "EMSFunctionLibrary.h"
 #include "Engine/AssetManager.h"
 #include "Abilities/GameplayAbility.h"
@@ -21,6 +22,11 @@ void USkillManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	Super::Initialize(Collection);
 	// 기본 경로에서 DataAsset 로드 (프로젝트에 맞게 경로 수정)
 	SkillTreeData = LoadObject<USkillTreeDataAsset>(nullptr, TEXT("/Script/SkillSystem.SkillTreeDataAsset'/Game/_Blueprints/UI/GameMenu/Skill/DA_SkillTree.DA_SkillTree'"));
+}
+
+void USkillManagerSubsystem::OnAllActorsLoaded()
+{
+	
 }
 
 const FSkillNode* USkillManagerSubsystem::FindSkillNode(FName SkillID) const
@@ -55,6 +61,31 @@ void USkillManagerSubsystem::UnlockSkill(FName SkillID)
 	UnlockedSkills.Add(SkillID);
 	UE_LOG(LogTemp, Log, TEXT("Skill unlocked: %s."), *SkillID.ToString());
 	
+	const FSkillNode* Node = GetSkillNode(SkillID);
+	if (Node && Node->EffectClass)
+	{
+		UAbilitySystemComponent* Asc = nullptr;
+		if (const APlayerController* PC = GetWorld()->GetFirstPlayerController())
+		{
+			if (const APawn* Pawn = PC->GetPawn())
+			{
+				Asc = Pawn->FindComponentByClass<UAbilitySystemComponent>();
+			}
+		}
+
+		if (Asc)
+		{
+			FGameplayEffectContextHandle Context = Asc->MakeEffectContext();
+			Context.AddSourceObject(this);
+			
+			const FGameplayEffectSpecHandle SpecHandle = Asc->MakeOutgoingSpec(Node->EffectClass, 1,Context);
+			if (SpecHandle.IsValid())
+			{
+				Asc->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+			}
+		}
+	}
+	
 	// TODO: SaveGame 처리 로직 추가
 }
 
@@ -86,12 +117,11 @@ bool USkillManagerSubsystem::IsSkillUnlocked(FName SkillID) const
 TArray<TSubclassOf<UGameplayAbility>> USkillManagerSubsystem::GetNextComboAbilities(const TSubclassOf<UGameplayAbility>& AbilityClass) const
 {
 	TArray<TSubclassOf<UGameplayAbility>> Result;
-	const FSkillNode* Node = GetSkillNode(AbilityClass);
-	if (Node)
+	if (const FSkillNode* Node = GetSkillNode(AbilityClass))
 	{
 		for (const FName& NextID : Node->NextSkillIDs)
 		{
-			if (IsSkillUnlocked(NextID))
+			//if (IsSkillUnlocked(NextID))
 			{
 				const FSkillNode* NextNode = FindSkillNode(NextID);
 				if (NextNode && NextNode->AbilityClass)

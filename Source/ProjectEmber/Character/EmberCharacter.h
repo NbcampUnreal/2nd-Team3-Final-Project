@@ -143,7 +143,10 @@ protected:
 
 	void AbilityInputPressed(int32 InputID);
 	FGameplayAbilitySpec* GetSpecFromOverlayMode(const bool IsRightInput = false) const;
+	FGameplayAbilitySpec* GetBlockSpecFromOverlayMode() const;
 	void TryAbilityFromOnAim(const bool bPressed);
+	void TryAbilityFromOnBlock(bool bPressed);
+
 protected:
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
@@ -156,6 +159,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
 	TMap<int32, TSubclassOf<class UGameplayAbility>> StartRightInputAbilities;
+
+	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
+	TMap<int32, TSubclassOf<class UGameplayAbility>> StartBlockInputAbilities;
 	
 	bool bClientAbility{false};
 	
@@ -195,6 +201,7 @@ protected:
 	virtual void Input_OnCrouch();
 	virtual void Input_OnJump(const FInputActionValue& ActionValue);
 	virtual void Input_OnAim(const FInputActionValue& ActionValue);
+	virtual void Input_OnBlock(const FInputActionValue& ActionValue);
 	virtual void Input_OnGlide();
 	virtual void Input_OnRagdoll();
 	virtual void Input_OnRoll();
