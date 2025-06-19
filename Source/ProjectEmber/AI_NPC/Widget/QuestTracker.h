@@ -30,4 +30,11 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	UTexture2D* CollectingImage;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* AcceptSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* CompleteSound;
 };

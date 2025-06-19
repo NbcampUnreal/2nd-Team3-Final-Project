@@ -12,27 +12,43 @@ class PROJECTEMBER_API UQuestGiverComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-
 public:
     UQuestGiverComponent();
 
-    /** 느낌표 표시용 Static Mesh */
+    // === Exclamation ===
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestGiver")
     UStaticMesh* ExclamationMarkMesh;
 
-    /** 실제로 머리 위에 붙을 Mesh Component */
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "QuestGiver")
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "QuestGiver")
     UStaticMeshComponent* ExclamationMarkComponent;
 
-    /** 느낌표 생성 및 붙이기 */
     UFUNCTION(BlueprintCallable, Category = "QuestGiver")
     void InitializeExclamationMark();
-
-    /** 표시 켜기 */
     UFUNCTION(BlueprintCallable, Category = "QuestGiver")
     void ShowExclamationMark();
-
-    /** 표시 끄기 */
     UFUNCTION(BlueprintCallable, Category = "QuestGiver")
     void HideExclamationMark();
+
+    // === Question ===
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestGiver")
+    UStaticMesh* QuestionMarkMesh;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "QuestGiver")
+    UStaticMeshComponent* QuestionMarkComponent;
+
+    UFUNCTION(BlueprintCallable, Category = "QuestGiver")
+    void InitializeQuestionMark();
+    UFUNCTION(BlueprintCallable, Category = "QuestGiver")
+    void ShowQuestionMark();
+    UFUNCTION(BlueprintCallable, Category = "QuestGiver")
+    void HideQuestionMark();
+
+    UFUNCTION(BlueprintCallable, Category = "QuestGiver")
+    void HideAllMarks();
+
+protected:
+    /*추가: Attach 대상 선택 함수 */
+    USceneComponent* GetAttachTarget() const;
+
+    virtual void BeginPlay() override;
 };

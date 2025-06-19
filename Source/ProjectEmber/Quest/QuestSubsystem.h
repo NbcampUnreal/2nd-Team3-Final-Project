@@ -25,7 +25,6 @@ public:
 
 
 public:
-
 	// NPC에게 F눌러서 통과 받을때 호출될 함수
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	bool TryStartQuest(FName QuestID, bool bPlayerAccepted = false);

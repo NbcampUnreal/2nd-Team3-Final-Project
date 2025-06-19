@@ -52,6 +52,7 @@ void UInteractionFragment_Spawn_Spline::SpawnActors(UWorld* World)
 		AActor* SpawnedActor = World->SpawnActor<AActor>(SpawnClass, SpawnLocation, SpawnRotation, SpawnParams);
 		if (IsValid(SpawnedActor))
 		{
+			SpawnedActor->SetOwner(GetOwner());
 			SpawnedList.Add(SpawnedActor);
 		}
 	}

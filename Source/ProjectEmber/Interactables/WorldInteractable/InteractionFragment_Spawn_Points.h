@@ -11,8 +11,17 @@ class ASpawnPoint : public AActor
 {
 	GENERATED_BODY()
 public:
+	ASpawnPoint()
+	{
+		Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+		RootComponent = Root;
+	}
+	
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<USceneComponent> Root;
+	
 	UPROPERTY(EditAnywhere, Category = "Spawner")
-	TSubclassOf<AActor> ActorToSapwn;
+	TSubclassOf<AActor> ActorToSpawn;
 
 	UPROPERTY(EditAnywhere, Category = "Spawner")
 	FVector PreviewOffset = FVector::ZeroVector;
@@ -27,7 +36,8 @@ public:
 
 
 
-UCLASS(Blueprintable, EditInlineNew, meta=(BlueprintSpawnableComponent))
+//UCLASS(Blueprintable, EditInlineNew, meta=(BlueprintSpawnableComponent))
+UCLASS() // 아직 미구현 상태라 빼둠
 class PROJECTEMBER_API UInteractionFragment_Spawn_Points : public UInteractionFragment_Spawn
 {
 	GENERATED_BODY()
