@@ -5,6 +5,7 @@
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
 #include "Attribute/Player/EmberPlayerAttributeSet.h"
 #include "Item/Ability/EmberItemAttributeSet.h"
+#include "Quest/QuestSubsystem.h"
 
 AEmberPlayerState::AEmberPlayerState()
 {
@@ -35,6 +36,30 @@ void AEmberPlayerState::BeginPlay()
 		// 완료 시 호출될 함수 바인딩
 		Proxy->Completed.AddUObject(this, &USkillManagerSubsystem::OnAllActorsLoaded);
 	}*/
+}
+
+void AEmberPlayerState::ActorPreSave_Implementation()
+{
+	if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
+	{
+		QuestProgress = QuestSubsystem->GetQuestProgress();	
+	}
+}
+
+void AEmberPlayerState::ActorLoaded_Implementation()
+{
+	if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
+	{
+		QuestSubsystem->LoadQuest(GetPlayerController(), QuestProgress);
+	}
+}
+
+void AEmberPlayerState::GameMenuWidgetLoaded()
+{
+	if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
+	{
+		QuestSubsystem->LoadQuest(GetPlayerController(), QuestProgress);
+	}
 }
 
 class UAbilitySystemComponent* AEmberPlayerState::GetAbilitySystemComponent() const

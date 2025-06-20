@@ -1,12 +1,14 @@
 ﻿#include "QuestSubsystem.h"
 #include "AbilitySystemComponent.h"
 #include "AI_NPC/NPC_Component/QuestGiverComponent.h"
+#include "AI_NPC/Widget/QuestListWidget.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
 #include "Character/EmberCharacter.h"
 #include "Data/QuestDataAsset.h"
 #include "EmberLog/EmberLog.h"
 #include "GameInstance/GameplayEventSubsystem.h"
 #include "Item/UserItemManger.h"
+#include "UI/HUD/EmberMainHUD.h"
 
 void UQuestSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -223,6 +225,36 @@ int32 UQuestSubsystem::GetCurrentStepIndexForQuest(FName QuestID, bool bAutoStar
     return INDEX_NONE;
 }
 
+void UQuestSubsystem::LoadQuest(const APlayerController* PlayerController, const TMap<FName, int32>& InQuestProgress)
+{
+    QuestProgress = InQuestProgress;
+    
+    if (AHUD* Hud = PlayerController->GetHUD())
+    {
+        if (UQuestListWidget* QuestListWidget = Cast<UQuestListWidget>(Cast<AEmberMainHUD>(Hud)->GetQuestListWidget()))
+        {
+            for (const auto& QuestPair : InQuestProgress)
+            {
+                const FName& QuestID = QuestPair.Key;
+                const int32  Count   = QuestPair.Value;
+                
+                if (const TObjectPtr<UQuestDataAsset>* AssetPtr = LoadedQuests.Find(QuestID))
+                {
+                    UQuestDataAsset* QuestAsset = *AssetPtr;
+                    for (int32 i = 0; i <= Count; ++i)
+                    {
+                        QuestListWidget->AddQuest(QuestAsset, i);
+                    }
+                }
+            }
+        }
+    }
+}
+
+TMap<FName, int32>& UQuestSubsystem::GetQuestProgress()
+{
+    return QuestProgress;
+}
 
 bool UQuestSubsystem::CompleteQuest(FName QuestID)
 {

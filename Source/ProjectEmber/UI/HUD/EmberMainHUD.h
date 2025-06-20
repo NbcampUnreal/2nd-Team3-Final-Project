@@ -50,14 +50,16 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	UPlayerQuestWidget* GetQuestLogWidget() const;
-	
+
+	UUserWidget* GetGameMenuWidget() const;
+
+	UUserWidget* GetQuestListWidget() const;
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<UPlayerQuestWidget> PlayerQuestWidgetClass;
 
 	UPROPERTY()
 	UPlayerQuestWidget* PlayerQuestWidgetInstance;
-
-
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI|HUD")
@@ -73,13 +75,6 @@ private:
 	bool bIsGameLeftMouseInputLock{ false };
 	bool bIsGameMovementInputLock{ false };
 
-public:
-//#if !UE_BUILD_SHIPPING
-	//UFUNCTION(BlueprintCallable, Category = "UI|HUD")
-	void ToggleDebugLayer();
-
-protected:
-	//TObjectPtr<ULayerDebugger> PrimaryDebugLayer;
-	//bool bDebugLayerVisible = false;
-//#endif
+	UPROPERTY()
+	TObjectPtr<UUserWidget> GameMenuInstance;
 };
