@@ -13,6 +13,11 @@ void ABaseInteractableActor::BeginPlay()
 	
 }
 
+void ABaseInteractableActor::TryInteract_Implementation(AActor* Caller)
+{
+	Interact(Caller);
+}
+
 void ABaseInteractableActor::Interact_Implementation(AActor* Caller)
 {
 	

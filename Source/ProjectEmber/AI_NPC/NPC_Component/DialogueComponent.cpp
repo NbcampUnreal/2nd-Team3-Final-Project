@@ -33,6 +33,12 @@ UDialogueComponent::UDialogueComponent()
     CurrentDialogueIndex = 0;
     bDialogueFinished = false;
 }
+
+void UDialogueComponent::TryInteract_Implementation(AActor* Caller)
+{
+    Interact_Implementation(Caller);
+}
+
 //트리거 설정 위젯 설정
 void UDialogueComponent::BeginPlay()
 {

@@ -25,7 +25,7 @@ public:
 	virtual void HandleInteractionEvent_Implementation(const FGameplayTag& EventTag, const FGameplayEventData& EventData) override;
 	
 	UFUNCTION(BlueprintCallable, Category="Interaction")
-	virtual void TryInteract(AActor* Interactor);
+	virtual void TryInteract_Implementation(AActor* Interactor) override;
 
 	UFUNCTION(BlueprintCallable, Category="Interaction")
 	bool CanInteract();
@@ -39,9 +39,11 @@ public:
 	UFUNCTION()
 	virtual void EndInteract_Implementation() override;
 
+	/**상속받은 블루프린트에서 전처리할 때 호출*/
 	UPROPERTY(BlueprintAssignable, Category="Interaction")
 	FOnInteractionStarted OnInteractionStarted;
 
+	/**상속받은 블루프린트에서 후처리할 때 호출*/
 	UPROPERTY(BlueprintAssignable, Category="Interaction")
 	FOnInteractionEnded OnInteractionEnded;
 	
