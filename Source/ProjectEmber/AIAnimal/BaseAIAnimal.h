@@ -52,8 +52,8 @@ public:
 
 	virtual bool IsTargetable_Implementation() const override;
 	
-	UFUNCTION(BlueprintImplementableEvent, Category= "OnBeginDeath")
-	void BP_OnBeginDeath();
+	//UFUNCTION(BlueprintImplementableEvent, Category= "OnBeginDeath")
+	//void BP_OnBeginDeath();
 	
 	UFUNCTION()
 	void OnHit(AActor* InstigatorActor);

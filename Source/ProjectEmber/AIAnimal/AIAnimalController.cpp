@@ -123,7 +123,6 @@ void AAIAnimalController::FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus)
             BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Warning");
             BlackboardComponent->SetValueAsObject("TargetActor", Actor);
         }
-    
     }
 }
 

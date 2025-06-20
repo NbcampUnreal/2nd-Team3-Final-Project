@@ -96,6 +96,8 @@ public:
 	//Spawn 1웨이브 끝나고 TrySpawnEntire(AnimalsInfoByToken); 로 호출
 	//DespawnQueue 공용으로 사용
 	FAnimalInitInfo GetRandomLocationByToken(FVector PlayerLocation);
+	UFUNCTION(BlueprintCallable)
+	void TryReleaseToken();
 	TQueue<FAnimalQueueInfo>			  CreateInfoQueueByToken;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning") //전투를 위한 애들
 	TArray<FAnimalSpawnInfo> AnimalsInfoByToken;
