@@ -33,7 +33,7 @@ void AMiniGameInteractableActor::BeginMiniGame()
 }
 
 void AMiniGameInteractableActor::EndMiniGame()
-{	
+{
 	bIsPlaying = false;
 }
 
