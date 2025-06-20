@@ -201,6 +201,11 @@ void UTokenRaidSubsystem::GiveTokenToRandom()
 	
 	// 랜덤 인덱스 선택
 	int32 RandomIndex = FMath::RandRange(0, ActiveUnits.Num() - 1);
+	if (!ActiveUnits.IsValidIndex(RandomIndex))
+	{
+		return;
+	}
+	
 	TWeakObjectPtr<ABaseAIAnimal> SelectedUnit = ActiveUnits[RandomIndex];
 	if (!SelectedUnit.IsValid())
 	{

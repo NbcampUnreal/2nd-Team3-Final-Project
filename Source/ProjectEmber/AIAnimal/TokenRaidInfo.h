@@ -36,10 +36,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = "RaidSpawn")
 	FGameplayTag Difficulty;
 
-	// 웨이브 번호 (0부터 시작)
-	UPROPERTY(EditAnywhere, Category = "RaidSpawn")
-	int32 Wave = 0;
-
 	// 웨이브 당 그룹 수 (이 웨이브에 몇 개 그룹이 등장할지)
 	UPROPERTY(EditAnywhere, Category = "RaidSpawn")
 	int32 GroupsPerWave = 0;
