@@ -53,7 +53,7 @@ void AAnimalSpawner::ReceiveMessage(const FName MessageType, UObject* Payload)
 
 void AAnimalSpawner::MessageMoveToDead(UObject* Payload)
 {
-	//주긍면 대기열 이동만 시키기 -> 리스폰을 위한 처리
+	//파밍대기 끝나고 죽으면 대기열 이동만 시키기 -> 리스폰을 위한 처리
 	if (ABaseAIAnimal* Animal = Cast<ABaseAIAnimal>(Payload))
 	{
 		for (FAnimalSpawnInfo& Info : AnimalsInfoByToken)
@@ -679,13 +679,13 @@ void AAnimalSpawner::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void AAnimalSpawner::OnTokenRaidEvent(FTokenRaidInfo InRow)
 {
-	for (int i = 0; i <InRow.GroupsPerWave; i++)
+	for (int32 i =0; i<InRow.GroupsPerWave; i++)
 	{
 		FAnimalSpawnInfo Info;
-		Info.AnimalClass = InRow.AnimalClass;
-		Info.TotalCount = InRow.UnitsPerGroup;
+		Info.AnimalClass = InRow.GroupInfo[i].AnimalClass;
+		Info.TotalCount = InRow.GroupInfo[i].UnitsPerGroup;
 		Info.LeaderCount = 1;
-		Info.FollowCount = InRow.UnitsPerGroup-1;
+		Info.FollowCount = InRow.GroupInfo[i].UnitsPerGroup-1;
 
 		AnimalsInfoByToken.Add(Info); //생성되는 객체들 정보를 담음, 인덱스 각 하나는 웨이브에서 한 그룹에 해당하는 정보
 	}
@@ -744,7 +744,7 @@ void AAnimalSpawner::TickCreateQueueByToken(TQueue<FAnimalQueueInfo>& InQueue)
 	//큐가 비었으면 AnimalsInfoByToken 쨰로 토큰 서브시스템한테 넘기기
 	if (UTokenRaidSubsystem* TokenRaidSubsystem = GetGameInstance()->GetSubsystem<UTokenRaidSubsystem>())
 	{
-		TokenRaidSubsystem->RegisterWaitingArray(AnimalsInfoByToken); // 1웨이브에 쓰일 모든 객체들
+		TokenRaidSubsystem->RegisterRaidInfoArray(this,AnimalsInfoByToken); // 1웨이브에 쓰일 모든 객체들
 	}
 }
 
@@ -772,4 +772,38 @@ FAnimalInitInfo AAnimalSpawner::GetRandomLocationByToken(FVector PlayerLocation)
 FGameplayTag AAnimalSpawner::GetIdentityTag() const
 {
 	return IdentityTag;
+}
+
+
+void AAnimalSpawner::TryReleaseToken()
+{
+	CreateInfoQueueByToken.Empty();
+
+	for (int32 InfoIndex = 0; InfoIndex < AnimalsInfoByToken.Num(); ++InfoIndex)
+	{
+		FAnimalSpawnInfo& Info = AnimalsInfoByToken[InfoIndex];
+		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.SpawnAnimals)
+		{
+			if (!Animal.IsValid())
+			{
+				continue;
+			}
+			
+			Animal->Destroy();
+			Animal = nullptr;
+		}
+		Info.SpawnAnimals.Empty();
+		
+		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.DeadAnimals)
+		{
+			if (!Animal.IsValid())
+			{
+				continue;
+			}
+			Animal->Destroy();
+			Animal = nullptr;
+		}
+		Info.DeadAnimals.Empty();
+	}
+	
 }

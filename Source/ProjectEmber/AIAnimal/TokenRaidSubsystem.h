@@ -28,8 +28,7 @@ public:
 	//이벤트 발생했을 때 호출될 시작 함수
 	UFUNCTION(BlueprintCallable)
 	FTokenRaidInfo GetRaidInfoRow(FGameplayTag Region);
-	
-	void RegisterWaitingArray(TArray<FAnimalSpawnInfo>& InArray);
+	void RegisterRaidInfoArray(AAnimalSpawner* OwnerSpawner ,TArray<FAnimalSpawnInfo>& InArray);
 	void OnFirstMovementComplete(AActor* InUnit, bool InResult);
 	void OnMovementComplete(AActor* InUnit, bool InResult);
 	void GiveTokenToRandom();
@@ -38,13 +37,8 @@ public:
 	UFUNCTION()
 	void OnEQSComplete(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);
 	void MovementStart();
-	
-
 	FVector GetBestLocation(ABaseAIAnimal& Animal);
-	
-	void OnUnitDied(ABaseAIAnimal* Unit);
-	void RequestToken(ABaseAIAnimal* Unit);
-	void SpawnWave(int32 WaveIndex);
+	void TryReleaseToken();
 	
 	// 데이터 테이블 참조
 	UPROPERTY(EditDefaultsOnly, Category = "Raid")
@@ -63,13 +57,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EQS") //실행시킬 eqs
 	TSoftObjectPtr<UEnvQuery> EQSQuery;
 
-	TArray<FVector> FoundLocations;
 	UPROPERTY()
-	TMap<int32,ABaseAIAnimal*> FoundQueriers;
-	TMap<ABaseAIAnimal*,FVector> OriLocation;
-	TArray<FAnimalSpawnInfo> WaitingArray; //베스트 포지션으로 이동하지 않음
-	TArray<TObjectPtr<ABaseAIAnimal>> ReadyUnits; // 베스트 포지션으로 이동 완료함, 토큰 가지지 않은
-	TArray<TObjectPtr<ABaseAIAnimal>> ActiveUnits; //토큰 가진, 가졌던
+	TMap<TWeakObjectPtr<ABaseAIAnimal>,FVector> OriLocation;
+	TArray<FVector> FoundLocations;
+	TArray<FAnimalSpawnInfo> RaidInfoArray; //베스트 포지션으로 이동하지 않음
+	TArray<TWeakObjectPtr<ABaseAIAnimal>> ActiveUnits; //베스트 포지션으로 이동 완료함, 토큰 가지지 않은
 	int32 TotalUnitsPerWave = 0;
+	
+	UPROPERTY()
+	AAnimalSpawner* InfoOwnerSpawner = nullptr;
 
 };
