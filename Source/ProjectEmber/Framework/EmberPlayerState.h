@@ -2,11 +2,12 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "EMSActorSaveInterface.h"
 #include "GameFramework/PlayerState.h"
 #include "EmberPlayerState.generated.h"
 
 UCLASS()
-class PROJECTEMBER_API AEmberPlayerState : public APlayerState, public IAbilitySystemInterface
+class PROJECTEMBER_API AEmberPlayerState : public APlayerState, public IAbilitySystemInterface, public IEMSActorSaveInterface
 {
 	GENERATED_BODY()
 
@@ -15,7 +16,12 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual class UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-	
+
+	UFUNCTION()
+	virtual void ActorPreSave_Implementation() override;
+	UFUNCTION()
+	virtual void ActorLoaded_Implementation() override;
+	void GameMenuWidgetLoaded();
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AbilitySystem", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
@@ -26,4 +32,8 @@ private:
 	TObjectPtr<class UEmberCharacterAttributeSet> AttributeSet;
 	UPROPERTY()
 	TObjectPtr<class UEmberItemAttributeSet> ItemAttributeSet;
+
+	
+	UPROPERTY(SaveGame)
+	TMap<FName, int32> QuestProgress;
 };

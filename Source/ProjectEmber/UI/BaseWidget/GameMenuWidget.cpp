@@ -74,3 +74,8 @@ UUserWidget* UGameMenuWidget::GetSkillTreeWidget() const
 {
     return WBP_SkillTree;
 }
+
+UUserWidget* UGameMenuWidget::GetQuestListWidget() const
+{
+    return Cast<UUserWidget>(WBP_Quest->WidgetTree->FindWidget(FName("WBP_QuestListWidget")));
+}

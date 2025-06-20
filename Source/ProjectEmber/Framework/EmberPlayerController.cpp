@@ -41,7 +41,7 @@ void AEmberPlayerController::SaveThumbnailImage()
 	FString SlotName;
 	if (UEMSInfoSaveGame* Info = UEMSFunctionLibrary::GetSlotInfoSaveGame(this, SlotName))
 	{
-		UEMSFunctionLibrary::ExportSaveThumbnail(this, ThumbnailRenderTarget, SlotName);
+		UEMSFunctionLibrary::ExportSaveThumbnail(this, SceneCaptureComponent2D->TextureTarget, SlotName);
 		EMBER_LOG(LogEmber, Warning, TEXT("Thumbnail exported for slot: %s"), *SlotName);
 	}
 	else
@@ -58,7 +58,7 @@ void AEmberPlayerController::SaveGameToSlot()
 
 	SaveCustom();
 
-	UEMSAsyncSaveGame* Active = UEMSAsyncSaveGame::AsyncSaveActors(GetWorld(), 0);
+	UEMSAsyncSaveGame* Active = UEMSAsyncSaveGame::AsyncSaveActors(GetWorld(), 1);
 	Active->OnCompleted.AddDynamic(this, &AEmberPlayerController::ShowSavingMessage);
 }
 
