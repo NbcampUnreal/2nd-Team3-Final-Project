@@ -132,7 +132,8 @@ public: /* UI Input */
 	UPROPERTY(EditAnywhere, Category="Input|UI") 
 	TObjectPtr<UInputAction> UIPauseAction;
 
-
+	UPROPERTY(EditAnywhere, Category = "Input|UI")
+	TObjectPtr<UInputAction> UICloseDialogueAction;
 private:
 	UPROPERTY()
 	TObjectPtr<UEnhancedInputComponent> InputComp;

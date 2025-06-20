@@ -39,7 +39,6 @@ void UBTTask_FirstMoveTo::OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint
 		{
 			bSuccess = true;
 		}
-		UE_LOG(LogTemp, Warning, TEXT("UBTTask_FirstMoveTo - OnTaskFinished 실행됨"));
 		GetWorld()->GetGameInstance()->GetSubsystem<UTokenRaidSubsystem>()->OnFirstMovementComplete(Animal, bSuccess);
 	}
 }

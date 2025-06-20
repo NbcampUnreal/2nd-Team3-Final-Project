@@ -40,8 +40,6 @@ void UEQC_TargetActor::ProvideContext(FEnvQueryInstance& QueryInstance, FEnvQuer
 
 	UObject* TargetObject = BlackboardComp->GetValueAsObject("TargetActor");
 	AActor* TargetActor = Cast<AActor>(TargetObject);
-	//APawn* Player = GetWorld()->GetFirstPlayerController()->GetPawn();
-	//AActor* TargetActor = Cast<AActor>(Player);
 	if (TargetActor)
 	{
 		// 컨텍스트에 대상 액터 추가

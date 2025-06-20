@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Character/InputHandler/EmberKeyMappingEntry.h"
 #include "EasyMultiSave/Public/EMSCustomSaveGame.h"
+#include "GameInstance/EmberVideoSettings.h"
+#include "GameInstance/EmberAudioSettings.h"
 #include "EmberSaveGame.generated.h"
 
 UCLASS()
@@ -17,5 +19,11 @@ public:
 
     UPROPERTY()
     TArray<FEmberDirectionalMoveEntry> SavedMoveBindings;
+
+    UPROPERTY(BlueprintReadWrite, SaveGame)
+    FEmberVideoSettings SavedVideoSettings;
+
+    UPROPERTY(BlueprintReadWrite, SaveGame)
+    FEmberAudioSettings SavedAudioSettings;
 	
 };

@@ -29,8 +29,7 @@ public:
 
     UFUNCTION()
     void OnCloseButtonClicked();
-
-    // Image·Î ±³Ã¼
+	
     UPROPERTY(meta = (BindWidget))
     class UImage* TutorialImage;
 

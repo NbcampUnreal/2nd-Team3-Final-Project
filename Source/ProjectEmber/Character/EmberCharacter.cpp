@@ -32,6 +32,7 @@
 #include "MotionWarpingComponent.h"
 #include "Components/WidgetComponent.h"
 #include "UI/Death/DeathScreenWidget.h"
+#include "AI_NPC/NPC_Component/DialogueComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(EmberCharacter)
 
@@ -89,6 +90,10 @@ AEmberCharacter::AEmberCharacter()
 	MotionWarpComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpComponent"));
 
 	TargetSystemComponent = CreateDefaultSubobject<UTargetSystemComponent>(TEXT("TargetSystemComponent"));
+
+	PrimaryActorTick.bCanEverTick = true;
+
+	ActiveDialogueComponent = nullptr;
 }
 
 void AEmberCharacter::BeginPlay()
@@ -1187,3 +1192,30 @@ void AEmberCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 	Super::EndPlay(EndPlayReason);
 }
+
+void AEmberCharacter::SetActiveDialogueComponent(UDialogueComponent* InDialogue)
+{
+	ActiveDialogueComponent = InDialogue;
+
+	if (ActiveDialogueComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[EmberCharacter] ActiveDialogueComponent set to: %s"), *ActiveDialogueComponent->GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[EmberCharacter] ActiveDialogueComponent cleared."));
+	}
+}
+
+void AEmberCharacter::Input_OnCloseDialogue()
+{
+	if (ActiveDialogueComponent)
+	{
+		ActiveDialogueComponent->CloseAnyOpenUI();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Input_OnCloseDialogue] No ActiveDialogueComponent to close!"));
+	}
+}
+
