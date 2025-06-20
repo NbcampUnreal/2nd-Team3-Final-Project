@@ -23,6 +23,7 @@ class UAlsCameraComponent;
 class UEmberInputHandlerComponent;
 class UMeleeTraceComponent;
 struct FInputActionValue;
+class UDialogueComponent;
 
 UCLASS()
 class PROJECTEMBER_API AEmberCharacter : public AAlsCharacter, public IAbilitySystemInterface, public IEMSActorSaveInterface
@@ -221,12 +222,16 @@ protected:
 	virtual void Input_OnStartItemQuick(const FInputActionValue& ActionValue);
 	virtual void Input_OnCancelItemQuick(const FInputActionValue& ActionValue);
 	virtual void Input_OnStartScan(const FInputActionValue& ActionValue);
+
+	virtual void Input_OnCloseDialogue();
+	
 	
 	FGameplayTag PreThrowOverlayTag;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "EmberCharacter")
 	TObjectPtr<UEmberInputHandlerComponent> InputHandler;
 
 	friend class UEmberInputHandlerComponent;
+
 
 protected:
 	/** 글라이드 시 전방(Forward) 속도 */
@@ -272,5 +277,11 @@ protected:
 	TObjectPtr<UUserItemManger> EmberItemManager;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Item")
 	TObjectPtr<UEmberCraftComponent> CraftCollision;
-	
+public:
+
+	UPROPERTY()
+	UDialogueComponent* ActiveDialogueComponent;
+
+	// 대화 시작 시 DialogueComponent 저장
+	void SetActiveDialogueComponent(UDialogueComponent* InDialogue);
 };

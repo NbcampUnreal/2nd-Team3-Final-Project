@@ -6,6 +6,22 @@
 
 #include "TokenRaidInfo.generated.h"
 
+
+USTRUCT(BlueprintType)
+struct PROJECTEMBER_API FTokenGroupInfo
+{
+	GENERATED_BODY()
+
+public:
+	// 그룹당 수
+	UPROPERTY(EditAnywhere, Category = "RaidSpawn")
+	int32 UnitsPerGroup = 0;
+
+	// 스폰 가능한 객체들
+	UPROPERTY(EditAnywhere, Category = "RaidSpawn")
+	TSubclassOf<ABaseAIAnimal> AnimalClass;
+};
+
 USTRUCT(BlueprintType)
 struct PROJECTEMBER_API FTokenRaidInfo : public FTableRowBase
 {
@@ -28,11 +44,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = "RaidSpawn")
 	int32 GroupsPerWave = 0;
 
-	// 그룹당 수
 	UPROPERTY(EditAnywhere, Category = "RaidSpawn")
-	int32 UnitsPerGroup = 0;
-
-	// 스폰 가능한 객체들
-	UPROPERTY(EditAnywhere, Category = "RaidSpawn")
-	TSubclassOf<ABaseAIAnimal> AnimalClass;
+	TArray<FTokenGroupInfo> GroupInfo;
 };

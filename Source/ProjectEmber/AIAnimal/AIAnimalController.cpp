@@ -17,15 +17,15 @@ AAIAnimalController::AAIAnimalController()
     HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
 
     SightConfig->SightRadius = 1500.0f;
-    SightConfig->LoseSightRadius = 2000.0f;
+    SightConfig->LoseSightRadius = 1800.0f;
     SightConfig->PeripheralVisionAngleDegrees = 120.0f;
-    SightConfig->SetMaxAge(3.0f);
+    SightConfig->SetMaxAge(2.0f);
     SightConfig->DetectionByAffiliation.bDetectEnemies = true;
     SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
     SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
     
-    HearingConfig->HearingRange = 1000.0f;
-    HearingConfig->SetMaxAge(3.0f);
+    HearingConfig->HearingRange = 800.0f;
+    HearingConfig->SetMaxAge(2.0f);
     HearingConfig->DetectionByAffiliation.bDetectEnemies = true;
     HearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
     HearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
@@ -56,7 +56,7 @@ void AAIAnimalController::BeginPlay()
 {
     Super::BeginPlay();
     PerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &AAIAnimalController::OnTargetPerceptionUpdated);
-
+    PerceptionComp->OnTargetPerceptionForgotten.AddDynamic(this, &AAIAnimalController::OnTargetPerceptionForgotten);
 }
 
 void AAIAnimalController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
@@ -72,6 +72,15 @@ void AAIAnimalController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus S
     FindTargetPlayer(Actor, Stimulus);
 }
 
+void AAIAnimalController::OnTargetPerceptionForgotten(AActor* Actor)
+{
+    if (BlackboardComponent)
+    {
+        BlackboardComponent->SetValueAsObject("TargetActor", nullptr);
+        BlackboardComponent->SetValueAsName("NStateTag","Animal.State.Idle");
+    }
+}
+
 void AAIAnimalController::FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus)
 {
     if (BlackboardComponent)
@@ -83,32 +92,36 @@ void AAIAnimalController::FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus)
             return;
         }
         
-        if (BlackboardComponent)
+        //--- 공격 확률 설정 --------------------------------------------------
+        float HitCount = Cast<ABaseAIAnimal>(GetPawn())->GetHitCount();
+        float AttackProb = 0.05;          // 기본 0 %
+        if (Cast<ABaseAIAnimal>(GetPawn())->GetPersonality() == EAnimalAIPersonality::Brave) 
         {
-            //--- 공격 확률 설정 --------------------------------------------------
-            float AttackProb = 0.00;          // 기본 0 %
-            if (Cast<ABaseAIAnimal>(GetPawn())->GetPersonality() == EAnimalAIPersonality::Brave) // 성격이 ‘용감’이라면 +5 %
-            {
-                AttackProb += 0.05f;           // 총합 ⇒ 5 %
-            }
-            if (Cast<ABaseAIAnimal>(GetPawn())->GetRoleTag() == "Animal.Role.Leader")
-            {
-                AttackProb += 0.5f;            // 총합 ⇒ 55 %
-            }
-            //--------------------------------------------------------------------
+            AttackProb += 0.05f;          // 성격이 ‘용감'이라면 +5 %
+        }
+        if (Cast<ABaseAIAnimal>(GetPawn())->GetRoleTag() == "Animal.Role.Leader")
+        {
+            AttackProb += 0.5f;            // 역할이 '리더'라면 +50 %
+        }
+        HitCount *= 0.01f; 
+        AttackProb -= HitCount;
+        //--------------------------------------------------------------------
 
-            // 난수 뽑아서 결정
-            if (FMath::FRand() <= AttackProb)
-            {
-                BlackboardComponent->SetValueAsObject("TargetActor", Actor);
-                BlackboardComponent->SetValueAsVector("TargetLocation", Actor->GetActorLocation());
-                BlackboardComponent->SetValueAsName("NStateTag","Animal.State.Attack");
-            }
-            else
-            {
-                BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Warning");
-                BlackboardComponent->SetValueAsObject("TargetActor", Actor);
-            }
+        // 난수 뽑아서 결정
+        if (AttackProb <= 0.0f)
+        {
+            AttackProb = 0.0f;
+        }
+        if (FMath::FRand() <= AttackProb)
+        {
+            BlackboardComponent->SetValueAsObject("TargetActor", Actor);
+            BlackboardComponent->SetValueAsVector("TargetLocation", Actor->GetActorLocation());
+            BlackboardComponent->SetValueAsName("NStateTag","Animal.State.Attack");
+        }
+        else
+        {
+            BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Warning");
+            BlackboardComponent->SetValueAsObject("TargetActor", Actor);
         }
     }
 }

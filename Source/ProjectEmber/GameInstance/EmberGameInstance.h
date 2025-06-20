@@ -10,6 +10,7 @@
 #include "InputTriggers.h"
 #include "InputModifiers.h"
 #include "EasyMultiSave.h"
+#include "GameInstance/EmberVideoSettings.h"
 #include "GameInstance/EmberSaveGame.h"
 #include "EmberGameInstance.generated.h"
 
@@ -30,10 +31,16 @@ public:
 	void TestPlaySound();
 
 	UFUNCTION(BlueprintCallable)
-	void ShowLoadingScreen();
+	void SaveVideoSettingsWithEMS(const FEmberVideoSettings& Settings);
 
 	UFUNCTION(BlueprintCallable)
-	void HideLoadingScreen();
+	FEmberVideoSettings LoadVideoSettingsWithEMS();
+
+	UFUNCTION(BlueprintCallable)
+	void SaveAudioSettingsWithEMS(const FEmberAudioSettings& Settings);
+
+	UFUNCTION(BlueprintCallable)
+	FEmberAudioSettings LoadAudioSettingsWithEMS();
 
 	UFUNCTION(BlueprintCallable)
 	void RequestOpenLevel(FName MapName);
@@ -78,12 +85,6 @@ private:
 
 	UPROPERTY()
 	ULevelSubsystem* LevelSubsystem;
-
-	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSoftClassPtr<UUserWidget> LoadingScreenClass;
-
-	UPROPERTY()
-	UUserWidget* LoadingScreenWidget;
 
 	FStreamableManager AssetLoader;
 };

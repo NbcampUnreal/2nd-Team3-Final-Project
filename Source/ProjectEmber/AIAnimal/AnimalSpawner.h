@@ -5,11 +5,12 @@
 #include "CoreMinimal.h"
 #include "EMSActorSaveInterface.h"
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
-#include "Components/BoxComponent.h"
 #include "GameFramework/Actor.h"
+#include "Interactables/WorldInteractable/WorldInteractableActor.h"
 #include "MessageBus/MessageBus.h"
 #include "AnimalSpawner.generated.h"
 
+struct FTokenRaidInfo;
 class ABaseAIAnimal;
 class AAnimalSpawnPoint;
 
@@ -78,7 +79,7 @@ struct FAnimalQueueInfo
 
 
 UCLASS()
-class PROJECTEMBER_API AAnimalSpawner : public AActor, public IEMSActorSaveInterface
+class PROJECTEMBER_API AAnimalSpawner : public AWorldInteractableActor, public IEMSActorSaveInterface
 {
 	GENERATED_BODY()
 
@@ -86,12 +87,17 @@ public:
 	AAnimalSpawner();
 
 	
-	//토근식 공격을 위한
+	//Token
 	UFUNCTION(BlueprintCallable)
-	void OnTokenRaidEvent(int32 InGroupsPerWave, int32 inUnitsPerGroup, TSubclassOf<ABaseAIAnimal> InClass);
+	void OnTokenRaidEvent(FTokenRaidInfo InRow);
 	void AddCreateQueueByLocation(TArray<FAnimalSpawnInfo>& InfoByTokenArray);
 	void TickCreateQueueByToken(TQueue<FAnimalQueueInfo>& InQueue);
+	UFUNCTION(BlueprintCallable) //파밍 끝나고 죽은 애들만 스폰
+	//Spawn 1웨이브 끝나고 TrySpawnEntire(AnimalsInfoByToken); 로 호출
+	//DespawnQueue 공용으로 사용
 	FAnimalInitInfo GetRandomLocationByToken(FVector PlayerLocation);
+	UFUNCTION(BlueprintCallable)
+	void TryReleaseToken();
 	TQueue<FAnimalQueueInfo>			  CreateInfoQueueByToken;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning") //전투를 위한 애들
 	TArray<FAnimalSpawnInfo> AnimalsInfoByToken;
@@ -132,10 +138,7 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	TArray<TSoftObjectPtr<AAnimalSpawnPoint>> SelectNearPoints(TArray<TSoftObjectPtr<AAnimalSpawnPoint>>& InSpawnPoints);
-	
-	//디스폰은 동물 마리 단위, 먼 순서대로 스폰되어 있는 모든 동물 정렬, 나중에 최적화? 시야범위 관련 사용자 설정에 쓰일 함수들
-	UFUNCTION(BlueprintCallable)
-	void SortFarthestAnimal();
+
 	
 	//Create
 	UFUNCTION(BlueprintCallable)
@@ -165,7 +168,7 @@ protected:
 
 	//Spawn
 	UFUNCTION(BlueprintCallable)  //전체 스폰
-	void TrySpawnEntire();
+	void TrySpawnEntire(TArray<FAnimalSpawnInfo>& InfoArray);
 
 	UFUNCTION(BlueprintCallable) //살아있는 애들만 스폰
 	void TrySpawnAlive(TArray<FAnimalSpawnInfo>& InfoArray);
@@ -177,12 +180,13 @@ protected:
 	void TickSpawnQueue();
 
 	//Despawn
+	//디스폰은 동물 마리 단위, 먼 순서대로 스폰되어 있는 모든 동물 정렬, 나중에 최적화? 시야범위 관련 사용자 설정에 쓰일 함수들
+	UFUNCTION(BlueprintCallable)
+	void SortFarthestAnimal(TArray<FAnimalSpawnInfo>& InfoArray);
+	
 	UFUNCTION(BlueprintCallable)
 	void TickDespawnQueue();
 	
-	UFUNCTION(BlueprintCallable)
-	void ProcessDespawnQueue(TSoftObjectPtr<ABaseAIAnimal>& InAnimal);
-
 	//Release
 	UFUNCTION(BlueprintCallable)
 	void TryReleaseEntire();
@@ -227,7 +231,6 @@ protected:
 	
 	TQueue<FAnimalQueueInfo>			  LoadInfoQueue; 
 	TQueue<FAnimalQueueInfo>			  CreateInfoQueue;  //매 tick 생성될, 큐에 담길 동물객체 하나마다의 정보를 담는 구조체
-	
 	TQueue<TSoftObjectPtr<ABaseAIAnimal>> SpawnQueue;
 	TQueue<TSoftObjectPtr<ABaseAIAnimal>> DespawnQueue;
 	

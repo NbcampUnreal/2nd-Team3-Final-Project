@@ -46,6 +46,9 @@ bool UQuestSubsystem::TryStartQuest(FName QuestID, bool bPlayerAccepted)
     {
         return false;
     }
+ 
+    // ⭐ 첫 스텝 자동 수락
+    StepAcceptance.Add(QuestID, true);
 
     if (UQuestDataAsset* QuestAsset = LoadedQuests.FindRef(QuestID))
     {
@@ -95,6 +98,11 @@ void UQuestSubsystem::OnGameEvent(const FGameplayTag& EventTag, const FGameplayE
 
     for (FName QuestID : KeysToCheck)
     {
+        if (!StepAcceptance.Contains(QuestID) || !StepAcceptance[QuestID])
+        {
+            UE_LOG(LogTemp, Warning, TEXT("[OnGameEvent] Quest %s: 현재 스텝 수락 안됨 -> 조건 무시"), *QuestID.ToString());
+            continue;
+        }
         if (UQuestDataAsset* QuestAsset = LoadedQuests.FindRef(QuestID))
         {
             CheckQuestStepCompletion(QuestAsset, EventTag, EventData);
@@ -178,6 +186,8 @@ bool UQuestSubsystem::AdvanceQuestStep(FName QuestID)
     {
         return CompleteQuest(QuestID);
     }
+
+    StepAcceptance.Add(QuestID, false);
     const FQuestStep& NextStep = QuestAsset->Steps[Index];
    
     for (UQuestCondition* Condition : NextStep.Conditions)
@@ -328,4 +338,12 @@ bool UQuestSubsystem::IsStepCompleted(FName QuestID, int32 StepIndex) const
         *QuestID.ToString(), StepIndex, CurrentIndex, bCompleted);
 
     return bCompleted;
+}
+void UQuestSubsystem::AcceptStep(FName QuestID)
+{
+    if (QuestProgress.Contains(QuestID))
+    {
+        StepAcceptance.Add(QuestID, true);
+        UE_LOG(LogTemp, Warning, TEXT("[AcceptStep] Quest %s: 현재 스텝 수락됨"), *QuestID.ToString());
+    }
 }

@@ -15,68 +15,79 @@ void UTokenRaidSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 	EQSQuery = LoadObject<UEnvQuery>(nullptr, TEXT("/Game/_Blueprints/AI/Animal/EQS_BestPointQuery.EQS_BestPointQuery"));
-	UE_LOG(LogTemp, Warning, TEXT("TokenRaidSubsystem Initialized."));
-}
-
-void UTokenRaidSubsystem::OnStartRaid(FGameplayTag InRegion, FGameplayTag InDifficulty)
-{
-	UE_LOG(LogTemp, Warning, TEXT("Subsystem Address = %p"), this);
- //지역과 난이도에 맞는 row 정하고
-	CurrentRegion = InRegion;
-	CurrentDifficulty = InDifficulty;
-	FromTableGetRaidInfo();
-	
- //지역에 맞는 스포너 호출 OnTokenRaidEvent
-	TArray<AActor*> FoundActors;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AAnimalSpawner::StaticClass(), FoundActors);
-	for (auto Actor : FoundActors)
+	TokenRaidDataTable = LoadObject<UDataTable>(nullptr, TEXT("/Game/_Blueprints/AI/Animal/DT_TokenRaidInfo.DT_TokenRaidInfo"));
+	if (TokenRaidDataTable)
 	{
-		AAnimalSpawner* Spawner = Cast<AAnimalSpawner>(Actor);
-		if ( CurrentRow.Region == Spawner->GetIdentityTag())
-		{
-			Spawner->OnTokenRaidEvent(CurrentRow.GroupsPerWave, CurrentRow.UnitsPerGroup, CurrentRow.AnimalClass); // 스포너에서 생성, 랜덤 배치 상태로 Array 반환 -> WaitingArray
-		}
-	}
-}
+		TArray<FTokenRaidInfo*> AllRows;
+		TokenRaidDataTable->GetAllRows(TEXT("TokenRaidContext"), AllRows);
 
-void UTokenRaidSubsystem::RegisterWaitingArray(TArray<FAnimalSpawnInfo>& InArray)
-{
-	WaitingArray = InArray;
-	RunEQSByQuerier();
-}
-
-//리더만 eqs 실행 -> 베스트 위치 받아오고 -> 랜덤 포인트 생성된 애들이 담긴 WaitingArray 인덱스 안의 동물별로 위치 지정
-void UTokenRaidSubsystem::RunEQSByQuerier()
-{
-	for (int32 i= 0; i<WaitingArray.Num(); i++)
-	{
-		for (auto& Animal : WaitingArray[i].SpawnAnimals)
+		for (FTokenRaidInfo* Row : AllRows)
 		{
-			if ("Animal.Role.Leader" == Animal->GetRoleTag())
+			if (Row)
 			{
-				FoundQueriers.Emplace(i,Animal.Get());
+				CurrentRowArray.Add(*Row);
 			}
 		}
 	}
-	
-	//리더 없을 때 예외 처리해야함 -> 리더 없으면 다음 아무나 BB 그룹 태그, 롤 태그 리더로 바꿔야함
-	
-	for (auto Querier : FoundQueriers)
+}
+
+FTokenRaidInfo UTokenRaidSubsystem::GetRaidInfoRow(FGameplayTag Region)
+{
+	for (auto Row : CurrentRowArray)
 	{
-		APawn* Player = GetWorld()->GetFirstPlayerController()->GetPawn();
-		Cast<AAIAnimalController>(Querier.Value->GetController())->GetBlackboardComponent()->SetValueAsObject("TargetActor", Player);
-		UEnvQueryInstanceBlueprintWrapper* QueryInstance = UEnvQueryManager::RunEQSQuery(
-																	GetWorld(),
-																	EQSQuery.Get(),
-																	Cast<UObject>(Querier.Value),
-																	EEnvQueryRunMode::AllMatching,
-																	nullptr);
-	
-		if (QueryInstance)
+		if (Row.Region == Region)
 		{
-			QueryInstance->GetOnQueryFinishedEvent().AddDynamic(this, &UTokenRaidSubsystem::OnEQSComplete);
+			return Row;
 		}
 	}
+	return FTokenRaidInfo();
+}
+
+void UTokenRaidSubsystem::RegisterRaidInfoArray(AAnimalSpawner* OwnerSpawner ,TArray<FAnimalSpawnInfo>& InArray)
+{
+	InfoOwnerSpawner = OwnerSpawner;
+	RaidInfoArray = InArray;
+	RunEQSByQuerier();
+}
+
+//리더만 eqs 실행 -> 베스트 위치 받아오고 -> 랜덤 포인트 생성된 애들이 담긴 RaidInfoArray 인덱스 안의 동물별로 위치 지정
+void UTokenRaidSubsystem::RunEQSByQuerier()
+{
+	ABaseAIAnimal* Querier = nullptr;
+	//스폰된 애들 통틀어서 대표로 EQS 돌릴 애 정함 -> [0]번째의  begin()
+	for (auto& Info : RaidInfoArray)
+	{
+		if (Info.SpawnAnimals.Num() == 0) //한그룹이 전멸 당했으면 넘어감
+		{
+			continue;
+		}
+		if (IsValid(Info.SpawnAnimals.begin()->Get()))
+		{
+			Querier = Cast<ABaseAIAnimal>(Info.SpawnAnimals.begin()->Get());
+		}
+	}
+
+	//다 돌았는데도 null이면 전멸 당한 것
+	if (!Querier)
+	{
+		return; //레이드 종료 -> TryReleaseToken(); 불러서 정리 -> 웨이브처리어케함 누가 웨이브돌릴거야
+	}
+	//EQC에서 BB의 타겟엑터에서 플레이어를 가져다 쓰고 있으니까 EQS 돌리는 애는 타겟엑터 지정이 먼저 필요함
+	APawn* Player = GetWorld()->GetFirstPlayerController()->GetPawn();
+	Cast<AAIAnimalController>(Querier->GetController())->GetBlackboardComponent()->SetValueAsObject("TargetActor", Player);
+
+	UEnvQueryInstanceBlueprintWrapper* QueryInstance = UEnvQueryManager::RunEQSQuery(
+																GetWorld(),
+																EQSQuery.Get(),
+																Cast<UObject>(Querier),
+																EEnvQueryRunMode::AllMatching,
+																nullptr);
+
+	if (QueryInstance)
+	{
+		QueryInstance->GetOnQueryFinishedEvent().AddDynamic(this, &UTokenRaidSubsystem::OnEQSComplete);
+	}
+	
 }
 
 void UTokenRaidSubsystem::OnEQSComplete(UEnvQueryInstanceBlueprintWrapper* QueryInstance,EEnvQueryStatus::Type QueryStatus)
@@ -97,53 +108,86 @@ void UTokenRaidSubsystem::OnEQSComplete(UEnvQueryInstanceBlueprintWrapper* Query
 		MovementStart(); // 베스트포인트 지정하면 bt에서 이동 노드 실행 -> 이동완료하면 델리게이트로 OnMovementComplete 호출됨
 	}
 }
+
 void UTokenRaidSubsystem::MovementStart()
 {
+	int32 index =0;
 	APawn* Player = GetWorld()->GetFirstPlayerController()->GetPawn();
-	FVector PlayerLocation = Player->GetActorLocation();
-	for (auto Querier : FoundQueriers)
+	
+	for (auto& Info : RaidInfoArray)
 	{
-		int32 index =0;
-		for (auto& Animal : WaitingArray[Querier.Key].SpawnAnimals)
+		for (auto& Animal : Info.SpawnAnimals)
 		{
+			Cast<AAIAnimalController>(Animal->GetController())->GetBlackboardComponent()->SetValueAsObject("TargetActor", Player);
 			Cast<AAIAnimalController>(Animal->GetController())->GetBlackboardComponent()->SetValueAsVector("SafeLocation", FoundLocations[index]);
-			Cast<AAIAnimalController>(Animal->GetController())->GetBlackboardComponent()->SetValueAsName("NStateTag","Animal.State.Idle");
+			//Cast<AAIAnimalController>(Animal->GetController())->GetBlackboardComponent()->SetValueAsName("NStateTag","Animal.State.Idle");
 			OriLocation.Emplace(Animal.Get(), FoundLocations[index]);
 			index++;
 		}
 	}
 }
+
 void UTokenRaidSubsystem::OnFirstMovementComplete(AActor* InUnit, bool InResult)
 {
+	//한번 실행될때마다 다 도착했는지 체크 -> 처음 대형 다 갖추고 시작해야함
+	//토큰 발행
 	if (!InResult)
 	{
 		return;
 	}
 	ABaseAIAnimal* Unit = Cast<ABaseAIAnimal>(InUnit);
-	ReadyUnits.AddUnique(Unit);
-	APawn* Player = GetWorld()->GetFirstPlayerController()->GetPawn();
-	FVector PlayerLocation = Player->GetActorLocation();
-	Cast<AAIAnimalController>(Unit->GetController())->GetBlackboardComponent()->SetValueAsName("NStateTag","Animal.State.Attack");
-	Cast<AAIAnimalController>(Unit->GetController())->GetBlackboardComponent()->SetValueAsObject("TargetActor",Player);
-	//Cast<AAIAnimalController>(Unit->GetController())->GetBrainComponent()->StopLogic(TEXT("WaitOthers"));
-	if (ReadyUnits.Num() == 3 && CanActiveTokens != 0)
+	if (Unit->GetIsDead()) 
 	{
-		GiveTokenToRandom();
+		return;
+	}
+	ActiveUnits.AddUnique(Unit); // 도착했으면 대기열에 추가
+	
+	for (int32 i=0; i<ActiveUnits.Num(); i++)
+	{
+		if (ActiveUnits[i]->GetIsDead()) //도착하는 사이에 다른 하나가 죽어있으면, 처음 시작 타이밍이라 그럴일 없겠지만 방어코드 
+		{
+			ActiveUnits.RemoveAtSwap(i);
+		}
+	}
+	
+	int32 AliveCount = 0;
+	for (auto& Info : RaidInfoArray)
+	{
+		for (auto& Animal : Info.SpawnAnimals)
+		{
+			if (!Animal->GetIsDead()) //준비되어야할 전체 수를 구함
+			{
+				AliveCount++;
+			}
+		}
+	}
+	
+	if (ActiveUnits.Num() == AliveCount && CanActiveTokens > 0)
+	{
+		//복사본 안 만들면 for문 돌다가 원본 변경됨
+		int32  CanActiveCount = CanActiveTokens;
+		for (int32 i = 0; i < CanActiveCount; i++)
+		{
+			GiveTokenToRandom();
+		}
 	}
 }
 
 void UTokenRaidSubsystem::OnMovementComplete(AActor* InUnit, bool InResult)
 {
+	//개별적으로 도착하면 호출됨
+	//다시 토큰 받을 수 있는 상태
 	if (!InResult)
 	{
 		return;
 	}
-	ABaseAIAnimal* Unit = Cast<ABaseAIAnimal>(InUnit);
-	ReadyUnits.AddUnique(Unit);
-	APawn* Player = GetWorld()->GetFirstPlayerController()->GetPawn();
-	FVector PlayerLocation = Player->GetActorLocation();
-	Cast<AAIAnimalController>(Unit->GetController())->GetBlackboardComponent()->SetValueAsName("NStateTag","Animal.State.Attack");
-	//Cast<AAIAnimalController>(Unit->GetController())->GetBrainComponent()->StopLogic(TEXT("WaitOthers"));
+	
+	ABaseAIAnimal* Animal = Cast<ABaseAIAnimal>(InUnit);
+	if (Animal->GetIsDead()) 
+	{
+		return;
+	}
+	ActiveUnits.AddUnique(Animal); //파밍 대기 상태가 아니면 토큰 받을 수 있음
 }
 
 void UTokenRaidSubsystem::GiveTokenToRandom()
@@ -154,12 +198,11 @@ void UTokenRaidSubsystem::GiveTokenToRandom()
 		return;
 	}
 
+	
 	// 랜덤 인덱스 선택
-	int32 RandomIndex = FMath::RandRange(0, ReadyUnits.Num() - 1);
-
-	ABaseAIAnimal* SelectedUnit = ReadyUnits[RandomIndex];
-	//Cast<AAIAnimalController>(SelectedUnit->GetController())->GetBrainComponent()->StartLogic();
-	if (!IsValid(SelectedUnit))
+	int32 RandomIndex = FMath::RandRange(0, ActiveUnits.Num() - 1);
+	TWeakObjectPtr<ABaseAIAnimal> SelectedUnit = ActiveUnits[RandomIndex];
+	if (!SelectedUnit.IsValid())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Selected unit is invalid."));
 		return;
@@ -167,51 +210,25 @@ void UTokenRaidSubsystem::GiveTokenToRandom()
 
 	// 토큰 부여
 	CanActiveTokens--;
-	ReadyUnits.RemoveAt(RandomIndex);
-	ActiveUnits.AddUnique(SelectedUnit);
+	SelectedUnit->SetHasToken(true);
 	APawn* Player = GetWorld()->GetFirstPlayerController()->GetPawn();
 	FVector PlayerLocation = Player->GetActorLocation();
 	Cast<AAIAnimalController>(SelectedUnit->GetController())->GetBlackboardComponent()->SetValueAsVector("TargetLocation", PlayerLocation);
-	SelectedUnit->SetHasToken(true);
+	ActiveUnits.RemoveAtSwap(RandomIndex);
 }
 
 void UTokenRaidSubsystem::ReturnToken(ABaseAIAnimal* Unit)
 {
-	if (!Unit || !Unit->GetHasToken())
+	if (!Unit || !Unit->GetHasToken() || Unit->GetIsDead())
 	{
 		return;
 	}
+	
 	CanActiveTokens++;
 	Unit->SetHasToken(false);
-	//여기서 레디에 추가하는 건 토큰이 유무에 따라 누락될 수 있어서 브로드캐스트(OnMovementComplete)로 처리됨
-	ActiveUnits.Remove(Unit);
-
-	
-	if (CanActiveTokens != 0) 
+	if (CanActiveTokens > 0) 
 	{
-		GiveTokenToRandom(); // 다음 단계 진행
-	}
-}
-
-void UTokenRaidSubsystem::FromTableGetRaidInfo()
-{
-	if (!TokenRaidDataTable)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("TokenRaidDataTable is not set."));
-		return;
-	}
-	
-	TArray<FTokenRaidInfo*> AllRows;
-	TokenRaidDataTable->GetAllRows(TEXT("TokenRaidContext"), AllRows);
-	
-	for (const FTokenRaidInfo* Row : AllRows)
-	{
-		if (Row->Region == CurrentRegion &&
-			Row->Difficulty == CurrentDifficulty)
-		{
-			CurrentRow = *Row;
-			return;
-		}
+		GiveTokenToRandom(); // 다음 단계 진행, 여기서 토큰대기열에 등록하면 안됨(돌아가는중임)
 	}
 }
 
@@ -219,7 +236,19 @@ FVector UTokenRaidSubsystem::GetBestLocation(ABaseAIAnimal& Animal)
 {
 	if (!OriLocation.Find(&Animal))
 	{
-		return Animal.GetActorLocation();
+		if (IsValid(&Animal))
+		{
+			return Animal.GetActorLocation();
+		}
+		return FVector::ZeroVector;
 	}
 	return *OriLocation.Find(&Animal);
+}
+
+void UTokenRaidSubsystem::TryReleaseToken()
+{
+	OriLocation.Empty();
+	ActiveUnits.Empty();
+	RaidInfoArray.Empty();
+	InfoOwnerSpawner->TryReleaseToken();
 }
