@@ -22,14 +22,6 @@ void AMiniGameInteractableActor::EndInteract_Implementation()
 
 void AMiniGameInteractableActor::BeginMiniGame()
 {
-	for (UMiniGameFragment* Fragment : MiniGameFragments)
-	{
-		if (Fragment)
-		{
-			Fragment->OnMiniGameStart(this);
-		}
-	}
-	
 	if (UGameplayEventSubsystem* EventSubsystem = UGameplayEventSubsystem::GetGameplayEvent(GetWorld()))
 	{
 		if (!EventSubsystem->OnGameEvent.IsAlreadyBound(this, &AMiniGameInteractableActor::CheckConditionCompletion))
@@ -42,14 +34,6 @@ void AMiniGameInteractableActor::BeginMiniGame()
 
 void AMiniGameInteractableActor::EndMiniGame()
 {	
-	for (UMiniGameFragment* Fragment : MiniGameFragments)
-	{
-		if (Fragment)
-		{
-			Fragment->OnMiniGameEnd();
-		}
-	}
-	
 	bIsPlaying = false;
 }
 

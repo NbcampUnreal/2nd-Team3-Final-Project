@@ -17,5 +17,5 @@ class PROJECTEMBER_API UBTService_UpdateDistanceToTarget : public UBTService_Bla
 public:
 	UBTService_UpdateDistanceToTarget();
 
-	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
+	virtual void TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override; //설정된 주기(Interval)마다 호출
 };

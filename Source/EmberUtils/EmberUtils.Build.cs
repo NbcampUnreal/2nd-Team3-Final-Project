@@ -22,7 +22,8 @@ public class EmberUtils : ModuleRules
                 "Engine",
                 "Slate",
                 "SlateCore",
-                "GameplayTags"
+                "GameplayTags",
+                "EasyMultiSave"
             }
         );
     }

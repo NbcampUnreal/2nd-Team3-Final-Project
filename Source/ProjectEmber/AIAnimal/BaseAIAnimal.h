@@ -4,13 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
-#include "EMSActorSaveInterface.h"
 #include "GameFramework/Character.h"
 #include "GameplayEffectTypes.h"
 #include "GameplayTagAssetInterface.h"
 #include "TargetSystemTargetableInterface.h"
 #include "Abilities/GameplayAbilityTypes.h"
-#include "Components/SphereComponent.h"
 #include "MessageBus/MessageBus.h"
 #include "BaseAIAnimal.generated.h"
 
@@ -20,20 +18,19 @@ class UBoxComponent;
 class UAISenseConfig_Hearing;
 class UAISenseConfig_Sight;
 class UAIPerceptionComponent;
-enum class EAnimalAIPersonality : uint8;
 class UBlackboardComponent;
 class AAIAnimalController;
 class UNavigationInvokerComponent;
 class AAIController;
 
+
 UENUM(BlueprintType)
 enum class EAnimalAIPersonality : uint8
 {
 	Normal			UMETA(DisplayName = "Normal"),			//인지 -> Idle, 피격-> 확정 도망
-	Cowardly        UMETA(DisplayName = "Cowardly"),        // 인지 -> 도망 확률 증가, 피격-> 확정 도망
-	Curious			UMETA(DisplayName = "Curious"),			// 인지 -> 접근 확률 증가, 피격-> 확정 도망
+	Cowardly        UMETA(DisplayName = "Cowardly"),        // 인지 -> 확정 도망, 피격-> 확정 도망
 	Brave			UMETA(DisplayName = "Brave"),			// 인지 -> 선공격 확률 증가, 피격-> 반격 확률 증가
-	Agile			UMETA(DisplayName = "Agile"),			// 기본 이동속도 증가
+	Agile			UMETA(DisplayName = "Agile"),			// 공격 이동 -> 이동속도 일시 증가
 	Lazy			UMETA(DisplayName = "Lazy"),			// 기본 이동속도 감소
 	End				UMETA(DisplayName = "End")
 };
@@ -55,12 +52,16 @@ public:
 
 	virtual bool IsTargetable_Implementation() const override;
 	
-
+	UFUNCTION(BlueprintImplementableEvent, Category= "OnBeginDeath")
+	void BP_OnBeginDeath();
+	
 	UFUNCTION()
 	void OnHit(AActor* InstigatorActor);
 
 	UFUNCTION()
 	void OnAttackSpecial();
+	UFUNCTION()
+	void OnAbilityEnd(const FAbilityEndedData& AbilityEndedData);
 	
 	UFUNCTION(BlueprintCallable)
 	void OnGameTimeChanged(const FGameplayTag& EventTag, const FGameplayEventData& EventData);
@@ -71,7 +72,7 @@ public:
 	void OnMaxHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	void OnFullnessChanged(const FOnAttributeChangeData& OnAttributeChangeData);
 	
-	
+	void TriggerSpeedUp();
 	EAnimalAIPersonality GetPersonality();
 	float GetWildPower() const;
 	float GetWanderRange() const;
@@ -79,6 +80,7 @@ public:
 	
 	void GenerateRandom();
 	void DecreaseFullness();
+	void SwitchBehaviorTree();
 
 	UFUNCTION(BlueprintCallable, Category = AI)
 	FGameplayTag GetIdentityTag() const;
@@ -98,6 +100,9 @@ public:
 	bool GetIsShouldSleep() const;
 	void SetIsShouldSleep(bool InIsSleep);
 
+	int32 GetHitCount() const;
+	void SetHitCount(int32 InHitCount =0);
+
 	//밤에 활동,비활동
 	UFUNCTION(BlueprintCallable)
 	void ActiveNonSleep();
@@ -113,7 +118,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = SoundPitch)
 	int32 GetSoundIndex() const;
-	
+
+	UFUNCTION(BlueprintCallable)
+	void SetHasToken(const bool InHasToken);
+
+	UFUNCTION(BlueprintCallable)
+	bool GetHasToken() const;
 	
 	/* Spawn & Despawn*/
 	UFUNCTION()
@@ -134,14 +144,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Attribute)
 	const class UEmberCharacterAttributeSet* GetCharacterAttributeSet() const;
 
-
-
 protected:
 	void ReceiveMessage(const FName MessageType, UObject* Payload);
 	void ApplyWaterSurface(float DeltaTime);
-	
-	UFUNCTION(BlueprintCallable, Category = AI)
-	void SetDetails();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UMeleeTraceComponent* MeleeTraceComponent;
@@ -212,7 +217,7 @@ protected:
 	float WalkSpeed = 300.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
-	float WanderRange = 500.0f;
+	float CoolDownTime = 3.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SoundPitch")
 	int32 SoundIndex = 0;
@@ -246,5 +251,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swim")
 	float WaterSurfaceZ = 0.0f; // 기준 물 표면 높이
 
-	bool bIsAbility = false;
+	int32 HitCount = 0;
+	bool bHasToken = false;
 };

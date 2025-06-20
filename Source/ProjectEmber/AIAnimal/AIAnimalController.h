@@ -33,14 +33,16 @@ class PROJECTEMBER_API AAIAnimalController : public AAIController, public IEMSAc
 public:
 	AAIAnimalController();
 
-	UPROPERTY(BlueprintReadWrite, Category = "AI", SaveGame)
+	void SwitchToBehaviorTree(int32 NewIndex);
+	
+	UPROPERTY(BlueprintReadWrite, Category = "AI", SaveGame)  // 실행중인 컴포넌트
 	UBehaviorTreeComponent* BehaviorTreeComponent;
 
 	UPROPERTY(BlueprintReadWrite, Category = "AI", SaveGame)
 	UBlackboardComponent* BlackboardComponent;
 	
 	UPROPERTY(EditAnywhere, Category = "AI")
-	UBehaviorTree* BehaviorTree;
+	TArray<TObjectPtr<UBehaviorTree>> BehaviorTrees;
 
 	FVector SafePoint;
 	
@@ -64,6 +66,9 @@ protected:
 	//움직이는 대상 -> 플레이어, 다른 종족은 시각, 청각으로 탐지
 	UFUNCTION()
 	void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+
+	UFUNCTION()
+	void OnTargetPerceptionForgotten(AActor* Actor);
 	
 	void FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus);
 	void FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus);
