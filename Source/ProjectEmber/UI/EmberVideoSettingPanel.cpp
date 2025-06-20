@@ -1,6 +1,9 @@
 #include "EmberVideoSettingPanel.h"
 #include "Components/ComboBoxString.h"
 #include "Components/Button.h"
+#include "GameInstance/EmberGameInstance.h"
+#include "GameInstance/EmberSaveGame.h"
+#include "GameInstance/EmberVideoSettings.h"
 #include "GameFramework/GameUserSettings.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -28,6 +31,13 @@ void UEmberVideoSettingPanel::InitOptions()
     UGameUserSettings* Settings = GEngine->GetGameUserSettings();
     if (!Settings) return;
 
+    FEmberVideoSettings Loaded;
+    if (UEmberGameInstance* GI = GetWorld()->GetGameInstance<UEmberGameInstance>())
+    {
+        Loaded = GI->LoadVideoSettingsWithEMS();
+    }
+
+
     if (ScreenModeComboBox)
     {
         ScreenModeComboBox->ClearOptions();
@@ -35,17 +45,24 @@ void UEmberVideoSettingPanel::InitOptions()
         ScreenModeComboBox->AddOption(TEXT("Windowed"));
         ScreenModeComboBox->AddOption(TEXT("Borderless"));
 
-        switch (Settings->GetFullscreenMode())
+        if (!Loaded.ScreenMode.IsEmpty())
         {
-        case EWindowMode::Fullscreen:
-            ScreenModeComboBox->SetSelectedOption(TEXT("Fullscreen"));
-            break;
-        case EWindowMode::Windowed:
-            ScreenModeComboBox->SetSelectedOption(TEXT("Windowed"));
-            break;
-        case EWindowMode::WindowedFullscreen:
-            ScreenModeComboBox->SetSelectedOption(TEXT("Borderless"));
-            break;
+            ScreenModeComboBox->SetSelectedOption(Loaded.ScreenMode);
+        }
+        else
+        {
+            switch (Settings->GetFullscreenMode())
+            {
+            case EWindowMode::Fullscreen:
+                ScreenModeComboBox->SetSelectedOption(TEXT("Fullscreen"));
+                break;
+            case EWindowMode::Windowed:
+                ScreenModeComboBox->SetSelectedOption(TEXT("Windowed"));
+                break;
+            case EWindowMode::WindowedFullscreen:
+                ScreenModeComboBox->SetSelectedOption(TEXT("Borderless"));
+                break;
+            }
         }
     }
 
@@ -56,30 +73,43 @@ void UEmberVideoSettingPanel::InitOptions()
         ResolutionComboBox->AddOption(TEXT("1280x720"));
         ResolutionComboBox->AddOption(TEXT("600x480"));
 
-        FIntPoint Res = Settings->GetScreenResolution();
-        FString ResString = FString::Printf(TEXT("%dx%d"), Res.X, Res.Y);
-        ResolutionComboBox->SetSelectedOption(ResString);
+        if (!Loaded.Resolution.IsEmpty())
+        {
+            ResolutionComboBox->SetSelectedOption(Loaded.Resolution);
+        }
+        else
+        {
+            FIntPoint Res = Settings->GetScreenResolution();
+            FString ResString = FString::Printf(TEXT("%dx%d"), Res.X, Res.Y);
+            ResolutionComboBox->SetSelectedOption(ResString);
+        }
     }
 
     TArray<FString> QualityOptions = { TEXT("Low"), TEXT("Medium"), TEXT("High"), TEXT("Epic") };
-
-    auto SetupQualityCombo = [&](UComboBoxString* Combo, int32 Index)
+    auto SetupQualityCombo = [&](UComboBoxString* Combo, const FString& Value, int32 DefaultIndex)
     {
         if (!Combo) return;
         Combo->ClearOptions();
-        for (auto& Opt : QualityOptions)
+        for (const auto& Opt : QualityOptions)
         {
             Combo->AddOption(Opt);
         }
-        Combo->SetSelectedIndex(3);
+        if (!Value.IsEmpty())
+        {
+            Combo->SetSelectedOption(Value);
+        }
+        else
+        {
+            Combo->SetSelectedIndex(DefaultIndex);
+        }
     };
 
-    SetupQualityCombo(OverallComboBox, Settings->GetOverallScalabilityLevel());
-    SetupQualityCombo(TextureComboBox, Settings->ScalabilityQuality.TextureQuality);
-    SetupQualityCombo(ShadowComboBox, Settings->ScalabilityQuality.ShadowQuality);
-    SetupQualityCombo(EffectsComboBox, Settings->ScalabilityQuality.EffectsQuality);
-    SetupQualityCombo(AAComboBox, Settings->ScalabilityQuality.AntiAliasingQuality);
-    SetupQualityCombo(ViewDistanceComboBox, Settings->ScalabilityQuality.ViewDistanceQuality);
+    SetupQualityCombo(OverallComboBox, Loaded.OverallQuality, Settings->GetOverallScalabilityLevel());
+    SetupQualityCombo(TextureComboBox, Loaded.TextureQuality, Settings->ScalabilityQuality.TextureQuality);
+    SetupQualityCombo(ShadowComboBox, Loaded.ShadowQuality, Settings->ScalabilityQuality.ShadowQuality);
+    SetupQualityCombo(EffectsComboBox, Loaded.EffectsQuality, Settings->ScalabilityQuality.EffectsQuality);
+    SetupQualityCombo(AAComboBox, Loaded.AntiAliasingQuality, Settings->ScalabilityQuality.AntiAliasingQuality);
+    SetupQualityCombo(ViewDistanceComboBox, Loaded.ViewDistanceQuality, Settings->ScalabilityQuality.ViewDistanceQuality);
 }
 
 int32 UEmberVideoSettingPanel::GetQualityIndexFromString(const FString& QualityName) const
@@ -121,6 +151,21 @@ void UEmberVideoSettingPanel::ApplyVideoSettings()
 
         Settings->ApplySettings(false);
         Settings->SaveSettings();
+    }
+
+    if (UEmberGameInstance* GI = GetWorld()->GetGameInstance<UEmberGameInstance>())
+    {
+        FEmberVideoSettings Data;
+        Data.Resolution = ResolutionComboBox->GetSelectedOption();
+        Data.ScreenMode = ScreenModeComboBox->GetSelectedOption();
+        Data.OverallQuality = OverallComboBox->GetSelectedOption();
+        Data.TextureQuality = TextureComboBox->GetSelectedOption();
+        Data.ShadowQuality = ShadowComboBox->GetSelectedOption();
+        Data.EffectsQuality = EffectsComboBox->GetSelectedOption();
+        Data.AntiAliasingQuality = AAComboBox->GetSelectedOption();
+        Data.ViewDistanceQuality = ViewDistanceComboBox->GetSelectedOption();
+
+        GI->SaveVideoSettingsWithEMS(Data);
     }
 }
 
