@@ -239,6 +239,10 @@ void AAnimalSpawner::DistanceCheck()
 
 TArray<TSoftObjectPtr<AAnimalSpawnPoint>> AAnimalSpawner::DiscardNearestPoint()
 {
+	if (SpawnPoints.Num() == 1)
+	{
+		return SpawnPoints;
+	}
 	// 스폰 조건에 맞는 포인트에 생성
 	int32 Closest = -1;
 	float SpawnPointMinimum = 10000000.f;
@@ -271,6 +275,11 @@ TArray<TSoftObjectPtr<AAnimalSpawnPoint>> AAnimalSpawner::SelectNearPoints(TArra
 	//PerSpawnPoints의 수만큼 정렬 순서대로 스폰
 	//InSpawnPoints.Num() < PerSpawnPoints 라면 PerSpawnPoints = InSpawnPoints.Num() 으로 변경
 
+	if (InSpawnPoints.Num() == 1)
+	{
+		return InSpawnPoints;
+	}
+	
 	APawn* Player = GetWorld()->GetFirstPlayerController()->GetPawn();
 	InSpawnPoints.Sort([Player](TSoftObjectPtr<AAnimalSpawnPoint> A, TSoftObjectPtr<AAnimalSpawnPoint> B)
 	{
@@ -418,6 +427,12 @@ void AAnimalSpawner::SortFarthestAnimal(TArray<FAnimalSpawnInfo>& InfoArray)
 		{
 			DespawnQueue.Enqueue(Animal);
 		}
+	}
+
+	//create 여부 bool 변수 리셋 : 디스폰 나갔다 돌아오면 초기화
+	for (auto& Point: SpawnPoints)
+	{
+		Point->SetIsCreated(false);
 	}
 }
 
