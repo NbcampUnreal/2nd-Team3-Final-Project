@@ -1,5 +1,4 @@
 #include "TutorialWidget.h"
-#include "Components/Border.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
 #include "Components/Button.h"   
@@ -8,8 +7,7 @@
 void UTutorialWidget::NativeConstruct()
 {
     Super::NativeConstruct();
-
-    // Ã³À½¿£ ¹«Á¶°Ç ¾È º¸ÀÌ°Ô!
+    
     SetVisibility(ESlateVisibility::Hidden);
 
     if (TutorialButton)
@@ -36,10 +34,7 @@ void UTutorialWidget::ShowTutorial(bool bShow)
 
 void UTutorialWidget::SetTutorialData(const FTutorialData& InData)
 {
-    // ÀÌ¹ÌÁö ¼³Á¤
     SetImageTexture(InData.KeyImage);
-
-    // ÅØ½ºÆ® ¼³Á¤
     if (TutorialNameText)
     {
         TutorialNameText->SetText(InData.Name);
@@ -53,7 +48,7 @@ void UTutorialWidget::SetTutorialData(const FTutorialData& InData)
 
 void UTutorialWidget::OnCloseButtonClicked()
 {
-    //  Subsystem Ã£¾Æ¼­ HideTutorial È£Ãâ!
+    //  Subsystem Ã£ï¿½Æ¼ï¿½ HideTutorial È£ï¿½ï¿½!
     if (UTutorialManagerSubsystem* TutorialSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UTutorialManagerSubsystem>())
     {
         TutorialSubsystem->HideTutorial();

@@ -2,7 +2,7 @@
 #include "Components/BoxComponent.h"
 #include "Tutorial/Subsystem/TutorialManagerSubsystem.h"
 #include "GameFramework/PlayerController.h"
-#include "Kismet/GameplayStatics.h"
+
 
 ATutorialBoxTrigger::ATutorialBoxTrigger()
 {

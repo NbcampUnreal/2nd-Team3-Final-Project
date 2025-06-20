@@ -23,10 +23,9 @@ protected:
     // 거리 체크 및 타겟 지정
     UFUNCTION()
     void CheckPlayerDistance();
+
     // 타이머 핸들
     FTimerHandle DistanceCheckTimerHandle;
-    FTimerHandle FacePlayerTimerHandle;
-
     // 컴포넌트들
     UPROPERTY(VisibleAnywhere)
     USceneComponent* RootScene;
