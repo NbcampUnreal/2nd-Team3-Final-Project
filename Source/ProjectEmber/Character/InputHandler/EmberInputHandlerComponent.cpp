@@ -71,6 +71,8 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
         Bind(ItemQuickAction,         ETriggerEvent::Completed,  &AEmberCharacter::Input_OnCancelItemQuick);
         
         Bind(ScanAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnStartScan);
+
+        Bind(UICloseDialogueAction, ETriggerEvent::Started,  &AEmberCharacter::Input_OnCloseDialogue);
         
         /*
         UPROPERTY(EditAnywhere, Category="Input") 
@@ -91,6 +93,7 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
             InputComponent->BindAction(InteractAction, ETriggerEvent::Started, Comp, &UInteractionComponent::Interact);
             InputComponent->BindAction(InteractAction, ETriggerEvent::Completed, Comp, &UInteractionComponent::StopGather);
             InputComponent->BindAction(InteractAction, ETriggerEvent::Started, Comp, &UInteractionComponent::TriggerAdvanceDialogue);
+
         }
     }
 

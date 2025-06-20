@@ -1,11 +1,12 @@
 #include "AIActorComponent.h"
-#include "AI_NPC/AINPCController.h"
+#include "AI_NPC/AIController/AINPCController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 #include "GameFramework/Actor.h"
 #include "AIController.h"
 #include "Engine/World.h"
+#include "AI_NPC/AIController/GhostAIController.h"
 
 UAIActorComponent::UAIActorComponent()
 {
@@ -22,6 +23,7 @@ void UAIActorComponent::BeginPlay()
     }
 
     GetWorld()->GetTimerManager().SetTimer(DistanceCheckTimerHandle, this, &UAIActorComponent::CheckPlayerDistance, 1.0f, true);
+
 }
 
 void UAIActorComponent::CheckPlayerDistance()
@@ -42,8 +44,6 @@ void UAIActorComponent::CheckPlayerDistance()
         UE_LOG(LogTemp, Warning, TEXT("AINPC teleported behind player."));
         return;
     }
-
-    
     APawn* OwnerPawn = Cast<APawn>(Owner);
     if (OwnerPawn)
     {
@@ -60,4 +60,5 @@ void UAIActorComponent::CheckPlayerDistance()
         }
     }
 }
+
 

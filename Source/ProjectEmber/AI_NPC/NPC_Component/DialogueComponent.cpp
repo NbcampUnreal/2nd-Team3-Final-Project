@@ -21,6 +21,7 @@
 #include "Quest/Condition/Dialogue/DialogueQuestCondition.h"
 #include "AI_NPC/Widget/QuestWidget.h"
 #include "AI_NPC/Widget/QuestTracker.h"
+#include "Character/EmberCharacter.h"
 
 UDialogueComponent::UDialogueComponent()
 {
@@ -233,6 +234,12 @@ void UDialogueComponent::OnPlayerExitRadius(UPrimitiveComponent* OverlappedComp,
 }
 void UDialogueComponent::Interact()
 {
+    AEmberCharacter* Player = Cast<AEmberCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+    if (Player)
+    {
+        // 나를 Player의 ActiveDialogueComponent 로 등록
+        Player->SetActiveDialogueComponent(this);
+    }
     if (QuestAsset)
     {
         if (UQuestSubsystem* Subsystem = GetWorld()->GetGameInstance()->GetSubsystem<UQuestSubsystem>())
@@ -297,7 +304,6 @@ void UDialogueComponent::Interact()
     CurrentDialogueIndex = 0;
     PositionDetachedCamera();
 
-    ACharacter* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
     if (Player && Player->GetMesh())
     {
         Player->GetMesh()->SetVisibility(false, true);
@@ -504,7 +510,7 @@ void UDialogueComponent::ShowQuestUI()
 
     UQuestWidget* QuestUI = CreateWidget<UQuestWidget>(PC, QuestWidgetClass);
     if (!QuestUI) return;
-
+    QuestWidget = QuestUI;
     bool bIsComplete = false;
     bool bIsAccepted = false;
 
@@ -552,8 +558,9 @@ void UDialogueComponent::ShowQuestCompleteWidget(const UQuestDataAsset* InQuestA
     if (!PC || !QuestCompleteWidgetClass || !QuestAsset) return;
 
     UQuestWidget* CompleteWidget = CreateWidget<UQuestWidget>(PC, QuestCompleteWidgetClass);
-    if (!CompleteWidget) return;
 
+    if (!CompleteWidget) return;
+    QuestCompleteWidget = CompleteWidget;
     if (UQuestSubsystem* QuestSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UQuestSubsystem>())
     {
         const bool bIsComplete = QuestSubsystem->IsQuestCompleted(QuestAsset->QuestID);
@@ -561,6 +568,7 @@ void UDialogueComponent::ShowQuestCompleteWidget(const UQuestDataAsset* InQuestA
 
         CompleteWidget->SetQuestInfoFromDataAsset(QuestAsset, bIsComplete, bIsAccepted);
     }
+
 
     CompleteWidget->OnQuestCompleted.AddLambda([this, PC, CapturedQuestAsset = QuestAsset, CompleteWidget]()
         {
@@ -646,12 +654,54 @@ void UDialogueComponent::ShowQuestTracker(bool bIsComplete, int32 StepIndex)
     Tracker->ShowTracker(StepType, StepName, FirstCondition, bIsComplete);
 }
 
-
-
 bool UDialogueComponent::IsDialogueActive() const
 {
     return DialogueWidget != nullptr;
 }
+void UDialogueComponent::ResetDialogueState()
+{
+    LinesOfDialogue.Empty();
+    CurrentDialogueIndex = 0;
+    bDialogueFinished = false;
+    bDialogueOverriddenByCondition = false;
+}
+
+
+void UDialogueComponent::CloseAnyOpenUI()
+{
+    //  위젯 체크
+    if (QuestWidget)
+    {
+        QuestWidget->RemoveFromParent();
+        QuestWidget = nullptr;
+    }
+    if (DialogueWidget)
+    {
+        DialogueWidget->RemoveFromParent();
+        DialogueWidget = nullptr;
+    }
+    if (QuestCompleteWidget)
+    {
+        QuestCompleteWidget->RemoveFromParent();
+        QuestCompleteWidget = nullptr;
+    }
+    // 입력 모드 & 카메라 복귀
+    ACharacter* Player = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+    if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
+    {
+        PC->SetInputMode(FInputModeGameOnly());
+        if (APawn* PlayerPawn = PC->GetPawn())
+        {
+            PC->SetViewTargetWithBlend(PlayerPawn, 0.5f);
+        }
+        Player->GetMesh()->SetVisibility(true, true);
+        SetInputMappingContexts({ GameplayInputMappingContext, GameplayUIInputMappingContext, GameplayAlsUIInputMappingContext }, true);
+        PC->bShowMouseCursor = false;
+    }
+    ResetDialogueState();
+
+}
+
 void UDialogueComponent::Interact_Implementation(AActor* Caller)
 {
     Interact();
