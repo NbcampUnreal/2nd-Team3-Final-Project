@@ -415,6 +415,10 @@ void AAnimalSpawner::SortFarthestAnimal(TArray<FAnimalSpawnInfo>& InfoArray)
 	//먼순서대로 정렬
 	SortFarAnimals.Sort([Player](const TSoftObjectPtr<ABaseAIAnimal>& A, const TSoftObjectPtr<ABaseAIAnimal>& B)
 	{
+		if (!Player || !A.IsValid() || !B.IsValid())
+		{
+			return false;
+		}
 		float DistA = FVector::DistSquared(A->GetActorLocation(), Player->GetActorLocation());
 		float DistB = FVector::DistSquared(B->GetActorLocation(), Player->GetActorLocation());
 		return DistA > DistB;
