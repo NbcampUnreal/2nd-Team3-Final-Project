@@ -254,7 +254,17 @@ void UBaseOverlayAbility::SetUpdateWarping()
 		const FVector Right   = FRotationMatrix(CtrlRot).GetScaledAxis(EAxis::Y);
 		
 		const FVector2D MoveInput = Character->GetMoveInput();
-		FVector MoveDir = (Forward * MoveInput.Y + Right * MoveInput.X).GetSafeNormal();
+		FVector MoveDir;
+		
+		if (MoveInput.Size() <= 0.1f)
+		{
+			MoveDir = Character->GetActorForwardVector();
+		}
+		else
+		{
+			MoveDir = (Forward * MoveInput.Y + Right * MoveInput.X).GetSafeNormal();	
+		}
+		
 		if (MoveDir.IsNearlyZero())
 		{
 			MoveDir = Forward;
