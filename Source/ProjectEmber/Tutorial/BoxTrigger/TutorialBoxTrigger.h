@@ -26,7 +26,7 @@ protected:
     UBoxComponent* BoxComponent;
 
 public:
-    //  ¹è¿­ ¹öÀü: DataListAsset + Index!
+    //  ï¿½è¿­ ï¿½ï¿½ï¿½ï¿½: DataListAsset + Index!
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Tutorial")
     UTutorialDataAsset* TutorialDataAsset;
 

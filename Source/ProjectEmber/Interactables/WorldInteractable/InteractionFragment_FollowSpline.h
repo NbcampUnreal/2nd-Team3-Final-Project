@@ -74,14 +74,17 @@ public:
 	UFUNCTION()
 	void TimelineFinished();
 
-	UPROPERTY(BlueprintAssignable, Category = "FollowSpline")
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FOnFollowSplineFinished OnFollowSplineFinished;
 
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category="Interaction")
 	void Move();
 
-	UPROPERTY(EditInstanceOnly, Category = "SplineTarget")
+	UPROPERTY(EditAnywhere, Category="Interaction")
+	bool bFollowSplineRotation = true;
+	
+	UPROPERTY(EditInstanceOnly, Category = "Interaction")
 	FInteractionMovementTarget MovementTarget;
 	
 	UPROPERTY(EditAnywhere, Category="Interaction")
