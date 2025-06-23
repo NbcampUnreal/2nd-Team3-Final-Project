@@ -135,13 +135,13 @@ void ABaseAIAnimal::BeginPlay()
 void ABaseAIAnimal::OnAbilityEnd(const FAbilityEndedData& AbilityEndedData)
 {
 	UGameplayAbility* EndedAbility = AbilityEndedData.AbilityThatEnded.Get();
-	if (EndedAbility->IsA(StartAbilities[0])) // 토큰 공격이 끝나면
+	if (EndedAbility->IsA(StartAbilities[0])) //공격이 끝나면
 	{
 		BlackboardComponent->SetValueAsBool("IsAbility", false);
-		if (bHasToken)
+		if (bHasToken) //토큰 공격이었다면
 		{
-			FVector BestLocation = GetGameInstance()->GetSubsystem<UTokenRaidSubsystem>()->GetBestLocation(*this);
-			BlackboardComponent->SetValueAsVector("SafeLocation", BestLocation);
+			//FVector BestLocation = GetGameInstance()->GetSubsystem<UTokenRaidSubsystem>()->GetBestLocation(*this);
+			//BlackboardComponent->SetValueAsVector("SafeLocation", BestLocation);
 		}
 	}
 }
@@ -269,6 +269,9 @@ void ABaseAIAnimal::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	if (GetMovementComponent())
 	{
+		float CurSpeed = GetVelocity().FVector::Length();
+		PlayRate = FMath::Clamp(CurSpeed / WalkSpeed, 0.1f, 2.0f);
+		
 		bIsShouldSwim = GetMovementComponent()->IsSwimming();
 		if (bIsShouldSwim)
 		{
@@ -281,17 +284,14 @@ void ABaseAIAnimal::Tick(float DeltaTime)
 	}
 	if (BlackboardComponent)
 	{
-		if (FName("Animal.Montage.Attack") == BlackboardComponent->GetValueAsName("NStateTag"))
+		UObject* TargetObject = BlackboardComponent->GetValueAsObject("TargetActor");
+		
+		if (AActor* Target = Cast<AActor>(TargetObject))
 		{
-			UObject* TargetObject = BlackboardComponent->GetValueAsObject("TargetActor");
-			
-			if (AActor* Target = Cast<AActor>(TargetObject))
-			{
-				FVector Direction = (Target->GetActorLocation()- GetActorLocation()).GetSafeNormal2D(); //z무시
-				FRotator TargetRotation = Direction.Rotation(); //얼마나 회전해야하는지
-				FRotator NewRot = FMath::RInterpTo(GetActorRotation(), TargetRotation, DeltaTime, 5.0f);
-				SetActorRotation(NewRot);
-			}
+			FVector Direction = (Target->GetActorLocation()- GetActorLocation()).GetSafeNormal2D(); //z무시
+			FRotator TargetRotation = Direction.Rotation(); //얼마나 회전해야하는지
+			FRotator NewRot = FMath::RInterpTo(GetActorRotation(), TargetRotation, DeltaTime, 5.0f);
+			SetActorRotation(NewRot);
 		}
 	}
 }
