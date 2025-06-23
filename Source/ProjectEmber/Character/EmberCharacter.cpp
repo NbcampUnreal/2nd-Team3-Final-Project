@@ -28,6 +28,8 @@
 #include "Item/Craft/EmberCraftComponent.h"
 #include "MeleeTrace/Public/MeleeTraceComponent.h"
 #include "Quest/QuestSubsystem.h"
+#include "OnlineSubsystem.h"
+#include "Interfaces/OnlineSessionInterface.h"
 #include "Utility/AlsVector.h"
 #include "MotionWarpingComponent.h"
 #include "Components/WidgetComponent.h"
@@ -94,6 +96,17 @@ AEmberCharacter::AEmberCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 
 	ActiveDialogueComponent = nullptr;
+
+	IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
+	if (OnlineSubsystem)
+	{
+		OnlineSessionInterface = OnlineSubsystem->GetSessionInterface();
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Green,
+				FString::Printf(TEXT("OnlineSubsystem: %s"), *OnlineSubsystem->GetSubsystemName().ToString()));
+		}
+	}
 }
 
 void AEmberCharacter::BeginPlay()

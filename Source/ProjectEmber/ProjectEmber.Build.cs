@@ -51,7 +51,7 @@ public class ProjectEmber : ModuleRules
             "EmberAbilitySystem",
             "EmberUtils",
             "MeleeTrace",
-            "EasyMultiSave", "SkillSystem"
+            "EasyMultiSave", "SkillSystem", "OnlineSubsystem"
         });
 
         //───────────────────────────────────────────────────────────────────────────────
