@@ -61,6 +61,15 @@ void AAIAnimalController::BeginPlay()
 
 void AAIAnimalController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
+    if (!IsValid(Actor) ||!IsValid(GetPawn()) )
+    {
+        return;
+    }
+    
+    if (!IsValid(Cast<ABaseAIAnimal>(GetPawn())))
+    {
+        return;
+    }
     bool IsSleep = Cast<ABaseAIAnimal>(GetPawn())->GetIsShouldSleep();
     bool IsDead = Cast<ABaseAIAnimal>(GetPawn())->GetIsDead();
     if (IsSleep || IsDead)

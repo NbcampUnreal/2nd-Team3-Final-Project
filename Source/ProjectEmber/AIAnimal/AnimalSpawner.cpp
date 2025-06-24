@@ -175,7 +175,7 @@ void AAnimalSpawner::ActorPreSave_Implementation()
 				SaveInfo.RoleTag = Animal->GetRoleTag();
 				SaveInfo.SpawnInfoIndex = i;
 				SaveInfo.SpawnPointIndex = Closest;
-				
+				SaveInfo.SavedId = SaveId;
 				SaveInfoArray.Emplace(SaveInfo);
 				SaveIndex++;
 			}
@@ -194,6 +194,10 @@ void AAnimalSpawner::ActorLoaded_Implementation()
 	{
 		for (int32 i =0; i<SaveInfoArray.Num(); i++)
 		{
+			if (SpawnPoints.Num() != 0 && SpawnPoints.IsValidIndex(SaveInfoArray[i].SpawnPointIndex))
+			{
+				SpawnPoints[SaveInfoArray[i].SpawnPointIndex]->SetIsCreated(true);
+			}
 			LoadInfoQueue.Enqueue(SaveInfoArray[i]);
 		}
 	}
@@ -667,27 +671,6 @@ void AAnimalSpawner::SpawnAnimalWithTag(FAnimalSpawnInfo& Info, TSoftObjectPtr<A
 	}
 }
 
-FAnimalInitInfo AAnimalSpawner::GetRandomLocationInSpawnVolume(TSoftObjectPtr<AAnimalSpawnPoint>& SpawnPoint)
-{
-	FVector SpawnLocation = SpawnPoint->GetActorLocation();
-	UBoxComponent* BoxComp = SpawnPoint->FindComponentByClass<UBoxComponent>();
-	FVector BoxExtent = BoxComp->GetScaledBoxExtent();
-	int RandomSign = FMath::RandRange(0, 1) == 0 ? -1 : 1;
-	const float RandomX = RandomSign * FMath::RandRange(-BoxExtent.X, BoxExtent.X);
-	RandomSign = FMath::RandRange(0, 1) == 0 ? -1 : 1;
-	const float RandomY = RandomSign * FMath::RandRange(-BoxExtent.Y, BoxExtent.Y);
-	SpawnLocation += FVector(RandomX, RandomY, 0.f);
-
-	FRotator SpawnRotation = FRotator::ZeroRotator;
-	SpawnRotation.Yaw = FMath::RandRange(-150.f, 150.f);
-
-	FAnimalInitInfo InitInfo;
-	InitInfo.Location = SpawnLocation;
-	InitInfo.Rotation = SpawnRotation;
-	
-	return InitInfo;
-}
-
 void AAnimalSpawner::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (UGameplayEventSubsystem* EventSystem = UGameplayEventSubsystem::GetGameplayEvent(GetWorld()))
@@ -771,16 +754,58 @@ void AAnimalSpawner::TickCreateQueueByToken(TQueue<FAnimalQueueInfo>& InQueue)
 		TokenRaidSubsystem->RegisterRaidInfoArray(this,AnimalsInfoByToken); // 1웨이브에 쓰일 모든 객체들
 	}
 }
-
-FAnimalInitInfo AAnimalSpawner::GetRandomLocationByToken(FVector PlayerLocation)
+FVector AAnimalSpawner::GetRandomXY(FVector SpawnLocation, FVector Extent)
 {
-	FVector SpawnLocation = PlayerLocation;
-	FVector Extent = FVector(1200.f,1200.f,0.f);
 	int RandomSign = FMath::RandRange(0, 1) == 0 ? -1 : 1;
 	const float RandomX = RandomSign * FMath::RandRange(-Extent.X, Extent.X);
 	RandomSign = FMath::RandRange(0, 1) == 0 ? -1 : 1;
 	const float RandomY = RandomSign * FMath::RandRange(-Extent.Y, Extent.Y);
 	SpawnLocation += FVector(RandomX, RandomY, 0.f);
+	return SpawnLocation;
+}
+
+FVector AAnimalSpawner::SpawnLineTrace(FVector SpawnLocation, float Start, float End)
+{
+	// 바닥 감지를 위한 라인트레이스
+	FHitResult HitResult;
+	FVector TraceStart = SpawnLocation + FVector(0.f, 0.f, 1000.f); // 위
+	FVector TraceEnd = SpawnLocation - FVector(0.f, 0.f, 4000.f);   // 아래
+
+	FCollisionQueryParams TraceParams(FName(TEXT("GroundTrace")), false, this);
+
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, TraceParams)) //월드에서 테스트 해보고 채널 바꿔보기
+	{
+		SpawnLocation.Z = HitResult.ImpactPoint.Z;
+	}
+	return SpawnLocation;
+}
+
+FAnimalInitInfo AAnimalSpawner::GetRandomLocationInSpawnVolume(TSoftObjectPtr<AAnimalSpawnPoint>& SpawnPoint)
+{
+	FVector SpawnLocation = SpawnPoint->GetActorLocation();
+	UBoxComponent* BoxComp = SpawnPoint->FindComponentByClass<UBoxComponent>();
+	FVector BoxExtent = BoxComp->GetScaledBoxExtent();
+	SpawnLocation = GetRandomXY(SpawnLocation, BoxExtent);
+
+	SpawnLocation = SpawnLineTrace(SpawnLocation,1000.f, 4000.f);
+	
+	FRotator SpawnRotation = FRotator::ZeroRotator;
+	SpawnRotation.Yaw = FMath::RandRange(-150.f, 150.f);
+
+	FAnimalInitInfo InitInfo;
+	InitInfo.Location = SpawnLocation;
+	InitInfo.Rotation = SpawnRotation;
+	
+	return InitInfo;
+}
+
+FAnimalInitInfo AAnimalSpawner::GetRandomLocationByToken(FVector PlayerLocation)
+{
+	FVector SpawnLocation = PlayerLocation;
+	FVector Extent = FVector(1200.f,1200.f,0.f);
+	SpawnLocation = GetRandomXY(SpawnLocation, Extent);
+
+	SpawnLocation = SpawnLineTrace(SpawnLocation,1000.f, 4000.f);
 
 	FRotator SpawnRotation = FRotator::ZeroRotator;
 	SpawnRotation.Yaw = FMath::RandRange(-150.f, 150.f);
