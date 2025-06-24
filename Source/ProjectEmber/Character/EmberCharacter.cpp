@@ -291,6 +291,10 @@ void AEmberCharacter::AbilityInputPressed(int32 InputID)
 	{
 		return;
 	}
+	if (AbilitySystemComponent->HasMatchingGameplayTag(AlsLocomotionModeTags::Gliding))
+	{
+		return;
+	}
 
 	bool bActive = false;
 
@@ -663,7 +667,7 @@ void AEmberCharacter::Input_OnMove(const FInputActionValue& ActionValue)
 		return;
 	}
 
-	if (GetCancelAbilityInput())
+	if (GetCancelAbilityInput() && !AbilitySystemComponent->HasMatchingGameplayTag(AlsCharacterStateTags::Blocking))
 	{
 		const FGameplayTagContainer CancelTags(AlsInputActionTags::OverlayAction);
 		AbilitySystemComponent->CancelAbilities(&CancelTags);
