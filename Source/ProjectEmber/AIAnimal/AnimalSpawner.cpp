@@ -201,6 +201,11 @@ void AAnimalSpawner::ActorLoaded_Implementation()
 
 void AAnimalSpawner::DistanceCheck()
 {
+	if (AnimalsInfo.Num() == 0 || SpawnPoints.Num() ==0)
+	{
+		return;
+	}
+	
 	// 로드 중일 때는 새로 생성하지 않음
 	if (bIsLoading)
 	{
