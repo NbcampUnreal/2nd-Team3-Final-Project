@@ -256,4 +256,5 @@ protected:
 
 	int32 HitCount = 0;
 	bool bHasToken = false;
+	bool IsAbility = false;
 };

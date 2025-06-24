@@ -137,7 +137,7 @@ void ABaseAIAnimal::OnAbilityEnd(const FAbilityEndedData& AbilityEndedData)
 	UGameplayAbility* EndedAbility = AbilityEndedData.AbilityThatEnded.Get();
 	if (EndedAbility->IsA(StartAbilities[0])) //공격이 끝나면
 	{
-		BlackboardComponent->SetValueAsBool("IsAbility", false);
+		IsAbility = false;
 		if (bHasToken) //토큰 공격이었다면
 		{
 			//FVector BestLocation = GetGameInstance()->GetSubsystem<UTokenRaidSubsystem>()->GetBestLocation(*this);
@@ -282,7 +282,7 @@ void ABaseAIAnimal::Tick(float DeltaTime)
 			SwimTime = 0.f;
 		}
 	}
-	if (BlackboardComponent)
+	if (BlackboardComponent && !IsAbility)
 	{
 		UObject* TargetObject = BlackboardComponent->GetValueAsObject("TargetActor");
 		
@@ -343,8 +343,9 @@ void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 
 void ABaseAIAnimal::OnAttackSpecial()
 {
-	BlackboardComponent->SetValueAsBool("IsAbility", true);
-
+	IsAbility = true;
+	BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Attack");
+	
 	FGameplayEventData Payload;
 	Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.AttackSpecial");
 	Payload.Instigator = this;
@@ -599,7 +600,6 @@ void ABaseAIAnimal::ApplyWaterSurface(float DeltaTime)
 	FVector NewLocation = GetActorLocation();
 	NewLocation.Z = WaterSurfaceZ + WaveOffsetZ;
 	SetActorLocation(NewLocation);
-	DrawDebugBox(GetWorld(), VolumeOrigin, VolumeExtent, FColor::Blue, false, 2.0f);
 }
 
 

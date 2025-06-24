@@ -70,7 +70,7 @@ void UTokenRaidSubsystem::RunEQSByQuerier()
 	//다 돌았는데도 null이면 전멸 당한 것
 	if (!Querier)
 	{
-		return; //레이드 종료 -> TryReleaseToken(); 불러서 정리 -> 웨이브처리어케함 누가 웨이브돌릴거야
+		return; //레이드 종료 -> TryReleaseToken(); 불러서 정리
 	}
 	//EQC에서 BB의 타겟엑터에서 플레이어를 가져다 쓰고 있으니까 EQS 돌리는 애는 타겟엑터 지정이 먼저 필요함
 	APawn* Player = GetWorld()->GetFirstPlayerController()->GetPawn();
@@ -209,7 +209,6 @@ void UTokenRaidSubsystem::GiveTokenToRandom()
 	TWeakObjectPtr<ABaseAIAnimal> SelectedUnit = ActiveUnits[RandomIndex];
 	if (!SelectedUnit.IsValid())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Selected unit is invalid."));
 		return;
 	}
 
