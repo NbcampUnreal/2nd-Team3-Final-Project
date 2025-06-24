@@ -754,7 +754,7 @@ void AEmberCharacter::Input_OnGlide()
 
 		AlsCharacterMovement->GravityScale = GlideGravityScale;
 
-		const FRotator ControlRot = GetControlRotation();
+		const FRotator ControlRot = GetActorRotation();//GetControlRotation();
 		const FVector ForwardDir = FRotationMatrix(ControlRot).GetScaledAxis(EAxis::X);
 
 		FVector NewVelocity = ForwardDir.GetSafeNormal() * GlideForwardSpeed;

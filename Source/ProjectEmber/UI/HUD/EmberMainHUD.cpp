@@ -136,8 +136,12 @@ void AEmberMainHUD::PushInitialWidget()
 {
 	for (auto& Pair : InitWidgetClasses)
 	{
-		PushContentToLayer(Pair.Key, Pair.Value);
+		UUserWidget* UserWidget = PushContentToLayer(Pair.Key, Pair.Value);
 
+		if (Pair.Key == FGameplayTag::RequestGameplayTag(TEXT("UI.Layer.GameMenu")))
+		{
+			GameMenuInstance = UserWidget;
+		}
 #if !UE_BUILD_SHIPPING
 		/*if (PrimaryDebugLayer)
 		{
@@ -159,5 +163,15 @@ UEmberLayerBase* AEmberMainHUD::GetLayer(const FGameplayTag& LayerTag) const
 UPlayerQuestWidget* AEmberMainHUD::GetQuestLogWidget() const
 {
 	return PlayerQuestWidgetInstance;
+}
+
+UUserWidget* AEmberMainHUD::GetGameMenuWidget() const
+{
+	return GameMenuInstance;
+}
+
+UUserWidget* AEmberMainHUD::GetQuestListWidget() const
+{
+	return Cast<UGameMenuWidget>(GameMenuInstance)->GetQuestListWidget();
 }
 
