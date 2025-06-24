@@ -37,6 +37,7 @@ void ATutorialBoxTrigger::OnOverlapBegin(UPrimitiveComponent* OverlappedComponen
             }
         }
     }
+    
 }
 void ATutorialBoxTrigger::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent,
     AActor* OtherActor,
