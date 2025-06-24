@@ -38,7 +38,8 @@ public class ProjectEmber : ModuleRules
             "EasyMultiSave",
             "LevelSequence",
             "MovieScene",
-            "MovieSceneTracks"
+            "MovieSceneTracks",
+            "MediaAssets"
         });
 
         //───────────────────────────────────────────────────────────────────────────────
