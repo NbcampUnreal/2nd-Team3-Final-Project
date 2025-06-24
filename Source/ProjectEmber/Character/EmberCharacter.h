@@ -43,7 +43,7 @@ private:
 	void SetupEmberInputComponent() const;
 	
 public:
-	TSharedPtr<class IOnlineSession, ESPMode::ThreadSafe> OnlineSessionInterface;
+	//TSharedPtr<class IOnlineSession, ESPMode::ThreadSafe> OnlineSessionInterface;
 public: /* Character */
 	virtual UMeleeTraceComponent* GetMeleeTraceComponent() const;
 	
