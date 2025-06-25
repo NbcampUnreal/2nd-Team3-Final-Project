@@ -96,7 +96,22 @@ FVector2D AAlsCharacter::GetMoveInput() const
 
 void AAlsCharacter::SetTargetMode(const FGameplayTag& InTargetMode)
 {
+	if (InTargetMode == TargetMode)
+	{
+		return;
+	}
+	
+	if (AscInstance && TargetMode.IsValid())
+	{
+		AscInstance->RemoveLooseGameplayTag(TargetMode);
+	}
+	
 	TargetMode = InTargetMode;
+	
+	if (AscInstance && TargetMode.IsValid())
+	{
+		AscInstance->AddLooseGameplayTag(TargetMode);
+	}
 }
 
 const FGameplayTag& AAlsCharacter::GetTargetMode() const

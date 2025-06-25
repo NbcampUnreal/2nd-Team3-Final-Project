@@ -165,6 +165,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
 	TMap<int32, TSubclassOf<class UGameplayAbility>> StartBlockInputAbilities;
+
+	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
+	TSubclassOf<class UGameplayAbility> DodgeAbilityClass;
 	
 	bool bClientAbility{false};
 	

@@ -807,6 +807,12 @@ void AEmberCharacter::Input_OnRoll()
 		return;
 	}
 
+	if (AbilitySystemComponent->HasMatchingGameplayTag(AlsOverlayModeTags::Sword))
+	{
+		AbilitySystemComponent->TryActivateAbilityByClass(DodgeAbilityClass);
+		return;
+	}
+
 	const FGameplayTagContainer CancelTags(AlsInputActionTags::OverlayAction);
 	AbilitySystemComponent->CancelAbilities(&CancelTags);
 
