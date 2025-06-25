@@ -1,4 +1,6 @@
 ﻿#include "EmberCharacterAttributeSet.h"
+
+#include "AlsCharacter.h"
 #include "GameplayEffectExtension.h"
 #include "Ability/Combat/ParryCounterAbility.h"
 #include "GameplayTag/EmberGameplayTag.h"
@@ -100,6 +102,21 @@ bool UEmberCharacterAttributeSet::PreGameplayEffectExecute(struct FGameplayEffec
 		else if (AbilitySystemComponent->HasMatchingGameplayTag(AlsCharacterStateTags::Blocking))
 		{
 			Data.EvaluatedData.Magnitude *= 0.8f;
+		}
+		else // 이쪽은 무조건 Hit 어빌리티 발동시켜야됨
+		{
+			if (AAlsCharacter* Character = Cast<AAlsCharacter>(AbilitySystemComponent->GetAvatarActor()))
+			{
+				const FGameplayEffectContextHandle& Context = Data.EffectSpec.GetContext();
+				if (AActor* Actor = Context.GetInstigator())
+				{
+					FVector InstigatorLocation = Actor->GetActorLocation();
+					FVector OwnerForwardVector = Character->GetActorForwardVector();
+
+					//FMath::Dot
+				}
+				AbilitySystemComponent->TryActivateAbilityByClass(EffectHelperInstance->ForwardHitAbilityClass);
+			}
 		}
 	}
 	
