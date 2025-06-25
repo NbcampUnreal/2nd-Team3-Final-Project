@@ -86,6 +86,11 @@ class PROJECTEMBER_API AAnimalSpawner : public AWorldInteractableActor, public I
 public:
 	AAnimalSpawner();
 
+	//MiniGame
+	void OnMiniGameEvent();
+	//Release
+	UFUNCTION(BlueprintCallable) // 전체 메모리해제 , 미니게임 체이싱-> 잡지 못하고 종료됐을 때 호출할 함수
+	void TryReleaseEntire();
 	
 	//Token
 	UFUNCTION(BlueprintCallable)
@@ -111,6 +116,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 
 
 	//EMS
@@ -188,9 +194,7 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void TickDespawnQueue();
 	
-	//Release
-	UFUNCTION(BlueprintCallable)
-	void TryReleaseEntire();
+	
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning") //일반적인 애들 

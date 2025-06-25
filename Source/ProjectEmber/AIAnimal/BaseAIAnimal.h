@@ -80,7 +80,7 @@ public:
 	
 	void GenerateRandom();
 	void DecreaseFullness();
-	void SwitchBehaviorTree();
+	void SwitchBehaviorTree(int32 Index);
 
 	UFUNCTION(BlueprintCallable, Category = AI)
 	FGameplayTag GetIdentityTag() const;

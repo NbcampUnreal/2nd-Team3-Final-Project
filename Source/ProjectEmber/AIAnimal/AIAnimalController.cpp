@@ -215,7 +215,10 @@ void AAIAnimalController::SwitchToBehaviorTree(int32 NewIndex)
     {
         BehaviorTreeComponent->StopTree(EBTStopMode::Safe);
     }
-    PerceptionComp->DestroyComponent();
+    if (NewIndex == 1)
+    {
+        PerceptionComp->DestroyComponent();
+    }
     
     // 새 BTComponent 실행
     UseBlackboard(BehaviorTrees[NewIndex]->BlackboardAsset, BlackboardComponent);

@@ -69,6 +69,8 @@ void ABaseAIAnimal::BeginPlay()
 		BlackboardComponent = AIController->GetBlackboardComponent();
 	}
 	
+	BlackboardComponent->SetValueAsFloat("CoolDownTime",CoolDownTime);  //연속공격을 위한 쿨다운 블랙보드
+	
 	if (HpBarWidgetClass)
 	{
 		HpBarWidget->SetWidgetClass(HpBarWidgetClass);
@@ -139,6 +141,10 @@ void ABaseAIAnimal::OnAbilityEnd(const FAbilityEndedData& AbilityEndedData)
 	if (EndedAbility->IsA(StartAbilities[0])) //공격이 끝나면
 	{
 		IsAbility = false;
+		if (BlackboardComponent)
+		{
+			BlackboardComponent->SetValueAsBool("IsAbility", IsAbility);
+		}
 	}
 }
 
@@ -340,7 +346,11 @@ void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 void ABaseAIAnimal::OnAttackSpecial()
 {
 	IsAbility = true;
-	BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Attack");
+	if (BlackboardComponent)
+	{
+		BlackboardComponent->SetValueAsBool("IsAbility", IsAbility);
+		BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Attack");
+	}
 	
 	FGameplayEventData Payload;
 	Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.AttackSpecial");
@@ -384,7 +394,8 @@ void ABaseAIAnimal::GenerateRandom()
 {
 	int32 RandomPersonality = FMath::RandRange(0, static_cast<int32>(EAnimalAIPersonality::End) - 1);
 	Personality = static_cast<EAnimalAIPersonality>(RandomPersonality);
-	Fullness = FMath::FRandRange(70.f, 90.f);
+	Fullness = FMath::FRandRange(70.0f, 90.0f);
+	CoolDownTime = FMath::FRandRange(5.0f, 15.0f);
 }
 
 void ABaseAIAnimal::DecreaseFullness()
@@ -668,9 +679,9 @@ void ABaseAIAnimal::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void ABaseAIAnimal::SwitchBehaviorTree()
+void ABaseAIAnimal::SwitchBehaviorTree(int32 Index)
 {
-	Cast<AAIAnimalController>(GetController())->SwitchToBehaviorTree(1);
+	Cast<AAIAnimalController>(GetController())->SwitchToBehaviorTree(Index);
 	BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
 }
 

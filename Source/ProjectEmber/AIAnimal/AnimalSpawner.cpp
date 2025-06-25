@@ -80,6 +80,19 @@ void AAnimalSpawner::MessageMoveToDead(UObject* Payload)
 			}
 			TryReleaseToken();
 		}
+
+		if (IdentityTag == FGameplayTag::RequestGameplayTag("Quest.MiniGame.Chasing"))
+		{
+			if (UGameplayEventSubsystem* EventSubsystem = GetGameInstance()->GetSubsystem<UGameplayEventSubsystem>())
+			{
+				FGameplayTag EventTag = FGameplayTag::RequestGameplayTag("Quest.MiniGame.Chasing");
+				FGameplayEventData Data;
+				Data.EventTag = EventTag;
+				EventSubsystem->BroadcastGameEvent(EventTag, Data);
+			}
+			TryReleaseEntire();
+			return;
+		}
 		
 		for (FAnimalSpawnInfo& Info : AnimalsInfo)
 		{
@@ -220,7 +233,7 @@ void AAnimalSpawner::ActorLoaded_Implementation()
 
 void AAnimalSpawner::DistanceCheck()
 {
-	if (AnimalsInfo.Num() == 0 || SpawnPoints.Num() ==0)
+	if (AnimalsInfo.Num() == 0 || SpawnPoints.Num() ==0 || IdentityTag == FGameplayTag::RequestGameplayTag("Quest.MiniGame.Chasing"))
 	{
 		return;
 	}
@@ -406,10 +419,19 @@ void AAnimalSpawner::TickCreateQueue(TQueue<FAnimalQueueInfo>& InQueue, bool& In
 		{
 			continue;
 		}
-		
-		MakeRandomActiveAtNight();
-		Spawned->SetRoleTag(PerAnimal.RoleTag);
-		Spawned->SetState(bIsShouldSleep);
+		if (IdentityTag == FGameplayTag::RequestGameplayTag("Quest.MiniGame.Chasing"))
+		{
+			Spawned->SetRoleTag(PerAnimal.RoleTag);
+			Spawned->SetState(false);
+			Spawned->SwitchBehaviorTree(2);
+			Spawned->TriggerSpeedUp();
+		}
+		else
+		{
+			MakeRandomActiveAtNight();
+			Spawned->SetRoleTag(PerAnimal.RoleTag);
+			Spawned->SetState(bIsShouldSleep);
+		}
 		AnimalsInfo[PerAnimal.SpawnInfoIndex].SpawnAnimals.Emplace(Spawned);
 		++SpawnedThisFrame;
 	}
@@ -594,7 +616,6 @@ void AAnimalSpawner::TryReleaseEntire()
 			}
 			
 			Animal->Destroy();
-			Animal = nullptr;
 		}
 		Info.SpawnAnimals.Empty();
 		
@@ -605,7 +626,6 @@ void AAnimalSpawner::TryReleaseEntire()
 				continue;
 			}
 			Animal->Destroy();
-			Animal = nullptr;
 		}
 		Info.DeadAnimals.Empty();
 	}
@@ -621,7 +641,6 @@ void AAnimalSpawner::TryReleaseEntire()
 			}
 			
 			Animal->Destroy();
-			Animal = nullptr;
 		}
 		Info.SpawnAnimals.Empty();
 		
@@ -632,7 +651,6 @@ void AAnimalSpawner::TryReleaseEntire()
 				continue;
 			}
 			Animal->Destroy();
-			Animal = nullptr;
 		}
 		Info.DeadAnimals.Empty();
 	}
@@ -699,6 +717,16 @@ void AAnimalSpawner::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
+void AAnimalSpawner::OnMiniGameEvent()
+{
+	if (!AnimalsInfo.IsValidIndex(0)||!SpawnPoints.IsValidIndex(0))
+	{
+		return;
+	}
+	AddCreateQueue(AnimalsInfo[0], SpawnPoints[0], AnimalsInfo[0].TotalCount, "Animal.Role.Alone");
+}
+
+
 void AAnimalSpawner::OnTokenRaidEvent(FTokenRaidInfo InRow)
 {
 	for (int32 i =0; i<InRow.GroupsPerWave; i++)
@@ -709,7 +737,7 @@ void AAnimalSpawner::OnTokenRaidEvent(FTokenRaidInfo InRow)
 		Info.LeaderCount = 1;
 		Info.FollowCount = InRow.GroupInfo[i].UnitsPerGroup-1;
 
-		AnimalsInfoByToken.Add(Info); //생성되는 객체들 정보를 담음, 인덱스 각 하나는 웨이브에서 한 그룹에 해당하는 정보
+		AnimalsInfoByToken.Add(Info); //생성되는 객체들 정보를 담음
 	}
 	AddCreateQueueByLocation(AnimalsInfoByToken);
 }
@@ -757,7 +785,7 @@ void AAnimalSpawner::TickCreateQueueByToken(TQueue<FAnimalQueueInfo>& InQueue)
 		
 		Spawned->SetRoleTag(PerAnimal.RoleTag);
 		Spawned->SetState(false);
-		Spawned->SwitchBehaviorTree();
+		Spawned->SwitchBehaviorTree(1);
 		Spawned->TriggerSpeedUp();
 		AnimalsInfoByToken[PerAnimal.SpawnInfoIndex].SpawnAnimals.Emplace(Spawned); // 생성된 객체를 담음
 		++SpawnedThisFrame;
