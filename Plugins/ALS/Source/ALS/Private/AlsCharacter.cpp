@@ -104,6 +104,16 @@ const FGameplayTag& AAlsCharacter::GetTargetMode() const
 	return TargetMode;
 }
 
+void AAlsCharacter::SetCancelAbilityInput(const bool bCancel)
+{
+	bCanceleAbilityInput = bCancel;
+}
+
+bool AAlsCharacter::GetCancelAbilityInput() const
+{
+	return bCanceleAbilityInput;
+}
+
 void AAlsCharacter::ForceLastInputDirectionBlocked(bool bBlocked)
 {
 	LocomotionState.bRotationTowardsLastInputDirectionBlocked = bBlocked;

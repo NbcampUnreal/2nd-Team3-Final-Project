@@ -55,7 +55,10 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 		Character->SetForceGameplayTags(ForceGameplayTags);
 		//Character->ForceLastInputDirectionBlocked(true);
 		//PreLocomotionState = Character->GetLocomotionState();
-
+		if (!bIsBlockAbility)
+		{
+			Character->SetCancelAbilityInput(false);
+		}
 	
 		if (!bLoopingMontage && bIsWarping && Character->GetLocomotionMode() != AlsLocomotionModeTags::InAir)
 		{
@@ -209,12 +212,19 @@ void UBaseOverlayAbility::OnComboNotify(const FGameplayEventData Payload)
 			if (!AbilitySystemComponent->TryActivateAbilityByClass(Abilities[0],false))
 			{
 				EMBER_LOG(LogEmber,Warning, TEXT("Failed to activate next combo ability: %s"), *Abilities[0]->GetName());
-			}	
+			}
 		}
 		
 		bool bReplicatedEndAbility = true;
 		bool bWasCancelled = false;
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
+	}
+	else if (bCanCombo && !bComboInputReceived)
+	{
+		if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
+		{
+			Character->SetCancelAbilityInput(true);
+		}
 	}
 }
 

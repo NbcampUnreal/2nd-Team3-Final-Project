@@ -6,13 +6,12 @@ bool UMiniGameQuestCondition::OnEvent_Implementation(const FGameplayTag& InEvent
     if (InEventTag != EventTag)
         return false;
 
-    if (!EventData.Target)
+    if (!EventData.Instigator)
         return false;
-
-    //  ¿ÀÁ÷ Æ¯Á¤ Actor¸¸ Á¶°Ç ¸¸Á·
-    if (!MinigameTarget.IsValid() || EventData.Target != MinigameTarget.Get())
+    
+    if (!MinigameTarget.IsValid() || EventData.Instigator != MinigameTarget.Get())
     {
-        UE_LOG(LogTemp, Warning, TEXT("[DialogueCondition] Event ´ë»óÀÌ ÁöÁ¤ÇÑ NPC¿Í ´Ù¸¨´Ï´Ù."));
+        UE_LOG(LogTemp, Warning, TEXT("[DialogueCondition] Event ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ NPCï¿½ï¿½ ï¿½Ù¸ï¿½ï¿½Ï´ï¿½."));
         return false;
     }
 
@@ -21,13 +20,13 @@ bool UMiniGameQuestCondition::OnEvent_Implementation(const FGameplayTag& InEvent
     const bool bNowFulfilled = IsFulfilled();
     if (bNowFulfilled)
     {
-        UE_LOG(LogTemp, Warning, TEXT("[DialogueCondition] Á¶°Ç ÃæÁ· ¿Ï·á! Target: %s / ÇöÀç Ä«¿îÆ®: %d"),
-            *EventData.Target->GetName(), CurrentCount);
+        UE_LOG(LogTemp, Warning, TEXT("[DialogueCondition] ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ï·ï¿½! Target: %s / ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½Æ®: %d"),
+            *EventData.Instigator->GetName(), CurrentCount);
     }
     else
     {
-        UE_LOG(LogTemp, Warning, TEXT("[DialogueCondition] Á¶°Ç ¾ÆÁ÷ ¹ÌÃæÁ·. Target: %s / ÇöÀç Ä«¿îÆ®: %d / ÇÊ¿ä ¼ö: %d"),
-            *EventData.Target->GetName(), CurrentCount, RequiredCount);
+        UE_LOG(LogTemp, Warning, TEXT("[DialogueCondition] ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½. Target: %s / ï¿½ï¿½ï¿½ï¿½ Ä«ï¿½ï¿½Æ®: %d / ï¿½Ê¿ï¿½ ï¿½ï¿½: %d"),
+            *EventData.Instigator->GetName(), CurrentCount, RequiredCount);
     }
 
     return bNowFulfilled;
