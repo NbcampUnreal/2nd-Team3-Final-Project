@@ -16,15 +16,15 @@ AAIAnimalController::AAIAnimalController()
     SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
     HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
 
-    SightConfig->SightRadius = 1500.0f;
-    SightConfig->LoseSightRadius = 1800.0f;
+    SightConfig->SightRadius = 200.0f;
+    SightConfig->LoseSightRadius = 300.0f;
     SightConfig->PeripheralVisionAngleDegrees = 120.0f;
     SightConfig->SetMaxAge(2.0f);
     SightConfig->DetectionByAffiliation.bDetectEnemies = true;
     SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
     SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
     
-    HearingConfig->HearingRange = 800.0f;
+    HearingConfig->HearingRange = 300.0f;
     HearingConfig->SetMaxAge(2.0f);
     HearingConfig->DetectionByAffiliation.bDetectEnemies = true;
     HearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
@@ -61,6 +61,15 @@ void AAIAnimalController::BeginPlay()
 
 void AAIAnimalController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
+    if (!IsValid(Actor) ||!IsValid(GetPawn()) )
+    {
+        return;
+    }
+    
+    if (!IsValid(Cast<ABaseAIAnimal>(GetPawn())))
+    {
+        return;
+    }
     bool IsSleep = Cast<ABaseAIAnimal>(GetPawn())->GetIsShouldSleep();
     bool IsDead = Cast<ABaseAIAnimal>(GetPawn())->GetIsDead();
     if (IsSleep || IsDead)
@@ -206,7 +215,10 @@ void AAIAnimalController::SwitchToBehaviorTree(int32 NewIndex)
     {
         BehaviorTreeComponent->StopTree(EBTStopMode::Safe);
     }
-    PerceptionComp->DestroyComponent();
+    if (NewIndex == 1)
+    {
+        PerceptionComp->DestroyComponent();
+    }
     
     // 새 BTComponent 실행
     UseBlackboard(BehaviorTrees[NewIndex]->BlackboardAsset, BlackboardComponent);

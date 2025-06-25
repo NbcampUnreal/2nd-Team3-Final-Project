@@ -80,7 +80,7 @@ public:
 	
 	void GenerateRandom();
 	void DecreaseFullness();
-	void SwitchBehaviorTree();
+	void SwitchBehaviorTree(int32 Index);
 
 	UFUNCTION(BlueprintCallable, Category = AI)
 	FGameplayTag GetIdentityTag() const;
@@ -217,6 +217,9 @@ protected:
 	float WalkSpeed = 300.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
+	float PlayRate = 1.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI")
 	float CoolDownTime = 3.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SoundPitch")
@@ -253,4 +256,5 @@ protected:
 
 	int32 HitCount = 0;
 	bool bHasToken = false;
+	bool IsAbility = false;
 };
