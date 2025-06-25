@@ -29,7 +29,7 @@ void UEmberMainMenuWidget::OnNewGameClicked()
 
     if (UEmberGameInstance* GI = Cast<UEmberGameInstance>(UGameplayStatics::GetGameInstance(GetWorld())))
     {
-        GI->RequestOpenLevel("L_OpenWorld");
+        GI->RequestOpenLevel("L_Als_Playground_Ktw");
     }
 }
 
