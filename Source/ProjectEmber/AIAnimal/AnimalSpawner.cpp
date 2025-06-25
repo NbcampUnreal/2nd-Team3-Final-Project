@@ -7,9 +7,9 @@
 #include "BaseAIAnimal.h"
 #include "TokenRaidSubsystem.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
-#include "BehaviorTree/BlackboardComponent.h"
 #include "Components/BoxComponent.h"
 #include "GameInstance/GameplayEventSubsystem.h"
+#include "Quest/QuestSubsystem.h"
 
 
 AAnimalSpawner::AAnimalSpawner()
@@ -56,14 +56,29 @@ void AAnimalSpawner::MessageMoveToDead(UObject* Payload)
 	//파밍대기 끝나고 죽으면 대기열 이동만 시키기 -> 리스폰을 위한 처리
 	if (ABaseAIAnimal* Animal = Cast<ABaseAIAnimal>(Payload))
 	{
+		int count =0;
 		for (FAnimalSpawnInfo& Info : AnimalsInfoByToken)
 		{
 			if (Info.SpawnAnimals.Contains(Animal))
 			{
 				Info.SpawnAnimals.Remove(Animal);
 				Info.DeadAnimals.Add(Animal);
-				return;
 			}
+			if (Info.SpawnAnimals.Num() ==0)
+			{
+				count++;
+			}
+		}
+		if (count == AnimalsInfoByToken.Num())
+		{
+			if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
+			{
+				FGameplayTag EventTag = FGameplayTag::RequestGameplayTag("Quest.Animal.RaidClear");
+				FGameplayEventData Data;
+				Data.EventTag = EventTag;
+				QuestSubsystem->OnGameEvent(EventTag, Data);
+			}
+			TryReleaseToken();
 		}
 		
 		for (FAnimalSpawnInfo& Info : AnimalsInfo)
@@ -239,7 +254,7 @@ void AAnimalSpawner::DistanceCheck()
 	else if (DespawnDistance <= Distance)
 	{
 		SortFarthestAnimal(AnimalsInfo);
-		SortFarthestAnimal(AnimalsInfoByToken);
+		TryReleaseToken();
 	}
 	else // 스폰과 디스폰 사이
 	{
@@ -754,6 +769,7 @@ void AAnimalSpawner::TickCreateQueueByToken(TQueue<FAnimalQueueInfo>& InQueue)
 		TokenRaidSubsystem->RegisterRaidInfoArray(this,AnimalsInfoByToken); // 1웨이브에 쓰일 모든 객체들
 	}
 }
+
 FVector AAnimalSpawner::GetRandomXY(FVector SpawnLocation, FVector Extent)
 {
 	int RandomSign = FMath::RandRange(0, 1) == 0 ? -1 : 1;
@@ -826,6 +842,7 @@ FGameplayTag AAnimalSpawner::GetIdentityTag() const
 
 void AAnimalSpawner::TryReleaseToken()
 {
+	GetWorld()->GetGameInstance()->GetSubsystem<UTokenRaidSubsystem>()->TryReleaseToken();
 	CreateInfoQueueByToken.Empty();
 
 	for (int32 InfoIndex = 0; InfoIndex < AnimalsInfoByToken.Num(); ++InfoIndex)
@@ -839,7 +856,6 @@ void AAnimalSpawner::TryReleaseToken()
 			}
 			
 			Animal->Destroy();
-			Animal = nullptr;
 		}
 		Info.SpawnAnimals.Empty();
 		
@@ -850,9 +866,8 @@ void AAnimalSpawner::TryReleaseToken()
 				continue;
 			}
 			Animal->Destroy();
-			Animal = nullptr;
 		}
 		Info.DeadAnimals.Empty();
 	}
-	
+	AnimalsInfoByToken.Empty();
 }

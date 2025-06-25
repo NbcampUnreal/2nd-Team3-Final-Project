@@ -10,6 +10,7 @@
 #include "TokenRaidSubsystem.h"
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
+#include "EmberLog/EmberLog.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PhysicsVolume.h"
 #include "UI/EmberHpBarUserWidget.h"
@@ -30,9 +31,9 @@ ABaseAIAnimal::ABaseAIAnimal()
 	AnimalAttributeSet = CreateDefaultSubobject<UEmberAnimalAttributeSet>(TEXT("AnimalAttributeSet"));
 	MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
 
-	// HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
-	// HpBarWidget->SetupAttachment(GetMesh());
-	// HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
+	HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
+	HpBarWidget->SetupAttachment(GetMesh());
+	HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
 }
 
 void ABaseAIAnimal::PossessedBy(AController* NewController)
@@ -68,15 +69,15 @@ void ABaseAIAnimal::BeginPlay()
 		BlackboardComponent = AIController->GetBlackboardComponent();
 	}
 	
-	// if (HpBarWidgetClass)
-	// {
-	// 	HpBarWidget->SetWidgetClass(HpBarWidgetClass);
-	// 	HpBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
-	// 	HpBarWidget->SetDrawSize(FVector2D(200.0f, 20.0f));
-	// 	HpBarWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	//
-	// 	HpBarWidget->UpdateAbilitySystemComponent(this);
-	// }
+	if (HpBarWidgetClass)
+	{
+		HpBarWidget->SetWidgetClass(HpBarWidgetClass);
+		HpBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
+		HpBarWidget->SetDrawSize(FVector2D(200.0f, 20.0f));
+		HpBarWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
+		HpBarWidget->UpdateAbilitySystemComponent(this);
+	}
 	
 	//InitAbilityActorInfo 호출 위치: 네트워크 플레이가 아니고 싱글 플레이나 로컬 전용이라면 괜찮음
 	//서버와 클라이언트 동기화가 중요하다면 BeginPlay()에서 호출
@@ -138,11 +139,6 @@ void ABaseAIAnimal::OnAbilityEnd(const FAbilityEndedData& AbilityEndedData)
 	if (EndedAbility->IsA(StartAbilities[0])) //공격이 끝나면
 	{
 		IsAbility = false;
-		if (bHasToken) //토큰 공격이었다면
-		{
-			//FVector BestLocation = GetGameInstance()->GetSubsystem<UTokenRaidSubsystem>()->GetBestLocation(*this);
-			//BlackboardComponent->SetValueAsVector("SafeLocation", BestLocation);
-		}
 	}
 }
 
@@ -248,7 +244,7 @@ void ABaseAIAnimal::SetVisibleInGame()
 		CharacterAttributeSet->SetHealth(CharacterAttributeSet->GetMaxHealth());
 		FOnAttributeChangeData ChangeData;
 		ChangeData.NewValue = CharacterAttributeSet->GetHealth();
-		//Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(ChangeData);
+		Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(ChangeData);
 	}
 	
 	for (UActorComponent* Component : GetComponents())
@@ -360,7 +356,7 @@ void ABaseAIAnimal::OnWalkSpeedChanged(const FOnAttributeChangeData& OnAttribute
 
 void ABaseAIAnimal::OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData)
 {
-	//Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(OnAttributeChangeData);
+	Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(OnAttributeChangeData);
 }
 
 void ABaseAIAnimal::OnFullnessChanged(const FOnAttributeChangeData& OnAttributeChangeData)

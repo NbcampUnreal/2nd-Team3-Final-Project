@@ -95,7 +95,6 @@ public:
 	FVector GetRandomXY(FVector SpawnLocation, FVector Extent);
 	FVector SpawnLineTrace(FVector SpawnLocation, float Start, float End);
 	UFUNCTION(BlueprintCallable) //파밍 끝나고 죽은 애들만 스폰
-	//Spawn 1웨이브 끝나고 TrySpawnEntire(AnimalsInfoByToken); 로 호출
 	//DespawnQueue 공용으로 사용
 	FAnimalInitInfo GetRandomLocationByToken(FVector PlayerLocation);
 	UFUNCTION(BlueprintCallable)

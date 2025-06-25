@@ -9,7 +9,6 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "EnvironmentQuery/EnvQuery.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
-#include "Kismet/GameplayStatics.h"
 
 void UTokenRaidSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -70,8 +69,9 @@ void UTokenRaidSubsystem::RunEQSByQuerier()
 	//다 돌았는데도 null이면 전멸 당한 것
 	if (!Querier)
 	{
-		return; //레이드 종료 -> TryReleaseToken(); 불러서 정리
+		return; //레이드 종료 
 	}
+	
 	//EQC에서 BB의 타겟엑터에서 플레이어를 가져다 쓰고 있으니까 EQS 돌리는 애는 타겟엑터 지정이 먼저 필요함
 	APawn* Player = GetWorld()->GetFirstPlayerController()->GetPawn();
 	Cast<AAIAnimalController>(Querier->GetController())->GetBlackboardComponent()->SetValueAsObject("TargetActor", Player);
@@ -120,11 +120,23 @@ void UTokenRaidSubsystem::MovementStart()
 		{
 			Cast<AAIAnimalController>(Animal->GetController())->GetBlackboardComponent()->SetValueAsObject("TargetActor", Player);
 			Cast<AAIAnimalController>(Animal->GetController())->GetBlackboardComponent()->SetValueAsVector("SafeLocation", FoundLocations[index]);
-			//Cast<AAIAnimalController>(Animal->GetController())->GetBlackboardComponent()->SetValueAsName("NStateTag","Animal.State.Idle");
 			OriLocation.Emplace(Animal.Get(), FoundLocations[index]);
 			index++;
 		}
 	}
+}
+
+FVector UTokenRaidSubsystem::GetBestLocation(ABaseAIAnimal& Animal)
+{
+	if (!OriLocation.Find(&Animal))
+	{
+		if (IsValid(&Animal))
+		{
+			return Animal.GetActorLocation();
+		}
+		return FVector::ZeroVector;
+	}
+	return *OriLocation.Find(&Animal);
 }
 
 void UTokenRaidSubsystem::OnFirstMovementComplete(AActor* InUnit, bool InResult)
@@ -236,23 +248,9 @@ void UTokenRaidSubsystem::ReturnToken(ABaseAIAnimal* Unit)
 	}
 }
 
-FVector UTokenRaidSubsystem::GetBestLocation(ABaseAIAnimal& Animal)
-{
-	if (!OriLocation.Find(&Animal))
-	{
-		if (IsValid(&Animal))
-		{
-			return Animal.GetActorLocation();
-		}
-		return FVector::ZeroVector;
-	}
-	return *OriLocation.Find(&Animal);
-}
-
 void UTokenRaidSubsystem::TryReleaseToken()
 {
 	OriLocation.Empty();
 	ActiveUnits.Empty();
 	RaidInfoArray.Empty();
-	InfoOwnerSpawner->TryReleaseToken();
 }
