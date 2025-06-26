@@ -152,13 +152,13 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 	
-	UPROPERTY(VisibleDefaultsOnly, SaveGame)
+	UPROPERTY(Transient)
 	TObjectPtr<class UEmberCharacterAttributeSet> CharacterAttributeSet;
 	
-	UPROPERTY(VisibleDefaultsOnly, SaveGame)
+	UPROPERTY(Transient)
 	TObjectPtr<class UEmberAnimalAttributeSet> AnimalAttributeSet;
 	
-	UPROPERTY(EditAnywhere, Category = "HpBar")
+	UPROPERTY(EditAnywhere, Category = "Widget")
 	TSubclassOf<class UUserWidget> HpBarWidgetClass;
 	
 	UPROPERTY(BlueprintReadOnly)
@@ -252,6 +252,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swim")
 	float WaterSurfaceZ = 0.0f; // 기준 물 표면 높이
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
+	float MaxHp = 200.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
+	float CurHp = 200.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
+	float AttackRate = 10.0f;
+	
 	int32 HitCount = 0;
 	bool bHasToken = false;
 	bool IsAbility = false;

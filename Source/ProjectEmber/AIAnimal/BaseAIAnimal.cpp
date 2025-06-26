@@ -10,11 +10,10 @@
 #include "TokenRaidSubsystem.h"
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
-#include "EmberLog/EmberLog.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PhysicsVolume.h"
 #include "Kismet/GameplayStatics.h"
-#include "UI/EmberHpBarUserWidget.h"
+#include "UI/AnimalHpBarUserWidget.h"
 #include "UI/EmberWidgetComponent.h"
 #include "Quest/QuestSubsystem.h"
 
@@ -35,26 +34,14 @@ ABaseAIAnimal::ABaseAIAnimal()
 	HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
 	HpBarWidget->SetupAttachment(GetMesh());
 	HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
-
-	UE_LOG(LogTemp, Warning, TEXT("[%s] ABaseAIAnimal::CharacterAttributeSet: %s"), *GetName(), CharacterAttributeSet ? TEXT("VALID") : TEXT("NULL"));
-	UE_LOG(LogTemp, Warning, TEXT("[%s] ABaseAIAnimal::AbilitySystemComponent: %s"), *GetName(), AbilitySystemComponent ? TEXT("VALID") : TEXT("NULL"));
-	UE_LOG(LogTemp, Warning, TEXT("[%s] ABaseAIAnimal::AnimalAttributeSet: %s"), *GetName(), AnimalAttributeSet ? TEXT("VALID") : TEXT("NULL"));
 }
 
 void ABaseAIAnimal::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 	
-	UE_LOG(LogTemp, Warning, TEXT("[%s] PossessedBy::CharacterAttributeSet: %s"), *GetName(), CharacterAttributeSet ? TEXT("VALID") : TEXT("NULL"));
-	UE_LOG(LogTemp, Warning, TEXT("[%s] PossessedBy::AnimalAttributeSet: %s"), *GetName(), AnimalAttributeSet ? TEXT("VALID") : TEXT("NULL"));
-	UE_LOG(LogTemp, Warning, TEXT("[%s] PossessedBy::AbilitySystemComponent: %s"), *GetName(), AbilitySystemComponent ? TEXT("VALID") : TEXT("NULL"));
-	
 	AbilitySystemComponent->InitStats(UEmberCharacterAttributeSet::StaticClass(), nullptr);
 	AbilitySystemComponent->InitStats(UEmberAnimalAttributeSet::StaticClass(), nullptr);
-
-	UE_LOG(LogTemp, Warning, TEXT("[%s] PossessedBy::CharacterAttributeSet: %s"), *GetName(), CharacterAttributeSet ? TEXT("VALID") : TEXT("NULL"));
-	UE_LOG(LogTemp, Warning, TEXT("[%s] PossessedBy::AnimalAttributeSet: %s"), *GetName(), AnimalAttributeSet ? TEXT("VALID") : TEXT("NULL"));
-	UE_LOG(LogTemp, Warning, TEXT("[%s] PossessedBy::AbilitySystemComponent: %s"), *GetName(), AbilitySystemComponent ? TEXT("VALID") : TEXT("NULL"));
 }
 
 
@@ -67,10 +54,6 @@ void ABaseAIAnimal::BeginPlay()
 	GetCharacterMovement()->AvoidanceWeight = 0.5f;
 	WalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
 	GenerateRandom();
-
-	UE_LOG(LogTemp, Warning, TEXT("[%s] BeginPlay::CharacterAttributeSet: %s"), *GetName(), CharacterAttributeSet ? TEXT("VALID") : TEXT("NULL"));
-	UE_LOG(LogTemp, Warning, TEXT("[%s] BeginPlay::AnimalAttributeSet: %s"), *GetName(), AnimalAttributeSet ? TEXT("VALID") : TEXT("NULL"));
-	UE_LOG(LogTemp, Warning, TEXT("[%s] BeginPlay::AbilitySystemComponent: %s"), *GetName(), AbilitySystemComponent ? TEXT("VALID") : TEXT("NULL"));
 	
 	if (AnimalAttributeSet)
 	{
@@ -87,12 +70,18 @@ void ABaseAIAnimal::BeginPlay()
 		BlackboardComponent = AIController->GetBlackboardComponent();
 		BlackboardComponent->SetValueAsFloat("CoolDownTime",CoolDownTime);  //연속공격을 위한 쿨다운 블랙보드
 	}
-	
+
+	if (CharacterAttributeSet)
+	{
+		CharacterAttributeSet->InitMaxHealth(MaxHp);
+		CharacterAttributeSet->InitHealth(CurHp);
+		CharacterAttributeSet->InitAttackRate(AttackRate);
+	}
 	if (HpBarWidgetClass)
 	{
 		HpBarWidget->SetWidgetClass(HpBarWidgetClass);
 		HpBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
-		HpBarWidget->SetDrawSize(FVector2D(200.0f, 20.0f));
+		HpBarWidget->SetDrawSize(FVector2D(MaxHp, 20.0f));
 		HpBarWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		HpBarWidget->UpdateAbilitySystemComponent(this);
 		HpBarWidget->SetVisibility(false);
@@ -269,7 +258,7 @@ void ABaseAIAnimal::SetVisibleInGame()
 		FOnAttributeChangeData ChangeData;
 		ChangeData.NewValue = CharacterAttributeSet->GetHealth();
 		
-		Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(ChangeData);
+		Cast<UAnimalHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(ChangeData);
 	}
 	
 	for (UActorComponent* Component : GetComponents())
@@ -299,7 +288,7 @@ void ABaseAIAnimal::Tick(float DeltaTime)
 		float Distance = FVector::Dist(PlayerPawn->GetActorLocation(), GetActorLocation());
 
 		// 거리 기준 예: 0~300은 1.0 투명도, 1000 이상은 완전 투명 (0.0)
-		float Opacity = 1.0f - FMath::Clamp((Distance - 300.0f) / 700.0f, 0.0f, 1.0f);
+		float Opacity = 1.0f - FMath::Clamp((Distance - 1000.0f) / 1400.0f, 0.0f, 1.0f);
 
 		UUserWidget* Widget = HpBarWidget->GetUserWidgetObject();
 		Widget->SetRenderOpacity(Opacity);
@@ -401,7 +390,7 @@ void ABaseAIAnimal::OnWalkSpeedChanged(const FOnAttributeChangeData& OnAttribute
 
 void ABaseAIAnimal::OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData)
 {
-	Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(OnAttributeChangeData);
+	Cast<UAnimalHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(OnAttributeChangeData);
 	HpBarWidget->SetVisibility(true);
 }
 
