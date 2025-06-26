@@ -96,12 +96,37 @@ FVector2D AAlsCharacter::GetMoveInput() const
 
 void AAlsCharacter::SetTargetMode(const FGameplayTag& InTargetMode)
 {
+	if (InTargetMode == TargetMode)
+	{
+		return;
+	}
+	
+	if (AscInstance && TargetMode.IsValid())
+	{
+		AscInstance->RemoveLooseGameplayTag(TargetMode);
+	}
+	
 	TargetMode = InTargetMode;
+	
+	if (AscInstance && TargetMode.IsValid())
+	{
+		AscInstance->AddLooseGameplayTag(TargetMode);
+	}
 }
 
 const FGameplayTag& AAlsCharacter::GetTargetMode() const
 {
 	return TargetMode;
+}
+
+void AAlsCharacter::SetCancelAbilityInput(const bool bCancel)
+{
+	bCanceleAbilityInput = bCancel;
+}
+
+bool AAlsCharacter::GetCancelAbilityInput() const
+{
+	return bCanceleAbilityInput;
 }
 
 void AAlsCharacter::ForceLastInputDirectionBlocked(bool bBlocked)

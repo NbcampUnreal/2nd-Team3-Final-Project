@@ -52,12 +52,16 @@ public:/* My Custom Function & Variable */
 	void SetTargetMode(const FGameplayTag& InTargetMode);
 	const FGameplayTag& GetTargetMode() const;
 	FEnhancedInputActionValueBinding* MoveInputBinding{nullptr};
-	
+
+	void SetCancelAbilityInput(const bool bCancel);
+	bool GetCancelAbilityInput() const;
 private:
 	TObjectPtr<UAbilitySystemComponent> AscInstance;
 	FGameplayTagContainer ForceGameplayTags;
 	
 	FGameplayTag TargetMode{FGameplayTag()};
+
+	bool bCanceleAbilityInput{false};
 
 protected: /* AlsCharacter */
 	UPROPERTY(BlueprintReadOnly, Category = "Als Character")

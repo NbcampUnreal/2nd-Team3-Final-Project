@@ -1,4 +1,6 @@
 ﻿#include "EmberCharacterAttributeSet.h"
+
+#include "AlsCharacter.h"
 #include "GameplayEffectExtension.h"
 #include "Ability/Combat/ParryCounterAbility.h"
 #include "GameplayTag/EmberGameplayTag.h"
@@ -84,7 +86,7 @@ bool UEmberCharacterAttributeSet::PreGameplayEffectExecute(struct FGameplayEffec
 			UCombatFunctionLibrary::ApplyGlobalTimeDilation(GetWorld(), 0.4f,0.17f);
 			// 2. 데미지 무효화
 			Data.EvaluatedData.Magnitude = 0.f;
-			// 4. 패링 카운터 어빌리티 발동 (상대에게)
+			// 3. 패링 카운터 어빌리티 발동 (상대에게)
 			const FGameplayEffectContextHandle& Context = Data.EffectSpec.GetContext();
 			if (UAbilitySystemComponent* SourceAsc = Context.GetInstigatorAbilitySystemComponent())
 			{
@@ -94,15 +96,27 @@ bool UEmberCharacterAttributeSet::PreGameplayEffectExecute(struct FGameplayEffec
 					EMBER_LOG(LogEmber, Warning, TEXT("Failed to activate enemy parry ability"));
 				}
 			}
-			// 5. 패링 카운터 어빌리티 발동 (나에게)
+			// 4. 패링 카운터 어빌리티 발동 (나에게)
 			AbilitySystemComponent->TryActivateAbilityByClass(EffectHelperInstance->ParryAbilityClass);
-
-			
-			
 		}
 		else if (AbilitySystemComponent->HasMatchingGameplayTag(AlsCharacterStateTags::Blocking))
 		{
 			Data.EvaluatedData.Magnitude *= 0.8f;
+		}
+		else // 이쪽은 무조건 Hit 어빌리티 발동시켜야됨
+		{
+			if (AAlsCharacter* Character = Cast<AAlsCharacter>(AbilitySystemComponent->GetAvatarActor()))
+			{
+				const FGameplayEffectContextHandle& Context = Data.EffectSpec.GetContext();
+				if (AActor* Actor = Context.GetInstigator())
+				{
+					FVector InstigatorLocation = Actor->GetActorLocation();
+					FVector OwnerForwardVector = Character->GetActorForwardVector();
+
+					//FMath::Dot
+				}
+				AbilitySystemComponent->TryActivateAbilityByClass(EffectHelperInstance->ForwardHitAbilityClass);
+			}
 		}
 	}
 	

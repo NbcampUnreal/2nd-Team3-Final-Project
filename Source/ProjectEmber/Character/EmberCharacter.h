@@ -42,6 +42,8 @@ public:
 private:
 	void SetupEmberInputComponent() const;
 	
+public:
+	//TSharedPtr<class IOnlineSession, ESPMode::ThreadSafe> OnlineSessionInterface;
 public: /* Character */
 	virtual UMeleeTraceComponent* GetMeleeTraceComponent() const;
 	
@@ -163,6 +165,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
 	TMap<int32, TSubclassOf<class UGameplayAbility>> StartBlockInputAbilities;
+
+	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
+	TSubclassOf<class UGameplayAbility> DodgeAbilityClass;
 	
 	bool bClientAbility{false};
 	

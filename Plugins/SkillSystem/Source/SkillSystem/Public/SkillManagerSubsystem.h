@@ -2,12 +2,13 @@
 
 #include "CoreMinimal.h"
 #include "EMSActorSaveInterface.h"
+#include "SkillDataHelper.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "SkillTreeDataAsset.h"
 #include "SkillManagerSubsystem.generated.h"
 
 
-UCLASS()
+UCLASS(Config = Engine, DefaultConfig, Blueprintable)
 class SKILLSYSTEM_API USkillManagerSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
@@ -43,6 +44,12 @@ private:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Skill")
 	USkillTreeDataAsset* SkillTreeData{nullptr};
+
+	UPROPERTY(Config)
+	TSubclassOf<USkillDataHelper> SkillTreeDataHelperClass;
+
+	UPROPERTY()
+	USkillDataHelper* SkillTreeDataHelperInstance;
 	
 	const FSkillNode* FindSkillNode(FName SkillID) const;
 };

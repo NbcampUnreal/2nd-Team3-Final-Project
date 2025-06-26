@@ -1,4 +1,6 @@
 #include "TutorialWidget.h"
+
+#include "MediaTexture.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
 #include "Components/Button.h"   
@@ -18,12 +20,23 @@ void UTutorialWidget::NativeConstruct()
 
 void UTutorialWidget::SetImageTexture(UTexture2D* NewImage)
 {
-    if (TutorialImage && NewImage)
+    if (KeylImage && NewImage)
     {
         FSlateBrush Brush;
         Brush.SetResourceObject(NewImage);
         Brush.ImageSize = FVector2D(NewImage->GetSizeX(), NewImage->GetSizeY());
-        TutorialImage->SetBrush(Brush);
+        KeylImage->SetBrush(Brush);
+    }
+}
+
+void UTutorialWidget::SetMediaImageTexture(UTexture* NewImage)
+{
+    if (MediaImage && NewImage)
+    {
+        FSlateBrush Brush;
+        Brush.SetResourceObject(NewImage);
+        Brush.ImageSize = FVector2D(100, 100); // 적절한 크기로 설정
+        MediaImage->SetBrush(Brush);
     }
 }
 
@@ -35,6 +48,7 @@ void UTutorialWidget::ShowTutorial(bool bShow)
 void UTutorialWidget::SetTutorialData(const FTutorialData& InData)
 {
     SetImageTexture(InData.KeyImage);
+    SetMediaImageTexture(InData.VideoTexture);
     if (TutorialNameText)
     {
         TutorialNameText->SetText(InData.Name);

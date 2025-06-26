@@ -19,4 +19,16 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect", Meta = (AllowPrivateAccess = true))
 	TSubclassOf<UGameplayAbility> ParryAbilityClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect", Meta = (AllowPrivateAccess = true))
+	TSubclassOf<UGameplayAbility> ForwardHitAbilityClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect", Meta = (AllowPrivateAccess = true))
+	TSubclassOf<UGameplayAbility> BackHitAbilityClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect", Meta = (AllowPrivateAccess = true))
+	TSubclassOf<UGameplayAbility> LeftHitAbilityClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect", Meta = (AllowPrivateAccess = true))
+	TSubclassOf<UGameplayAbility> RightHitAbilityClass;
 };

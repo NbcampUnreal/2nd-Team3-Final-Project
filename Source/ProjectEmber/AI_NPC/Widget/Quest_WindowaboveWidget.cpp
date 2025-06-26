@@ -19,9 +19,9 @@ void UQuest_WindowaboveWidget::OnCloseButtonClicked()
 {
     if (UGameMenuWidget* GameMenu = GetTypedOuter<UGameMenuWidget>())
     {
-        if (GameMenu->WidgetSwitcher && GameMenu->EmptyBorder)
+        if (GameMenu->BaseWidgetSwitcher && GameMenu->EmptyBorder)
         {
-            GameMenu->WidgetSwitcher->SetActiveWidget(GameMenu->EmptyBorder);
+            GameMenu->BaseWidgetSwitcher->SetActiveWidget(GameMenu->EmptyBorder);
         }
     }
 

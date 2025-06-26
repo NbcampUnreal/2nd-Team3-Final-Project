@@ -38,7 +38,8 @@ public class ProjectEmber : ModuleRules
             "EasyMultiSave",
             "LevelSequence",
             "MovieScene",
-            "MovieSceneTracks"
+            "MovieSceneTracks",
+            "MediaAssets"
         });
 
         //───────────────────────────────────────────────────────────────────────────────
@@ -51,7 +52,7 @@ public class ProjectEmber : ModuleRules
             "EmberAbilitySystem",
             "EmberUtils",
             "MeleeTrace",
-            "EasyMultiSave", "SkillSystem"
+            "EasyMultiSave", "SkillSystem", "OnlineSubsystem"
         });
 
         //───────────────────────────────────────────────────────────────────────────────
