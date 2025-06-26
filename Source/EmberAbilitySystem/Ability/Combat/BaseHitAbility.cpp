@@ -27,6 +27,7 @@ void UBaseHitAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		PlayMontageTask->OnCompleted.AddDynamic(this, &UBaseHitAbility::OnMontageFinished);
 		PlayMontageTask->OnInterrupted.AddDynamic(this, &UBaseHitAbility::OnMontageFinished);
 		PlayMontageTask->OnCancelled.AddDynamic(this, &UBaseHitAbility::OnMontageFinished);
+		PlayMontageTask->OnBlendOut.AddDynamic(this, &UBaseHitAbility::OnMontageFinished);
 
 		PlayMontageTask->ReadyForActivation();
 		return;	

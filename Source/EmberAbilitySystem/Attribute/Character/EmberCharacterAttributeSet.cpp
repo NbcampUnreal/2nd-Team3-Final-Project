@@ -105,18 +105,7 @@ bool UEmberCharacterAttributeSet::PreGameplayEffectExecute(struct FGameplayEffec
 		}
 		else // 이쪽은 무조건 Hit 어빌리티 발동시켜야됨
 		{
-			if (AAlsCharacter* Character = Cast<AAlsCharacter>(AbilitySystemComponent->GetAvatarActor()))
-			{
-				const FGameplayEffectContextHandle& Context = Data.EffectSpec.GetContext();
-				if (AActor* Actor = Context.GetInstigator())
-				{
-					FVector InstigatorLocation = Actor->GetActorLocation();
-					FVector OwnerForwardVector = Character->GetActorForwardVector();
-
-					//FMath::Dot
-				}
-				AbilitySystemComponent->TryActivateAbilityByClass(EffectHelperInstance->ForwardHitAbilityClass);
-			}
+			DirectionalHitAbility(Data);
 		}
 	}
 	
@@ -186,5 +175,59 @@ void UEmberCharacterAttributeSet::ApplyGameplayEffectToSelf(UAbilitySystemCompon
 	if (SpecHandle.IsValid())
 	{
 		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+	}
+}
+
+void UEmberCharacterAttributeSet::DirectionalHitAbility(const FGameplayEffectModCallbackData& Data)
+{
+	UAbilitySystemComponent* Asc = GetOwningAbilitySystemComponentChecked();
+	if (!Asc)
+	{
+		return;
+	}
+
+	const AAlsCharacter* Character = Cast<AAlsCharacter>(Asc->GetAvatarActor());
+	if (!Character)
+	{
+		return;
+	}
+	
+	const FGameplayEffectContextHandle& Context = Data.EffectSpec.GetContext();
+	const AActor* Instigator = Context.GetInstigator();
+	if (!Instigator)
+	{
+		return;
+	}
+
+	// 1. 방향 벡터 계산
+	const FVector ToInst   = (Instigator->GetActorLocation() - Character->GetActorLocation()).GetSafeNormal();
+	const FVector Forward  = Character->GetActorForwardVector();
+	const FVector Right    = Character->GetActorRightVector();
+
+	// 2. 내적으로 방향 계산
+	const float ForwardDot = FVector::DotProduct(Forward, ToInst);
+	const float RightDot   = FVector::DotProduct(Right, ToInst);
+	
+	TSubclassOf<UGameplayAbility> AbilityToActivate;
+	if (FMath::Abs(ForwardDot) > FMath::Abs(RightDot))
+	{
+		// 전후
+		if (ForwardDot > 0.f)
+			AbilityToActivate = EffectHelperInstance->ForwardHitAbilityClass;
+		else
+			AbilityToActivate = EffectHelperInstance->BackHitAbilityClass;
+	}
+	else
+	{
+		// 좌우
+		if (RightDot > 0.f)
+			AbilityToActivate = EffectHelperInstance->RightHitAbilityClass;
+		else
+			AbilityToActivate = EffectHelperInstance->LeftHitAbilityClass;
+	}
+	
+	if (AbilityToActivate)
+	{
+		Asc->TryActivateAbilityByClass(AbilityToActivate);
 	}
 }
