@@ -13,6 +13,7 @@
 #include "EmberLog/EmberLog.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PhysicsVolume.h"
+#include "Kismet/GameplayStatics.h"
 #include "UI/EmberHpBarUserWidget.h"
 #include "UI/EmberWidgetComponent.h"
 #include "Quest/QuestSubsystem.h"
@@ -30,18 +31,30 @@ ABaseAIAnimal::ABaseAIAnimal()
 	CharacterAttributeSet = CreateDefaultSubobject<UEmberCharacterAttributeSet>(TEXT("CharacterAttributeSet"));
 	AnimalAttributeSet = CreateDefaultSubobject<UEmberAnimalAttributeSet>(TEXT("AnimalAttributeSet"));
 	MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
-
+	
 	HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
 	HpBarWidget->SetupAttachment(GetMesh());
 	HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
+
+	UE_LOG(LogTemp, Warning, TEXT("[%s] ABaseAIAnimal::CharacterAttributeSet: %s"), *GetName(), CharacterAttributeSet ? TEXT("VALID") : TEXT("NULL"));
+	UE_LOG(LogTemp, Warning, TEXT("[%s] ABaseAIAnimal::AbilitySystemComponent: %s"), *GetName(), AbilitySystemComponent ? TEXT("VALID") : TEXT("NULL"));
+	UE_LOG(LogTemp, Warning, TEXT("[%s] ABaseAIAnimal::AnimalAttributeSet: %s"), *GetName(), AnimalAttributeSet ? TEXT("VALID") : TEXT("NULL"));
 }
 
 void ABaseAIAnimal::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-
+	
+	UE_LOG(LogTemp, Warning, TEXT("[%s] PossessedBy::CharacterAttributeSet: %s"), *GetName(), CharacterAttributeSet ? TEXT("VALID") : TEXT("NULL"));
+	UE_LOG(LogTemp, Warning, TEXT("[%s] PossessedBy::AnimalAttributeSet: %s"), *GetName(), AnimalAttributeSet ? TEXT("VALID") : TEXT("NULL"));
+	UE_LOG(LogTemp, Warning, TEXT("[%s] PossessedBy::AbilitySystemComponent: %s"), *GetName(), AbilitySystemComponent ? TEXT("VALID") : TEXT("NULL"));
+	
 	AbilitySystemComponent->InitStats(UEmberCharacterAttributeSet::StaticClass(), nullptr);
 	AbilitySystemComponent->InitStats(UEmberAnimalAttributeSet::StaticClass(), nullptr);
+
+	UE_LOG(LogTemp, Warning, TEXT("[%s] PossessedBy::CharacterAttributeSet: %s"), *GetName(), CharacterAttributeSet ? TEXT("VALID") : TEXT("NULL"));
+	UE_LOG(LogTemp, Warning, TEXT("[%s] PossessedBy::AnimalAttributeSet: %s"), *GetName(), AnimalAttributeSet ? TEXT("VALID") : TEXT("NULL"));
+	UE_LOG(LogTemp, Warning, TEXT("[%s] PossessedBy::AbilitySystemComponent: %s"), *GetName(), AbilitySystemComponent ? TEXT("VALID") : TEXT("NULL"));
 }
 
 
@@ -54,6 +67,11 @@ void ABaseAIAnimal::BeginPlay()
 	GetCharacterMovement()->AvoidanceWeight = 0.5f;
 	WalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
 	GenerateRandom();
+
+	UE_LOG(LogTemp, Warning, TEXT("[%s] BeginPlay::CharacterAttributeSet: %s"), *GetName(), CharacterAttributeSet ? TEXT("VALID") : TEXT("NULL"));
+	UE_LOG(LogTemp, Warning, TEXT("[%s] BeginPlay::AnimalAttributeSet: %s"), *GetName(), AnimalAttributeSet ? TEXT("VALID") : TEXT("NULL"));
+	UE_LOG(LogTemp, Warning, TEXT("[%s] BeginPlay::AbilitySystemComponent: %s"), *GetName(), AbilitySystemComponent ? TEXT("VALID") : TEXT("NULL"));
+	
 	if (AnimalAttributeSet)
 	{
 		FEmberAnimalAttributeData AttributeData;
@@ -67,9 +85,8 @@ void ABaseAIAnimal::BeginPlay()
 	if (AIController)
 	{
 		BlackboardComponent = AIController->GetBlackboardComponent();
+		BlackboardComponent->SetValueAsFloat("CoolDownTime",CoolDownTime);  //연속공격을 위한 쿨다운 블랙보드
 	}
-	
-	BlackboardComponent->SetValueAsFloat("CoolDownTime",CoolDownTime);  //연속공격을 위한 쿨다운 블랙보드
 	
 	if (HpBarWidgetClass)
 	{
@@ -77,8 +94,8 @@ void ABaseAIAnimal::BeginPlay()
 		HpBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
 		HpBarWidget->SetDrawSize(FVector2D(200.0f, 20.0f));
 		HpBarWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	
 		HpBarWidget->UpdateAbilitySystemComponent(this);
+		HpBarWidget->SetVisibility(false);
 	}
 	
 	//InitAbilityActorInfo 호출 위치: 네트워크 플레이가 아니고 싱글 플레이나 로컬 전용이라면 괜찮음
@@ -171,6 +188,7 @@ void ABaseAIAnimal::OnBeginDeath()
 		}
 	}
 	
+	HpBarWidget->SetVisibility(false);
 	SetActorTickEnabled(false);
 	GetWorldTimerManager().PauseTimer(FullnessTimerHandle);
 	if (NiagaraComponent)
@@ -250,6 +268,7 @@ void ABaseAIAnimal::SetVisibleInGame()
 		CharacterAttributeSet->SetHealth(CharacterAttributeSet->GetMaxHealth());
 		FOnAttributeChangeData ChangeData;
 		ChangeData.NewValue = CharacterAttributeSet->GetHealth();
+		
 		Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(ChangeData);
 	}
 	
@@ -269,6 +288,23 @@ void ABaseAIAnimal::SetVisibleInGame()
 void ABaseAIAnimal::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+	if (HpBarWidget && HpBarWidget->GetUserWidgetObject())
+	{
+		APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
+		if (!PlayerPawn)
+		{
+			return;
+		}
+		float Distance = FVector::Dist(PlayerPawn->GetActorLocation(), GetActorLocation());
+
+		// 거리 기준 예: 0~300은 1.0 투명도, 1000 이상은 완전 투명 (0.0)
+		float Opacity = 1.0f - FMath::Clamp((Distance - 300.0f) / 700.0f, 0.0f, 1.0f);
+
+		UUserWidget* Widget = HpBarWidget->GetUserWidgetObject();
+		Widget->SetRenderOpacity(Opacity);
+	}
+	
 	if (GetMovementComponent())
 	{
 		float CurSpeed = GetVelocity().FVector::Length();
@@ -313,7 +349,6 @@ void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 	bIsShouldSleep = false;
 	HitCount++;
 	TriggerSpeedUp();
-	
 	if (BlackboardComponent)
 	{
 		if (AActor* TargetActor = Cast<AController>(InstigatorActor->GetOwner())->GetPawn())
@@ -349,7 +384,7 @@ void ABaseAIAnimal::OnAttackSpecial()
 	if (BlackboardComponent)
 	{
 		BlackboardComponent->SetValueAsBool("IsAbility", IsAbility);
-		BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Attack");
+		BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Attacked");
 	}
 	
 	FGameplayEventData Payload;
@@ -367,6 +402,7 @@ void ABaseAIAnimal::OnWalkSpeedChanged(const FOnAttributeChangeData& OnAttribute
 void ABaseAIAnimal::OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData)
 {
 	Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(OnAttributeChangeData);
+	HpBarWidget->SetVisibility(true);
 }
 
 void ABaseAIAnimal::OnFullnessChanged(const FOnAttributeChangeData& OnAttributeChangeData)
