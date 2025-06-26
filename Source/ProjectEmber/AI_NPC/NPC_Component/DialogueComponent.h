@@ -22,22 +22,16 @@ class PROJECTEMBER_API UDialogueComponent : public UActorComponent, public IInte
 
 public:
     UDialogueComponent();
+    virtual void TryInteract_Implementation(AActor* Caller) override;
     virtual void Interact_Implementation(AActor* Caller) override;
     virtual float GetGatherTime_Implementation() override;
-
-
-
-    UFUNCTION()
-    void RepositionNPCForDialogue();
-
-    UFUNCTION(BlueprintCallable, Category = "Quest")
-    void UpdateQuestLogWidgetFromAsset(const UQuestDataAsset* InQuestAsset);
 
     UFUNCTION()
     void PositionDetachedCamera();
     void ShowQuestCompleteWidget(const UQuestDataAsset* InQuestAsset, bool bIsQuestComplete);
     void AdvanceDialogue();
     void Interact();
+    void ShowQuestTracker(bool bIsComplete, int32 StepIndex);
     void ShowQuestUI();
     void LoadDialogueFromDataTable(bool bResetDialogueIndex, FName InObjectiveTag = NAME_None);
 
@@ -47,20 +41,16 @@ public:
     UPROPERTY()
     bool bDialogueFinished = false;
     bool IsDialogueActive() const;
+    UPROPERTY()
+    int32 AcceptedStepIndex = 0;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest")
-    UQuestDataAsset* QuestAsset;
-
-
-    UFUNCTION(BlueprintCallable, Category = "Dialogue")
-    void SetCustomDialogueLines(const TArray<FText>& InLines);
-
-    /** ��ȭ ������ ǥ���ϰ� ��� ��� ���� */
-    UFUNCTION(BlueprintCallable, Category = "Dialogue")
-    void StartDialogue();
-
+    void ResetDialogueState();
     UPROPERTY()
     bool bDialogueOverriddenByCondition = false;
+
+
+    UFUNCTION(BlueprintCallable, Category = "Dialogue")
+    void CloseAnyOpenUI();
 protected:
     virtual void BeginPlay() override;
     UFUNCTION()
@@ -86,13 +76,24 @@ protected:
 
     UPROPERTY(EditAnywhere, Category = "UI")
     TSubclassOf<UUserWidget> DialogueWidgetClass;
+   
+    UPROPERTY()
+    UUserWidget* QuestWidget;
 
     UPROPERTY()
     UUserWidget* DialogueWidget;
 
+    UPROPERTY()
+    UUserWidget* QuestCompleteWidget;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Quest")
+    UQuestDataAsset* QuestAsset;
 
     UPROPERTY(EditDefaultsOnly, Category = "Quest")
     TSubclassOf<class UQuestWidget> QuestCompleteWidgetClass;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Quest")
+    TSubclassOf<class UQuestTracker> QuestTrackerClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<FText> LinesOfDialogue;
@@ -132,7 +133,6 @@ protected:
 
     UPROPERTY()
     UQuestWidget* QuestWidgetInstance;
-
 
 
 };

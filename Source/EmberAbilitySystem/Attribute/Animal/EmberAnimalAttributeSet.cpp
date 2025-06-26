@@ -30,6 +30,5 @@ void UEmberAnimalAttributeSet::InitFromData(const FEmberAnimalAttributeData& Dat
 {
 	InitFullness(Data.Fullness);
 	InitWalkSpeed(Data.WalkSpeed);
-	InitWanderRange(Data.WanderRange);
 	InitWildPower(Data.WildPower);
 }

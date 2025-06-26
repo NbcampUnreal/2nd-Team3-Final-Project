@@ -71,6 +71,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Base")
 	bool bLoopingMontage;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Base")
+	bool bIsBlockAbility{false};
 	/**
 	 * Als 캐릭터에게 이 태그가 있는지 체크 후
 	 * 있다면 DefaultMontage대신 재생
@@ -131,6 +133,8 @@ protected:
 	void OnMontageTick() const;
 	UFUNCTION()
 	void OnBlendOut();
+	UFUNCTION()
+	void OnParryEnded();
 	
 private:
 	void SetUpdateWarping();
@@ -158,4 +162,6 @@ private:
 	FAlsLocomotionState PreLocomotionState;
 	FVector PreDirection;
 	FTimerHandle MontageTickHandle;
+
+	FTimerHandle ParryingTimerHandle;
 };

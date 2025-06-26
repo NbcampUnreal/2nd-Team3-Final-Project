@@ -23,15 +23,21 @@ public:
 	virtual void Deinitialize() override;
 	int32 GetCurrentStepIndexForQuest(FName QuestID, bool bAutoStartIfNotExists = false);
 
+	void LoadQuest(const APlayerController* PlayerController, const TMap<FName, int32>& InQuestProgress);
+	
+	TMap<FName, int32>& GetQuestProgress();
 
 public:
-
 	// NPC에게 F눌러서 통과 받을때 호출될 함수
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	bool TryStartQuest(FName QuestID, bool bPlayerAccepted = false);
 
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	bool IsQuestAccepted(FName QuestID) const;
+	
+
+	UFUNCTION(BlueprintCallable, Category = "Quest")
+	void AcceptStep(FName QuestID);
 
 	//마지막으로 수락한 퀘스트
 	UPROPERTY()
@@ -65,8 +71,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	bool IsStepCompleted(FName QuestID, int32 StepIndex) const;
 
-
-
+	TMap<FName, bool> StepAcceptance;
 
 private:
 	// 로드된 퀘스트 목록
@@ -74,9 +79,11 @@ private:
 	TMap<FName, TObjectPtr<UQuestDataAsset>> LoadedQuests;
 
 	// 현재 진행 중인 퀘스트 목록
+	UPROPERTY()
 	TMap<FName, int32> QuestProgress;
-
+	
 	// 완료된 퀘스트 목록
+	UPROPERTY()
 	TSet<FName> CompletedQuests;
 
 	// 초기화 단계에서 데이터불러오는 함수

@@ -16,8 +16,14 @@ class PROJECTEMBER_API IInteractable
 
 public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
+	void TryInteract(AActor* Caller);
+	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
 	void Interact(AActor* Caller);
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
+	void EndInteract();
+	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
 	float GetGatherTime();
 };

@@ -45,9 +45,16 @@ EBTNodeResult::Type UBTTask_AttackTarget::ExecuteTask(UBehaviorTreeComponent& Ow
 	ABaseAIAnimal* AIAnimal = Cast<ABaseAIAnimal>(AIPawn);
 	if (AIAnimal)
 	{
-		UObject* TargetObject = BlackboardComp->GetValueAsObject("TargetObject");
+		AIAnimal->SetHitCount(0);
+		UObject* TargetObject = BlackboardComp->GetValueAsObject("TargetActor");
 		if (ABaseAIAnimal* TargetActor = Cast<ABaseAIAnimal>(TargetObject))//가져왔는데 동물이면
 		{
+			if (TargetActor->GetIsDead())
+			{
+				Cast<AAIController>(AIAnimal->GetController())->GetBlackboardComponent()->SetValueAsName("NStateTag", "Animal.State.Idle");
+				Cast<AAIController>(AIAnimal->GetController())->GetBlackboardComponent()->SetValueAsObject("TargetActor", nullptr);
+				return EBTNodeResult::Failed;
+			}
 			if (Cast<ABaseAIAnimal>(AIPawn)->GetIdentityTag() == TargetActor->GetIdentityTag())
 			{
 				return EBTNodeResult::Failed;
@@ -59,13 +66,13 @@ EBTNodeResult::Type UBTTask_AttackTarget::ExecuteTask(UBehaviorTreeComponent& Ow
 		{
 			return EBTNodeResult::Failed;
 		}
-		
 		FGameplayEventData Payload;
 		Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.Attack");
 		Payload.Instigator = AICharacter;
 		Payload.OptionalObject = AICharacter->GetMontage(FGameplayTag::RequestGameplayTag("Animal.Montage.Attack"));
+		float PlayTime = AICharacter->GetMontage(FGameplayTag::RequestGameplayTag("Animal.Montage.Attack"))->GetPlayLength();
+		BlackboardComp->SetValueAsFloat("AnimPlayTime",PlayTime);
 		AICharacter->GetAbilitySystemComponent()->HandleGameplayEvent(Payload.EventTag, &Payload);
-		
 		return Super::ExecuteTask(OwnerComp, NodeMemory);
 	}
 	return EBTNodeResult::Failed;

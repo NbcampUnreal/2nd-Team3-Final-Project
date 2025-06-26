@@ -1,12 +1,14 @@
 ﻿#include "QuestSubsystem.h"
 #include "AbilitySystemComponent.h"
 #include "AI_NPC/NPC_Component/QuestGiverComponent.h"
+#include "AI_NPC/Widget/QuestListWidget.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
 #include "Character/EmberCharacter.h"
 #include "Data/QuestDataAsset.h"
 #include "EmberLog/EmberLog.h"
 #include "GameInstance/GameplayEventSubsystem.h"
 #include "Item/UserItemManger.h"
+#include "UI/HUD/EmberMainHUD.h"
 
 void UQuestSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -40,22 +42,33 @@ bool UQuestSubsystem::TryStartQuest(FName QuestID, bool bPlayerAccepted)
 {
     UE_LOG(LogTemp, Warning, TEXT("!!! [TryStartQuest] QuestID: %s / bPlayerAccepted: %d"), *QuestID.ToString(), bPlayerAccepted);
 
-    // 수락 의사가 없거나, 퀘스트가 존재하지 않거나 이미 완료됐으면 리턴
     if (!bPlayerAccepted || !LoadedQuests.Contains(QuestID) || CompletedQuests.Contains(QuestID))
     {
         return false;
     }
+ 
+    // ⭐ 첫 스텝 자동 수락
+    StepAcceptance.Add(QuestID, true);
 
-    // 퀘스트가 처음 시작되는 경우만 Step 0 초기화
-    if (!QuestProgress.Contains(QuestID))
+    if (UQuestDataAsset* QuestAsset = LoadedQuests.FindRef(QuestID))
     {
-        QuestProgress.Add(QuestID, 0);
-
-        if (UQuestDataAsset* QuestAsset = LoadedQuests.FindRef(QuestID))
+        if (QuestAsset->Steps.IsValidIndex(0))
         {
-            if (QuestAsset->Steps.IsValidIndex(0))
+            const FQuestStep& FirstStep = QuestAsset->Steps[0];
+
+            //  무조건 수락하면 HideExclamationMark!
+            if (AActor* GiverActor = FirstStep.QuestGiver.Get())
             {
-                FQuestStep FirstStep = QuestAsset->Steps[0];
+                if (UQuestGiverComponent* GiverComp = GiverActor->FindComponentByClass<UQuestGiverComponent>())
+                {
+                    GiverComp->HideExclamationMark();
+                }
+            }
+            // Progress가 없으면 새로 만듦 (이건 그대로)
+            if (!QuestProgress.Contains(QuestID))
+            {
+                QuestProgress.Add(QuestID, 0);
+
                 for (UQuestCondition* Condition : FirstStep.Conditions)
                 {
                     if (Condition)
@@ -69,9 +82,9 @@ bool UQuestSubsystem::TryStartQuest(FName QuestID, bool bPlayerAccepted)
 
     LastAcceptedQuestID = QuestID;
 
-    if (UQuestDataAsset* QuestAsset = LoadedQuests.FindRef(QuestID))
+    if (UQuestDataAsset* QuestAsset2 = LoadedQuests.FindRef(QuestID))
     {
-        OnQuestStarted.Broadcast(QuestAsset);
+        OnQuestStarted.Broadcast(QuestAsset2);
     }
 
     return true;
@@ -85,6 +98,11 @@ void UQuestSubsystem::OnGameEvent(const FGameplayTag& EventTag, const FGameplayE
 
     for (FName QuestID : KeysToCheck)
     {
+        if (!StepAcceptance.Contains(QuestID) || !StepAcceptance[QuestID])
+        {
+            UE_LOG(LogTemp, Warning, TEXT("[OnGameEvent] Quest %s: 현재 스텝 수락 안됨 -> 조건 무시"), *QuestID.ToString());
+            continue;
+        }
         if (UQuestDataAsset* QuestAsset = LoadedQuests.FindRef(QuestID))
         {
             CheckQuestStepCompletion(QuestAsset, EventTag, EventData);
@@ -122,6 +140,18 @@ void UQuestSubsystem::CheckQuestStepCompletion(const UQuestDataAsset* QuestAsset
             break;
         }
     }
+    if (bAllConditionsMet)
+    {
+        // 현재 스텝의 QuestGiver에게 접근
+        if (AActor* GiverActor = CurrentStep.QuestGiver.Get())
+        {
+            if (UQuestGiverComponent* GiverComp = GiverActor->FindComponentByClass<UQuestGiverComponent>())
+            {
+                // Subsystem은 직접 숨김/생성 하지 않고, ShowQuestionMark만 호출!
+                GiverComp->ShowQuestionMark();
+            }
+        }
+    }
 }
 
 bool UQuestSubsystem::AdvanceQuestStep(FName QuestID)
@@ -156,6 +186,8 @@ bool UQuestSubsystem::AdvanceQuestStep(FName QuestID)
     {
         return CompleteQuest(QuestID);
     }
+
+    StepAcceptance.Add(QuestID, false);
     const FQuestStep& NextStep = QuestAsset->Steps[Index];
    
     for (UQuestCondition* Condition : NextStep.Conditions)
@@ -166,19 +198,11 @@ bool UQuestSubsystem::AdvanceQuestStep(FName QuestID)
         }
     }
 
-    if (AActor* GiverActor = NextStep.QuestGiver.Get())
+    if(AActor * GiverActor = NextStep.QuestGiver.Get())
     {
         if (UQuestGiverComponent* GiverComp = GiverActor->FindComponentByClass<UQuestGiverComponent>())
         {
-            // 여기서 npc 상호작용 가능하게 키기
-            /*if (!GiverComp->ExclamationMarkComponent)
-            {
-                GiverComp->ExclamationMarkComponent = NewObject<UStaticMeshComponent>(GiverActor);
-                GiverComp->ExclamationMarkComponent->SetupAttachment(GiverComp->GetRootComponent());
-                GiverComp->ExclamationMarkComponent->SetStaticMesh(GiverComp->ExclamationMarkMesh);
-                GiverComp->ExclamationMarkComponent->RegisterComponent();
-            }
-            GiverComp->ExclamationMarkComponent->SetVisibility(true);*/
+            GiverComp->ShowExclamationMark();
         }
     }
     
@@ -186,12 +210,20 @@ bool UQuestSubsystem::AdvanceQuestStep(FName QuestID)
     return true;
 }
 
-int32 UQuestSubsystem::GetCurrentStepIndexForQuest(FName QuestID, bool bAutoStartIfNotExists /* = false */)
+int32 UQuestSubsystem::GetCurrentStepIndexForQuest(FName QuestID, bool bAutoStartIfNotExists)
 {
     if (const int32* FoundStep = QuestProgress.Find(QuestID))
     {
         return *FoundStep;
     }
+    if (CompletedQuests.Contains(QuestID))
+    {
+        if (const UQuestDataAsset* QuestAsset = LoadedQuests.FindRef(QuestID))
+        {
+            return QuestAsset->Steps.Num() - 1;
+        }
+    }
+
     if (bAutoStartIfNotExists)
     {
         if (TryStartQuest(QuestID))
@@ -199,9 +231,40 @@ int32 UQuestSubsystem::GetCurrentStepIndexForQuest(FName QuestID, bool bAutoStar
             return 0;
         }
     }
+
     return INDEX_NONE;
 }
 
+void UQuestSubsystem::LoadQuest(const APlayerController* PlayerController, const TMap<FName, int32>& InQuestProgress)
+{
+    QuestProgress = InQuestProgress;
+    
+    if (AHUD* Hud = PlayerController->GetHUD())
+    {
+        if (UQuestListWidget* QuestListWidget = Cast<UQuestListWidget>(Cast<AEmberMainHUD>(Hud)->GetQuestListWidget()))
+        {
+            for (const auto& QuestPair : InQuestProgress)
+            {
+                const FName& QuestID = QuestPair.Key;
+                const int32  Count   = QuestPair.Value;
+                
+                if (const TObjectPtr<UQuestDataAsset>* AssetPtr = LoadedQuests.Find(QuestID))
+                {
+                    UQuestDataAsset* QuestAsset = *AssetPtr;
+                    for (int32 i = 0; i <= Count; ++i)
+                    {
+                        QuestListWidget->AddQuest(QuestAsset, i);
+                    }
+                }
+            }
+        }
+    }
+}
+
+TMap<FName, int32>& UQuestSubsystem::GetQuestProgress()
+{
+    return QuestProgress;
+}
 
 bool UQuestSubsystem::CompleteQuest(FName QuestID)
 {
@@ -224,7 +287,15 @@ bool UQuestSubsystem::CompleteQuest(FName QuestID)
          */
     }
     int32 StepIndex = QuestProgress.FindChecked(QuestID);
-    UE_LOG(LogEmber, Log, TEXT("[CompleteQuest] QuestID: %s, 마지막 StepIndex: %d"), *QuestID.ToString(), StepIndex);
+    //퀘스트 마커 다 끄기
+    const FQuestStep& LastStep = QuestAsset->Steps.Last();
+    if (AActor* GiverActor = LastStep.QuestGiver.Get())
+    {
+        if (UQuestGiverComponent* GiverComp = GiverActor->FindComponentByClass<UQuestGiverComponent>())
+        {
+            GiverComp->HideAllMarks();
+        }
+    }
 
     QuestProgress.Remove(QuestID);
     CompletedQuests.Add(QuestID);
@@ -267,4 +338,12 @@ bool UQuestSubsystem::IsStepCompleted(FName QuestID, int32 StepIndex) const
         *QuestID.ToString(), StepIndex, CurrentIndex, bCompleted);
 
     return bCompleted;
+}
+void UQuestSubsystem::AcceptStep(FName QuestID)
+{
+    if (QuestProgress.Contains(QuestID))
+    {
+        StepAcceptance.Add(QuestID, true);
+        UE_LOG(LogTemp, Warning, TEXT("[AcceptStep] Quest %s: 현재 스텝 수락됨"), *QuestID.ToString());
+    }
 }

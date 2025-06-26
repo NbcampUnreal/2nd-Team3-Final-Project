@@ -27,6 +27,15 @@ void UGA_AnimalAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		Instigator = OwnerInfo->OwnerActor;
 	}
 
+	if (TriggerEventData->EventTag == FGameplayTag::RequestGameplayTag("Trigger.Animal.AttackSpecial"))
+	{
+		IsSpecialAttack = true;
+	}
+	else
+	{
+		IsSpecialAttack= false;
+	}
+
 	if (TriggerEventData->OptionalObject)
 	{
 		Montage = const_cast<UAnimMontage*>(Cast<const UAnimMontage>(TriggerEventData->OptionalObject.Get()));
@@ -38,6 +47,8 @@ void UGA_AnimalAttack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 	if (Task)
 	{
 		Task->OnCompleted.AddDynamic(this, &UGA_AnimalAttack::OnCompleteCallback);
+		Task->OnInterrupted.AddDynamic(this, &UGA_AnimalAttack::OnMontageInterrupted);
+		Task->OnCancelled.AddDynamic(this, &UGA_AnimalAttack::OnMontageInterrupted);
 		Task->ReadyForActivation();
 	}
 }
@@ -46,6 +57,12 @@ void UGA_AnimalAttack::OnCompleteCallback()
 {
 	bool bReplicatedEndAbility = true;
 	bool bWasCancelled = false;
-	
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
+}
+
+void UGA_AnimalAttack::OnMontageInterrupted()
+{
+	bool bReplicatedEndAbility = true;
+	bool bWasCancelled = false;
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
 }

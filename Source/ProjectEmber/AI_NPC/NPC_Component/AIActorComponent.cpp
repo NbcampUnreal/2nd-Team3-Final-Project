@@ -1,15 +1,16 @@
 #include "AIActorComponent.h"
-#include "AI_NPC/AINPCController.h"
+#include "AI_NPC/AIController/AINPCController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 #include "GameFramework/Actor.h"
 #include "AIController.h"
 #include "Engine/World.h"
+#include "AI_NPC/AIController/GhostAIController.h"
 
 UAIActorComponent::UAIActorComponent()
 {
-    PrimaryComponentTick.bCanEverTick = false;  // ������Ʈ��
+    PrimaryComponentTick.bCanEverTick = false;  
 }
 
 void UAIActorComponent::BeginPlay()
@@ -22,7 +23,7 @@ void UAIActorComponent::BeginPlay()
     }
 
     GetWorld()->GetTimerManager().SetTimer(DistanceCheckTimerHandle, this, &UAIActorComponent::CheckPlayerDistance, 1.0f, true);
-    GetWorld()->GetTimerManager().SetTimer(FacePlayerTimerHandle, this, &UAIActorComponent::FacePlayer, 0.02f, true);
+
 }
 
 void UAIActorComponent::CheckPlayerDistance()
@@ -33,10 +34,12 @@ void UAIActorComponent::CheckPlayerDistance()
     AActor* Owner = GetOwner();
     float Distance = FVector::Dist(PlayerPawn->GetActorLocation(), Owner->GetActorLocation());
 
-    const float TeleportThreshold = 200000.f;
+    const float TeleportMinThreshold = 2000.f;       // 최소 텔레포트 거리
+    const float TeleportMaxThreshold = 3000.f;      // 최대 텔레포트 거리
     const float FollowThreshold = 10.f;
 
-    if (Distance > TeleportThreshold)
+    // 텔레포트: 너무 멀지도 너무 가깝지도 않을 때만
+    if (Distance > TeleportMinThreshold && Distance < TeleportMaxThreshold)
     {
         FVector TeleportLocation = PlayerPawn->GetActorLocation() + PlayerPawn->GetActorForwardVector() * -100.f;
         Owner->SetActorLocation(TeleportLocation);
@@ -44,7 +47,6 @@ void UAIActorComponent::CheckPlayerDistance()
         return;
     }
 
-    // AIController�� Pawn�� ���� ����
     APawn* OwnerPawn = Cast<APawn>(Owner);
     if (OwnerPawn)
     {
@@ -62,16 +64,4 @@ void UAIActorComponent::CheckPlayerDistance()
     }
 }
 
-void UAIActorComponent::FacePlayer()
-{
-    APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-    if (!PlayerPawn || !GetOwner()) return;
 
-    AActor* Owner = GetOwner();
-    FVector ToPlayer = (PlayerPawn->GetActorLocation() - Owner->GetActorLocation()).GetSafeNormal();
-    FRotator TargetRot = ToPlayer.Rotation();
-    TargetRot.Pitch = 0.f;
-    TargetRot.Roll = 0.f;
-
-    Owner->SetActorRotation(FMath::RInterpTo(Owner->GetActorRotation(), TargetRot, GetWorld()->GetDeltaSeconds(), 5.0f));
-}

@@ -12,6 +12,29 @@ class UInteractionFragment : public UActorComponent
 	GENERATED_BODY()
 
 public:
+	/** 실행 시도 → 성공 시 실행 */
+	UFUNCTION(BlueprintCallable, Category="Interaction")
+	void TryExecuteInteraction(AActor* Interactor);
+
+	/** 실행 조건 검사 (추상적 조건 포함 가능) */
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
+	bool CanExecuteInteraction(AActor* Interactor) const;
+	
 	UFUNCTION(BlueprintNativeEvent, Category="Interaction")
 	void ExecuteInteraction(AActor* Interactor);
+
+	UFUNCTION(BlueprintNativeEvent, Category="Interaction")
+	void EndInteraction();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction")
+	bool bInteractionEnabled = true;
+
+	UFUNCTION(BlueprintCallable, Category="Interaction")
+	void DisableInteraction() { bInteractionEnabled = false; }
+
+	UFUNCTION(BlueprintCallable, Category="Interaction")
+	void EnableInteraction() { bInteractionEnabled = true; }
+
+	UFUNCTION(BlueprintPure, Category="Interaction")
+	bool IsInteractionEnabled() const { return bInteractionEnabled; }
 };

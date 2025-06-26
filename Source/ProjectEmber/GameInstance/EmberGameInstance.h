@@ -9,11 +9,15 @@
 #include "UObject/SoftObjectPtr.h"
 #include "InputTriggers.h"
 #include "InputModifiers.h"
+#include "EasyMultiSave.h"
+#include "GameInstance/EmberVideoSettings.h"
+#include "GameInstance/EmberSaveGame.h"
 #include "EmberGameInstance.generated.h"
 
 class UAudioSubsystem;
 class ULevelSubsystem;
 class UUserWidget;
+class UEmberLoadingWidget;
 
 UCLASS()
 class PROJECTEMBER_API UEmberGameInstance : public UGameInstance
@@ -27,10 +31,16 @@ public:
 	void TestPlaySound();
 
 	UFUNCTION(BlueprintCallable)
-	void ShowLoadingScreen();
+	void SaveVideoSettingsWithEMS(const FEmberVideoSettings& Settings);
 
 	UFUNCTION(BlueprintCallable)
-	void HideLoadingScreen();
+	FEmberVideoSettings LoadVideoSettingsWithEMS();
+
+	UFUNCTION(BlueprintCallable)
+	void SaveAudioSettingsWithEMS(const FEmberAudioSettings& Settings);
+
+	UFUNCTION(BlueprintCallable)
+	FEmberAudioSettings LoadAudioSettingsWithEMS();
 
 	UFUNCTION(BlueprintCallable)
 	void RequestOpenLevel(FName MapName);
@@ -43,6 +53,13 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ApplySavedMoveBindingsToUserSettings();
+
+	UFUNCTION(BlueprintCallable)
+	void ApplySavedActionKeyMappingsToUserSettings();
+
+	void SaveKeyMappingsWithEMS();
+
+	void LoadKeyMappingsWithEMS();
 
 	UPROPERTY(BlueprintReadWrite)
 	TArray<FEmberDirectionalMoveEntry> SavedMoveBindings;
@@ -68,12 +85,6 @@ private:
 
 	UPROPERTY()
 	ULevelSubsystem* LevelSubsystem;
-
-	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSoftClassPtr<UUserWidget> LoadingScreenClass;
-
-	UPROPERTY()
-	UUserWidget* LoadingScreenWidget;
 
 	FStreamableManager AssetLoader;
 };

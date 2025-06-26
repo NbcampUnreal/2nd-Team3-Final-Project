@@ -24,14 +24,8 @@ protected:
     UFUNCTION()
     void CheckPlayerDistance();
 
-    // 플레이어를 바라보는 회전
-    UFUNCTION()
-    void FacePlayer();
-
     // 타이머 핸들
     FTimerHandle DistanceCheckTimerHandle;
-    FTimerHandle FacePlayerTimerHandle;
-
     // 컴포넌트들
     UPROPERTY(VisibleAnywhere)
     USceneComponent* RootScene;

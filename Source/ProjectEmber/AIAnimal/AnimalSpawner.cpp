@@ -5,9 +5,11 @@
 #include "AIController.h"
 #include "AnimalSpawnPoint.h"
 #include "BaseAIAnimal.h"
+#include "TokenRaidSubsystem.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
-#include "BehaviorTree/BlackboardComponent.h"
 #include "Components/BoxComponent.h"
+#include "GameInstance/GameplayEventSubsystem.h"
+#include "Quest/QuestSubsystem.h"
 
 
 AAnimalSpawner::AAnimalSpawner()
@@ -32,6 +34,12 @@ void AAnimalSpawner::BeginPlay()
 	// FName으로 키값(메세지) 지정하고 델리게이트 전달, 구독했으면 EndPlay에서 해제까지 꼭 하기
 	UMessageBus::GetInstance()->Subscribe(TEXT("HideAnimal"), MessageDelegateHandle);
 	}
+	
+	//시간 받아오는 델리게이트 구독->저장해뒀다가 생성/스폰 시킬 때 사용
+	if (UGameplayEventSubsystem* EventSystem = UGameplayEventSubsystem::GetGameplayEvent(GetWorld()))
+	{
+		EventSystem->OnGameEvent.AddDynamic(this, &AAnimalSpawner::OnGameTimeChanged);
+	}
 }
 
 void AAnimalSpawner::ReceiveMessage(const FName MessageType, UObject* Payload)
@@ -45,14 +53,51 @@ void AAnimalSpawner::ReceiveMessage(const FName MessageType, UObject* Payload)
 
 void AAnimalSpawner::MessageMoveToDead(UObject* Payload)
 {
+	//파밍대기 끝나고 죽으면 대기열 이동만 시키기 -> 리스폰을 위한 처리
 	if (ABaseAIAnimal* Animal = Cast<ABaseAIAnimal>(Payload))
 	{
+		int count =0;
+		for (FAnimalSpawnInfo& Info : AnimalsInfoByToken)
+		{
+			if (Info.SpawnAnimals.Contains(Animal))
+			{
+				Info.SpawnAnimals.Remove(Animal);
+				Info.DeadAnimals.Add(Animal);
+			}
+			if (Info.SpawnAnimals.Num() ==0)
+			{
+				count++;
+			}
+		}
+		if (count == AnimalsInfoByToken.Num())
+		{
+			if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
+			{
+				FGameplayTag EventTag = FGameplayTag::RequestGameplayTag("Quest.Animal.RaidClear");
+				FGameplayEventData Data;
+				Data.EventTag = EventTag;
+				QuestSubsystem->OnGameEvent(EventTag, Data);
+			}
+			TryReleaseToken();
+		}
+
+		if (IdentityTag == FGameplayTag::RequestGameplayTag("Quest.MiniGame.Chasing"))
+		{
+			if (UGameplayEventSubsystem* EventSubsystem = GetGameInstance()->GetSubsystem<UGameplayEventSubsystem>())
+			{
+				FGameplayTag EventTag = FGameplayTag::RequestGameplayTag("Quest.MiniGame.Chasing");
+				FGameplayEventData Data;
+				Data.EventTag = EventTag;
+				EventSubsystem->BroadcastGameEvent(EventTag, Data);
+			}
+			TryReleaseEntire();
+			return;
+		}
+		
 		for (FAnimalSpawnInfo& Info : AnimalsInfo)
 		{
 			if (Info.SpawnAnimals.Contains(Animal))
 			{
-				//UE_LOG(LogTemp, Warning, TEXT("[Hidden] Animal %s (%p)"), *Animal->GetName(), Animal);
-				
 				Info.SpawnAnimals.Remove(Animal);
 				Info.DeadAnimals.Add(Animal);
 				return;
@@ -61,10 +106,51 @@ void AAnimalSpawner::MessageMoveToDead(UObject* Payload)
 	}
 }
 
+void AAnimalSpawner::OnGameTimeChanged(const FGameplayTag& EventTag, const FGameplayEventData& EventData)
+{
+	if (EventTag.MatchesTag(FGameplayTag::RequestGameplayTag(TEXT("Gameplay.Time.Day"))))
+	{
+		// 활동 시작
+		bIsDay = true;
+	}
+	else if (EventTag.MatchesTag(FGameplayTag::RequestGameplayTag(TEXT("Gameplay.Time.Night"))))
+	{
+		// 휴식 상태로 전환
+		bIsDay = false;
+		Weather = EventData.EventMagnitude; // 0.맑음, 1.흐린 2.비 3.천둥
+	}
+}
+
+void AAnimalSpawner::MakeRandomActiveAtNight()
+{
+	//--- 밤에 활동 확률 설정 --------------------------------------------------
+	int32 WeatherCopy = Weather;
+	float AttackProb = 0.15;          // 기본 15 %
+	
+	 // 날씨가 나쁠수록  0.25% =>  0, 0.25, 0.5, 0.75
+	WeatherCopy *= 0.25f;
+	AttackProb += WeatherCopy;           // 총합 ⇒ 0.15, 0.4, 0.65, 0.9
+	//--------------------------------------------------------------------
+
+	// 난수 뽑아서 결정
+	if (FMath::FRand() <= AttackProb)
+	{
+		bIsShouldSleep = false;
+	}
+	else
+	{
+		bIsShouldSleep = true;
+	}
+}
+
 void AAnimalSpawner::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (!CreateInfoQueueByToken.IsEmpty())
+	{
+		TickCreateQueueByToken(CreateInfoQueueByToken);
+	}
 	if (!LoadInfoQueue.IsEmpty())
 	{
 		TickCreateQueue(LoadInfoQueue, bIsLoading);
@@ -117,7 +203,7 @@ void AAnimalSpawner::ActorPreSave_Implementation()
 				SaveInfo.RoleTag = Animal->GetRoleTag();
 				SaveInfo.SpawnInfoIndex = i;
 				SaveInfo.SpawnPointIndex = Closest;
-				
+				SaveInfo.SavedId = SaveId;
 				SaveInfoArray.Emplace(SaveInfo);
 				SaveIndex++;
 			}
@@ -136,6 +222,10 @@ void AAnimalSpawner::ActorLoaded_Implementation()
 	{
 		for (int32 i =0; i<SaveInfoArray.Num(); i++)
 		{
+			if (SpawnPoints.Num() != 0 && SpawnPoints.IsValidIndex(SaveInfoArray[i].SpawnPointIndex))
+			{
+				SpawnPoints[SaveInfoArray[i].SpawnPointIndex]->SetIsCreated(true);
+			}
 			LoadInfoQueue.Enqueue(SaveInfoArray[i]);
 		}
 	}
@@ -143,6 +233,11 @@ void AAnimalSpawner::ActorLoaded_Implementation()
 
 void AAnimalSpawner::DistanceCheck()
 {
+	if (AnimalsInfo.Num() == 0 || SpawnPoints.Num() ==0 || IdentityTag == FGameplayTag::RequestGameplayTag("Quest.MiniGame.Chasing"))
+	{
+		return;
+	}
+	
 	// 로드 중일 때는 새로 생성하지 않음
 	if (bIsLoading)
 	{
@@ -171,7 +266,8 @@ void AAnimalSpawner::DistanceCheck()
 	}
 	else if (DespawnDistance <= Distance)
 	{
-		SortFarthestAnimal();
+		SortFarthestAnimal(AnimalsInfo);
+		TryReleaseToken();
 	}
 	else // 스폰과 디스폰 사이
 	{
@@ -180,6 +276,10 @@ void AAnimalSpawner::DistanceCheck()
 
 TArray<TSoftObjectPtr<AAnimalSpawnPoint>> AAnimalSpawner::DiscardNearestPoint()
 {
+	if (SpawnPoints.Num() == 1)
+	{
+		return SpawnPoints;
+	}
 	// 스폰 조건에 맞는 포인트에 생성
 	int32 Closest = -1;
 	float SpawnPointMinimum = 10000000.f;
@@ -212,6 +312,11 @@ TArray<TSoftObjectPtr<AAnimalSpawnPoint>> AAnimalSpawner::SelectNearPoints(TArra
 	//PerSpawnPoints의 수만큼 정렬 순서대로 스폰
 	//InSpawnPoints.Num() < PerSpawnPoints 라면 PerSpawnPoints = InSpawnPoints.Num() 으로 변경
 
+	if (InSpawnPoints.Num() == 1)
+	{
+		return InSpawnPoints;
+	}
+	
 	APawn* Player = GetWorld()->GetFirstPlayerController()->GetPawn();
 	InSpawnPoints.Sort([Player](TSoftObjectPtr<AAnimalSpawnPoint> A, TSoftObjectPtr<AAnimalSpawnPoint> B)
 	{
@@ -258,28 +363,19 @@ void AAnimalSpawner::TryCreateQueue(TArray<TSoftObjectPtr<AAnimalSpawnPoint>>& I
 			}
 			SpawnPoint->SetIsCreated(true);
 		}
-		else//이미 create됐던 지역이라면 숨겨진 애들만 다시 보이게 처리로 바뀌어야함
+		else
 		{
-			// if (SpawnPoint->GetAliveAnimalsInBox() < PermittedToSpawnLimit) //애들이 다 튀어나가서 포인트 영역안에 사냥하고 잇는 애만 남으면 -> 그녀석 죽이면 바로 재스폰 되버림  -> 영역 제한하거나 포인트가 그 포인트에서 생성된 애들 수나 포인터 들고 있거나
-			// {
-			// 	UE_LOG(LogTemp, Warning, TEXT("SpawnPoint [%s]: Overlapping alive animals: %d"), *SpawnPoint->GetName(), SpawnPoint->GetAliveAnimalsInBox());
-			// 	//타이머 기반 스폰 기능 넣으면 타이머에 TrySpawnDead(AnimalsInfo) 만 바인딩 해서 죽은 애들만 다시 스폰 가능 
-			// 	TrySpawnEntire();
-			// }
-
-			TrySpawnEntire();
-				
-			
+			//스포너에서 생성된 총 동물 수 중 죽어서 리스폰대기열에 PermittedToSpawnLimit 이상 쌓이면 리스폰
+			TrySpawnEntire(AnimalsInfo);
 		}
 	}
 }
 
 void AAnimalSpawner::CreateAnimalsQueue(FAnimalSpawnInfo& Info, TSoftObjectPtr<AAnimalSpawnPoint>& InSpawnPoint)
 {
-	AddCreateQueue(Info, InSpawnPoint, Info.LeaderCount, "Animal.Group.Leader");
-	AddCreateQueue(Info, InSpawnPoint, Info.PatrolCount, "Animal.Group.Patrol");
-	AddCreateQueue(Info, InSpawnPoint, Info.FollowCount, "Animal.Group.Follower");
-	AddCreateQueue(Info, InSpawnPoint, Info.AloneCount , "Animal.Group.Alone");
+	AddCreateQueue(Info, InSpawnPoint, Info.LeaderCount, "Animal.Role.Leader");
+	AddCreateQueue(Info, InSpawnPoint, Info.FollowCount, "Animal.Role.Follower");
+	AddCreateQueue(Info, InSpawnPoint, Info.AloneCount , "Animal.Role.Alone");
 }
 
 void AAnimalSpawner::AddCreateQueue(FAnimalSpawnInfo& Info, TSoftObjectPtr<AAnimalSpawnPoint>& InSpawnPoint, int32 Count, FName RoleTag)
@@ -288,7 +384,7 @@ void AAnimalSpawner::AddCreateQueue(FAnimalSpawnInfo& Info, TSoftObjectPtr<AAnim
 	for (int32 i=0; i < Count; i++)
 	{
 		FAnimalInitInfo InitInfo = GetRandomLocationInSpawnVolume(InSpawnPoint);
-		FAnimalQueueInfo PerAnimalQueueInfo; //여기수정함
+		FAnimalQueueInfo PerAnimalQueueInfo;
 		PerAnimalQueueInfo.AnimalClass = Info.AnimalClass;
 		PerAnimalQueueInfo.InitInfo = InitInfo;
 		PerAnimalQueueInfo.RoleTag = RoleTag;
@@ -323,8 +419,19 @@ void AAnimalSpawner::TickCreateQueue(TQueue<FAnimalQueueInfo>& InQueue, bool& In
 		{
 			continue;
 		}
-		Spawned->SetRoleTag(PerAnimal.RoleTag);
-		Spawned->SetIdleState();
+		if (IdentityTag == FGameplayTag::RequestGameplayTag("Quest.MiniGame.Chasing"))
+		{
+			Spawned->SetRoleTag(PerAnimal.RoleTag);
+			Spawned->SetState(false);
+			Spawned->SwitchBehaviorTree(2);
+			Spawned->TriggerSpeedUp();
+		}
+		else
+		{
+			MakeRandomActiveAtNight();
+			Spawned->SetRoleTag(PerAnimal.RoleTag);
+			Spawned->SetState(bIsShouldSleep);
+		}
 		AnimalsInfo[PerAnimal.SpawnInfoIndex].SpawnAnimals.Emplace(Spawned);
 		++SpawnedThisFrame;
 	}
@@ -335,12 +442,12 @@ void AAnimalSpawner::TickCreateQueue(TQueue<FAnimalQueueInfo>& InQueue, bool& In
 }
 
 //디스폰 : SortFarthestAnimal(정렬 + 큐에 넣기) -> Tick에서 TickDespawnQueue ->ProcessDespawnQueue(해당하는 구조체 찾고, 숨김 TSet으로 이동, 애니멀 숨김처리)
-void AAnimalSpawner::SortFarthestAnimal()
+void AAnimalSpawner::SortFarthestAnimal(TArray<FAnimalSpawnInfo>& InfoArray)
 {
 	TArray<TSoftObjectPtr<ABaseAIAnimal>> SortFarAnimals;
 	APawn* Player = GetWorld()->GetFirstPlayerController()->GetPawn();
 	
-	for (FAnimalSpawnInfo& Info : AnimalsInfo)
+	for (FAnimalSpawnInfo& Info : InfoArray)
 	{
 		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.SpawnAnimals)
 		{
@@ -354,6 +461,10 @@ void AAnimalSpawner::SortFarthestAnimal()
 	//먼순서대로 정렬
 	SortFarAnimals.Sort([Player](const TSoftObjectPtr<ABaseAIAnimal>& A, const TSoftObjectPtr<ABaseAIAnimal>& B)
 	{
+		if (!Player || !A.IsValid() || !B.IsValid())
+		{
+			return false;
+		}
 		float DistA = FVector::DistSquared(A->GetActorLocation(), Player->GetActorLocation());
 		float DistB = FVector::DistSquared(B->GetActorLocation(), Player->GetActorLocation());
 		return DistA > DistB;
@@ -366,6 +477,12 @@ void AAnimalSpawner::SortFarthestAnimal()
 		{
 			DespawnQueue.Enqueue(Animal);
 		}
+	}
+
+	//create 여부 bool 변수 리셋 : 디스폰 나갔다 돌아오면 초기화
+	for (auto& Point: SpawnPoints)
+	{
+		Point->SetIsCreated(false);
 	}
 }
 
@@ -381,40 +498,21 @@ void AAnimalSpawner::TickDespawnQueue()
 		{
 			return;
 		}
-		ProcessDespawnQueue(PerAnimal);
+		PerAnimal->SetHiddenInGame();
 		++DespawnedThisFrame;
 	}
 }
 
-void AAnimalSpawner::ProcessDespawnQueue(TSoftObjectPtr<ABaseAIAnimal>& InAnimal)
-{
-	//살아있거나 파밍대기 상태인 애들
-	if (InAnimal)
-	{
-		for (FAnimalSpawnInfo& Info : AnimalsInfo)
-		{
-			if (Info.SpawnAnimals.Contains(InAnimal.Get()))
-			{
-				InAnimal->SetHiddenInGame();
-				
-				//UE_LOG(LogTemp, Log, TEXT("Despawn Animal pointer: %p"), InAnimal.Get());
-				break;
-			}
-		}
-	}
-}
-
-
 //스폰 : 거리체크 -> 생성 필요없음 -> TrySpawnEntire -> TrySpawnAlive 또는 TrySpawnAlive + TrySpawnDead -> TickSpawnQueue
-void AAnimalSpawner::TrySpawnEntire()
+void AAnimalSpawner::TrySpawnEntire(TArray<FAnimalSpawnInfo>& InfoArray)
 {
 	// 디스폰 -> 스폰 전환시
 	//살아있던 애들만 다시 스폰
 	//살아있는 애들 + 죽은 애들까지 전체 스폰
 	//게임 규칙에 따라 여기서 함수 추가
 	
-	TrySpawnAlive(AnimalsInfo);
-	TrySpawnDead(AnimalsInfo);
+	TrySpawnAlive(InfoArray);
+	TrySpawnDead(InfoArray);
 }
 
 void AAnimalSpawner::TrySpawnAlive(TArray<FAnimalSpawnInfo>& InfoArray)
@@ -471,7 +569,7 @@ void AAnimalSpawner::TrySpawnDead(TArray<FAnimalSpawnInfo>& InfoArray)
 
 void AAnimalSpawner::TickSpawnQueue()
 {
-	//다시 보이개만 처리
+	//다시 보이게, 위치 랜덤 처리
 	
 	int32 SpawnedThisFrame = 0;
 	while (!SpawnQueue.IsEmpty() && SpawnedThisFrame < MaxSpawnPerTick)
@@ -482,6 +580,9 @@ void AAnimalSpawner::TickSpawnQueue()
 		{
 			continue;
 		}
+		MakeRandomActiveAtNight();
+		GetRandomLocationByToken(PerAnimal->GetActorLocation());
+		PerAnimal->SetState(bIsShouldSleep);
 		PerAnimal->SetVisibleInGame();
 		
 		++SpawnedThisFrame;
@@ -494,15 +595,12 @@ void AAnimalSpawner::TryReleaseEntire()
 	// if (GetWorld()->GetTimerManager().IsTimerActive(DistanceTimerHandle))
 	// {
 	// 	GetWorld()->GetTimerManager().PauseTimer(DistanceTimerHandle);
-	// 	UE_LOG(LogTemp, Warning, TEXT("DistanceTimerHandle paused."));
 	// }
-	
-	//전체 메모리 해제
-	//UE_LOG(LogTemp, Warning, TEXT("=== TryReleaseEntire: Start ==="));
 	
 	//큐 정리
 	LoadInfoQueue.Empty();
 	CreateInfoQueue.Empty();
+	CreateInfoQueueByToken.Empty();
 	SpawnQueue.Empty();
 	DespawnQueue.Empty();
 
@@ -510,9 +608,6 @@ void AAnimalSpawner::TryReleaseEntire()
 	for (int32 InfoIndex = 0; InfoIndex < AnimalsInfo.Num(); ++InfoIndex)
 	{
 		FAnimalSpawnInfo& Info = AnimalsInfo[InfoIndex];
-        //UE_LOG(LogTemp, Warning, TEXT("--- Info[%d] ---"), InfoIndex);
-        //UE_LOG(LogTemp, Warning, TEXT("SpawnAnimals Count: %d"), Info.SpawnAnimals.Num());
-        		
 		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.SpawnAnimals)
 		{
 			if (!Animal.IsValid())
@@ -521,12 +616,9 @@ void AAnimalSpawner::TryReleaseEntire()
 			}
 			
 			Animal->Destroy();
-			Animal = nullptr;
 		}
 		Info.SpawnAnimals.Empty();
-		//UE_LOG(LogTemp, Warning, TEXT("SpawnAnimals Count: %d"), Info.SpawnAnimals.Num());
-
-		//UE_LOG(LogTemp, Warning, TEXT("SpawnAnimals Count: %d"), Info.DeadAnimals.Num());
+		
 		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.DeadAnimals)
 		{
 			if (!Animal.IsValid())
@@ -534,10 +626,33 @@ void AAnimalSpawner::TryReleaseEntire()
 				continue;
 			}
 			Animal->Destroy();
-			Animal = nullptr;
 		}
 		Info.DeadAnimals.Empty();
-		//UE_LOG(LogTemp, Warning, TEXT("SpawnAnimals Count: %d"), Info.DeadAnimals.Num());
+	}
+
+	for (int32 InfoIndex = 0; InfoIndex < AnimalsInfoByToken.Num(); ++InfoIndex)
+	{
+		FAnimalSpawnInfo& Info = AnimalsInfoByToken[InfoIndex];
+		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.SpawnAnimals)
+		{
+			if (!Animal.IsValid())
+			{
+				continue;
+			}
+			
+			Animal->Destroy();
+		}
+		Info.SpawnAnimals.Empty();
+		
+		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.DeadAnimals)
+		{
+			if (!Animal.IsValid())
+			{
+				continue;
+			}
+			Animal->Destroy();
+		}
+		Info.DeadAnimals.Empty();
 	}
 
 	for (TSoftObjectPtr<AAnimalSpawnPoint>& Point : SpawnPoints)
@@ -565,10 +680,9 @@ void AAnimalSpawner::TryCreateEntire(TArray<TSoftObjectPtr<AAnimalSpawnPoint>>& 
 
 void AAnimalSpawner::CreateAnimals(FAnimalSpawnInfo& Info, TSoftObjectPtr<AAnimalSpawnPoint>& InSpawnPoint)
 {
-	SpawnAnimalWithTag(Info, InSpawnPoint, "Animal.Group.Leader", Info.LeaderCount);
-	SpawnAnimalWithTag(Info, InSpawnPoint, "Animal.Group.Patrol", Info.PatrolCount);
-	SpawnAnimalWithTag(Info, InSpawnPoint, "Animal.Group.Follower", Info.FollowCount);
-	SpawnAnimalWithTag(Info, InSpawnPoint, "Animal.Group.Alone", Info.AloneCount);
+	SpawnAnimalWithTag(Info, InSpawnPoint, "Animal.Role.Leader", Info.LeaderCount);
+	SpawnAnimalWithTag(Info, InSpawnPoint, "Animal.Role.Follower", Info.FollowCount);
+	SpawnAnimalWithTag(Info, InSpawnPoint, "Animal.Role.Alone", Info.AloneCount);
 }
 
 void AAnimalSpawner::SpawnAnimalWithTag(FAnimalSpawnInfo& Info, TSoftObjectPtr<AAnimalSpawnPoint>& SpawnPoint, FName RoleTag, int32 Count)
@@ -590,16 +704,152 @@ void AAnimalSpawner::SpawnAnimalWithTag(FAnimalSpawnInfo& Info, TSoftObjectPtr<A
 	}
 }
 
+void AAnimalSpawner::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (UGameplayEventSubsystem* EventSystem = UGameplayEventSubsystem::GetGameplayEvent(GetWorld()))
+	{
+		EventSystem->OnGameEvent.RemoveDynamic(this, &AAnimalSpawner::OnGameTimeChanged);
+	}
+	
+	GetWorldTimerManager().ClearTimer(DistanceTimerHandle);
+	UMessageBus::GetInstance()->Unsubscribe(TEXT("HideAnimal"), MessageDelegateHandle);
+
+	Super::EndPlay(EndPlayReason);
+}
+
+void AAnimalSpawner::OnMiniGameEvent()
+{
+	if (!AnimalsInfo.IsValidIndex(0)||!SpawnPoints.IsValidIndex(0))
+	{
+		return;
+	}
+	AddCreateQueue(AnimalsInfo[0], SpawnPoints[0], AnimalsInfo[0].TotalCount, "Animal.Role.Alone");
+}
+
+
+void AAnimalSpawner::OnTokenRaidEvent(FTokenRaidInfo InRow)
+{
+	for (int32 i =0; i<InRow.GroupsPerWave; i++)
+	{
+		FAnimalSpawnInfo Info;
+		Info.AnimalClass = InRow.GroupInfo[i].AnimalClass;
+		Info.TotalCount = InRow.GroupInfo[i].UnitsPerGroup;
+		Info.LeaderCount = 1;
+		Info.FollowCount = InRow.GroupInfo[i].UnitsPerGroup-1;
+
+		AnimalsInfoByToken.Add(Info); //생성되는 객체들 정보를 담음
+	}
+	AddCreateQueueByLocation(AnimalsInfoByToken);
+}
+
+void AAnimalSpawner::AddCreateQueueByLocation(TArray<FAnimalSpawnInfo>& InfoByTokenArray)
+{
+	APawn* Player = GetWorld()->GetFirstPlayerController()->GetPawn();
+	//한 웨이브에 생성되는 그룹 수만큼 돌면서
+	for (int32 i=0; i <InfoByTokenArray.Num() ; i++)
+	{
+		for (int32 j =0; j<InfoByTokenArray[i].TotalCount; j++)
+		{
+			FAnimalInitInfo InitInfo = GetRandomLocationByToken(Player->GetActorLocation());
+			FAnimalQueueInfo PerAnimalQueueInfo;
+			PerAnimalQueueInfo.AnimalClass = InfoByTokenArray[i].AnimalClass;
+			PerAnimalQueueInfo.InitInfo = InitInfo;
+			FName RoleTag = "Animal.Role.Follower";
+			if (j==0)
+			{
+				RoleTag = "Animal.Role.Leader"; // 그룹에서 첫번째가 무조건 리더
+			}
+			PerAnimalQueueInfo.RoleTag = RoleTag;
+			PerAnimalQueueInfo.SpawnInfoIndex = i;
+			CreateInfoQueueByToken.Enqueue(PerAnimalQueueInfo); //동물들 행동을 위한 정보 담음
+		}
+	}
+}
+void AAnimalSpawner::TickCreateQueueByToken(TQueue<FAnimalQueueInfo>& InQueue)
+{
+	int32 SpawnedThisFrame = 0;
+	while (!InQueue.IsEmpty() && SpawnedThisFrame < MaxSpawnPerTick)
+	{
+		FAnimalQueueInfo PerAnimal;
+		InQueue.Dequeue(PerAnimal); //큐에서 맨앞 꺼내고 삭제
+
+		FActorSpawnParameters Params;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+		ABaseAIAnimal* Spawned = GetWorld()->SpawnActor<ABaseAIAnimal>(PerAnimal.AnimalClass,
+													PerAnimal.InitInfo.Location, PerAnimal.InitInfo.Rotation, Params);
+		if (!IsValid(Spawned))
+		{
+			continue;
+		}
+		
+		Spawned->SetRoleTag(PerAnimal.RoleTag);
+		Spawned->SetState(false);
+		Spawned->SwitchBehaviorTree(1);
+		Spawned->TriggerSpeedUp();
+		AnimalsInfoByToken[PerAnimal.SpawnInfoIndex].SpawnAnimals.Emplace(Spawned); // 생성된 객체를 담음
+		++SpawnedThisFrame;
+	}
+
+	//큐가 비었으면 AnimalsInfoByToken 쨰로 토큰 서브시스템한테 넘기기
+	if (UTokenRaidSubsystem* TokenRaidSubsystem = GetGameInstance()->GetSubsystem<UTokenRaidSubsystem>())
+	{
+		TokenRaidSubsystem->RegisterRaidInfoArray(this,AnimalsInfoByToken); // 1웨이브에 쓰일 모든 객체들
+	}
+}
+
+FVector AAnimalSpawner::GetRandomXY(FVector SpawnLocation, FVector Extent)
+{
+	int RandomSign = FMath::RandRange(0, 1) == 0 ? -1 : 1;
+	const float RandomX = RandomSign * FMath::RandRange(-Extent.X, Extent.X);
+	RandomSign = FMath::RandRange(0, 1) == 0 ? -1 : 1;
+	const float RandomY = RandomSign * FMath::RandRange(-Extent.Y, Extent.Y);
+	SpawnLocation += FVector(RandomX, RandomY, 0.f);
+	return SpawnLocation;
+}
+
+FVector AAnimalSpawner::SpawnLineTrace(FVector SpawnLocation, float Start, float End)
+{
+	// 바닥 감지를 위한 라인트레이스
+	FHitResult HitResult;
+	FVector TraceStart = SpawnLocation + FVector(0.f, 0.f, 1000.f); // 위
+	FVector TraceEnd = SpawnLocation - FVector(0.f, 0.f, 4000.f);   // 아래
+
+	FCollisionQueryParams TraceParams(FName(TEXT("GroundTrace")), false, this);
+
+	if (GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, TraceParams)) //월드에서 테스트 해보고 채널 바꿔보기
+	{
+		SpawnLocation.Z = HitResult.ImpactPoint.Z;
+	}
+	return SpawnLocation;
+}
+
 FAnimalInitInfo AAnimalSpawner::GetRandomLocationInSpawnVolume(TSoftObjectPtr<AAnimalSpawnPoint>& SpawnPoint)
 {
 	FVector SpawnLocation = SpawnPoint->GetActorLocation();
 	UBoxComponent* BoxComp = SpawnPoint->FindComponentByClass<UBoxComponent>();
 	FVector BoxExtent = BoxComp->GetScaledBoxExtent();
-	int RandomSign = FMath::RandRange(0, 1) == 0 ? -1 : 1;
-	const float RandomX = RandomSign * FMath::RandRange(-BoxExtent.X, BoxExtent.X);
-	RandomSign = FMath::RandRange(0, 1) == 0 ? -1 : 1;
-	const float RandomY = RandomSign * FMath::RandRange(-BoxExtent.Y, BoxExtent.Y);
-	SpawnLocation += FVector(RandomX, RandomY, 0.f);
+	SpawnLocation = GetRandomXY(SpawnLocation, BoxExtent);
+
+	SpawnLocation = SpawnLineTrace(SpawnLocation,1000.f, 4000.f);
+	
+	FRotator SpawnRotation = FRotator::ZeroRotator;
+	SpawnRotation.Yaw = FMath::RandRange(-150.f, 150.f);
+
+	FAnimalInitInfo InitInfo;
+	InitInfo.Location = SpawnLocation;
+	InitInfo.Rotation = SpawnRotation;
+	
+	return InitInfo;
+}
+
+FAnimalInitInfo AAnimalSpawner::GetRandomLocationByToken(FVector PlayerLocation)
+{
+	FVector SpawnLocation = PlayerLocation;
+	FVector Extent = FVector(1200.f,1200.f,0.f);
+	SpawnLocation = GetRandomXY(SpawnLocation, Extent);
+
+	SpawnLocation = SpawnLineTrace(SpawnLocation,1000.f, 4000.f);
 
 	FRotator SpawnRotation = FRotator::ZeroRotator;
 	SpawnRotation.Yaw = FMath::RandRange(-150.f, 150.f);
@@ -611,10 +861,41 @@ FAnimalInitInfo AAnimalSpawner::GetRandomLocationInSpawnVolume(TSoftObjectPtr<AA
 	return InitInfo;
 }
 
-void AAnimalSpawner::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	Super::EndPlay(EndPlayReason);
 
-	GetWorldTimerManager().ClearTimer(DistanceTimerHandle);
-	UMessageBus::GetInstance()->Unsubscribe(TEXT("HideAnimal"), MessageDelegateHandle);
+FGameplayTag AAnimalSpawner::GetIdentityTag() const
+{
+	return IdentityTag;
+}
+
+
+void AAnimalSpawner::TryReleaseToken()
+{
+	GetWorld()->GetGameInstance()->GetSubsystem<UTokenRaidSubsystem>()->TryReleaseToken();
+	CreateInfoQueueByToken.Empty();
+
+	for (int32 InfoIndex = 0; InfoIndex < AnimalsInfoByToken.Num(); ++InfoIndex)
+	{
+		FAnimalSpawnInfo& Info = AnimalsInfoByToken[InfoIndex];
+		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.SpawnAnimals)
+		{
+			if (!Animal.IsValid())
+			{
+				continue;
+			}
+			
+			Animal->Destroy();
+		}
+		Info.SpawnAnimals.Empty();
+		
+		for (TSoftObjectPtr<ABaseAIAnimal>& Animal : Info.DeadAnimals)
+		{
+			if (!Animal.IsValid())
+			{
+				continue;
+			}
+			Animal->Destroy();
+		}
+		Info.DeadAnimals.Empty();
+	}
+	AnimalsInfoByToken.Empty();
 }

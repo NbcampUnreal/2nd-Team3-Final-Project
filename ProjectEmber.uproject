@@ -13,7 +13,9 @@
 				"Engine",
 				"UMG",
 				"GameplayAbilities",
-				"EnhancedInput"
+				"EnhancedInput",
+				"EasyMultiSave",
+				"CoreUObject"
 			]
 		},
 		{
@@ -83,6 +85,28 @@
 		},
 		{
 			"Name": "MotionWarping",
+			"Enabled": true
+		},
+		{
+			"Name": "TargetSystem",
+			"Enabled": true,
+			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/6bd21ce58d6e4cb295f71bd370233f53"
+		},
+		{
+			"Name": "AsyncLoadingScreen",
+			"Enabled": true,
+			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/01f39767dc6b4290877f38365787cbf8"
+		},
+		{
+			"Name": "SkillSystem",
+			"Enabled": true
+		},
+		{
+			"Name": "OnlineSubsystemSteam",
+			"Enabled": true
+		},
+		{
+			"Name": "OnlineFramework",
 			"Enabled": true
 		}
 	]

@@ -11,6 +11,8 @@
 #include "GameFramework/Character.h"
 #include "MessageBus/MessageBus.h"
 #include "MotionWarpingComponent.h"
+#include "SkillManagerSubsystem.h"
+#include "Attribute/Player/EmberPlayerAttributeSet.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -24,7 +26,7 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
+	
 	/* 모든 행동에대한 코스트, 쿨타임 등을 한번에 처리하고 bool 리턴해줌 */
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
@@ -32,17 +34,37 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 		return;
 	}
 
-	if (!bLoopingMontage && bIsWarping)
+	if (bIsBlockAbility)
 	{
-		SetUpdateWarping();
-	}
+		UAbilitySystemComponent* Asc = GetAbilitySystemComponentFromActorInfo();
+		
+		Asc->AddLooseGameplayTag(AlsCharacterStateTags::Parrying);
 
+		if (const UEmberPlayerAttributeSet* PlayerAttributesSet = Asc->GetSet<UEmberPlayerAttributeSet>())
+		{
+			GetAvatarActorFromActorInfo()->GetWorld()->GetTimerManager().SetTimer(ParryingTimerHandle,
+			FTimerDelegate::CreateUObject(this, &UBaseOverlayAbility::OnParryEnded),
+			/* 추후 어트리뷰트에서 패링판정 시간을 가져와서 세팅해주기 */ PlayerAttributesSet->GetParryDuration(), 
+			false
+			);		
+		}
+	}
+	
 	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
 	{
 		Character->SetForceGameplayTags(ForceGameplayTags);
 		//Character->ForceLastInputDirectionBlocked(true);
 		//PreLocomotionState = Character->GetLocomotionState();
-
+		if (!bIsBlockAbility)
+		{
+			Character->SetCancelAbilityInput(false);
+		}
+	
+		if (!bLoopingMontage && bIsWarping && Character->GetLocomotionMode() != AlsLocomotionModeTags::InAir)
+		{
+			SetUpdateWarping();
+		}
+		
 		if (bMontageTickEnable)
 		{
 			Character->GetWorld()->GetTimerManager().SetTimer(
@@ -69,7 +91,7 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	PlayMontageTask->OnCompleted.AddDynamic(this, &UBaseOverlayAbility::OnMontageCompleted);
 	PlayMontageTask->OnInterrupted.AddDynamic(this, &UBaseOverlayAbility::OnMontageInterrupted);
 	PlayMontageTask->OnCancelled.AddDynamic(this, &UBaseOverlayAbility::OnMontageInterrupted);
-	PlayMontageTask->OnBlendOut.AddDynamic(this, &UBaseOverlayAbility::OnMontageCompleted);
+	//PlayMontageTask->OnBlendOut.AddDynamic(this, &UBaseOverlayAbility::OnMontageCompleted);
 	
 	//PlayMontageTask->OnBlendOut.AddDynamic(this, &UBaseOverlayAbility::OnMontageCompleted);
 	//PlayMontageTask->OnBlendOut
@@ -118,6 +140,9 @@ void UBaseOverlayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	{
 		AbilitySystemComponent->TryActivateAbilityByClass(AbilityClass,false);
 	}
+
+	AbilitySystemComponent->RemoveLooseGameplayTag(AlsCharacterStateTags::Parrying);
+	//AbilitySystemComponent->RemoveLooseGameplayTag(AlsCharacterStateTags::Blocking);
 	
 	UMessageBus::GetInstance()->BroadcastMessage(TEXT("OverlayAbilityEnded"), GetAvatarActorFromActorInfo());
 }
@@ -179,14 +204,27 @@ void UBaseOverlayAbility::OnComboNotify(const FGameplayEventData Payload)
 {
 	if (bCanCombo && bComboInputReceived)
 	{
-		if (!AbilitySystemComponent->TryActivateAbilityByClass(NextComboAbility,false))
+		USkillManagerSubsystem* SkillManagerSubsystem = GetAvatarActorFromActorInfo()->GetGameInstance()->GetSubsystem<USkillManagerSubsystem>();
+		auto Abilities = SkillManagerSubsystem->GetNextComboAbilities(ThisClass::GetClass());
+		// 나중에 좌클릭눌렷는지 우클릭눌렷는지 Received에서 판단해서 나누자
+		if (Abilities.Num() > 0)
 		{
-			EMBER_LOG(LogEmber,Warning, TEXT("Failed to activate next combo ability: %s"), *NextComboAbility->GetName());
+			if (!AbilitySystemComponent->TryActivateAbilityByClass(Abilities[0],false))
+			{
+				EMBER_LOG(LogEmber,Warning, TEXT("Failed to activate next combo ability: %s"), *Abilities[0]->GetName());
+			}
 		}
 		
 		bool bReplicatedEndAbility = true;
 		bool bWasCancelled = false;
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
+	}
+	else if (bCanCombo && !bComboInputReceived)
+	{
+		if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
+		{
+			Character->SetCancelAbilityInput(true);
+		}
 	}
 }
 
@@ -207,6 +245,14 @@ void UBaseOverlayAbility::OnBlendOut()
 {
 }
 
+void UBaseOverlayAbility::OnParryEnded()
+{
+	if (UAbilitySystemComponent* Asc = GetAbilitySystemComponentFromActorInfo_Ensured())
+	{
+		Asc->RemoveLooseGameplayTag(AlsCharacterStateTags::Parrying);
+	}
+}
+
 void UBaseOverlayAbility::SetUpdateWarping()
 {
 	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
@@ -218,7 +264,17 @@ void UBaseOverlayAbility::SetUpdateWarping()
 		const FVector Right   = FRotationMatrix(CtrlRot).GetScaledAxis(EAxis::Y);
 		
 		const FVector2D MoveInput = Character->GetMoveInput();
-		FVector MoveDir = (Forward * MoveInput.Y + Right * MoveInput.X).GetSafeNormal();
+		FVector MoveDir;
+		
+		if (MoveInput.Size() <= 0.1f)
+		{
+			MoveDir = Character->GetActorForwardVector();
+		}
+		else
+		{
+			MoveDir = (Forward * MoveInput.Y + Right * MoveInput.X).GetSafeNormal();	
+		}
+		
 		if (MoveDir.IsNearlyZero())
 		{
 			MoveDir = Forward;

@@ -69,3 +69,13 @@ void UGameMenuWidget::UpdateQuestInfoViaWidgetTree()
         UE_LOG(LogTemp, Warning, TEXT("WBP_Questcontents 위젯을 찾을 수 없음"));
     }
 }
+
+UUserWidget* UGameMenuWidget::GetSkillTreeWidget() const
+{
+    return WBP_SkillTree;
+}
+
+UUserWidget* UGameMenuWidget::GetQuestListWidget() const
+{
+    return Cast<UUserWidget>(WBP_Quest->WidgetTree->FindWidget(FName("WBP_QuestListWidget")));
+}

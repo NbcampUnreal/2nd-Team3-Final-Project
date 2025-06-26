@@ -18,9 +18,18 @@
 			"Name": "TargetSystem",
 			"Type": "Runtime",
 			"LoadingPhase": "PreDefault",
+			"AdditionalDependencies": [
+				"ALS"
+			],
 			"PlatformAllowList": [
 				"Win64"
 			]
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "ALS",
+			"Enabled": true
 		}
 	]
 }

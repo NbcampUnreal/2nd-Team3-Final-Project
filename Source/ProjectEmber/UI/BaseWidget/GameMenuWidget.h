@@ -30,18 +30,26 @@ public:
     UFUNCTION(BlueprintCallable)
     void UpdateQuestInfoViaWidgetTree();
 
+	UFUNCTION(BlueprintCallable, Category="UI|Layer")
+	UUserWidget* GetSkillTreeWidget() const;
+
+	UUserWidget* GetQuestListWidget() const;
 public:
     // Toggle 시 접근할 수 있도록 public으로 설정
     UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
-    UWidgetSwitcher* WidgetSwitcher;
+    UWidgetSwitcher* BaseWidgetSwitcher;
 
     UPROPERTY(meta = (BindWidget), BlueprintReadWrite)
     UBorder* EmptyBorder;
 
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
+	UUserWidget* WBP_SkillTree;
+	
 protected:
-
+	
     /** 중간 퀘스트 래퍼 위젯 (블루프린트: WBP_Quest) */
     UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
     UUserWidget* WBP_Quest;
+	
 
 };

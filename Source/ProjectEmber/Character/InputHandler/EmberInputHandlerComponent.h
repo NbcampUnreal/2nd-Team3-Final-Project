@@ -86,6 +86,24 @@ public: /* Base Input */
 
 	UPROPERTY(EditAnywhere, Category="Input") 
 	TObjectPtr<UInputAction> BuildAction;
+
+	UPROPERTY(EditAnywhere, Category="Input") 
+	TObjectPtr<UInputAction> TargetAction;
+
+	UPROPERTY(EditAnywhere, Category="Input") 
+	TObjectPtr<UInputAction> ThrowQuickAction;
+
+	UPROPERTY(EditAnywhere, Category="Input") 
+	TObjectPtr<UInputAction> ThrowOverlayAction;
+
+	UPROPERTY(EditAnywhere, Category="Input") 
+	TObjectPtr<UInputAction> ItemQuickAction;
+
+	UPROPERTY(EditAnywhere, Category="Input") 
+	TObjectPtr<UInputAction> ScanAction;
+
+	UPROPERTY(EditAnywhere, Category="Input") 
+	TObjectPtr<UInputAction> BlockAction;
 	
 	UPROPERTY(EditAnywhere, Category="Input") 
 	TArray<TObjectPtr<UInputAction>> QuickSlotActions;
@@ -114,7 +132,8 @@ public: /* UI Input */
 	UPROPERTY(EditAnywhere, Category="Input|UI") 
 	TObjectPtr<UInputAction> UIPauseAction;
 
-
+	UPROPERTY(EditAnywhere, Category = "Input|UI")
+	TObjectPtr<UInputAction> UICloseDialogueAction;
 private:
 	UPROPERTY()
 	TObjectPtr<UEnhancedInputComponent> InputComp;

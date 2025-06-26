@@ -38,8 +38,7 @@ void UEQC_TargetActor::ProvideContext(FEnvQueryInstance& QueryInstance, FEnvQuer
 		return;
 	}
 
-	UObject* TargetObject = BlackboardComp->GetValueAsObject("TargetObject");
-
+	UObject* TargetObject = BlackboardComp->GetValueAsObject("TargetActor");
 	AActor* TargetActor = Cast<AActor>(TargetObject);
 	if (TargetActor)
 	{

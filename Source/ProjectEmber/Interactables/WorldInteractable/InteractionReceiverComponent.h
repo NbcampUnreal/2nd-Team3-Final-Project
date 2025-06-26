@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "InteractionReceiverComponent.generated.h"
 
+class UInteractionCondition;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FActivateAction1, AActor*, CausingActor);  
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FActivateAction2, AActor*, CausingActor);  
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FActivateAction3, AActor*, CausingActor);  
@@ -16,6 +17,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FActivateAction7, AActor*, CausingAc
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FActivateAction8, AActor*, CausingActor);  
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FActivateAction9, AActor*, CausingActor);  
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FActivateAction10, AActor*, CausingActor);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInteractionCompleted, AActor*, CompletedBy, bool, bCanBeTriggeredAgain);
+
 
 UCLASS( Blueprintable, meta=(BlueprintSpawnableComponent) )
 class PROJECTEMBER_API UInteractionReceiverComponent : public UActorComponent
@@ -25,12 +28,18 @@ class PROJECTEMBER_API UInteractionReceiverComponent : public UActorComponent
 public:	
 	UInteractionReceiverComponent();
 
-protected:
-	virtual void BeginPlay() override;
+	UFUNCTION(BlueprintCallable, Category="Interaction")
+	void EvaluateDeactivationConditions(const TArray<UInteractionCondition*>& Conditions);
 
-public:	
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	UFUNCTION(BlueprintCallable, Category="Interaction")
+	void BroadCastInteractionCompleted(AActor* CompletedBy);
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction")
+	bool bCanBeTriggeredAgain = true;
+	
+	UPROPERTY(BlueprintAssignable, Category="Interaction")
+	FOnInteractionCompleted OnInteractionCompleted;
+	
 	UPROPERTY(BlueprintAssignable, Category="Interaction")
 	FActivateAction1 ActivateAction1;
 	

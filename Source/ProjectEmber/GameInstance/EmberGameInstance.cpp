@@ -1,6 +1,10 @@
 #include "GameInstance/EmberGameInstance.h"
 #include "GameInstance/AudioSubsystem.h"
 #include "GameInstance/LevelSubsystem.h"
+#include "EasyMultiSave.h"
+#include "EMSFunctionLibrary.h"
+#include "GameInstance/EmberSaveGame.h"
+#include "GameFramework/GameUserSettings.h" 
 #include "UI/EmberKeySettingWidget.h"
 #include "EnhancedInputSubsystems.h"
 #include "UserSettings/EnhancedInputUserSettings.h"
@@ -16,6 +20,13 @@ void UEmberGameInstance::Init()
 
 	AudioSubsystem = GetSubsystem<UAudioSubsystem>();
 	LevelSubsystem = GetSubsystem<ULevelSubsystem>();
+
+    if (UGameUserSettings* Settings = GEngine->GetGameUserSettings())
+    {
+        Settings->LoadSettings(true);
+    }
+
+    LoadKeyMappingsWithEMS();
 }
 
 void UEmberGameInstance::TestPlaySound()
@@ -23,52 +34,9 @@ void UEmberGameInstance::TestPlaySound()
 	AudioSubsystem->PlayBGMSoundByArea(EAreaType::LobbyArea);
 }
 
-void UEmberGameInstance::ShowLoadingScreen()
-{
-	UE_LOG(LogTemp, Warning, TEXT("[Loading] ShowLoadingScreen called"));
-
-	if (!LoadingScreenClass.IsValid())
-	{
-		LoadingScreenClass.LoadSynchronous();
-	}
-
-	if (!LoadingScreenClass.IsValid()) return;
-
-	if (!LoadingScreenWidget)
-	{
-		LoadingScreenWidget = CreateWidget<UUserWidget>(this, LoadingScreenClass.Get());
-	}
-
-	if (LoadingScreenWidget && !LoadingScreenWidget->IsInViewport())
-	{
-		LoadingScreenWidget->AddToViewport(100);
-		UE_LOG(LogTemp, Warning, TEXT("[Loading] Widget Added To Viewport"));
-	}
-
-	if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
-	{
-		PC->bShowMouseCursor = false;
-		PC->SetInputMode(FInputModeUIOnly());
-	}
-}
-
-void UEmberGameInstance::HideLoadingScreen()
-{
-	if (LoadingScreenWidget && LoadingScreenWidget->IsInViewport())
-	{
-		LoadingScreenWidget->RemoveFromParent();
-	}
-}
-
 void UEmberGameInstance::RequestOpenLevel(FName MapName)
 {
-	ShowLoadingScreen();
-
-	FTimerHandle TimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this, MapName]()
-		{
-			UGameplayStatics::OpenLevel(this, MapName);
-		}, 0.8f, false);
+    UGameplayStatics::OpenLevel(this, MapName);
 }
 
 void UEmberGameInstance::TestPlaySFX(ESfxSoundType SoundType, const FName RowName, FVector Location)
@@ -138,4 +106,124 @@ void UEmberGameInstance::ApplySavedMoveBindingsToUserSettings()
     }
 
     UE_LOG(LogTemp, Warning, TEXT("=== UserSettings mapping complete ==="));
+}
+
+void UEmberGameInstance::ApplySavedActionKeyMappingsToUserSettings()
+{
+    if (SavedMappings.Num() == 0)
+        return;
+
+    APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+    if (!PC) return;
+
+    ULocalPlayer* LP = PC->GetLocalPlayer();
+    if (!LP) return;
+
+    UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(LP);
+    if (!Subsystem) return;
+
+    UEnhancedInputUserSettings* UserSettings = Subsystem->GetUserSettings();
+    if (!UserSettings) return;
+
+    for (const auto& Entry : SavedMappings)
+    {
+        FMapPlayerKeyArgs Args;
+        Args.MappingName = Entry.MappingName;
+        Args.NewKey = Entry.BoundKey;
+        Args.Slot = EPlayerMappableKeySlot::First;
+        FGameplayTagContainer FailureReason;
+        UserSettings->MapPlayerKey(Args, FailureReason);
+
+        UE_LOG(LogTemp, Warning, TEXT("[KeyRemap] Apply: %s -> %s | Fail: %s"),
+            *Entry.MappingName.ToString(),
+            *Entry.BoundKey.ToString(),
+            *FailureReason.ToString());
+    }
+    UserSettings->SaveSettings();
+
+}
+
+void UEmberGameInstance::SaveKeyMappingsWithEMS()
+{
+    UEmberSaveGame* SaveGameInstance = Cast<UEmberSaveGame>(
+        UEMSFunctionLibrary::GetCustomSave(this, UEmberSaveGame::StaticClass(), TEXT("KeyRemapSlot"), TEXT(""))
+    );
+    if (!SaveGameInstance)
+    {
+        SaveGameInstance = NewObject<UEmberSaveGame>(this, UEmberSaveGame::StaticClass());
+    }
+
+    SaveGameInstance->SavedMappings = SavedMappings;
+    SaveGameInstance->SavedMoveBindings = SavedMoveBindings;
+
+    UEMSFunctionLibrary::SaveCustom(this, SaveGameInstance);
+}
+
+void UEmberGameInstance::LoadKeyMappingsWithEMS()
+{
+    UEmberSaveGame* LoadedSave = Cast<UEmberSaveGame>(
+        UEMSFunctionLibrary::GetCustomSave(this, UEmberSaveGame::StaticClass(), TEXT("KeyRemapSlot"), TEXT(""))
+    );
+    if (LoadedSave)
+    {
+        SavedMappings = LoadedSave->SavedMappings;
+        SavedMoveBindings = LoadedSave->SavedMoveBindings;
+    }
+}
+
+void UEmberGameInstance::SaveVideoSettingsWithEMS(const FEmberVideoSettings& Settings)
+{
+    UEmberSaveGame* SaveGameInstance = Cast<UEmberSaveGame>(
+        UEMSFunctionLibrary::GetCustomSave(this, UEmberSaveGame::StaticClass(), TEXT("VideoSettingSlot"), TEXT(""))
+    );
+    if (!SaveGameInstance)
+    {
+        SaveGameInstance = NewObject<UEmberSaveGame>(this, UEmberSaveGame::StaticClass());
+    }
+
+    SaveGameInstance->SavedVideoSettings = Settings;
+
+    UEMSFunctionLibrary::SaveCustom(this, SaveGameInstance);
+}
+
+FEmberVideoSettings UEmberGameInstance::LoadVideoSettingsWithEMS()
+{
+    UEmberSaveGame* LoadedSave = Cast<UEmberSaveGame>(
+        UEMSFunctionLibrary::GetCustomSave(this, UEmberSaveGame::StaticClass(), TEXT("VideoSettingSlot"), TEXT(""))
+    );
+
+    if (LoadedSave)
+    {
+        return LoadedSave->SavedVideoSettings;
+    }
+
+    return FEmberVideoSettings();
+}
+
+void UEmberGameInstance::SaveAudioSettingsWithEMS(const FEmberAudioSettings& Settings)
+{
+    UEmberSaveGame* SaveGameInstance = Cast<UEmberSaveGame>(
+        UEMSFunctionLibrary::GetCustomSave(this, UEmberSaveGame::StaticClass(), TEXT("AudioSettingSlot"), TEXT(""))
+    );
+    if (!SaveGameInstance)
+    {
+        SaveGameInstance = NewObject<UEmberSaveGame>(this, UEmberSaveGame::StaticClass());
+    }
+
+    SaveGameInstance->SavedAudioSettings = Settings;
+    UEMSFunctionLibrary::SaveCustom(this, SaveGameInstance);
+}
+
+FEmberAudioSettings UEmberGameInstance::LoadAudioSettingsWithEMS()
+{
+    UEmberSaveGame* Loaded = Cast<UEmberSaveGame>(
+        UEMSFunctionLibrary::GetCustomSave(this, UEmberSaveGame::StaticClass(), TEXT("AudioSettingSlot"), TEXT(""))
+    );
+
+    if (Loaded)
+    {
+        return Loaded->SavedAudioSettings;
+    }
+
+    return FEmberAudioSettings();
 }

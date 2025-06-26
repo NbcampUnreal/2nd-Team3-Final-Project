@@ -9,3 +9,9 @@ void UInteractionFragment_Spawn::ExecuteInteraction_Implementation(AActor* Inter
 	UWorld* World = GetOwner()->GetWorld();
 	SpawnActors(World);
 }
+
+void UInteractionFragment_Spawn::EndInteraction_Implementation()
+{
+	Super::EndInteraction_Implementation();
+	DestroySpawnedActors();
+}

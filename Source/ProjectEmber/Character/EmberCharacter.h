@@ -4,6 +4,7 @@
 #include "AlsCharacter.h"
 #include "AbilitySystemInterface.h"
 #include "EMSActorSaveInterface.h"
+#include "MessageBus/MessageBus.h"
 #include "EmberCharacter.generated.h"
 
 class UEmberHpBarUserWidget;
@@ -22,6 +23,7 @@ class UAlsCameraComponent;
 class UEmberInputHandlerComponent;
 class UMeleeTraceComponent;
 struct FInputActionValue;
+class UDialogueComponent;
 
 UCLASS()
 class PROJECTEMBER_API AEmberCharacter : public AAlsCharacter, public IAbilitySystemInterface, public IEMSActorSaveInterface
@@ -35,10 +37,13 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 	virtual void PossessedBy(AController* NewController) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
 private:
 	void SetupEmberInputComponent() const;
 	
+public:
+	//TSharedPtr<class IOnlineSession, ESPMode::ThreadSafe> OnlineSessionInterface;
 public: /* Character */
 	virtual UMeleeTraceComponent* GetMeleeTraceComponent() const;
 	
@@ -48,6 +53,9 @@ public: /* Character */
 	UPROPERTY(EditAnywhere, Category = "InteractionSystem")
 	TObjectPtr<class UInteractionComponent> InteractionComponent;
 
+	UPROPERTY(EditAnywhere, Category = "DeathWidget")
+	TSubclassOf<class UUserWidget> DeathWidgetClass;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UMeleeTraceComponent* MeleeTraceComponent;
@@ -55,9 +63,28 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<class UMotionWarpingComponent> MotionWarpComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TargetSystem", meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<UTargetSystemComponent> TargetSystemComponent;
+
+public: /* TargetSystem */
+	UFUNCTION(BlueprintCallable, Category = "TargetSystem")
+	UTargetSystemComponent* GetTargetSystemComponent() const;
+
+	UFUNCTION()
+	void OnTargetLockedOff(AActor* TargetActor);
 	
+	void DelayToSendHitActors();
+	
+	void ReceiveHitActorDeath(AActor* InstigatorActor);
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<AActor*> HitActors;
+
+	FTimerHandle HitTimerHandle;
+	FTimerHandle HitDeathTimerHandle;
+	FTimerHandle HitTimerInputHandle;
+	int32 HitActorsIndex{0};
+	bool bIsHitActorsInputReset{false};
 protected: /* Mesh */
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> VisualCharacterMesh;
@@ -119,7 +146,10 @@ protected:
 
 	void AbilityInputPressed(int32 InputID);
 	FGameplayAbilitySpec* GetSpecFromOverlayMode(const bool IsRightInput = false) const;
+	FGameplayAbilitySpec* GetBlockSpecFromOverlayMode() const;
 	void TryAbilityFromOnAim(const bool bPressed);
+	void TryAbilityFromOnBlock(bool bPressed);
+
 protected:
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
@@ -132,6 +162,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
 	TMap<int32, TSubclassOf<class UGameplayAbility>> StartRightInputAbilities;
+
+	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
+	TMap<int32, TSubclassOf<class UGameplayAbility>> StartBlockInputAbilities;
+
+	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
+	TSubclassOf<class UGameplayAbility> DodgeAbilityClass;
 	
 	bool bClientAbility{false};
 	
@@ -171,6 +207,7 @@ protected:
 	virtual void Input_OnCrouch();
 	virtual void Input_OnJump(const FInputActionValue& ActionValue);
 	virtual void Input_OnAim(const FInputActionValue& ActionValue);
+	virtual void Input_OnBlock(const FInputActionValue& ActionValue);
 	virtual void Input_OnGlide();
 	virtual void Input_OnRagdoll();
 	virtual void Input_OnRoll();
@@ -179,11 +216,27 @@ protected:
 	virtual void Input_OnSwitchShoulder();
 	virtual void Input_OnQuickSlot(int32 PressedIndex);
 	virtual void Input_OnBuild();
+	
+	virtual void Input_OnSwitchTarget(const FInputActionValue& ActionValue);
+	virtual void Input_OnStartTarget(const FInputActionValue& ActionValue);
+	virtual void OnResetTarget();
+	
+	virtual void Input_OnStartThrowQuick(const FInputActionValue& ActionValue);
+	virtual void Input_OnCancelThrowQuick(const FInputActionValue& ActionValue);
+	virtual void Input_OnSwitchThrowOverlay(const FInputActionValue& ActionValue);
+	virtual void Input_OnStartItemQuick(const FInputActionValue& ActionValue);
+	virtual void Input_OnCancelItemQuick(const FInputActionValue& ActionValue);
+	virtual void Input_OnStartScan(const FInputActionValue& ActionValue);
 
+	virtual void Input_OnCloseDialogue();
+	
+	
+	FGameplayTag PreThrowOverlayTag;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "EmberCharacter")
 	TObjectPtr<UEmberInputHandlerComponent> InputHandler;
 
 	friend class UEmberInputHandlerComponent;
+
 
 protected:
 	/** 글라이드 시 전방(Forward) 속도 */
@@ -196,17 +249,29 @@ protected:
 
 	/** 글라이드 시 중력 스케일 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Glide")
-	float GlideGravityScale = 0.f;
+	float GlideGravityScale = 0.1f;
 
 	/** 기본 낙하 */
 	float DefaultGravityScale = 1.0f;
 
 	FGameplayTag PreOverlayTag;
 
-protected:
-	//UFUNCTION()
-	//void HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, AActor* HitActor, const FVector& HitLocation, const FVector& HitNormal, FName HitBoneName, FMeleeTraceInstanceHandle TraceHandle);
+protected: /* MeleeTrace */
+	UFUNCTION()
+	void HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, AActor* HitActor, const FVector& HitLocation, const FVector& HitNormal, FName HitBoneName, FMeleeTraceInstanceHandle TraceHandle);
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat")
+	TSubclassOf<class UGameplayEffect> DamageGameplayEffectClass;
 
+	void ReceiveMessage(const FName MessageType, UObject* Payload);
+	FMessageDelegate MessageDelegateHandle;
+
+public:
+	void ShowQuickActionWidget();
+protected:
+	bool bShowQuickActionWidget{false};
+	FTimerHandle QuickActionTimerHandle;
+	
 public: /* Inventory */
 	UFUNCTION(BlueprintCallable, Category = "Item")
 	UUserItemManger* GetItemManager();
@@ -217,7 +282,11 @@ protected:
 	TObjectPtr<UUserItemManger> EmberItemManager;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Item")
 	TObjectPtr<UEmberCraftComponent> CraftCollision;
-	
+public:
+
+	UPROPERTY()
+	UDialogueComponent* ActiveDialogueComponent;
+
+	// 대화 시작 시 DialogueComponent 저장
+	void SetActiveDialogueComponent(UDialogueComponent* InDialogue);
 };
-
-

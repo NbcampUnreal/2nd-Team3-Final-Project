@@ -56,6 +56,36 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
         Bind(GlideAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnGlide);
         Bind(BuildAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnBuild);
         
+        Bind(BlockAction,           ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnBlock);
+        Bind(BlockAction,           ETriggerEvent::Canceled,   &AEmberCharacter::Input_OnBlock);
+        
+        Bind(TargetAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnStartTarget);
+        Bind(TargetAction,         ETriggerEvent::Completed,  &AEmberCharacter::Input_OnSwitchTarget);
+        
+        Bind(ThrowQuickAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnStartThrowQuick);
+        Bind(ThrowQuickAction,         ETriggerEvent::Canceled,  &AEmberCharacter::Input_OnCancelThrowQuick);
+
+        Bind(ThrowOverlayAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnSwitchThrowOverlay);
+
+        Bind(ItemQuickAction,         ETriggerEvent::Started,  &AEmberCharacter::Input_OnStartItemQuick);
+        Bind(ItemQuickAction,         ETriggerEvent::Completed,  &AEmberCharacter::Input_OnCancelItemQuick);
+        
+        Bind(ScanAction,         ETriggerEvent::Triggered,  &AEmberCharacter::Input_OnStartScan);
+
+        Bind(UICloseDialogueAction, ETriggerEvent::Started,  &AEmberCharacter::Input_OnCloseDialogue);
+        
+        /*
+        UPROPERTY(EditAnywhere, Category="Input") 
+    TObjectPtr<UInputAction> TargetAction;
+    UPROPERTY(EditAnywhere, Category="Input") 
+    TObjectPtr<UInputAction> ThrowQuickAction;
+    UPROPERTY(EditAnywhere, Category="Input") 
+    TObjectPtr<UInputAction> ThrowOverlayAction;
+    UPROPERTY(EditAnywhere, Category="Input") 
+    TObjectPtr<UInputAction> ItemQuickAction;
+    UPROPERTY(EditAnywhere, Category="Input") 
+    TObjectPtr<UInputAction> ScanAction;
+         */
         
         UInteractionComponent* Comp = Character->InteractionComponent.Get();
         if (Comp)
@@ -63,6 +93,7 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
             InputComponent->BindAction(InteractAction, ETriggerEvent::Started, Comp, &UInteractionComponent::Interact);
             InputComponent->BindAction(InteractAction, ETriggerEvent::Completed, Comp, &UInteractionComponent::StopGather);
             InputComponent->BindAction(InteractAction, ETriggerEvent::Started, Comp, &UInteractionComponent::TriggerAdvanceDialogue);
+
         }
     }
 
@@ -76,7 +107,7 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
     }
     // Ability input
     InputComponent->BindAction(AttackAction, ETriggerEvent::Started, Character, &AEmberCharacter::AbilityInputPressed, 0);
-
+    InputComponent->BindAction(AimAction, ETriggerEvent::Started, Character, &AEmberCharacter::AbilityInputPressed, 1);
     // Bind Action Value
     Character->MoveInputBinding = &InputComponent->BindActionValue(MoveAction);
 }
