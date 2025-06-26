@@ -9,6 +9,7 @@
 #include "Engine/DataTable.h"
 #include "ItemSubsystem.generated.h"
 
+class UEmberQuickSlotPanel;
 class UEmberQuickSlotsPanel;
 class UItemDetailWidget;
 class UAbilitySystemComponent;
@@ -31,7 +32,7 @@ public:
 	
 	TObjectPtr<UItemDetailWidget> GetItemDetailWidget();
 	
-	TObjectPtr<UEmberQuickSlotsPanel> GetQuickSlotWidget();
+	TObjectPtr<UEmberQuickSlotPanel> GetQuickSlotWidget();
 
 protected:
 	bool SelectWeightedItem(const TArray<FEmberDropItemGroup>& ItemsToSelectFrom, FEmberDropItemGroup& OutSelectedItem);
@@ -83,6 +84,6 @@ protected:
 	TObjectPtr<UItemDetailWidget> DetailWidget;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item UI")
-	TObjectPtr<UEmberQuickSlotsPanel> QuickSlotWidget;
+	TObjectPtr<UEmberQuickSlotPanel> QuickSlotWidget;
 	
 };

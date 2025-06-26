@@ -4,43 +4,34 @@
 #include "EmberCraftSlotWidget.h"
 
 #include "EmberLog/EmberLog.h"
+#include "Item/Craft/EmberCraftComponent.h"
+#include "Item/ItemContainer/Implements/EmberBaseResourceSlotContainer/EmberCraftContainer.h"
 
-void UEmberCraftSlotWidget::InitCraftComponent(TScriptInterface<IEmberSlotDataProviderInterface> InDataProvider,
-	const FName& InRequestItemID)
+
+void UEmberCraftSlotWidget::InitCraftComponent(TScriptInterface<IEmberSlotProviderInterface> InDataProvider,
+	int32 InSlotIndex)
 {
 	DataProvider = InDataProvider;
-	RequestItemID = InRequestItemID;
-
+	SlotIndex = InSlotIndex;
+	
 	if (DataProvider)
 	{
-		FInstancedStruct InstancedStruct = IEmberSlotDataProviderInterface::Execute_GetSlotItemInfo(DataProvider.GetObject(), 0);
-
-		SlotData = FEmberWidgetSlotData(InstancedStruct);
-
-		if (SlotData.ItemID.IsNone())
+		if (UEmberCraftComponent* CraftComponent = Cast<UEmberCraftComponent>(DataProvider.GetObject()))
 		{
-			FEmberSlotData InSlotData = FEmberSlotData(RequestItemID);
-			InSlotData.InitializeInstancedStruct(InstancedStruct);
-			SlotData = FEmberWidgetSlotData(InstancedStruct);
-
+			SetSlotData(CraftComponent->ResultItemInfo(SlotIndex));
 		}
 	}
 }
 
-void UEmberCraftSlotWidget::UpdateCraftSlot()
+void UEmberCraftSlotWidget::UpdateSlot()
 {
 	if (DataProvider)
 	{
-		FInstancedStruct InstancedStruct = IEmberSlotDataProviderInterface::Execute_GetSlotItemInfo(DataProvider.GetObject(), 0);
-
-		SlotData = FEmberWidgetSlotData(InstancedStruct);
-
-		if (SlotData.ItemID.IsNone())
+		if (UEmberCraftComponent* CraftComponent = Cast<UEmberCraftComponent>(DataProvider.GetObject()))
 		{
-			FEmberSlotData InSlotData = FEmberSlotData(RequestItemID);
-			InSlotData.InitializeInstancedStruct(InstancedStruct);
-			SlotData = FEmberWidgetSlotData(InstancedStruct);
-
+			SlotData = FEmberWidgetSlot(CraftComponent->ResultItemInfo(SlotIndex));
 		}
 	}
+	
+	Super::UpdateSlot();
 }

@@ -17,7 +17,8 @@ UEmberDropComponent::UEmberDropComponent()
 	DropManager = CreateDefaultSubobject<UEmberDropItemManager>(TEXT("EmberDropItemManager"));
 	if (DropManager)
 	{
-		DropManager->InitSlot(30, 10, GetOwner());
+		DropManager->InitOwner(GetOwner());
+		DropManager->InitSlotCount(30, 10);
 	}
 	// ...
 }

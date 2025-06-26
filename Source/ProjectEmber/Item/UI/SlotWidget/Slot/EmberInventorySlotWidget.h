@@ -4,14 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "EmberBaseDragAbleSlotWidget.h"
-#include "EmberInventorySlot.generated.h"
+#include "EmberInventorySlotWidget.generated.h"
 
+class UEmberQuickSlotPanel;
 class UEmberQuickSlotsPanel;
 /**
  * 
  */
 UCLASS()
-class PROJECTEMBER_API UEmberInventorySlot : public UEmberBaseDragAbleSlotWidget
+class PROJECTEMBER_API UEmberInventorySlotWidget : public UEmberBaseDragAbleSlotWidget
 {
 	GENERATED_BODY()
 
@@ -19,5 +20,5 @@ class PROJECTEMBER_API UEmberInventorySlot : public UEmberBaseDragAbleSlotWidget
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TObjectPtr<UEmberQuickSlotsPanel> QuickSlotWidget;
+	TObjectPtr<UEmberQuickSlotPanel> QuickSlotWidget;
 };

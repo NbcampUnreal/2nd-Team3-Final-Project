@@ -3,12 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ActiveGameplayEffectHandle.h"
 #include "ItemTypes.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Engine/DataTable.h"
 #include "ItemSystemLibrary.generated.h"
 
-struct FActiveGameplayEffectHandle;
 class UAbilitySystemComponent;
 class UItemSubsystem;
 /**

@@ -18,7 +18,7 @@ class PROJECTEMBER_API UEmberCraftWidget : public UUserWidget
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "Craft")
-	void InitCraft(UEmberCraftComponent* InCraftComponent, const FCraftSelectInfo& InCraftInfo);
+	void InitCraft(UEmberCraftComponent* InCraftComponent, const FCraftSelectInfo& InCraftInfo, int32 InIndex);
 	
 	UFUNCTION(BlueprintCallable, Category = "Craft")
 	void StartCraftingItem();
@@ -26,8 +26,10 @@ public:
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Craft")
 	FCraftSelectInfo CraftInfo;
-	
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Craft")
+	int32 CraftIndex;
+		
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Craft")
 	TObjectPtr<UEmberCraftComponent> CraftComponent;
 };

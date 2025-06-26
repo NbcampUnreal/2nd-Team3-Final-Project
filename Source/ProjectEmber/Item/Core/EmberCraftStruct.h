@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "EmberTmpStruct.h"
 #include "ItemCraftType.h"
+#include "ItemStruct/EmberSlot.h"
 #include "EmberCraftStruct.generated.h"
 /**
  * 
@@ -37,7 +38,7 @@ struct FCraftSelectInfo
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FEmberMasterItemData RequestItemData;
+	FEmberSlot ResultItemData;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FCraftPair> RequiredItemDataHandles;
 

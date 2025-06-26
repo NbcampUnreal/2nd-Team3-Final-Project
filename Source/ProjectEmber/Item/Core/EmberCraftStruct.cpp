@@ -35,6 +35,6 @@ void FTotalItemInfo::RemoveItemIndexes(const int32 InIndex)
 
 FCraftSelectInfo::FCraftSelectInfo(const FCraftInfoRow& InCraftInfoRow)
 {
-	RequestItemData = FEmberMasterItemData(InCraftInfoRow.RequestItem.ItemData.RowName, InCraftInfoRow.RequestItem.Quantity);
+	ResultItemData = FEmberSlot(InCraftInfoRow.ResultItem.ItemData.RowName, InCraftInfoRow.ResultItem.Quantity);
 	RequiredItemDataHandles = InCraftInfoRow.RequireItems;
 }

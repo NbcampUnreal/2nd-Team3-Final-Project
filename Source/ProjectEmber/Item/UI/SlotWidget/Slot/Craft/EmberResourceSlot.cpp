@@ -3,50 +3,80 @@
 
 #include "EmberResourceSlot.h"
 
+#include "EmberLog/EmberLog.h"
 #include "Item/Core/EmberTmpStruct.h"
 #include "Item/Craft/EmberCraftComponent.h"
 
-void UEmberResourceSlot::InitCraft(UEmberCraftComponent* InCraftComponent, const FCraftPair& InRequestInfo)
-{
-	CraftComponent = InCraftComponent;
-	
-	if (CraftComponent)
-	{
-		RequiredQuantity = InRequestInfo.Quantity;
-		FEmberItemEntry ItemEntry = FEmberItemEntry(InRequestInfo.ItemData.RowName);
-		FInstancedStruct OutInstancedStruct;
-		IEmberResourceProvider::Execute_GetItemInfo(CraftComponent, ItemEntry, OutInstancedStruct);
-		FEmberSlotData RequestInfo = FEmberSlotData(InRequestInfo.ItemData.RowName);
-		if (const FEmberMasterItemData* ItemData = OutInstancedStruct.GetPtr<FEmberMasterItemData>())
-		{
-			RequestInfo.Quantity = ItemData->Quantity;
-		}
-		RequestInfo.InitializeInstancedStruct(OutInstancedStruct);
-		SlotData = FEmberWidgetSlotData(OutInstancedStruct);
-	}
-
-	UpdateSlot();
-}
-
 float UEmberResourceSlot::GetPercentage()
 {
-	float Percentage = FMath::Min(SlotData.Quantity / RequiredQuantity, 1.0f);
+	float Percentage = 0.0f;
+	if (SlotData.Quantity > 0)
+	{
+		Percentage = FMath::Min((CurrentQuantity / SlotData.Quantity) * 100.f, 100.f);
+	}
+	 
 	return Percentage;
 }
 
-void UEmberResourceSlot::UpdateCraftSlot()
+void UEmberResourceSlot::UpdateSlot()
 {
-	if (CraftComponent)
+	if (UEmberCraftComponent* CraftComponent = Cast<UEmberCraftComponent>(DataProvider.GetObject()))
 	{
-		FEmberItemEntry ItemEntry = FEmberItemEntry(SlotData.ItemID);
-		FInstancedStruct OutInstancedStruct;
-		IEmberResourceProvider::Execute_GetItemInfo(CraftComponent, ItemEntry, OutInstancedStruct);
-		FEmberSlotData RequestInfo = FEmberSlotData(SlotData.ItemID);
-		if (const FEmberMasterItemData* ItemData = OutInstancedStruct.GetPtr<FEmberMasterItemData>())
+
+		if (FCraftInfoRow* CraftInfoRow = CraftComponent->CraftItemInfo(SlotIndex))
 		{
-			RequestInfo.Quantity = ItemData->Quantity;
+
+			if (CraftInfoRow->RequireItems.IsValidIndex(RequireIndex))
+			{
+				FInstancedStruct InstancedStruct;
+				SlotData.InitializeInstancedStruct(InstancedStruct);
+				FInstancedStruct CurrentInstancedStruct;
+				IEmberResourceProvider::Execute_GetItemInfo(CraftComponent, SlotData, CurrentInstancedStruct);
+
+				if (const FEmberItemEntry* CurrentItemEntry = CurrentInstancedStruct.GetPtr<FEmberItemEntry>())
+				{
+					CurrentQuantity = CurrentItemEntry->Quantity;
+
+				}
+			}
 		}
-		RequestInfo.InitializeInstancedStruct(OutInstancedStruct);
-		SlotData = FEmberWidgetSlotData(OutInstancedStruct);
+	}
+	Super::UpdateSlot();
+
+}
+
+void UEmberResourceSlot::InitCraftComponent(TScriptInterface<IEmberSlotProviderInterface> InDataProvider,
+                                            const int32 InSlotIndex, const int32 InRequireIndex)
+{
+	
+	DataProvider = InDataProvider;
+	SlotIndex = InSlotIndex;
+	RequireIndex = InRequireIndex;
+
+	if (DataProvider)
+	{
+		if (UEmberCraftComponent* CraftComponent = Cast<UEmberCraftComponent>(DataProvider.GetObject()))
+		{
+			if (FCraftInfoRow* CraftInfoRow = CraftComponent->CraftItemInfo(SlotIndex))
+			{
+				if (CraftInfoRow->RequireItems.IsValidIndex(RequireIndex))
+				{
+					FCraftPair Pair = CraftInfoRow->RequireItems[RequireIndex];
+					FInstancedStruct InstancedStruct;
+					FEmberItemEntry ItemEntry = FEmberItemEntry(Pair.ItemData.RowName, Pair.Quantity);
+					ItemEntry.InitializeInstancedStruct(InstancedStruct);
+					SetSlotData(InstancedStruct);
+
+					FInstancedStruct CurrentInstancedStruct;
+					IEmberResourceProvider::Execute_GetItemInfo(CraftComponent, ItemEntry, InstancedStruct);
+
+					if (const FEmberItemEntry* CurrentItemEntry = CurrentInstancedStruct.GetPtr<FEmberItemEntry>())
+					{
+						CurrentQuantity = CurrentItemEntry->Quantity;
+
+					}
+				}
+			}
+		}
 	}
 }

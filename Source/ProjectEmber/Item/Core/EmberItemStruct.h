@@ -174,29 +174,3 @@ inline uint32 GetTypeHash(const FEmberItemKey& ItemKey)
     }
     return CombineHash;
 }
-
-struct FInstancedStructTypeKeyFuncs : public TDefaultMapKeyFuncs<FInstancedStruct, FInstancedStruct, false>
-{
-    // 1. Key로 사용할 타입 정의: 우리는 구조체의 타입을 Key로 사용할 것이므로 UScriptStruct 포인터입니다.
-    using KeyType = const UScriptStruct*;
-
-    // 2. 요소(FInstancedStruct)에서 Key(UScriptStruct*)를 추출하는 방법 정의
-    static FORCEINLINE KeyType GetSetKey(const FInstancedStruct& Element)
-    {
-        return Element.GetScriptStruct();
-    }
-
-    // 3. 두 Key(UScriptStruct*)가 같은지 비교하는 방법 정의
-    static FORCEINLINE bool Matches(KeyType A, KeyType B)
-    {
-        return A == B;
-    }
-
-    // 4. Key(UScriptStruct*)로 해시 값을 생성하는 방법 정의
-    static FORCEINLINE uint32 GetHash(KeyType Key)
-    {
-        // 포인터에 대한 기본 GetTypeHash를 사용합니다.
-        return GetTypeHash(Key);
-    }
-};
-

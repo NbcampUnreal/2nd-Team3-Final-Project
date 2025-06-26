@@ -13,9 +13,12 @@ void UEmberCraftSelectWidget::InitData(UEmberCraftComponent* InCraftComponent)
 
 	if (CraftComponent)
 	{
-		for (FCraftInfoRow& CraftInfoRow : CraftComponent->CraftItemInfos())
+		for (FCraftInfoRow* CraftInfoRow : CraftComponent->CraftItemInfos())
 		{
-			CraftSelectInfos.Add(FCraftSelectInfo(CraftInfoRow));
+			if (CraftInfoRow)
+			{
+				CraftSelectInfos.Add(FCraftSelectInfo(*CraftInfoRow));
+			}
 		}
 	}
 }

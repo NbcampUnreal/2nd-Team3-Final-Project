@@ -33,6 +33,9 @@ protected:
 	void SetResourceProvider(TScriptInterface<UEmberResourceProvider> Provider);
 
 	UFUNCTION(BlueprintCallable)
+	void ResetResourceProvider();
+
+	UFUNCTION(BlueprintCallable)
 	int32 DEBUG_GetResourceProviderNum();
 
 	// --- IEmberResourceProvider ---

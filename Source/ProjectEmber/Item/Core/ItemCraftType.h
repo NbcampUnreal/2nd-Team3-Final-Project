@@ -27,7 +27,7 @@ struct FCraftInfoRow : public FTableRowBase
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ItemMasterInfoRow")
-	FCraftPair RequestItem;
+	FCraftPair ResultItem;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ItemMasterInfoRow")
 	TArray<FCraftPair> RequireItems;

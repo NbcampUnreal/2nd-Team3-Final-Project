@@ -5,7 +5,6 @@
 
 #include "EmberLog/EmberLog.h"
 #include "Item/ItemSubsystem.h"
-#include "Item/Core/EmberTmpStruct.h"
 #include "Item/Core/ItemSystemLibrary.h"
 
 TArray<FItemPair> UEmberDropItemManager::GetDropItemName(const FName& MonsterID, const UAbilitySystemComponent* AbilitySystemComponent)
@@ -27,6 +26,6 @@ void UEmberDropItemManager::SetDropItem(const FName& MonsterID, const UAbilitySy
     for (auto& Item : DropItemMap)
     {
         FEmberItemEntry Entry = FEmberItemEntry(Item.ItemID, Item.Quantity, Item.Enchants);
-        AddItem(Entry);
+        AddSlotItemReturnApplied(Entry,0);
     }
 }

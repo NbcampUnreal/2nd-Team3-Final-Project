@@ -2,6 +2,8 @@
 
 
 #include "EmberStorageComponent.h"
+
+#include "EmberEquipmentManager.h"
 #include "InventoryManager.h"
 #include "Core/EmberTmpStruct.h"
 
@@ -15,7 +17,7 @@ UEmberStorageComponent::UEmberStorageComponent()
 	InventoryManager = CreateDefaultSubobject<UInventoryManager>(TEXT("InventoryManager"));
 	if (InventoryManager)
 	{
-		InventoryManager->InitSlot(InventoryMaxSlot, InventoryMaxSlotRow, GetOwner());
+		InventoryManager->InitOwner(GetOwner());
 	}
 	// ...
 }
@@ -35,7 +37,7 @@ void UEmberStorageComponent::AddItem(FName ItemID, int32 Quantity, int32 InSlotI
 	if (InventoryManager)
 	{
 		FEmberItemEntry Entry = FEmberItemEntry(ItemID, Quantity);
-		InventoryManager->AddItem(Entry, InSlotIndex);		
+		InventoryManager->AddSlotItemReturnApplied(Entry, InSlotIndex);
 	}
 }
 

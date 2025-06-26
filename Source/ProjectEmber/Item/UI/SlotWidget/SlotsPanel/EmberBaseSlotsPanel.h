@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Item/UI/SlotWidget/EmberSlotDataProviderInterface.h"
+#include "Item/UI/EmberSlotProviderInterface.h"
 #include "EmberBaseSlotsPanel.generated.h"
 
 class UItemDetailWidget;
@@ -39,7 +39,7 @@ public:
 	virtual void UpdateSlots();
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Slots Panel")
-	TScriptInterface<IEmberSlotDataProviderInterface> DataProvider;
+	TScriptInterface<IEmberSlotProviderInterface> DataProvider;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Slots Panel")
 	TArray<TObjectPtr<UEmberBaseSlotWidget>> Slots;

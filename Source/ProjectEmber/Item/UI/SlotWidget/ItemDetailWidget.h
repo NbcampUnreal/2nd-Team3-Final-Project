@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Item/Core/EmberWidgetSlotData.h"
+#include "Item/Core/ItemStruct/Implements/EmberSlot/EmberWidgetSlot.h"
 #include "ItemDetailWidget.generated.h"
 
 /**
@@ -26,8 +26,8 @@ private:
 	void SetWidgetMousePosition();
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Slot")
-	FEmberWidgetSlotData EmberWidgetSlotData = FEmberWidgetSlotData();
+	FEmberWidgetSlot EmberWidgetSlotData = FEmberWidgetSlot();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Slot")
-	FTimerHandle MouseTimerHandle;
+	FTimerHandle MousesTimerHandle;
 };

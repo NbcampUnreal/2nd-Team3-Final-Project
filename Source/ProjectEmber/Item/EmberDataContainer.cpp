@@ -13,6 +13,7 @@
 #include "EmberLog/EmberLog.h"
 
 
+/*
 // Sets default values for this component's properties
 UEmberDataContainer::UEmberDataContainer()
 {
@@ -461,7 +462,7 @@ void UEmberDataContainer::SpawnDroppedItem(FName ItemIDToDrop, int32 QuantityToD
     else
     {
         EMBER_LOG(LogEmberItem, Error, TEXT("SpawnDroppedItem: Failed to spawn DroppedItemActor for %s."), *ItemIDToDrop.ToString());
-    }*/
+    }#1#
 }
 
 int32 UEmberDataContainer::GetSlotCount_Implementation() const
@@ -861,4 +862,4 @@ void UEmberDataContainer::HandleItemConsumption(const FConsumableInfoRow* Consum
     if (!ConsumeData || !OwnerAbilitySystemComponent) return;
 
     UItemSystemLibrary::ApplyEffectInfoList(OwnerAbilitySystemComponent, ConsumeData->EffectsToApplyOnConsume, Owner); 
-}
+}*/

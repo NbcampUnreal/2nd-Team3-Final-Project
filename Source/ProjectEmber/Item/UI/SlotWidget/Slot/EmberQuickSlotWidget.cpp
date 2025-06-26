@@ -31,7 +31,7 @@ void UEmberQuickSlotWidget::UseQuickSlotItem(int32 InIndex) const
 
 	if (DataProvider && IsValid(DataProvider.GetObject()))
 	{
-		IEmberSlotDataProviderInterface::Execute_UseItemInSlot(DataProvider.GetObject(), InIndex);
+		IEmberSlotProviderInterface::Execute_UseItemInSlot(DataProvider.GetObject(), InIndex);
 	}
 }
 
@@ -39,7 +39,7 @@ void UEmberQuickSlotWidget::AddQuickSlotItem() const
 {
 	if (DataProvider && IsValid(DataProvider.GetObject()))
 	{
-		IEmberSlotDataProviderInterface::Execute_MoveItemByWidget(DataProvider.GetObject(), StartSlotDropOperation->SlotType, SlotIndex, StartSlotDropOperation->Provider.GetObject(), StartSlotDropOperation->SlotIndex, StartSlotDropOperation->DraggedQuantity);
+		IEmberSlotProviderInterface::Execute_MoveItemByWidget(DataProvider.GetObject(), StartSlotDropOperation->SlotType, SlotIndex, StartSlotDropOperation->Provider.GetObject(), StartSlotDropOperation->SlotIndex, StartSlotDropOperation->DraggedQuantity);
 	}
 }
 

@@ -8,6 +8,7 @@
 #include "GameplayEffectTypes.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
 #include "EmberLog/EmberLog.h"
+#include "Item/Core/ItemTypes.h"
 #include "Engine/GameInstance.h"
 #include "Item/ItemSubsystem.h"
 
@@ -37,7 +38,6 @@ TArray<FActiveGameplayEffectHandle> UItemSystemLibrary::ApplyEffectInfoList(UAbi
 	{
 		return EffectHandles;
 	}
-
 	for (const FItemEffectApplicationInfo& EffectInfo : EffectInfos)
 	{
 

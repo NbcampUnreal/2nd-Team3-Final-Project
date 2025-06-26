@@ -4,11 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Item/EmberDataContainer.h"
+#include "Item/ItemContainer/Implements/EmberBaseResourceSlotContainer/EmberInventorySlotContainer.h"
 #include "EmberDropItemManager.generated.h"
 
 
 UCLASS(ClassGroup=(Custom))
-class PROJECTEMBER_API UEmberDropItemManager : public UEmberDataContainer
+class PROJECTEMBER_API UEmberDropItemManager : public UEmberInventorySlotContainer
 {
 	GENERATED_BODY()
 	

@@ -18,17 +18,16 @@ class PROJECTEMBER_API UEmberResourceSlot : public UEmberBaseSlotWidget
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintCallable, Category="Craft")
-	void InitCraft(UEmberCraftComponent* InCraftComponent, const FCraftPair& InRequestInfo);
-	
 	UFUNCTION(BlueprintCallable)
 	float GetPercentage();
 
+	virtual void UpdateSlot() override;
 	UFUNCTION(BlueprintCallable)
-	void UpdateCraftSlot();
+	void InitCraftComponent(TScriptInterface<IEmberSlotProviderInterface> InDataProvider, const int32 InSlotIndex, const int32 InRequireIndex);
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 RequiredQuantity = 0;
+	int32 CurrentQuantity = 0;
 	
-	TObjectPtr<UEmberCraftComponent> CraftComponent = nullptr;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 RequireIndex = 0;
 };

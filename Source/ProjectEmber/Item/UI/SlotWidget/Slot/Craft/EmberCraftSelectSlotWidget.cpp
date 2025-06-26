@@ -5,11 +5,10 @@
 
 #include "Item/Craft/EmberCraftComponent.h"
 
-void UEmberCraftSelectSlotWidget::InitCraftItems(const FEmberMasterItemData& InRequestItem)
+void UEmberCraftSelectSlotWidget::InitCraftItems(const FEmberSlot& InRequestItem)
 {
 	FInstancedStruct InstancedStruct;
-	FEmberSlotData InSlotData = FEmberSlotData(InRequestItem.ItemID, InRequestItem.Quantity);
-	InSlotData.InitializeInstancedStruct(InstancedStruct);
+	InRequestItem.InitializeInstancedStruct(InstancedStruct);
 	SetSlotData(InstancedStruct);
 }
 

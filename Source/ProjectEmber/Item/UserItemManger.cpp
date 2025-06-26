@@ -8,6 +8,8 @@
 #include "Item/Drop/EmberDropItemManager.h"
 #include "EmberEquipmentManager.h"
 #include "Core/EmberTmpStruct.h"
+#include "Core/ItemStruct/Implements/EmberSlot/EmberInventorySlot.h"
+#include "Core/ItemStruct/Implements/EmberSlot/EmberQuickSlot.h"
 #include "Craft/EmberCraftComponent.h"
 #include "EmberLog/EmberLog.h"
 
@@ -27,25 +29,30 @@ UUserItemManger::UUserItemManger()
 	InventoryManager = CreateDefaultSubobject<UInventoryManager>(TEXT("InventoryManager"));
 	if (InventoryManager)
 	{
-		InventoryManager->InitSlot(InventoryMaxSlot, InventoryMaxSlotRow, GetOwner());
+		InventoryManager->InitOwner(GetOwner());
+		InventoryManager->InitSlotCount(InventoryMaxSlot, InventoryMaxSlotRow);
 	}
 	QuickSlotManager = CreateDefaultSubobject<UQuickSlotManager>(TEXT("QuickSlotManager"));
 	if (QuickSlotManager)
 	{
-		QuickSlotManager->InitSlot(QuickMaxSlot, QuickMaxSlotRow, GetOwner());
+		QuickSlotManager->InitOwner(GetOwner());
+		QuickSlotManager->InitSlotCount(QuickMaxSlot, QuickMaxSlotRow);
+
 	}
 
 	DropItemManager = CreateDefaultSubobject<UEmberDropItemManager>(TEXT("DropItemManager"));
 	if (DropItemManager)
 	{
-		DropItemManager->InitSlot(DropItemMaxSlot, DropItemMaxSlotRow, GetOwner());
+		DropItemManager->InitOwner(GetOwner());
+		DropItemManager->InitSlotCount(DropItemMaxSlot, DropItemMaxSlotRow);
 	}
 	
 	EquipmentManager = CreateDefaultSubobject<UEmberEquipmentManager>(TEXT("EquipmentManager"));
 
 	if (EquipmentManager)
 	{
-		EquipmentManager->InitSlot(4, 0, GetOwner());
+		EquipmentManager->InitOwner(GetOwner());
+
 	}
 
 	CraftComponent = CreateDefaultSubobject<UEmberCraftComponent>(TEXT("CraftComponent"));
@@ -91,32 +98,31 @@ void UUserItemManger::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	// ...
 }
 
-FEmberItemInfo UUserItemManger::GetQuickSlotInfo(int32 InIndex)
+FEmberQuickSlot UUserItemManger::GetQuickSlotInfo(int32 InIndex)
 {
-	if (const FEmberItemInfo* Item = QuickSlotManager->GetSlotDataByIndex(InIndex).GetPtr<FEmberItemInfo>())
+	if (const FEmberQuickSlot* Item = QuickSlotManager->GetSlotItemInfo(InIndex).GetPtr<FEmberQuickSlot>())
 	{
-		return FEmberItemInfo(*Item);
+		return FEmberQuickSlot(*Item);
 	}
-	return FEmberItemInfo();
+	return FEmberQuickSlot();
 }
 
 void UUserItemManger::UseQuickSlot(int32 InIndex)
 {
-	QuickSlotManager->UseItemInSlot_Implementation(InIndex);
+	QuickSlotManager->UseSlotItem(InIndex);
 }
 
-FEmberItemInfo UUserItemManger::GetInventorySlotInfo(int32 InIndex)
+FEmberInventorySlot UUserItemManger::GetInventorySlotInfo(int32 InIndex)
 {
-	if (const FEmberItemInfo* Item = InventoryManager->GetSlotDataByIndex(InIndex).GetPtr<FEmberItemInfo>())
+	if (const FEmberInventorySlot* Item = InventoryManager->GetSlotItemInfo(InIndex).GetPtr<FEmberInventorySlot>())
 	{
-		return FEmberItemInfo(*Item);
+		return FEmberInventorySlot(*Item);
 	}
-	return FEmberItemInfo();
+	return FEmberInventorySlot();
 }
 
 void UUserItemManger::UseInventorySlotInfo(int32 InIndex)
 {
-	InventoryManager->UseItemInSlot_Implementation(InIndex);
 }
 
 void UUserItemManger::SetDropProvider(UEmberDropItemManager* InDropItemProvider)
@@ -146,7 +152,7 @@ FEmberMasterItemData UUserItemManger::DebugGetItemInfo(const FName& InSlotName)
 void UUserItemManger::AddItem(FName ItemID, int32 Quantity, int32 InSlotIndex)
 {
 	FEmberItemEntry Entry = FEmberItemEntry(ItemID, Quantity);
-	InventoryManager->AddItem(Entry, InSlotIndex);
+	InventoryManager->AddSlotItem(Entry, InSlotIndex);
 }
 
 const UInventoryManager* UUserItemManger::GetInventoryManager() const

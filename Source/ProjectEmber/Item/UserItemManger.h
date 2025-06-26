@@ -29,13 +29,13 @@ public:
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 	
 	UFUNCTION(BlueprintCallable)
-	FEmberItemInfo GetQuickSlotInfo(int32 InIndex);
+	FEmberQuickSlot GetQuickSlotInfo(int32 InIndex);
 	
 	UFUNCTION(BlueprintCallable)
 	void UseQuickSlot(int32 InIndex);
 	
 	UFUNCTION(BlueprintCallable)
-	FEmberItemInfo GetInventorySlotInfo(int32 InIndex);
+	FEmberInventorySlot GetInventorySlotInfo(int32 InIndex);
 	
 	UFUNCTION(BlueprintCallable)
 	void UseInventorySlotInfo(int32 InIndex);

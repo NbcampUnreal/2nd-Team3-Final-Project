@@ -12,7 +12,7 @@
 #include "EmberLog/EmberLog.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/SlotWidget/ItemDetailWidget.h"
-#include "UI/SlotWidget/SlotsPanel/EmberQuickSlotsPanel.h"
+#include "UI/SlotWidget/SlotsPanel/Implements/EmberBasePanel/EmberQuickSlotPanel.h"
 
 void UItemSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -183,13 +183,13 @@ TObjectPtr<UItemDetailWidget> UItemSubsystem::GetItemDetailWidget()
     return DetailWidget;
 }
 
-TObjectPtr<UEmberQuickSlotsPanel> UItemSubsystem::GetQuickSlotWidget()
+TObjectPtr<UEmberQuickSlotPanel> UItemSubsystem::GetQuickSlotWidget()
 {
     if (!QuickSlotWidget)
     {
         if (const UEmberItemDeveloperSetting* ItemSetting = UEmberItemDeveloperSetting::Get())
         {
-            QuickSlotWidget = CreateWidget<UEmberQuickSlotsPanel>(UGameplayStatics::GetPlayerController(GetWorld(), 0), ItemSetting->QuickSlotWidgetClass);
+            QuickSlotWidget = CreateWidget<UEmberQuickSlotPanel>(UGameplayStatics::GetPlayerController(GetWorld(), 0), ItemSetting->QuickSlotWidgetClass);
             QuickSlotWidget->AddToViewport();
         }
     }

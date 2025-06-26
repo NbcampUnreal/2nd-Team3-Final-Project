@@ -3,18 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "EmberBaseSlotsPanel.h"
-#include "EmberQuickSlotsPanel.generated.h"
+#include "Item/UI/SlotWidget/SlotsPanel/EmberBasePanel.h"
+#include "EmberQuickSlotPanel.generated.h"
 
 class UEmberItemSlotDragDropOperation;
 /**
  * 
  */
 UCLASS()
-class PROJECTEMBER_API UEmberQuickSlotsPanel : public UEmberBaseSlotsPanel
+class PROJECTEMBER_API UEmberQuickSlotPanel : public UEmberBasePanel
 {
 	GENERATED_BODY()
-
 public:
 	virtual void BP_SetProvider_Implementation() override;
 
@@ -23,7 +22,7 @@ public:
 
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 
-public:
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UEmberItemSlotDragDropOperation> SlotOperation;
 

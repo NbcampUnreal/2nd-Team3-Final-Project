@@ -16,11 +16,7 @@ class PROJECTEMBER_API UEmberCraftSlotWidget : public UEmberBaseDragAbleSlotWidg
 	GENERATED_BODY()
 public:
 	UFUNCTION(BlueprintCallable)
-	void InitCraftComponent(TScriptInterface<IEmberSlotDataProviderInterface> InDataProvider, const FName& InRequestItemID);
+	void InitCraftComponent(TScriptInterface<IEmberSlotProviderInterface> InDataProvider, int32 InSlotIndex);
 
-	UFUNCTION(BlueprintCallable)
-	void UpdateCraftSlot();
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FName RequestItemID;
+	virtual void UpdateSlot() override;
 };

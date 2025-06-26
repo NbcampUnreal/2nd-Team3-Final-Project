@@ -79,6 +79,11 @@ void UEmberItemCollectorBoxCollision::SetResourceProvider(TScriptInterface<UEmbe
 
 }
 
+void UEmberItemCollectorBoxCollision::ResetResourceProvider()
+{
+	ResourceProviders.Reset();
+}
+
 TMap<FName, int32> UEmberItemCollectorBoxCollision::GetAllItemInfos_Implementation()
 {
 	TMap<FName, int32> AllItemInfos;
@@ -108,25 +113,12 @@ TMap<FName, int32> UEmberItemCollectorBoxCollision::GetAllItemInfos_Implementati
 void UEmberItemCollectorBoxCollision::TryConsumeResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems)
 {
 	TArray<FEmberItemEntry> RequireItems = InRequireItems;
-	EMBER_LOG(LogTemp, Warning, TEXT("ABCDE5"));
-
 	if (bConsumeAbleResource_Implementation(RequireItems))
 	{
-		EMBER_LOG(LogTemp, Warning, TEXT("ABCDE51"));
-
 		for (TWeakObjectPtr<UObject>& ResourceProvider : ResourceProviders)
 		{
-			EMBER_LOG(LogTemp, Warning, TEXT("ABCDE52"));
-
 			if (ResourceProvider.Get())
-			{	EMBER_LOG(LogTemp, Warning, TEXT("ABCDE53"));
-
-				for (auto& a : RequireItems)
-				{
-					EMBER_LOG(LogTemp, Warning, TEXT("ABCDE5 %s, %d"), *a.ItemID.ToString(), a.Quantity);
-
-				}
-
+			{	
 				IEmberResourceProvider::Execute_RemoveResourceUntilAble(ResourceProvider.Get(), RequireItems);
 			}
 
@@ -150,12 +142,13 @@ bool UEmberItemCollectorBoxCollision::bConsumeAbleResource_Implementation(const 
 			IEmberResourceProvider::Execute_GetItemInfos(ResourceProvider, RequiresEntries, OutItemInfos);
 		}
 	}
-
+	
 	for (auto& RequiresEntry : RequiresEntries)
 	{
 		if (FInstancedStruct* OutItemInstanced = OutItemInfos.Find(RequiresEntry.CreateItemKey()))
 		{
-			if (const FEmberMasterItemData* Data = OutItemInstanced->GetPtr<FEmberMasterItemData>())
+
+			if (const FEmberItemEntry* Data = OutItemInstanced->GetPtr<FEmberItemEntry>())
 			{
 				if (Data->Quantity >= RequiresEntry.Quantity)
 				{
@@ -163,8 +156,10 @@ bool UEmberItemCollectorBoxCollision::bConsumeAbleResource_Implementation(const 
 				}
 			}
 		}
+
 		return false;
 	}
+
 	return true;
 }
 

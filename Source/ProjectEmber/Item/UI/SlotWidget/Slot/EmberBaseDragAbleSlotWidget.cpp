@@ -5,6 +5,7 @@
 
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "EmberLog/EmberLog.h"
+#include "Item/ItemContainer/EmberBaseSlotContainer.h"
 #include "Item/UI/DragDropOperation/EmberItemSlotDragDropOperation.h"
 #include "Item/UI/SlotWidget/DragSlotImage.h"
 
@@ -13,9 +14,7 @@ void UEmberBaseDragAbleSlotWidget::CreateDragDropOperation_Implementation(const 
 {
 	if (TObjectPtr<UEmberItemSlotDragDropOperation> SlotOperation = NewObject<UEmberItemSlotDragDropOperation>(GetTransientPackage(), UEmberItemSlotDragDropOperation::StaticClass()))
 	{
-
 		SlotOperation->SlotIndex = SlotIndex;
-		SlotOperation->SlotType = SlotType;
 		SlotOperation->Pivot = EDragPivot::MouseDown;
 		SlotOperation->DraggedQuantity = SlotData.Quantity;
 		SlotOperation->Provider = DataProvider;
@@ -31,10 +30,6 @@ void UEmberBaseDragAbleSlotWidget::CreateDragDropOperation_Implementation(const 
 				SlotOperation->DefaultDragVisual = CopySlotImage;
 			}
 		}
-		
-#if UE_BUILD_DEVELOPMENT
-		EMBER_LOG(LogEmberItem, Display, TEXT("StartDrag : SlotType : %s, Quantity: %d"),*SlotType.ToString(), SlotIndex);
-#endif
     
 		OutOperation = SlotOperation;
 	}
@@ -42,7 +37,7 @@ void UEmberBaseDragAbleSlotWidget::CreateDragDropOperation_Implementation(const 
 
 FEventReply UEmberBaseDragAbleSlotWidget::StartDragDrop_Implementation(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-	if (!SlotData.ItemID.IsNone() && InMouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton))
+	if (!SlotData.bIsEmpty() && InMouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton))
 	{
 		// 클릭 즉시 drag발동
 		return UWidgetBlueprintLibrary::DetectDragIfPressed(InMouseEvent, this, EKeys::LeftMouseButton);
@@ -58,12 +53,11 @@ bool UEmberBaseDragAbleSlotWidget::DropAction_Implementation(const FGeometry& In
 {
 	if (TObjectPtr<const UEmberItemSlotDragDropOperation> EmberDropOperation = Cast<UEmberItemSlotDragDropOperation>(InOperation))
 	{
-		if (!EmberDropOperation->Provider)
+		if (!EmberDropOperation->Provider || !Cast<UEmberBaseSlotContainer>(DataProvider.GetObject()))
 		{
 			return false;
 		}
-
-		IEmberSlotDataProviderInterface::Execute_MoveItemByWidget(DataProvider.GetObject(), EmberDropOperation->SlotType, SlotIndex, EmberDropOperation->Provider.GetObject(), EmberDropOperation->SlotIndex, EmberDropOperation->DraggedQuantity);
+		IEmberSlotProviderInterface::Execute_MoveItemByWidget(DataProvider.GetObject(), EmberDropOperation->SlotType, SlotIndex, EmberDropOperation->Provider.GetObject(), EmberDropOperation->SlotIndex, EmberDropOperation->DraggedQuantity);
 	}
 	return true;
 }

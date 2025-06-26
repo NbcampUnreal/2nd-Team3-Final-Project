@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Item/Core/EmberTmpStruct.h"
 #include "Item/UI/SlotWidget/Slot/EmberBaseSlotWidget.h"
 #include "EmberCraftSelectSlotWidget.generated.h"
 
@@ -16,7 +15,7 @@ class PROJECTEMBER_API UEmberCraftSelectSlotWidget : public UEmberBaseSlotWidget
 	GENERATED_BODY()
 public:
 	UFUNCTION(BlueprintCallable)
-	void InitCraftItems(const FEmberMasterItemData& InRequestItem);
+	void InitCraftItems(const FEmberSlot& InRequestItem);
 	
 
 };

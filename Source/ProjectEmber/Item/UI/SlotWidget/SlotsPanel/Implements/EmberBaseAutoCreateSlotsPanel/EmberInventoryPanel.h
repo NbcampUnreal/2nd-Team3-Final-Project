@@ -3,18 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "EmberBaseSlotsPanel.h"
-#include "EmberInventorySlotsPanel.generated.h"
+#include "Item/UI/SlotWidget/SlotsPanel/EmberBaseAutoCreateSlotsPanel.h"
+#include "EmberInventoryPanel.generated.h"
 
-struct FInventorySlotData;
 /**
  * 
  */
 UCLASS()
-class PROJECTEMBER_API UEmberInventorySlotsPanel : public UEmberBaseSlotsPanel
+class PROJECTEMBER_API UEmberInventoryPanel : public UEmberBaseAutoCreateSlotsPanel
 {
 	GENERATED_BODY()
 
 public:
 	virtual void BP_SetProvider_Implementation() override;
+	
 };

@@ -1,14 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "EmberInventorySlotsPanel.h"
+#include "EmberInventoryPanel.h"
 
+#include "EmberLog/EmberLog.h"
 #include "GameFramework/Character.h"
 #include "Item/UserItemManger.h"
 #include "Item/InventoryManager.h"
 #include "Item/UI/SlotWidget/Slot/EmberBaseSlotWidget.h"
 
-void UEmberInventorySlotsPanel::BP_SetProvider_Implementation()
+void UEmberInventoryPanel::BP_SetProvider_Implementation()
 {
 	Super::BP_SetProvider_Implementation();
 	

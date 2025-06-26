@@ -1,16 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "EmberQuickSlotsPanel.h"
+#include "EmberQuickSlotPanel.h"
 
 #include "EmberLog/EmberLog.h"
 #include "GameFramework/Character.h"
 #include "Item/UserItemManger.h"
-#include "Item/QuickSlotManager.h"
-#include "Item/UI/SlotWidget/Slot/EmberBaseSlotWidget.h"
 #include "Item/UI/SlotWidget/Slot/EmberQuickSlotWidget.h"
+#include "Item/QuickSlotManager.h"
 
-void UEmberQuickSlotsPanel::BP_SetProvider_Implementation()
+
+void UEmberQuickSlotPanel::BP_SetProvider_Implementation()
 {
 	Super::BP_SetProvider_Implementation();
 	
@@ -27,7 +27,7 @@ void UEmberQuickSlotsPanel::BP_SetProvider_Implementation()
 	}
 }
 
-void UEmberQuickSlotsPanel::SetSlotOperation(UEmberItemSlotDragDropOperation* InSlotOperation)
+void UEmberQuickSlotPanel::SetSlotOperation(UEmberItemSlotDragDropOperation* InSlotOperation)
 {
 	SlotOperation = InSlotOperation;
 	for (auto& DataSlot : Slots)
@@ -38,7 +38,7 @@ void UEmberQuickSlotsPanel::SetSlotOperation(UEmberItemSlotDragDropOperation* In
 		}
 	}
 }
-FReply UEmberQuickSlotsPanel::NativeOnMouseButtonDown(const FGeometry& InGeometry,
+FReply UEmberQuickSlotPanel::NativeOnMouseButtonDown(const FGeometry& InGeometry,
 	const FPointerEvent& InMouseEvent)
 {
 	FReply Reply = Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
@@ -50,6 +50,3 @@ FReply UEmberQuickSlotsPanel::NativeOnMouseButtonDown(const FGeometry& InGeometr
 
 	return Reply;
 }
-
-
-

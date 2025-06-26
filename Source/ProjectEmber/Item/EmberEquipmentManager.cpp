@@ -12,6 +12,7 @@
 #include "EmberLog/EmberLog.h"
 
 
+/*
 UEmberEquipmentManager::UEmberEquipmentManager()
 {
 	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Helmet);
@@ -26,7 +27,6 @@ UEmberEquipmentManager::UEmberEquipmentManager()
 	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Belt);
 	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Ring);
 	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Shield);
-	DataSlots.SetNum(12);
 }
 
 int32 UEmberEquipmentManager::GetSlotCount_Implementation() const
@@ -201,3 +201,4 @@ bool UEmberEquipmentManager::bIsEquipmentTag(const FGameplayTag& InTag) const
 {
 	return SlotGameplayTags.HasTagExact(InTag);
 }
+*/
