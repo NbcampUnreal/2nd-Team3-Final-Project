@@ -91,10 +91,9 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	PlayMontageTask->OnCompleted.AddDynamic(this, &UBaseOverlayAbility::OnMontageCompleted);
 	PlayMontageTask->OnInterrupted.AddDynamic(this, &UBaseOverlayAbility::OnMontageInterrupted);
 	PlayMontageTask->OnCancelled.AddDynamic(this, &UBaseOverlayAbility::OnMontageInterrupted);
-	//PlayMontageTask->OnBlendOut.AddDynamic(this, &UBaseOverlayAbility::OnMontageCompleted);
+	/* Throw 가 쓰고 있음 주석 ㄴㄴ */
+	PlayMontageTask->OnBlendOut.AddDynamic(this, &UBaseOverlayAbility::OnMontageCompleted);
 	
-	//PlayMontageTask->OnBlendOut.AddDynamic(this, &UBaseOverlayAbility::OnMontageCompleted);
-	//PlayMontageTask->OnBlendOut
 	PlayMontageTask->ReadyForActivation();
 	
 	if (!bLoopingMontage && bCanCombo)
@@ -148,6 +147,11 @@ void UBaseOverlayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 
+	if (auto AbilityClass = ChooseAbilityByState())
+	{
+		AbilitySystemComponent->TryActivateAbilityByClass(AbilityClass,false);
+	}
+	
 	bComboInputReceived = false;
 	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
 	{
@@ -161,11 +165,6 @@ void UBaseOverlayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 		{
 			Character->ForceLastInputDirectionBlocked(true);	
 		}
-	}
-
-	if (auto AbilityClass = ChooseAbilityByState())
-	{
-		AbilitySystemComponent->TryActivateAbilityByClass(AbilityClass,false);
 	}
 
 	AbilitySystemComponent->RemoveLooseGameplayTag(AlsCharacterStateTags::Parrying);
