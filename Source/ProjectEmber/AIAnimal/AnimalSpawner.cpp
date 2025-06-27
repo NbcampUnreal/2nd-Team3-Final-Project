@@ -80,6 +80,7 @@ void AAnimalSpawner::MessageMoveToDead(UObject* Payload)
 					Data.EventTag = EventTag;
 					QuestSubsystem->OnGameEvent(EventTag, Data);
 				}
+				OnRaidClear.Broadcast();
 				TryReleaseToken();
 			}
 		}
@@ -93,6 +94,7 @@ void AAnimalSpawner::MessageMoveToDead(UObject* Payload)
 				Data.EventTag = EventTag;
 				EventSubsystem->BroadcastGameEvent(EventTag, Data);
 			}
+			OnChasingClear.Broadcast();
 			TryReleaseEntire();
 			return;
 		}
