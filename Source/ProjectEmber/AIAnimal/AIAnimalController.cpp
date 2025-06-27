@@ -17,9 +17,9 @@ AAIAnimalController::AAIAnimalController()
     HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
 
     SightConfig->SightRadius = 200.0f;
-    SightConfig->LoseSightRadius = 300.0f;
-    SightConfig->PeripheralVisionAngleDegrees = 120.0f;
-    SightConfig->SetMaxAge(2.0f);
+    SightConfig->LoseSightRadius = 1000.0f;
+    SightConfig->PeripheralVisionAngleDegrees = 210.0f;
+    SightConfig->SetMaxAge(5.0f);
     SightConfig->DetectionByAffiliation.bDetectEnemies = true;
     SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
     SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
@@ -100,7 +100,12 @@ void AAIAnimalController::FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus)
         {
             return;
         }
-        
+        if (Cast<ABaseAIAnimal>(GetPawn())->GetPersonality() == EAnimalAIPersonality::Cowardly) // 성격이 ‘겁쟁이’이라면 확정 도망
+        {
+            BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Warning");
+            BlackboardComponent->SetValueAsObject("TargetActor", Actor);
+            return;
+        }
         //--- 공격 확률 설정 --------------------------------------------------
         float HitCount = Cast<ABaseAIAnimal>(GetPawn())->GetHitCount();
         float AttackProb = 0.05;          // 기본 0 %
@@ -114,6 +119,7 @@ void AAIAnimalController::FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus)
         }
         HitCount *= 0.01f; 
         AttackProb -= HitCount;
+        
         //--------------------------------------------------------------------
 
         // 난수 뽑아서 결정
@@ -147,6 +153,13 @@ void AAIAnimalController::FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus)
             {
                 return;
             }
+            if (Cast<ABaseAIAnimal>(GetPawn())->GetPersonality() == EAnimalAIPersonality::Cowardly) // 성격이 ‘겁쟁이’이라면 확정 도망
+            {
+                BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Warning");
+                BlackboardComponent->SetValueAsObject("TargetActor", Actor);
+                return;
+            }
+            
             const UAbilitySystemComponent* TargetAsc = TargetAnimal->GetAbilitySystemComponent();
             const UAbilitySystemComponent* SourceAsc = Cast<ABaseAIAnimal>(GetPawn())->GetAbilitySystemComponent();
             const UEmberAnimalAttributeSet* TargetAttribute = TargetAsc->GetSet<UEmberAnimalAttributeSet>();
@@ -181,7 +194,7 @@ void AAIAnimalController::FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus)
             else //this가 우선순위가 더 크다면(낮다면) -> 도망
             {
                 //여기서 인식되면 타겟, 거리 등록
-                BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
+                BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Warning");
                 BlackboardComponent->SetValueAsObject("TargetActor", Actor);
             }
         }

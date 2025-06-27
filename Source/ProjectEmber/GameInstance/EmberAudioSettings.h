@@ -9,11 +9,14 @@ struct FEmberAudioSettings
     GENERATED_BODY()
 
     UPROPERTY(BlueprintReadWrite, SaveGame)
-    float MasterVolume{1.f};
+    float MasterVolume;
 
     UPROPERTY(BlueprintReadWrite, SaveGame)
-    float BgmVolume{1.f};
+    float BgmVolume;
 
     UPROPERTY(BlueprintReadWrite, SaveGame)
-    float EffectsVolume{1.f};
+    float EffectsVolume;
+
+    UPROPERTY(BlueprintReadWrite, SaveGame)
+    float UIVolume;
 };

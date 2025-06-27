@@ -31,15 +31,34 @@ protected:
     UFUNCTION()
     void OnEffectsSliderChanged(float Value);
 
-    UPROPERTY(meta = (BindWidget)) USlider* MasterSlider;
-    UPROPERTY(meta = (BindWidget)) UTextBlock* MasterValueText;
+    UFUNCTION()
+    void OnUISliderChanged(float Value);
 
-    UPROPERTY(meta = (BindWidget)) USlider* BgmSlider;
-    UPROPERTY(meta = (BindWidget)) UTextBlock* BgmValueText;
+    UPROPERTY(meta = (BindWidget))
+    USlider* MasterSlider;
 
-    UPROPERTY(meta = (BindWidget)) USlider* EffectsSlider;
-    UPROPERTY(meta = (BindWidget)) UTextBlock* EffectsValueText;
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* MasterValueText;
 
-    UPROPERTY(meta = (BindWidget)) UButton* ApplyButton;
+    UPROPERTY(meta = (BindWidget))
+    USlider* BgmSlider;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* BgmValueText;
+
+    UPROPERTY(meta = (BindWidget))
+    USlider* EffectsSlider;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* EffectsValueText;
+
+    UPROPERTY(meta = (BindWidget))
+    USlider* UISlider;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* UIValueText;
+
+    UPROPERTY(meta = (BindWidget))
+    UButton* ApplyButton;
 	
 };

@@ -27,12 +27,20 @@ void UBaseHitAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		PlayMontageTask->OnCompleted.AddDynamic(this, &UBaseHitAbility::OnMontageFinished);
 		PlayMontageTask->OnInterrupted.AddDynamic(this, &UBaseHitAbility::OnMontageFinished);
 		PlayMontageTask->OnCancelled.AddDynamic(this, &UBaseHitAbility::OnMontageFinished);
+		PlayMontageTask->OnBlendOut.AddDynamic(this, &UBaseHitAbility::OnMontageFinished);
 
 		PlayMontageTask->ReadyForActivation();
 		return;	
 	}
 
 	EndAbility(Handle, ActorInfo, ActivationInfo, false, true);
+}
+
+void UBaseHitAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
+{
+	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+	
 }
 
 void UBaseHitAbility::OnMontageFinished()

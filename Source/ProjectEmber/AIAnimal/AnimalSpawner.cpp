@@ -56,34 +56,34 @@ void AAnimalSpawner::MessageMoveToDead(UObject* Payload)
 	//파밍대기 끝나고 죽으면 대기열 이동만 시키기 -> 리스폰을 위한 처리
 	if (ABaseAIAnimal* Animal = Cast<ABaseAIAnimal>(Payload))
 	{
-		int count =0;
-		for (FAnimalSpawnInfo& Info : AnimalsInfoByToken)
+		if(AnimalsInfoByToken.Num() != 0)
 		{
-			if (Info.SpawnAnimals.Contains(Animal))
+			int count =0;
+			for (FAnimalSpawnInfo& Info : AnimalsInfoByToken)
 			{
-				Info.SpawnAnimals.Remove(Animal);
-				Info.DeadAnimals.Add(Animal);
+				if (Info.SpawnAnimals.Contains(Animal))
+				{
+					Info.SpawnAnimals.Remove(Animal);
+					Info.DeadAnimals.Add(Animal);
+				}
+				if (Info.SpawnAnimals.Num() ==0)
+				{
+					count++;
+				}
 			}
-			if (Info.SpawnAnimals.Num() ==0)
+			if (count == AnimalsInfoByToken.Num())
 			{
-				count++;
+				if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
+				{
+					FGameplayTag EventTag = FGameplayTag::RequestGameplayTag("Quest.Animal.RaidClear");
+					FGameplayEventData Data;
+					Data.EventTag = EventTag;
+					QuestSubsystem->OnGameEvent(EventTag, Data);
+				}
+				TryReleaseToken();
 			}
 		}
-		if (count == AnimalsInfoByToken.Num())
-		{
-			if (UGameplayEventSubsystem* EventSubsystem = GetGameInstance()->GetSubsystem<UGameplayEventSubsystem>())
-			{
-				FGameplayTag EventTag = FGameplayTag::RequestGameplayTag("Quest.Animal.RaidClear");
-				FGameplayEventData Data;
-				Data.EventTag = EventTag;
-				EventSubsystem->BroadcastGameEvent(EventTag, Data);
-			}
-			
-			OnRaidClear.Broadcast();
-			
-			TryReleaseToken();
-		}
-
+		
 		if (IdentityTag == FGameplayTag::RequestGameplayTag("Quest.MiniGame.Chasing"))
 		{
 			if (UGameplayEventSubsystem* EventSubsystem = GetGameInstance()->GetSubsystem<UGameplayEventSubsystem>())
@@ -93,9 +93,6 @@ void AAnimalSpawner::MessageMoveToDead(UObject* Payload)
 				Data.EventTag = EventTag;
 				EventSubsystem->BroadcastGameEvent(EventTag, Data);
 			}
-			
-			OnChasingClear.Broadcast();
-			
 			TryReleaseEntire();
 			return;
 		}

@@ -10,9 +10,6 @@ void UEmberMainMenuWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-    if (NewGameButton)
-        NewGameButton->OnClicked.AddDynamic(this, &UEmberMainMenuWidget::OnNewGameClicked);
-
     if (ContinueButton)
         ContinueButton->OnClicked.AddDynamic(this, &UEmberMainMenuWidget::OnContinueClicked);
 
@@ -21,16 +18,6 @@ void UEmberMainMenuWidget::NativeConstruct()
 
     if (QuitButton)
         QuitButton->OnClicked.AddDynamic(this, &UEmberMainMenuWidget::OnQuitClicked);
-}
-
-void UEmberMainMenuWidget::OnNewGameClicked()
-{
-    RemoveFromParent();
-
-    if (UEmberGameInstance* GI = Cast<UEmberGameInstance>(UGameplayStatics::GetGameInstance(GetWorld())))
-    {
-        GI->RequestOpenLevel("L_Als_Playground_Ktw");
-    }
 }
 
 void UEmberMainMenuWidget::OnContinueClicked()
