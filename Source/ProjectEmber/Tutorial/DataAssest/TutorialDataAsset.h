@@ -6,6 +6,9 @@
 #include "Engine/DataAsset.h"
 #include "TutorialDataAsset.generated.h"
 
+
+class UMediaTexture;
+
 USTRUCT(BlueprintType)
 struct FTutorialData
 {
@@ -17,6 +20,7 @@ public:
         , Description(FText::FromString(TEXT("Default Description")))
         , KeyImage(nullptr)
         , Sound(nullptr)
+        , VideoTexture(nullptr)
     {
     }
 
@@ -31,6 +35,10 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     USoundBase* Sound;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    UMediaTexture* VideoTexture;
+ 
 };
 
 

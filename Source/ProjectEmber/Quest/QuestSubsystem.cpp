@@ -1,12 +1,14 @@
 ﻿#include "QuestSubsystem.h"
 #include "AbilitySystemComponent.h"
 #include "AI_NPC/NPC_Component/QuestGiverComponent.h"
+#include "AI_NPC/Widget/QuestListWidget.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
 #include "Character/EmberCharacter.h"
 #include "Data/QuestDataAsset.h"
 #include "EmberLog/EmberLog.h"
 #include "GameInstance/GameplayEventSubsystem.h"
 #include "Item/UserItemManger.h"
+#include "UI/HUD/EmberMainHUD.h"
 
 void UQuestSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -44,6 +46,9 @@ bool UQuestSubsystem::TryStartQuest(FName QuestID, bool bPlayerAccepted)
     {
         return false;
     }
+ 
+    // ⭐ 첫 스텝 자동 수락
+    StepAcceptance.Add(QuestID, true);
 
     if (UQuestDataAsset* QuestAsset = LoadedQuests.FindRef(QuestID))
     {
@@ -93,6 +98,11 @@ void UQuestSubsystem::OnGameEvent(const FGameplayTag& EventTag, const FGameplayE
 
     for (FName QuestID : KeysToCheck)
     {
+        if (!StepAcceptance.Contains(QuestID) || !StepAcceptance[QuestID])
+        {
+            UE_LOG(LogTemp, Warning, TEXT("[OnGameEvent] Quest %s: 현재 스텝 수락 안됨 -> 조건 무시"), *QuestID.ToString());
+            continue;
+        }
         if (UQuestDataAsset* QuestAsset = LoadedQuests.FindRef(QuestID))
         {
             CheckQuestStepCompletion(QuestAsset, EventTag, EventData);
@@ -176,6 +186,8 @@ bool UQuestSubsystem::AdvanceQuestStep(FName QuestID)
     {
         return CompleteQuest(QuestID);
     }
+
+    StepAcceptance.Add(QuestID, false);
     const FQuestStep& NextStep = QuestAsset->Steps[Index];
    
     for (UQuestCondition* Condition : NextStep.Conditions)
@@ -223,6 +235,36 @@ int32 UQuestSubsystem::GetCurrentStepIndexForQuest(FName QuestID, bool bAutoStar
     return INDEX_NONE;
 }
 
+void UQuestSubsystem::LoadQuest(const APlayerController* PlayerController, const TMap<FName, int32>& InQuestProgress)
+{
+    QuestProgress = InQuestProgress;
+    
+    if (AHUD* Hud = PlayerController->GetHUD())
+    {
+        if (UQuestListWidget* QuestListWidget = Cast<UQuestListWidget>(Cast<AEmberMainHUD>(Hud)->GetQuestListWidget()))
+        {
+            for (const auto& QuestPair : InQuestProgress)
+            {
+                const FName& QuestID = QuestPair.Key;
+                const int32  Count   = QuestPair.Value;
+                
+                if (const TObjectPtr<UQuestDataAsset>* AssetPtr = LoadedQuests.Find(QuestID))
+                {
+                    UQuestDataAsset* QuestAsset = *AssetPtr;
+                    for (int32 i = 0; i <= Count; ++i)
+                    {
+                        QuestListWidget->AddQuest(QuestAsset, i);
+                    }
+                }
+            }
+        }
+    }
+}
+
+TMap<FName, int32>& UQuestSubsystem::GetQuestProgress()
+{
+    return QuestProgress;
+}
 
 bool UQuestSubsystem::CompleteQuest(FName QuestID)
 {
@@ -296,4 +338,12 @@ bool UQuestSubsystem::IsStepCompleted(FName QuestID, int32 StepIndex) const
         *QuestID.ToString(), StepIndex, CurrentIndex, bCompleted);
 
     return bCompleted;
+}
+void UQuestSubsystem::AcceptStep(FName QuestID)
+{
+    if (QuestProgress.Contains(QuestID))
+    {
+        StepAcceptance.Add(QuestID, true);
+        UE_LOG(LogTemp, Warning, TEXT("[AcceptStep] Quest %s: 현재 스텝 수락됨"), *QuestID.ToString());
+    }
 }

@@ -6,6 +6,22 @@
 
 #include "TokenRaidInfo.generated.h"
 
+
+USTRUCT(BlueprintType)
+struct PROJECTEMBER_API FTokenGroupInfo
+{
+	GENERATED_BODY()
+
+public:
+	// 그룹당 수
+	UPROPERTY(EditAnywhere, Category = "RaidSpawn")
+	int32 UnitsPerGroup = 0;
+
+	// 스폰 가능한 객체들
+	UPROPERTY(EditAnywhere, Category = "RaidSpawn")
+	TSubclassOf<ABaseAIAnimal> AnimalClass;
+};
+
 USTRUCT(BlueprintType)
 struct PROJECTEMBER_API FTokenRaidInfo : public FTableRowBase
 {
@@ -20,19 +36,10 @@ public:
 	UPROPERTY(EditAnywhere, Category = "RaidSpawn")
 	FGameplayTag Difficulty;
 
-	// 웨이브 번호 (0부터 시작)
-	UPROPERTY(EditAnywhere, Category = "RaidSpawn")
-	int32 Wave = 0;
-
 	// 웨이브 당 그룹 수 (이 웨이브에 몇 개 그룹이 등장할지)
 	UPROPERTY(EditAnywhere, Category = "RaidSpawn")
 	int32 GroupsPerWave = 0;
 
-	// 그룹당 수
 	UPROPERTY(EditAnywhere, Category = "RaidSpawn")
-	int32 UnitsPerGroup = 0;
-
-	// 스폰 가능한 객체들
-	UPROPERTY(EditAnywhere, Category = "RaidSpawn")
-	TSubclassOf<ABaseAIAnimal> AnimalClass;
+	TArray<FTokenGroupInfo> GroupInfo;
 };

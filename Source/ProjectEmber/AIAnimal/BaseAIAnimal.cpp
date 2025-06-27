@@ -12,7 +12,8 @@
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PhysicsVolume.h"
-#include "UI/EmberHpBarUserWidget.h"
+#include "Kismet/GameplayStatics.h"
+#include "UI/AnimalHpBarUserWidget.h"
 #include "UI/EmberWidgetComponent.h"
 #include "Quest/QuestSubsystem.h"
 
@@ -29,16 +30,16 @@ ABaseAIAnimal::ABaseAIAnimal()
 	CharacterAttributeSet = CreateDefaultSubobject<UEmberCharacterAttributeSet>(TEXT("CharacterAttributeSet"));
 	AnimalAttributeSet = CreateDefaultSubobject<UEmberAnimalAttributeSet>(TEXT("AnimalAttributeSet"));
 	MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
-
-	// HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
-	// HpBarWidget->SetupAttachment(GetMesh());
-	// HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
+	
+	HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
+	HpBarWidget->SetupAttachment(GetMesh());
+	HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
 }
 
 void ABaseAIAnimal::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-
+	
 	AbilitySystemComponent->InitStats(UEmberCharacterAttributeSet::StaticClass(), nullptr);
 	AbilitySystemComponent->InitStats(UEmberAnimalAttributeSet::StaticClass(), nullptr);
 }
@@ -53,6 +54,7 @@ void ABaseAIAnimal::BeginPlay()
 	GetCharacterMovement()->AvoidanceWeight = 0.5f;
 	WalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
 	GenerateRandom();
+	
 	if (AnimalAttributeSet)
 	{
 		FEmberAnimalAttributeData AttributeData;
@@ -66,17 +68,24 @@ void ABaseAIAnimal::BeginPlay()
 	if (AIController)
 	{
 		BlackboardComponent = AIController->GetBlackboardComponent();
+		BlackboardComponent->SetValueAsFloat("CoolDownTime",CoolDownTime);  //연속공격을 위한 쿨다운 블랙보드
 	}
-	
-	// if (HpBarWidgetClass)
-	// {
-	// 	HpBarWidget->SetWidgetClass(HpBarWidgetClass);
-	// 	HpBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
-	// 	HpBarWidget->SetDrawSize(FVector2D(200.0f, 20.0f));
-	// 	HpBarWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	//
-	// 	HpBarWidget->UpdateAbilitySystemComponent(this);
-	// }
+
+	if (CharacterAttributeSet)
+	{
+		CharacterAttributeSet->InitMaxHealth(MaxHp);
+		CharacterAttributeSet->InitHealth(CurHp);
+		CharacterAttributeSet->InitAttackRate(AttackRate);
+	}
+	if (HpBarWidgetClass)
+	{
+		HpBarWidget->SetWidgetClass(HpBarWidgetClass);
+		HpBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
+		HpBarWidget->SetDrawSize(FVector2D(MaxHp, 20.0f));
+		HpBarWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		HpBarWidget->UpdateAbilitySystemComponent(this);
+		HpBarWidget->SetVisibility(false);
+	}
 	
 	//InitAbilityActorInfo 호출 위치: 네트워크 플레이가 아니고 싱글 플레이나 로컬 전용이라면 괜찮음
 	//서버와 클라이언트 동기화가 중요하다면 BeginPlay()에서 호출
@@ -135,13 +144,12 @@ void ABaseAIAnimal::BeginPlay()
 void ABaseAIAnimal::OnAbilityEnd(const FAbilityEndedData& AbilityEndedData)
 {
 	UGameplayAbility* EndedAbility = AbilityEndedData.AbilityThatEnded.Get();
-	if (EndedAbility->IsA(StartAbilities[0])) // 토큰 공격이 끝나면
+	if (EndedAbility->IsA(StartAbilities[0])) //공격이 끝나면
 	{
-		BlackboardComponent->SetValueAsBool("IsAbility", false);
-		if (bHasToken)
+		IsAbility = false;
+		if (BlackboardComponent)
 		{
-			FVector BestLocation = GetGameInstance()->GetSubsystem<UTokenRaidSubsystem>()->GetBestLocation(*this);
-			BlackboardComponent->SetValueAsVector("SafeLocation", BestLocation);
+			BlackboardComponent->SetValueAsBool("IsAbility", IsAbility);
 		}
 	}
 }
@@ -169,6 +177,7 @@ void ABaseAIAnimal::OnBeginDeath()
 		}
 	}
 	
+	HpBarWidget->SetVisibility(false);
 	SetActorTickEnabled(false);
 	GetWorldTimerManager().PauseTimer(FullnessTimerHandle);
 	if (NiagaraComponent)
@@ -198,8 +207,6 @@ void ABaseAIAnimal::OnBeginDeath()
 	Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.Death");
 	Payload.Instigator = this;
 	AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
-	
-	BP_OnBeginDeath();
 }
 
 void ABaseAIAnimal::ReceiveMessage(const FName MessageType, UObject* Payload)
@@ -250,7 +257,8 @@ void ABaseAIAnimal::SetVisibleInGame()
 		CharacterAttributeSet->SetHealth(CharacterAttributeSet->GetMaxHealth());
 		FOnAttributeChangeData ChangeData;
 		ChangeData.NewValue = CharacterAttributeSet->GetHealth();
-		//Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(ChangeData);
+		
+		Cast<UAnimalHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(ChangeData);
 	}
 	
 	for (UActorComponent* Component : GetComponents())
@@ -269,8 +277,28 @@ void ABaseAIAnimal::SetVisibleInGame()
 void ABaseAIAnimal::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+	if (HpBarWidget && HpBarWidget->GetUserWidgetObject())
+	{
+		APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
+		if (!PlayerPawn)
+		{
+			return;
+		}
+		float Distance = FVector::Dist(PlayerPawn->GetActorLocation(), GetActorLocation());
+
+		// 거리 기준 예: 0~300은 1.0 투명도, 1000 이상은 완전 투명 (0.0)
+		float Opacity = 1.0f - FMath::Clamp((Distance - 1000.0f) / 1400.0f, 0.0f, 1.0f);
+
+		UUserWidget* Widget = HpBarWidget->GetUserWidgetObject();
+		Widget->SetRenderOpacity(Opacity);
+	}
+	
 	if (GetMovementComponent())
 	{
+		float CurSpeed = GetVelocity().FVector::Length();
+		PlayRate = FMath::Clamp(CurSpeed / WalkSpeed, 0.1f, 2.0f);
+		
 		bIsShouldSwim = GetMovementComponent()->IsSwimming();
 		if (bIsShouldSwim)
 		{
@@ -281,19 +309,16 @@ void ABaseAIAnimal::Tick(float DeltaTime)
 			SwimTime = 0.f;
 		}
 	}
-	if (BlackboardComponent)
+	if (BlackboardComponent && !IsAbility)
 	{
-		if (FName("Animal.Montage.Attack") == BlackboardComponent->GetValueAsName("NStateTag"))
+		UObject* TargetObject = BlackboardComponent->GetValueAsObject("TargetActor");
+		
+		if (AActor* Target = Cast<AActor>(TargetObject))
 		{
-			UObject* TargetObject = BlackboardComponent->GetValueAsObject("TargetActor");
-			
-			if (AActor* Target = Cast<AActor>(TargetObject))
-			{
-				FVector Direction = (Target->GetActorLocation()- GetActorLocation()).GetSafeNormal2D(); //z무시
-				FRotator TargetRotation = Direction.Rotation(); //얼마나 회전해야하는지
-				FRotator NewRot = FMath::RInterpTo(GetActorRotation(), TargetRotation, DeltaTime, 5.0f);
-				SetActorRotation(NewRot);
-			}
+			FVector Direction = (Target->GetActorLocation()- GetActorLocation()).GetSafeNormal2D(); //z무시
+			FRotator TargetRotation = Direction.Rotation(); //얼마나 회전해야하는지
+			FRotator NewRot = FMath::RInterpTo(GetActorRotation(), TargetRotation, DeltaTime, 5.0f);
+			SetActorRotation(NewRot);
 		}
 	}
 }
@@ -313,7 +338,6 @@ void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 	bIsShouldSleep = false;
 	HitCount++;
 	TriggerSpeedUp();
-	
 	if (BlackboardComponent)
 	{
 		if (AActor* TargetActor = Cast<AController>(InstigatorActor->GetOwner())->GetPawn())
@@ -345,8 +369,13 @@ void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 
 void ABaseAIAnimal::OnAttackSpecial()
 {
-	BlackboardComponent->SetValueAsBool("IsAbility", true);
-
+	IsAbility = true;
+	if (BlackboardComponent)
+	{
+		BlackboardComponent->SetValueAsBool("IsAbility", IsAbility);
+		BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Attacked");
+	}
+	
 	FGameplayEventData Payload;
 	Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.AttackSpecial");
 	Payload.Instigator = this;
@@ -361,7 +390,8 @@ void ABaseAIAnimal::OnWalkSpeedChanged(const FOnAttributeChangeData& OnAttribute
 
 void ABaseAIAnimal::OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData)
 {
-	//Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(OnAttributeChangeData);
+	Cast<UAnimalHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(OnAttributeChangeData);
+	HpBarWidget->SetVisibility(true);
 }
 
 void ABaseAIAnimal::OnFullnessChanged(const FOnAttributeChangeData& OnAttributeChangeData)
@@ -389,7 +419,8 @@ void ABaseAIAnimal::GenerateRandom()
 {
 	int32 RandomPersonality = FMath::RandRange(0, static_cast<int32>(EAnimalAIPersonality::End) - 1);
 	Personality = static_cast<EAnimalAIPersonality>(RandomPersonality);
-	Fullness = FMath::FRandRange(70.f, 90.f);
+	Fullness = FMath::FRandRange(70.0f, 90.0f);
+	CoolDownTime = FMath::FRandRange(5.0f, 15.0f);
 }
 
 void ABaseAIAnimal::DecreaseFullness()
@@ -490,7 +521,7 @@ void ABaseAIAnimal::SetRoleTag(const FName InRoleTag)
 	
 		UNiagaraSystem* NiagaraSystem = LoadObject<UNiagaraSystem>(nullptr, TEXT("/Game/SoStylized/Effects/Systems/NS_ElectricBuildup.NS_ElectricBuildup"));
 		if (NiagaraSystem)
-		{ //올라가는 방향, 스피드 더 빠르게, 크기도 전체적으로 감싸는 느낌으로, 차라리 밑에 오오라 느김도 괜찮을 듯, 컬러 스테일이랑 다이나믹 머테리얼 파라미터 커브값이 0으로 되면서 안보인 듯
+		{ //컬러 스테일이랑 다이나믹 머테리얼 파라미터 커브값이 0으로 되면서 안보인 듯
 			NiagaraComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
 		   NiagaraSystem,
 		   GetMesh(),
@@ -601,7 +632,6 @@ void ABaseAIAnimal::ApplyWaterSurface(float DeltaTime)
 	FVector NewLocation = GetActorLocation();
 	NewLocation.Z = WaterSurfaceZ + WaveOffsetZ;
 	SetActorLocation(NewLocation);
-	DrawDebugBox(GetWorld(), VolumeOrigin, VolumeExtent, FColor::Blue, false, 2.0f);
 }
 
 
@@ -674,9 +704,9 @@ void ABaseAIAnimal::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void ABaseAIAnimal::SwitchBehaviorTree()
+void ABaseAIAnimal::SwitchBehaviorTree(int32 Index)
 {
-	Cast<AAIAnimalController>(GetController())->SwitchToBehaviorTree(1);
+	Cast<AAIAnimalController>(GetController())->SwitchToBehaviorTree(Index);
 	BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
 }
 

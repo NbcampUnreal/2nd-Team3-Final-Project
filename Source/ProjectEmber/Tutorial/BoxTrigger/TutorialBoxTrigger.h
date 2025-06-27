@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "EMSActorSaveInterface.h"
 #include "Engine/TriggerBox.h"
 #include "Tutorial/Widget/TutorialWidget.h"
 #include "Engine/TriggerBox.h"
@@ -12,7 +13,7 @@
 class UBoxComponent;
 
 UCLASS()
-class PROJECTEMBER_API ATutorialBoxTrigger : public ATriggerBox
+class PROJECTEMBER_API ATutorialBoxTrigger : public ATriggerBox, public IEMSActorSaveInterface
 {
 	GENERATED_BODY()
 	
@@ -26,14 +27,14 @@ protected:
     UBoxComponent* BoxComponent;
 
 public:
-    //  ¹è¿­ ¹öÀü: DataListAsset + Index!
+    //  ï¿½è¿­ ï¿½ï¿½ï¿½ï¿½: DataListAsset + Index!
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Tutorial")
     UTutorialDataAsset* TutorialDataAsset;
-
+    
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Tutorial")
     int32 TutorialIndex = 0;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tutorial")
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tutorial", SaveGame)
     bool bTriggered = false;
 private:
     UFUNCTION()
@@ -43,4 +44,10 @@ private:
         int32 OtherBodyIndex,
         bool bFromSweep,
         const FHitResult& SweepResult);
+
+    UFUNCTION()
+    void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent,
+                      AActor* OtherActor,
+                      UPrimitiveComponent* OtherComp,
+                      int32 OtherBodyIndex);
 };

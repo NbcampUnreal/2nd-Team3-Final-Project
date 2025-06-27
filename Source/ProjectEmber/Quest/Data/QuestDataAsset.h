@@ -126,7 +126,5 @@ public:
     // 퀘스트 단계를 순서대로 나열
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest|Config")
     TArray<FQuestStep> Steps;
-
-
-
+    
 };

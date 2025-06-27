@@ -200,7 +200,7 @@ void UInteractionComponent::Interact()
 
 	if (GatherTime <= 0.0f)
 	{
-		IInteractable::Execute_Interact(RawObj, GetOwner());
+		IInteractable::Execute_TryInteract(RawObj, GetOwner());
 		OnInteractOverTrigger->UpdateOverlaps();
 	}
 	else

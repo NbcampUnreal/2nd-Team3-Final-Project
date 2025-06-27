@@ -19,7 +19,6 @@ EBTNodeResult::Type UBTTask_MoveToBest::ExecuteTask(UBehaviorTreeComponent& Owne
 	AAIController* AIController = OwnerComp.GetAIOwner();
 	ABaseAIAnimal* Animal = Cast<ABaseAIAnimal>(AIController->GetPawn());
 	GetWorld()->GetGameInstance()->GetSubsystem<UTokenRaidSubsystem>()->ReturnToken(Animal); 
-	UE_LOG(LogTemp, Warning, TEXT("ExecuteTask - MoveToBest 실행됨"));
 	return Result;
 }
 
@@ -31,9 +30,6 @@ void UBTTask_MoveToBest::OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8
 
 	AAIController* AIController = OwnerComp.GetAIOwner();
 	ABaseAIAnimal* Animal = Cast<ABaseAIAnimal>(AIController->GetPawn());
-
-	//베스트 포인트로 이동했다 -> 최초 공격대형 잡을 때(토큰 발행전 -> 알아서 리턴), 공격하고 돌아갈 때(돌아왓으면 토큰 반환)
-	
 	
 	if (IsValid(Animal))
 	{
@@ -42,8 +38,6 @@ void UBTTask_MoveToBest::OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8
 		{
 			bSuccess = true;
 		}
-		UE_LOG(LogTemp, Warning, TEXT("UBTTask_MoveToBest - OnTaskFinished 실행됨"));
-		//Animal->OnAnimalMoveFinish.Broadcast(Cast<AActor>(Animal), bSuccess);
 		GetWorld()->GetGameInstance()->GetSubsystem<UTokenRaidSubsystem>()->OnMovementComplete(Animal, bSuccess);
 	}
 }
