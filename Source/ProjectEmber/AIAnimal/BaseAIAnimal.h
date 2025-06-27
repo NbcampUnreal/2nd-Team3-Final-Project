@@ -30,8 +30,7 @@ enum class EAnimalAIPersonality : uint8
 	Normal			UMETA(DisplayName = "Normal"),			//인지 -> Idle, 피격-> 확정 도망
 	Cowardly        UMETA(DisplayName = "Cowardly"),        // 인지 -> 확정 도망, 피격-> 확정 도망
 	Brave			UMETA(DisplayName = "Brave"),			// 인지 -> 선공격 확률 증가, 피격-> 반격 확률 증가
-	Agile			UMETA(DisplayName = "Agile"),			// 공격 이동 -> 이동속도 일시 증가
-	Lazy			UMETA(DisplayName = "Lazy"),			// 기본 이동속도 감소
+	Agile			UMETA(DisplayName = "Agile"),			// 토큰 공격 이동(태어났을 땐 전체 이동속도 up) -> (이후 이동속도는 Agile만)이동속도 일시 증가
 	End				UMETA(DisplayName = "End")
 };
 
@@ -75,7 +74,6 @@ public:
 	void TriggerSpeedUp();
 	EAnimalAIPersonality GetPersonality();
 	float GetWildPower() const;
-	float GetWanderRange() const;
 	TObjectPtr<UAnimMontage> GetMontage(FGameplayTag MontageTag);
 	
 	void GenerateRandom();
@@ -154,13 +152,13 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
 	TObjectPtr<class UAbilitySystemComponent> AbilitySystemComponent;
 	
-	UPROPERTY(SaveGame)
+	UPROPERTY(Transient)
 	TObjectPtr<class UEmberCharacterAttributeSet> CharacterAttributeSet;
 	
-	UPROPERTY(SaveGame)
+	UPROPERTY(Transient)
 	TObjectPtr<class UEmberAnimalAttributeSet> AnimalAttributeSet;
 	
-	UPROPERTY(EditAnywhere, Category = "HpBar")
+	UPROPERTY(EditAnywhere, Category = "Widget")
 	TSubclassOf<class UUserWidget> HpBarWidgetClass;
 	
 	UPROPERTY(BlueprintReadOnly)
@@ -254,6 +252,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swim")
 	float WaterSurfaceZ = 0.0f; // 기준 물 표면 높이
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
+	float MaxHp = 200.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
+	float CurHp = 200.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widget")
+	float AttackRate = 10.0f;
+	
 	int32 HitCount = 0;
 	bool bHasToken = false;
 	bool IsAbility = false;
