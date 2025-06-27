@@ -1,6 +1,7 @@
 #include "GameInstance/EmberGameInstance.h"
 #include "GameInstance/AudioSubsystem.h"
 #include "GameInstance/LevelSubsystem.h"
+#include "GameInstance/DungeonSubsystem.h"
 #include "EasyMultiSave.h"
 #include "EMSFunctionLibrary.h"
 #include "GameInstance/EmberSaveGame.h"
@@ -21,6 +22,7 @@ void UEmberGameInstance::Init()
 
 	AudioSubsystem = GetSubsystem<UAudioSubsystem>();
 	LevelSubsystem = GetSubsystem<ULevelSubsystem>();
+	DungeonSubsystem = GetSubsystem<UDungeonSubsystem>();
 
     if (UGameUserSettings* Settings = GEngine->GetGameUserSettings())
     {
@@ -93,19 +95,6 @@ void UEmberGameInstance::TestPlaySFX(ESfxSoundType SoundType, const FName RowNam
 	AudioSubsystem->PlaySFX(SoundType, RowName, Location);
 }
 
-void UEmberGameInstance::ClearDungeon(int DungeonIndex)
-{
-	if (!IsClearDungeon(DungeonIndex))
-	{
-		bIsDungeonClear[DungeonIndex] = true;
-	}
-}
-
-bool UEmberGameInstance::IsClearDungeon(int DungeonIndex)
-{
-	return bIsDungeonClear[DungeonIndex];
-}
-
 static FString GetMoveDirectionMappingName(EMoveDirection Dir)
 {
     switch (Dir)
@@ -128,7 +117,7 @@ void UEmberGameInstance::ApplySavedMoveBindingsToUserSettings()
     {
         UE_LOG(LogTemp, Error, TEXT("No PlayerController!"));
         return;
-    }
+	}
 
     ULocalPlayer* LP = PC->GetLocalPlayer();
     if (!LP)
@@ -231,4 +220,14 @@ void UEmberGameInstance::LoadKeyMappingsWithEMS()
         SavedMappings = LoadedSave->SavedMappings;
         SavedMoveBindings = LoadedSave->SavedMoveBindings;
     }
+}
+
+UDungeonSubsystem* UEmberGameInstance::GetDungeonSubSystem()
+{
+	if (IsValid(DungeonSubsystem))
+	{
+		return DungeonSubsystem;
+	}
+
+	return nullptr;
 }
