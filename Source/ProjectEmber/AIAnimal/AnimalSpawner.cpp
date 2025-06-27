@@ -339,7 +339,10 @@ TArray<TSoftObjectPtr<AAnimalSpawnPoint>> AAnimalSpawner::SelectNearPoints(TArra
 	TArray<TSoftObjectPtr<AAnimalSpawnPoint>> OutSpawnPoints;
 	for (int32 i = 0; i < BestSpawnPointsAmount; i++)
 	{
-		OutSpawnPoints.Add(InSpawnPoints[i]);
+		if (InSpawnPoints[i].IsValid())
+		{
+			OutSpawnPoints.Add(InSpawnPoints[i]);
+		}
 	}
 	return OutSpawnPoints;
 }
@@ -485,7 +488,10 @@ void AAnimalSpawner::SortFarthestAnimal(TArray<FAnimalSpawnInfo>& InfoArray)
 	//create 여부 bool 변수 리셋 : 디스폰 나갔다 돌아오면 초기화
 	for (auto& Point: SpawnPoints)
 	{
-		Point->SetIsCreated(false);
+		if (Point.IsValid())
+		{
+			Point->SetIsCreated(false);
+		}
 	}
 }
 
