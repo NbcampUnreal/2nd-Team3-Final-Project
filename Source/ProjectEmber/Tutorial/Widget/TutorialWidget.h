@@ -21,6 +21,9 @@ public:
     UFUNCTION(BlueprintCallable)
     void SetImageTexture(UTexture2D* NewImage);
 
+	UFUNCTION(BlueprintCallable)
+    void SetMediaImageTexture(UTexture* NewImage);
+	
     UFUNCTION(BlueprintCallable)
     void ShowTutorial(bool bShow);
 
@@ -29,11 +32,13 @@ public:
 
     UFUNCTION()
     void OnCloseButtonClicked();
-
-    // Image·Î ±³Ã¼
+	
     UPROPERTY(meta = (BindWidget))
-    class UImage* TutorialImage;
+    class UImage* KeylImage;
 
+	UPROPERTY(meta = (BindWidget))
+	class UImage* MediaImage;
+	
     UPROPERTY(meta = (BindWidget))
     class UTextBlock* TutorialNameText;
 

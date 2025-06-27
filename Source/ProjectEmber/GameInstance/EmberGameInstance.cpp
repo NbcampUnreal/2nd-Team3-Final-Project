@@ -7,7 +7,6 @@
 #include "GameInstance/EmberSaveGame.h"
 #include "GameFramework/GameUserSettings.h" 
 #include "UI/EmberKeySettingWidget.h"
-#include "UI/EmberLoadingWidget.h"
 #include "EnhancedInputSubsystems.h"
 #include "UserSettings/EnhancedInputUserSettings.h"
 #include "InputMappingContext.h"
@@ -26,7 +25,7 @@ void UEmberGameInstance::Init()
 
     if (UGameUserSettings* Settings = GEngine->GetGameUserSettings())
     {
-        Settings->LoadSettings(true); // true = Apply immediately
+        Settings->LoadSettings(true);
     }
 
     LoadKeyMappingsWithEMS();
@@ -37,57 +36,9 @@ void UEmberGameInstance::TestPlaySound()
 	AudioSubsystem->PlayBGMSoundByArea(EAreaType::LobbyArea);
 }
 
-void UEmberGameInstance::ShowLoadingScreen()
-{
-	UE_LOG(LogTemp, Warning, TEXT("[Loading] ShowLoadingScreen called"));
-
-	if (!LoadingScreenClass.IsValid())
-	{
-		LoadingScreenClass.LoadSynchronous();
-	}
-
-	if (!LoadingScreenClass.IsValid()) return;
-
-	if (!LoadingScreenWidget)
-	{
-		LoadingScreenWidget = CreateWidget<UUserWidget>(this, LoadingScreenClass.Get());
-	}
-
-    if (LoadingScreenWidget && !LoadingScreenWidget->IsInViewport())
-    {
-        LoadingScreenWidget->AddToViewport(100);
-        UE_LOG(LogTemp, Warning, TEXT("[Loading] Widget Added To Viewport"));
-
-        if (UEmberLoadingWidget* TypedLoading = Cast<UEmberLoadingWidget>(LoadingScreenWidget))
-        {
-            TypedLoading->Progress = 0.0f;
-        }
-    }
-
-	if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
-	{
-		PC->bShowMouseCursor = false;
-		PC->SetInputMode(FInputModeUIOnly());
-	}
-}
-
-void UEmberGameInstance::HideLoadingScreen()
-{
-	if (LoadingScreenWidget && LoadingScreenWidget->IsInViewport())
-	{
-		LoadingScreenWidget->RemoveFromParent();
-	}
-}
-
 void UEmberGameInstance::RequestOpenLevel(FName MapName)
 {
-	ShowLoadingScreen();
-
-	FTimerHandle TimerHandle;
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this, MapName]()
-		{
-			UGameplayStatics::OpenLevel(this, MapName);
-		}, 2.0f, false);
+    UGameplayStatics::OpenLevel(this, MapName);
 }
 
 void UEmberGameInstance::TestPlaySFX(ESfxSoundType SoundType, const FName RowName, FVector Location)
@@ -220,6 +171,64 @@ void UEmberGameInstance::LoadKeyMappingsWithEMS()
         SavedMappings = LoadedSave->SavedMappings;
         SavedMoveBindings = LoadedSave->SavedMoveBindings;
     }
+}
+
+void UEmberGameInstance::SaveVideoSettingsWithEMS(const FEmberVideoSettings& Settings)
+{
+    UEmberSaveGame* SaveGameInstance = Cast<UEmberSaveGame>(
+        UEMSFunctionLibrary::GetCustomSave(this, UEmberSaveGame::StaticClass(), TEXT("VideoSettingSlot"), TEXT(""))
+    );
+    if (!SaveGameInstance)
+    {
+        SaveGameInstance = NewObject<UEmberSaveGame>(this, UEmberSaveGame::StaticClass());
+    }
+
+    SaveGameInstance->SavedVideoSettings = Settings;
+
+    UEMSFunctionLibrary::SaveCustom(this, SaveGameInstance);
+}
+
+FEmberVideoSettings UEmberGameInstance::LoadVideoSettingsWithEMS()
+{
+    UEmberSaveGame* LoadedSave = Cast<UEmberSaveGame>(
+        UEMSFunctionLibrary::GetCustomSave(this, UEmberSaveGame::StaticClass(), TEXT("VideoSettingSlot"), TEXT(""))
+    );
+
+    if (LoadedSave)
+    {
+        return LoadedSave->SavedVideoSettings;
+    }
+
+    return FEmberVideoSettings();
+}
+
+void UEmberGameInstance::SaveAudioSettingsWithEMS(const FEmberAudioSettings& Settings)
+{
+    UEmberSaveGame* SaveGameInstance = Cast<UEmberSaveGame>(
+        UEMSFunctionLibrary::GetCustomSave(this, UEmberSaveGame::StaticClass(), TEXT("AudioSettingSlot"), TEXT(""))
+    );
+    if (!SaveGameInstance)
+    {
+        SaveGameInstance = NewObject<UEmberSaveGame>(this, UEmberSaveGame::StaticClass());
+    }
+
+    SaveGameInstance->SavedAudioSettings = Settings;
+    UEMSFunctionLibrary::SaveCustom(this, SaveGameInstance);
+}
+
+FEmberAudioSettings UEmberGameInstance::LoadAudioSettingsWithEMS()
+{
+    UEmberSaveGame* Loaded = Cast<UEmberSaveGame>(
+        UEMSFunctionLibrary::GetCustomSave(this, UEmberSaveGame::StaticClass(), TEXT("AudioSettingSlot"), TEXT(""))
+    );
+
+    if (Loaded)
+    {
+        return Loaded->SavedAudioSettings;
+    }
+
+    return FEmberAudioSettings();
+}
 }
 
 UDungeonSubsystem* UEmberGameInstance::GetDungeonSubSystem()

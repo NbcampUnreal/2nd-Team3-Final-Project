@@ -1,4 +1,7 @@
 ﻿#include "EmberCharacterAttributeSet.h"
+
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AlsCharacter.h"
 #include "GameplayEffectExtension.h"
 #include "Ability/Combat/ParryCounterAbility.h"
 #include "GameplayTag/EmberGameplayTag.h"
@@ -84,7 +87,7 @@ bool UEmberCharacterAttributeSet::PreGameplayEffectExecute(struct FGameplayEffec
 			UCombatFunctionLibrary::ApplyGlobalTimeDilation(GetWorld(), 0.4f,0.17f);
 			// 2. 데미지 무효화
 			Data.EvaluatedData.Magnitude = 0.f;
-			// 4. 패링 카운터 어빌리티 발동 (상대에게)
+			// 3. 패링 카운터 어빌리티 발동 (상대에게)
 			const FGameplayEffectContextHandle& Context = Data.EffectSpec.GetContext();
 			if (UAbilitySystemComponent* SourceAsc = Context.GetInstigatorAbilitySystemComponent())
 			{
@@ -94,15 +97,27 @@ bool UEmberCharacterAttributeSet::PreGameplayEffectExecute(struct FGameplayEffec
 					EMBER_LOG(LogEmber, Warning, TEXT("Failed to activate enemy parry ability"));
 				}
 			}
-			// 5. 패링 카운터 어빌리티 발동 (나에게)
+			// 4. 패링 카운터 어빌리티 발동 (나에게)
 			AbilitySystemComponent->TryActivateAbilityByClass(EffectHelperInstance->ParryAbilityClass);
-
-			
-			
 		}
 		else if (AbilitySystemComponent->HasMatchingGameplayTag(AlsCharacterStateTags::Blocking))
 		{
 			Data.EvaluatedData.Magnitude *= 0.8f;
+
+			const FGameplayEffectContextHandle& Context = Data.EffectSpec.GetContext();
+
+			AbilitySystemComponent->BP_ApplyGameplayEffectToSelf(EffectHelperInstance->BlockHitEffectClass, 1.0f, Context);
+			
+			FGameplayEventData Payload;
+			Payload.EventTag = AlsCharacterStateTags::Hit;
+			Payload.Instigator = Context.GetInstigator();
+			Payload.Target = GetOwningActor();
+	
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetOwningActor(),	AlsCharacterStateTags::Hit,Payload);
+		}
+		else // 이쪽은 무조건 Hit 어빌리티 발동시켜야됨
+		{
+			DirectionalHitAbility(Data);
 		}
 	}
 	
@@ -172,5 +187,59 @@ void UEmberCharacterAttributeSet::ApplyGameplayEffectToSelf(UAbilitySystemCompon
 	if (SpecHandle.IsValid())
 	{
 		AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+	}
+}
+
+void UEmberCharacterAttributeSet::DirectionalHitAbility(const FGameplayEffectModCallbackData& Data)
+{
+	UAbilitySystemComponent* Asc = GetOwningAbilitySystemComponentChecked();
+	if (!Asc)
+	{
+		return;
+	}
+
+	const AAlsCharacter* Character = Cast<AAlsCharacter>(Asc->GetAvatarActor());
+	if (!Character)
+	{
+		return;
+	}
+	
+	const FGameplayEffectContextHandle& Context = Data.EffectSpec.GetContext();
+	const AActor* Instigator = Context.GetInstigator();
+	if (!Instigator)
+	{
+		return;
+	}
+
+	// 1. 방향 벡터 계산
+	const FVector ToInst   = (Instigator->GetActorLocation() - Character->GetActorLocation()).GetSafeNormal();
+	const FVector Forward  = Character->GetActorForwardVector();
+	const FVector Right    = Character->GetActorRightVector();
+
+	// 2. 내적으로 방향 계산
+	const float ForwardDot = FVector::DotProduct(Forward, ToInst);
+	const float RightDot   = FVector::DotProduct(Right, ToInst);
+	
+	TSubclassOf<UGameplayAbility> AbilityToActivate;
+	if (FMath::Abs(ForwardDot) > FMath::Abs(RightDot))
+	{
+		// 전후
+		if (ForwardDot > 0.f)
+			AbilityToActivate = EffectHelperInstance->ForwardHitAbilityClass;
+		else
+			AbilityToActivate = EffectHelperInstance->BackHitAbilityClass;
+	}
+	else
+	{
+		// 좌우
+		if (RightDot > 0.f)
+			AbilityToActivate = EffectHelperInstance->RightHitAbilityClass;
+		else
+			AbilityToActivate = EffectHelperInstance->LeftHitAbilityClass;
+	}
+	
+	if (AbilityToActivate)
+	{
+		Asc->TryActivateAbilityByClass(AbilityToActivate);
 	}
 }

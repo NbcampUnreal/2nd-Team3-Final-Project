@@ -80,12 +80,18 @@ void UInteractionFragment_FollowSpline::TimelineProgress(const float Value) cons
 	
 	float Distance = FMath::Lerp(StartDistance, EndDistance, Value);
 	UE_LOG(LogTemp, Warning, TEXT("TimelineProgress: Value=%.3f, Distance=%.3f"), Value, Distance);
-    
 	
 	FVector Location = Spline->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
-	FRotator Rotation = Spline->GetRotationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
 	
-	Target->SetActorLocationAndRotation(Location, Rotation);
+	if (bFollowSplineRotation)
+	{
+		FRotator Rotation = Spline->GetRotationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::World);
+		Target->SetActorLocationAndRotation(Location, Rotation);
+	}
+	else
+	{
+		Target->SetActorLocation(Location);
+	}
 }
 
 void UInteractionFragment_FollowSpline::TimelineFinished()

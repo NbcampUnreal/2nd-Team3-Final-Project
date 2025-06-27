@@ -80,6 +80,7 @@ protected:
 protected: /* State Effects */
 
 	void ApplyGameplayEffectToSelf(UAbilitySystemComponent* AbilitySystemComponent, const TSubclassOf<UGameplayEffect>& EffectClass, float Level = 1.0f);
+	void DirectionalHitAbility(const FGameplayEffectModCallbackData& Data);
 	
 	UPROPERTY(Config)
 	TSubclassOf<UEmberEffectHelper> EffectHelperClass;

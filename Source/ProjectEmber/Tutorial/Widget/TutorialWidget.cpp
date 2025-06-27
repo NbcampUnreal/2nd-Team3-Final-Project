@@ -1,5 +1,6 @@
 #include "TutorialWidget.h"
-#include "Components/Border.h"
+
+#include "MediaTexture.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
 #include "Components/Button.h"   
@@ -8,8 +9,7 @@
 void UTutorialWidget::NativeConstruct()
 {
     Super::NativeConstruct();
-
-    // Ã³À½¿£ ¹«Á¶°Ç ¾È º¸ÀÌ°Ô!
+    
     SetVisibility(ESlateVisibility::Hidden);
 
     if (TutorialButton)
@@ -20,12 +20,23 @@ void UTutorialWidget::NativeConstruct()
 
 void UTutorialWidget::SetImageTexture(UTexture2D* NewImage)
 {
-    if (TutorialImage && NewImage)
+    if (KeylImage && NewImage)
     {
         FSlateBrush Brush;
         Brush.SetResourceObject(NewImage);
         Brush.ImageSize = FVector2D(NewImage->GetSizeX(), NewImage->GetSizeY());
-        TutorialImage->SetBrush(Brush);
+        KeylImage->SetBrush(Brush);
+    }
+}
+
+void UTutorialWidget::SetMediaImageTexture(UTexture* NewImage)
+{
+    if (MediaImage && NewImage)
+    {
+        FSlateBrush Brush;
+        Brush.SetResourceObject(NewImage);
+        Brush.ImageSize = FVector2D(100, 100); // ì ì ˆí•œ í¬ê¸°ë¡œ ì„¤ì •
+        MediaImage->SetBrush(Brush);
     }
 }
 
@@ -36,10 +47,8 @@ void UTutorialWidget::ShowTutorial(bool bShow)
 
 void UTutorialWidget::SetTutorialData(const FTutorialData& InData)
 {
-    // ÀÌ¹ÌÁö ¼³Á¤
     SetImageTexture(InData.KeyImage);
-
-    // ÅØ½ºÆ® ¼³Á¤
+    SetMediaImageTexture(InData.VideoTexture);
     if (TutorialNameText)
     {
         TutorialNameText->SetText(InData.Name);
@@ -53,7 +62,7 @@ void UTutorialWidget::SetTutorialData(const FTutorialData& InData)
 
 void UTutorialWidget::OnCloseButtonClicked()
 {
-    //  Subsystem Ã£¾Æ¼­ HideTutorial È£Ãâ!
+    //  Subsystem Ã£ï¿½Æ¼ï¿½ HideTutorial È£ï¿½ï¿½!
     if (UTutorialManagerSubsystem* TutorialSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UTutorialManagerSubsystem>())
     {
         TutorialSubsystem->HideTutorial();

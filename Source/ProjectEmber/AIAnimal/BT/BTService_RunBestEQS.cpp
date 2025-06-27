@@ -33,10 +33,7 @@ void UBTService_RunBestEQS::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* N
 	{
 		return;
 	}
-
-	APawn* Player = GetWorld()->GetFirstPlayerController()->GetPawn();
-	Cast<AAIAnimalController>(Cast<ABaseAIAnimal>(AIPawn)->GetController())->GetBlackboardComponent()->SetValueAsVector("TargetLocation", Player->GetActorLocation());
-
+	
 	if (Cast<AAIAnimalController>(Cast<ABaseAIAnimal>(AIPawn)->GetController())->GetBlackboardComponent()->GetValueAsName("NGroupTag") != "Animal.Role.Leader")
 	{
 		return;

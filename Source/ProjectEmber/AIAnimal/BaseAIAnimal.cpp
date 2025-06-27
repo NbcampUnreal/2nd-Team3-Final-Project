@@ -10,6 +10,7 @@
 #include "TokenRaidSubsystem.h"
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
+#include "EmberLog/EmberLog.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PhysicsVolume.h"
 #include "UI/EmberHpBarUserWidget.h"
@@ -24,23 +25,15 @@ ABaseAIAnimal::ABaseAIAnimal()
 	NavGenerationRadius = 4000.0f; //시각,청각 인지 버뮈보다 인보커 생성 범위가 커야함
 	NavRemoveRadius = 4300.0f;
 	NavInvokerComponent = CreateDefaultSubobject<UNavigationInvokerComponent>(TEXT("NavInvokerComponent"));
+	NavInvokerComponent->SetGenerationRadii(NavGenerationRadius, NavRemoveRadius);
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	CharacterAttributeSet = CreateDefaultSubobject<UEmberCharacterAttributeSet>(TEXT("CharacterAttributeSet"));
 	AnimalAttributeSet = CreateDefaultSubobject<UEmberAnimalAttributeSet>(TEXT("AnimalAttributeSet"));
-	
-	GenerateRandom();
-	FEmberAnimalAttributeData AttributeData;
-	AttributeData.Fullness = Fullness;
-	AttributeData.WalkSpeed = WalkSpeed;
-	AttributeData.WanderRange = WanderRange;
-	AttributeData.WildPower = WildPower;
-	AnimalAttributeSet->InitFromData(AttributeData);
-
 	MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
 
-	// HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
-	// HpBarWidget->SetupAttachment(GetMesh());
-	// HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
+	HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
+	HpBarWidget->SetupAttachment(GetMesh());
+	HpBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 200.0f));
 }
 
 void ABaseAIAnimal::PossessedBy(AController* NewController)
@@ -55,24 +48,38 @@ void ABaseAIAnimal::PossessedBy(AController* NewController)
 void ABaseAIAnimal::BeginPlay()
 {
 	Super::BeginPlay();
-
-	AIController = Cast<AAIAnimalController>(GetController());
-	NavInvokerComponent->SetGenerationRadii(NavGenerationRadius, NavRemoveRadius);
 	
+	GetCharacterMovement()->bUseRVOAvoidance = true;
+	GetCharacterMovement()->AvoidanceConsiderationRadius = 800.0f; // AI가 다른 AI 감지할 반경
+	GetCharacterMovement()->AvoidanceWeight = 0.5f;
+	WalkSpeed = GetCharacterMovement()->MaxWalkSpeed;
+	GenerateRandom();
+	if (AnimalAttributeSet)
+	{
+		FEmberAnimalAttributeData AttributeData;
+		AttributeData.Fullness = Fullness;
+		AttributeData.WalkSpeed = WalkSpeed;
+		AttributeData.WildPower = WildPower;
+		AnimalAttributeSet->InitFromData(AttributeData);
+	}
+	
+	AIController = Cast<AAIAnimalController>(GetController());
 	if (AIController)
 	{
 		BlackboardComponent = AIController->GetBlackboardComponent();
 	}
 	
-	// if (HpBarWidgetClass)
-	// {
-	// 	HpBarWidget->SetWidgetClass(HpBarWidgetClass);
-	// 	HpBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
-	// 	HpBarWidget->SetDrawSize(FVector2D(200.0f, 20.0f));
-	// 	HpBarWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	//
-	// 	HpBarWidget->UpdateAbilitySystemComponent(this);
-	// }
+	BlackboardComponent->SetValueAsFloat("CoolDownTime",CoolDownTime);  //연속공격을 위한 쿨다운 블랙보드
+	
+	if (HpBarWidgetClass)
+	{
+		HpBarWidget->SetWidgetClass(HpBarWidgetClass);
+		HpBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
+		HpBarWidget->SetDrawSize(FVector2D(200.0f, 20.0f));
+		HpBarWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
+		HpBarWidget->UpdateAbilitySystemComponent(this);
+	}
 	
 	//InitAbilityActorInfo 호출 위치: 네트워크 플레이가 아니고 싱글 플레이나 로컬 전용이라면 괜찮음
 	//서버와 클라이언트 동기화가 중요하다면 BeginPlay()에서 호출
@@ -118,10 +125,6 @@ void ABaseAIAnimal::BeginPlay()
 	GetWorldTimerManager().SetTimer(FullnessTimerHandle, this, &ABaseAIAnimal::DecreaseFullness, 5.0f, true);
 	
 	
-	GetCharacterMovement()->bUseRVOAvoidance = true;
-	GetCharacterMovement()->AvoidanceConsiderationRadius = 800.0f; // AI가 다른 AI 감지할 반경
-	GetCharacterMovement()->AvoidanceWeight = 0.5f;
-	
 	/* 메세지버스 사용 예시 */
 	// 함수 바인딩
 	MessageDelegateHandle = FMessageDelegate::CreateUObject(this, &ThisClass::ReceiveMessage);
@@ -129,17 +132,19 @@ void ABaseAIAnimal::BeginPlay()
 	// FName으로 키값(메세지) 지정하고 델리게이트 전달
 	UMessageBus::GetInstance()->Subscribe(TEXT("HideAnimal"), MessageDelegateHandle);
 	UMessageBus::GetInstance()->Subscribe(TEXT("FixSpeed"), MessageDelegateHandle);
-	UMessageBus::GetInstance()->Subscribe(TEXT("SpecialAttack"), MessageDelegateHandle);
 	// 호출할 곳에서 
 }
 
 void ABaseAIAnimal::OnAbilityEnd(const FAbilityEndedData& AbilityEndedData)
 {
 	UGameplayAbility* EndedAbility = AbilityEndedData.AbilityThatEnded.Get();
-	if (EndedAbility->IsA(StartAbilities[0]) && bHasToken) // 토큰 공격이 끝나면
+	if (EndedAbility->IsA(StartAbilities[0])) //공격이 끝나면
 	{
-		FVector BestLocation = GetGameInstance()->GetSubsystem<UTokenRaidSubsystem>()->GetBestLocation(*this);
-		BlackboardComponent->SetValueAsVector("SafeLocation", BestLocation);
+		IsAbility = false;
+		if (BlackboardComponent)
+		{
+			BlackboardComponent->SetValueAsBool("IsAbility", IsAbility);
+		}
 	}
 }
 
@@ -195,9 +200,6 @@ void ABaseAIAnimal::OnBeginDeath()
 	Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.Death");
 	Payload.Instigator = this;
 	AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
-
-	
-	BP_OnBeginDeath();
 }
 
 void ABaseAIAnimal::ReceiveMessage(const FName MessageType, UObject* Payload)
@@ -219,16 +221,6 @@ void ABaseAIAnimal::ReceiveMessage(const FName MessageType, UObject* Payload)
 			{
 				AnimalAttributeSet->SetWalkSpeed(WalkSpeed);
 			}
-		}
-		
-	}
-
-	if (TEXT("SpecialAttack") == MessageType)
-	{
-		if (Payload == this)
-		{
-			bIsAbility = false;
-			BlackboardComponent->SetValueAsBool("IsAbility", false);
 		}
 	}
 }
@@ -258,7 +250,7 @@ void ABaseAIAnimal::SetVisibleInGame()
 		CharacterAttributeSet->SetHealth(CharacterAttributeSet->GetMaxHealth());
 		FOnAttributeChangeData ChangeData;
 		ChangeData.NewValue = CharacterAttributeSet->GetHealth();
-		//Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(ChangeData);
+		Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(ChangeData);
 	}
 	
 	for (UActorComponent* Component : GetComponents())
@@ -279,6 +271,9 @@ void ABaseAIAnimal::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	if (GetMovementComponent())
 	{
+		float CurSpeed = GetVelocity().FVector::Length();
+		PlayRate = FMath::Clamp(CurSpeed / WalkSpeed, 0.1f, 2.0f);
+		
 		bIsShouldSwim = GetMovementComponent()->IsSwimming();
 		if (bIsShouldSwim)
 		{
@@ -289,19 +284,16 @@ void ABaseAIAnimal::Tick(float DeltaTime)
 			SwimTime = 0.f;
 		}
 	}
-	if (BlackboardComponent)
+	if (BlackboardComponent && !IsAbility)
 	{
-		if (FName("Animal.Montage.Attack") == BlackboardComponent->GetValueAsName("NStateTag"))
+		UObject* TargetObject = BlackboardComponent->GetValueAsObject("TargetActor");
+		
+		if (AActor* Target = Cast<AActor>(TargetObject))
 		{
-			UObject* TargetObject = BlackboardComponent->GetValueAsObject("TargetActor");
-			
-			if (AActor* Target = Cast<AActor>(TargetObject))
-			{
-				FVector Direction = (Target->GetActorLocation()- GetActorLocation()).GetSafeNormal2D(); //z무시
-				FRotator TargetRotation = Direction.Rotation(); //얼마나 회전해야하는지
-				FRotator NewRot = FMath::RInterpTo(GetActorRotation(), TargetRotation, DeltaTime, 5.0f);
-				SetActorRotation(NewRot);
-			}
+			FVector Direction = (Target->GetActorLocation()- GetActorLocation()).GetSafeNormal2D(); //z무시
+			FRotator TargetRotation = Direction.Rotation(); //얼마나 회전해야하는지
+			FRotator NewRot = FMath::RInterpTo(GetActorRotation(), TargetRotation, DeltaTime, 5.0f);
+			SetActorRotation(NewRot);
 		}
 	}
 }
@@ -319,6 +311,7 @@ void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 {
 	//도망가는 상황에서만 속도 빨라졌다 감소 추가해야함->이팩트로 적용예정
 	bIsShouldSleep = false;
+	HitCount++;
 	TriggerSpeedUp();
 	
 	if (BlackboardComponent)
@@ -337,8 +330,6 @@ void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 			float Dot = FVector::DotProduct(ForwardVector, Direction);
 			if (Dot<0)//뒤쪽이라면
 			{
-				BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
-				BlackboardComponent->SetValueAsBool("IsAbility", true);
 				OnAttackSpecial();
 				return;
 			}
@@ -354,6 +345,13 @@ void ABaseAIAnimal::OnHit(AActor* InstigatorActor)
 
 void ABaseAIAnimal::OnAttackSpecial()
 {
+	IsAbility = true;
+	if (BlackboardComponent)
+	{
+		BlackboardComponent->SetValueAsBool("IsAbility", IsAbility);
+		BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Attack");
+	}
+	
 	FGameplayEventData Payload;
 	Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.AttackSpecial");
 	Payload.Instigator = this;
@@ -368,7 +366,7 @@ void ABaseAIAnimal::OnWalkSpeedChanged(const FOnAttributeChangeData& OnAttribute
 
 void ABaseAIAnimal::OnHealthChanged(const FOnAttributeChangeData& OnAttributeChangeData)
 {
-	//Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(OnAttributeChangeData);
+	Cast<UEmberHpBarUserWidget>(HpBarWidget->GetWidget())->OnHealthChanged(OnAttributeChangeData);
 }
 
 void ABaseAIAnimal::OnFullnessChanged(const FOnAttributeChangeData& OnAttributeChangeData)
@@ -392,13 +390,12 @@ void ABaseAIAnimal::OnFullnessChanged(const FOnAttributeChangeData& OnAttributeC
 	}
 }
 
-
 void ABaseAIAnimal::GenerateRandom()
 {
 	int32 RandomPersonality = FMath::RandRange(0, static_cast<int32>(EAnimalAIPersonality::End) - 1);
 	Personality = static_cast<EAnimalAIPersonality>(RandomPersonality);
-	SetDetails();
-	Fullness = FMath::FRandRange(70.f, 90.f);
+	Fullness = FMath::FRandRange(70.0f, 90.0f);
+	CoolDownTime = FMath::FRandRange(5.0f, 15.0f);
 }
 
 void ABaseAIAnimal::DecreaseFullness()
@@ -428,11 +425,6 @@ bool ABaseAIAnimal::IsTargetable_Implementation() const
 float ABaseAIAnimal::GetWildPower() const
 {
 	return WildPower;
-}
-
-float ABaseAIAnimal::GetWanderRange() const //아무데서도 안 쓰임
-{
-	return WanderRange;
 }
 
 TObjectPtr<UAnimMontage> ABaseAIAnimal::GetMontage(FGameplayTag MontageTag)
@@ -471,29 +463,6 @@ EAnimalAIPersonality ABaseAIAnimal::GetPersonality()
 	return Personality;
 }
 
-void ABaseAIAnimal::SetDetails()
-{
-	switch (Personality)
-	{
-	case EAnimalAIPersonality::Agile:
-		{
-			WalkSpeed *= 1.2f;
-			break;
-		}
-	case EAnimalAIPersonality::Lazy:
-		{
-			WalkSpeed *= 0.8f;
-			break;
-		}
-	default:
-		{
-			WalkSpeed = 300.0f;
-			WanderRange = 500.0f;
-		}
-		break;
-	}
-}
-
 void ABaseAIAnimal::SetIdentityTag(const FGameplayTag InIdentityTag)
 {
 	IdentityTag= InIdentityTag;
@@ -527,7 +496,7 @@ void ABaseAIAnimal::SetRoleTag(const FName InRoleTag)
 	
 		UNiagaraSystem* NiagaraSystem = LoadObject<UNiagaraSystem>(nullptr, TEXT("/Game/SoStylized/Effects/Systems/NS_ElectricBuildup.NS_ElectricBuildup"));
 		if (NiagaraSystem)
-		{ //올라가는 방향, 스피드 더 빠르게, 크기도 전체적으로 감싸는 느낌으로, 차라리 밑에 오오라 느김도 괜찮을 듯, 컬러 스테일이랑 다이나믹 머테리얼 파라미터 커브값이 0으로 되면서 안보인 듯
+		{ //컬러 스테일이랑 다이나믹 머테리얼 파라미터 커브값이 0으로 되면서 안보인 듯
 			NiagaraComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
 		   NiagaraSystem,
 		   GetMesh(),
@@ -550,7 +519,6 @@ void ABaseAIAnimal::SetState(bool IsShouldSleep)
 	}
 	
 	// 생성, 리스폰 때 활동/비활동인지
-
 	if (IsShouldSleep)
 	{
 		DeactiveSleep();
@@ -561,8 +529,12 @@ void ABaseAIAnimal::SetState(bool IsShouldSleep)
 	}
 }
 
-void ABaseAIAnimal::OnGameTimeChanged(const FGameplayTag& EventTag, const FGameplayEventData& EventData)
+void ABaseAIAnimal::OnGameTimeChanged(const FGameplayTag& EventTag, const FGameplayEventData& EventData) 
 {
+	if (bIsDead)
+	{
+		return;
+	}
 	//월드에 있을 때 밤->낮 바뀔 때
 	if (EventTag.MatchesTag(FGameplayTag::RequestGameplayTag(TEXT("Gameplay.Time.Day"))))
 	{
@@ -635,7 +607,6 @@ void ABaseAIAnimal::ApplyWaterSurface(float DeltaTime)
 	FVector NewLocation = GetActorLocation();
 	NewLocation.Z = WaterSurfaceZ + WaveOffsetZ;
 	SetActorLocation(NewLocation);
-	DrawDebugBox(GetWorld(), VolumeOrigin, VolumeExtent, FColor::Blue, false, 2.0f);
 }
 
 
@@ -647,6 +618,16 @@ bool ABaseAIAnimal::GetIsShouldSleep() const
 void ABaseAIAnimal::SetIsShouldSleep(bool InIsSleep)
 {
 	bIsShouldSleep = InIsSleep;
+}
+
+int32 ABaseAIAnimal::GetHitCount() const
+{
+	return HitCount;
+}
+
+void ABaseAIAnimal::SetHitCount(int32 InHitCount)
+{
+	HitCount = InHitCount;
 }
 
 bool ABaseAIAnimal::GetIsDead() const
@@ -686,8 +667,8 @@ void ABaseAIAnimal::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	}
 	
 	UMessageBus::GetInstance()->Unsubscribe(TEXT("HideAnimal"), MessageDelegateHandle);
-	UMessageBus::GetInstance()->Unsubscribe(TEXT("FixSpeed"), MessageDelegateHandle); 
-	UMessageBus::GetInstance()->Unsubscribe(TEXT("SpecialAttack"), MessageDelegateHandle);
+	UMessageBus::GetInstance()->Unsubscribe(TEXT("FixSpeed"), MessageDelegateHandle);
+	
 	if (NiagaraComponent)
 	{
 		NiagaraComponent->Deactivate();         
@@ -698,10 +679,9 @@ void ABaseAIAnimal::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-
-void ABaseAIAnimal::SwitchBehaviorTree()
+void ABaseAIAnimal::SwitchBehaviorTree(int32 Index)
 {
-	Cast<AAIAnimalController>(GetController())->SwitchToBehaviorTree(1);
+	Cast<AAIAnimalController>(GetController())->SwitchToBehaviorTree(Index);
 	BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
 }
 

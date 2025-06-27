@@ -28,10 +28,13 @@
 #include "Item/Craft/EmberCraftComponent.h"
 #include "MeleeTrace/Public/MeleeTraceComponent.h"
 #include "Quest/QuestSubsystem.h"
+#include "OnlineSubsystem.h"
+#include "Interfaces/OnlineSessionInterface.h"
 #include "Utility/AlsVector.h"
 #include "MotionWarpingComponent.h"
 #include "Components/WidgetComponent.h"
 #include "UI/Death/DeathScreenWidget.h"
+#include "AI_NPC/NPC_Component/DialogueComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(EmberCharacter)
 
@@ -89,6 +92,21 @@ AEmberCharacter::AEmberCharacter()
 	MotionWarpComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpComponent"));
 
 	TargetSystemComponent = CreateDefaultSubobject<UTargetSystemComponent>(TEXT("TargetSystemComponent"));
+
+	PrimaryActorTick.bCanEverTick = true;
+
+	ActiveDialogueComponent = nullptr;
+
+	/*IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
+	if (OnlineSubsystem)
+	{
+		OnlineSessionInterface = OnlineSubsystem->GetSessionInterface();
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Green,
+				FString::Printf(TEXT("OnlineSubsystem: %s"), *OnlineSubsystem->GetSubsystemName().ToString()));
+		}
+	}*/
 }
 
 void AEmberCharacter::BeginPlay()
@@ -270,6 +288,10 @@ void AEmberCharacter::OnOutOfHealth()
 void AEmberCharacter::AbilityInputPressed(int32 InputID)
 {
 	if (UUIFunctionLibrary::GetIsAbilityInputLock(Cast<APlayerController>(GetController())))
+	{
+		return;
+	}
+	if (AbilitySystemComponent->HasMatchingGameplayTag(AlsLocomotionModeTags::Gliding))
 	{
 		return;
 	}
@@ -645,6 +667,12 @@ void AEmberCharacter::Input_OnMove(const FInputActionValue& ActionValue)
 		return;
 	}
 
+	if (GetCancelAbilityInput() && !AbilitySystemComponent->HasMatchingGameplayTag(AlsCharacterStateTags::Blocking))
+	{
+		const FGameplayTagContainer CancelTags(AlsInputActionTags::OverlayAction);
+		AbilitySystemComponent->CancelAbilities(&CancelTags);
+	}
+	
 	const auto Value = UAlsVector::ClampMagnitude012D(ActionValue.Get<FVector2D>());
 	const auto ForwardDir = UAlsVector::AngleToDirectionXY(UE_REAL_TO_FLOAT(GetViewState().Rotation.Yaw));
 	const auto RightDir = UAlsVector::PerpendicularCounterClockwiseXY(ForwardDir);
@@ -749,7 +777,7 @@ void AEmberCharacter::Input_OnGlide()
 
 		AlsCharacterMovement->GravityScale = GlideGravityScale;
 
-		const FRotator ControlRot = GetControlRotation();
+		const FRotator ControlRot = GetActorRotation();//GetControlRotation();
 		const FVector ForwardDir = FRotationMatrix(ControlRot).GetScaledAxis(EAxis::X);
 
 		FVector NewVelocity = ForwardDir.GetSafeNormal() * GlideForwardSpeed;
@@ -776,6 +804,12 @@ void AEmberCharacter::Input_OnRoll()
 {
 	if (AbilitySystemComponent->HasMatchingGameplayTag(AlsInputActionTags::LockRolling))
 	{
+		return;
+	}
+
+	if (AbilitySystemComponent->HasMatchingGameplayTag(AlsOverlayModeTags::Sword))
+	{
+		AbilitySystemComponent->TryActivateAbilityByClass(DodgeAbilityClass);
 		return;
 	}
 
@@ -1187,3 +1221,30 @@ void AEmberCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 	Super::EndPlay(EndPlayReason);
 }
+
+void AEmberCharacter::SetActiveDialogueComponent(UDialogueComponent* InDialogue)
+{
+	ActiveDialogueComponent = InDialogue;
+
+	if (ActiveDialogueComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[EmberCharacter] ActiveDialogueComponent set to: %s"), *ActiveDialogueComponent->GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[EmberCharacter] ActiveDialogueComponent cleared."));
+	}
+}
+
+void AEmberCharacter::Input_OnCloseDialogue()
+{
+	if (ActiveDialogueComponent)
+	{
+		ActiveDialogueComponent->CloseAnyOpenUI();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Input_OnCloseDialogue] No ActiveDialogueComponent to close!"));
+	}
+}
+

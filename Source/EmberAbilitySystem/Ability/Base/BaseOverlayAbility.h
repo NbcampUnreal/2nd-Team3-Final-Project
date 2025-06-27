@@ -5,6 +5,7 @@
 #include "State/AlsLocomotionState.h"
 #include "BaseOverlayAbility.generated.h"
 
+class UAbilityTask_PlayMontageAndWait;
 /**
  * 기존 몽타주 대신 ALS state에 따라 다른 몽타주를 재생시키기 위한 구조체
  */
@@ -134,10 +135,25 @@ protected:
 	UFUNCTION()
 	void OnBlendOut();
 	UFUNCTION()
-	void OnParryEnded();
+	void OnParryEnded() const;
+	UFUNCTION()
+	void OnBlockHit(const FGameplayEventData Payload);
 	
+	UFUNCTION()
+	void OnBlockHitSectionTimerFinished();
 private:
-	void SetUpdateWarping();
+	/**
+	 * 모션 워핑
+	 */
+	void SetUpdateWarping() const;
+
+	/**
+	 * 블록 히트
+	 */
+	bool bEndAfterBlockHit = false;
+	FTimerHandle BlockHitTimerHandle;
+	UPROPERTY()
+	UAbilityTask_PlayMontageAndWait* BlockHitMontageTask = nullptr;
 	
 	UAnimMontage*					ChooseMontageByState();
 	TSubclassOf<UGameplayAbility>	ChooseAbilityByState();

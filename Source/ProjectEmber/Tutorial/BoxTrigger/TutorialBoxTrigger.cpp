@@ -2,7 +2,7 @@
 #include "Components/BoxComponent.h"
 #include "Tutorial/Subsystem/TutorialManagerSubsystem.h"
 #include "GameFramework/PlayerController.h"
-#include "Kismet/GameplayStatics.h"
+
 
 ATutorialBoxTrigger::ATutorialBoxTrigger()
 {
@@ -36,5 +36,16 @@ void ATutorialBoxTrigger::OnOverlapBegin(UPrimitiveComponent* OverlappedComponen
                 bTriggered = true;
             }
         }
+    }
+    
+}
+void ATutorialBoxTrigger::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent,
+    AActor* OtherActor,
+    UPrimitiveComponent* OtherComp,
+    int32 OtherBodyIndex)
+{
+    if (bTriggered)
+    {
+        bTriggered = false;
     }
 }

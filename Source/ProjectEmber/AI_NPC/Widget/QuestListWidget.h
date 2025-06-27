@@ -19,15 +19,16 @@ class PROJECTEMBER_API UQuestListWidget : public UUserWidget
 protected:
     virtual void NativeConstruct() override;
 
-    /** Äù½ºÆ® ½ÃÀÛ ½Ã È£ÃâµÊ */
+    /** ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ È£ï¿½ï¿½ï¿½ */
     UFUNCTION()
     void HandleQuestStarted(UQuestDataAsset* QuestAsset);
 
-    /** ½ºÅÜ ¹öÆ° Å¬¸¯ ½Ã È£ÃâµÊ */
+    /** ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ° Å¬ï¿½ï¿½ ï¿½ï¿½ È£ï¿½ï¿½ï¿½ */
     UFUNCTION()
     void OnQuestEntryClicked(UQuestDataAsset* ClickedQuest, int32 StepIndex); 
 
-    /** Äù½ºÆ®ÀÇ °¢ ½ºÅÜ¸¶´Ù ¹öÆ° »ý¼º */
+    /** ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½Ü¸ï¿½ï¿½ï¿½ ï¿½ï¿½Æ° ï¿½ï¿½ï¿½ï¿½ */
+public:
     void AddQuest(UQuestDataAsset* QuestAsset, int32 StepIndex);
 
 public:
@@ -37,7 +38,7 @@ public:
     UPROPERTY(meta = (BindWidget))
     UScrollBox* QuestListScrollBox;
 
-    /** ¼±ÅÃµÈ Äù½ºÆ® ½ºÅÜ ³»¿ëÀ» Ç¥½ÃÇÒ À§Á¬ */
+    /** ï¿½ï¿½ï¿½Ãµï¿½ ï¿½ï¿½ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest")
     UPlayerQuestWidget* QuestContentsWidget;
 };
