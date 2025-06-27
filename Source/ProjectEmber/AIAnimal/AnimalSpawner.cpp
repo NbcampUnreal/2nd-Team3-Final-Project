@@ -71,13 +71,16 @@ void AAnimalSpawner::MessageMoveToDead(UObject* Payload)
 		}
 		if (count == AnimalsInfoByToken.Num())
 		{
-			if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
+			if (UGameplayEventSubsystem* EventSubsystem = GetGameInstance()->GetSubsystem<UGameplayEventSubsystem>())
 			{
 				FGameplayTag EventTag = FGameplayTag::RequestGameplayTag("Quest.Animal.RaidClear");
 				FGameplayEventData Data;
 				Data.EventTag = EventTag;
-				QuestSubsystem->OnGameEvent(EventTag, Data);
+				EventSubsystem->BroadcastGameEvent(EventTag, Data);
 			}
+			
+			OnRaidClear.Broadcast();
+			
 			TryReleaseToken();
 		}
 
@@ -90,6 +93,9 @@ void AAnimalSpawner::MessageMoveToDead(UObject* Payload)
 				Data.EventTag = EventTag;
 				EventSubsystem->BroadcastGameEvent(EventTag, Data);
 			}
+			
+			OnChasingClear.Broadcast();
+			
 			TryReleaseEntire();
 			return;
 		}
