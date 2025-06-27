@@ -749,16 +749,34 @@ void AEmberCharacter::Input_OnJump(const FInputActionValue& ActionValue)
 
 void AEmberCharacter::Input_OnAim(const FInputActionValue& ActionValue)
 {
-	
-	
-	/*if (OverlayMode == AlsOverlayModeTags::Default)
-	{
-	}
-	else */if (OverlayMode == AlsOverlayModeTags::Bow ||
+	if (OverlayMode == AlsOverlayModeTags::Bow ||
 		OverlayMode == AlsOverlayModeTags::Throw)
 	{
+		SwitchOnAimTarget(ActionValue.Get<bool>());
+		
 		TryAbilityFromOnAim(ActionValue.Get<bool>());
 		SetDesiredAiming(ActionValue.Get<bool>());
+	}
+}
+
+void AEmberCharacter::SwitchOnAimTarget(const bool bPressed)
+{
+	if (bPressed)
+	{
+		if (TargetSystemComponent->IsLocked())
+		{
+			CachedTargetActor = TargetSystemComponent->GetLockedOnTargetActor();
+			TargetSystemComponent->TargetLockOff();
+		}
+	}
+	else
+	{
+		if (CachedTargetActor.IsValid())
+		{
+			TargetSystemComponent->TargetActor({CachedTargetActor.Get()});
+		}
+		
+		CachedTargetActor.Reset();
 	}
 }
 
@@ -817,7 +835,8 @@ void AEmberCharacter::Input_OnRoll()
 		return;
 	}
 
-	if (AbilitySystemComponent->HasMatchingGameplayTag(AlsOverlayModeTags::Sword))
+	if (AbilitySystemComponent->HasMatchingGameplayTag(AlsOverlayModeTags::Sword) ||
+		GetOverlayMode() == AlsOverlayModeTags::Sword)
 	{
 		AbilitySystemComponent->TryActivateAbilityByClass(DodgeAbilityClass);
 		return;
@@ -825,7 +844,7 @@ void AEmberCharacter::Input_OnRoll()
 
 	const FGameplayTagContainer CancelTags(AlsInputActionTags::OverlayAction);
 	AbilitySystemComponent->CancelAbilities(&CancelTags);
-
+	
 	StartRolling(1.3f);
 }
 

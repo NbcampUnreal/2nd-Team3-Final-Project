@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
 #include "EMSActorSaveInterface.h"
+#include "GameplayAbilitySpec.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/PlayerState.h"
 #include "EmberPlayerState.generated.h"
 
@@ -21,6 +23,8 @@ public:
 	virtual void ActorPreSave_Implementation() override;
 	UFUNCTION()
 	virtual void ActorLoaded_Implementation() override;
+	void HandleAbilityFailed(const UGameplayAbility* FailedAbility, const FGameplayTagContainer& FailureTags);
+	
 	void GameMenuWidgetLoaded();
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AbilitySystem", meta=(AllowPrivateAccess="true"))

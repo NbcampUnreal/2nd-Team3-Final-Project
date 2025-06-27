@@ -61,7 +61,7 @@ void USwordDodgeAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 				PlayMontageTask->OnCompleted.AddDynamic(this, &USwordDodgeAbility::OnMontageFinished);
 				PlayMontageTask->OnInterrupted.AddDynamic(this, &USwordDodgeAbility::OnMontageFinished);
 				PlayMontageTask->OnCancelled.AddDynamic(this, &USwordDodgeAbility::OnMontageFinished);
-
+				PlayMontageTask->OnBlendOut.AddDynamic(this, &USwordDodgeAbility::OnMontageFinished);
 				PlayMontageTask->ReadyForActivation();
 				return;
 			}	
