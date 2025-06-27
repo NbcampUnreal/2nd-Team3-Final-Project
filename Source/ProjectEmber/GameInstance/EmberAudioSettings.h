@@ -16,4 +16,7 @@ struct FEmberAudioSettings
 
     UPROPERTY(BlueprintReadWrite, SaveGame)
     float EffectsVolume;
+
+    UPROPERTY(BlueprintReadWrite, SaveGame)
+    float UIVolume;
 };
