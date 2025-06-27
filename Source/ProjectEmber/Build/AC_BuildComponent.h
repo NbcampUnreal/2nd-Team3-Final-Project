@@ -62,11 +62,15 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Build")
     bool DetectBuildBoxes(FTransform& OutTransform);
 
+    UFUNCTION(BlueprintCallable, Category = "Build")
+    void RepairBuilding();
+
     UFUNCTION(BlueprintCallable, Category = "Build/Save")
 	void SaveBuilds();
 	UFUNCTION(BlueprintCallable, Category = "Build/Load")
 	void LoadBuilds();
 
+    void UpdateBuildPreviewUI();
 
 public:
     // Components
@@ -119,4 +123,10 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UMaterialInstance> RedMaterial;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Build/UI")
+    TSubclassOf<UUserWidget> BuildPreviewWidgetClass;
+
+    UPROPERTY()
+    UUserWidget* BuildPreviewWidget;
 };
