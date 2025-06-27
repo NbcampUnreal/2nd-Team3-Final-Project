@@ -245,7 +245,17 @@ void AEmberCharacter::Tick(float DeltaSeconds)
 		FRotator NewRot(0.0f, NewYaw, 0.0f);
 
 		SetActorRotation(NewRot);
+
+		const FRotator ControlRot = GetActorRotation();//GetControlRotation();
+		const FVector ForwardDir = FRotationMatrix(ControlRot).GetScaledAxis(EAxis::X);
+
+		FVector NewVelocity = ForwardDir.GetSafeNormal() * GlideForwardSpeed;
+
+		NewVelocity.Z = -FMath::Abs(GlideDescendSpeed);
+
+		AlsCharacterMovement->Velocity = NewVelocity;
 	}
+	
 	if (!TargetSystemComponent->IsLocked() && HitActors.Num() > 0)
 	{
 		if (!GetWorld()->GetTimerManager().IsTimerActive(HitTimerHandle))

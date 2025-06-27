@@ -436,9 +436,9 @@ void ABaseAIAnimal::DecreaseFullness()
 }
 
 void ABaseAIAnimal::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
- {
+{
  	TagContainer;
- }
+}
 
 bool ABaseAIAnimal::IsTargetable_Implementation() const
 {

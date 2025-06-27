@@ -25,7 +25,7 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	const FGameplayEventData* TriggerEventData)
 {
-	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	//Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
 	/* 모든 행동에대한 코스트, 쿨타임 등을 한번에 처리하고 bool 리턴해줌 */
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
@@ -53,6 +53,11 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
 	{
 		Character->SetForceGameplayTags(ForceGameplayTags);
+		if (SetDesiredGaitTag.IsValid())
+		{
+			Character->SetForceDesiredGait(SetDesiredGaitTag, true);	
+		}
+		
 		//Character->ForceLastInputDirectionBlocked(true);
 		//PreLocomotionState = Character->GetLocomotionState();
 		if (!bIsBlockAbility)
@@ -121,6 +126,8 @@ void UBaseOverlayAbility::CancelAbility(const FGameplayAbilitySpecHandle Handle,
 	bool bReplicateCancelAbility)
 {
 	Super::CancelAbility(Handle, ActorInfo, ActivationInfo, bReplicateCancelAbility);
+	/** 혹시모를 잔무빙 제거 */
+	ClearWarping();
 }
 
 void UBaseOverlayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
@@ -138,8 +145,7 @@ void UBaseOverlayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 			{
 				if (auto* AnimInst = Character->GetMesh()->GetAnimInstance())
 				{
-					// 0.f 이면 즉시 컷, >0이면 BlendOutTime 만큼 페이드아웃
-					AnimInst->Montage_Stop(0.25f, /* 몽타주 지정 안 하면 모두 중단 */ nullptr);
+					AnimInst->Montage_Stop(0.25f, nullptr);
 				}
 			}
 		}
@@ -167,9 +173,10 @@ void UBaseOverlayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 		}
 	}
 
+	/** Timer 보다 빠르게 끊어버릴 수 있으니 한번 더 제거 */
 	AbilitySystemComponent->RemoveLooseGameplayTag(AlsCharacterStateTags::Parrying);
-	//AbilitySystemComponent->RemoveLooseGameplayTag(AlsCharacterStateTags::Blocking);
-	
+
+	/** 어빌리티 종료 메세지버스 브로드캐스트 */
 	UMessageBus::GetInstance()->BroadcastMessage(TEXT("OverlayAbilityEnded"), GetAvatarActorFromActorInfo());
 }
 
@@ -409,6 +416,23 @@ void UBaseOverlayAbility::SetUpdateWarping() const
 
 		auto* MoveComp = Cast<UAlsCharacterMovementComponent>(Character->GetCharacterMovement());
 		MoveComp->SetIsActiveOverlayAbility(true);
+	}
+}
+
+void UBaseOverlayAbility::ClearWarping() const
+{
+	if (ACharacter* Char = Cast<ACharacter>(GetAvatarActorFromActorInfo()))
+	{
+		if (auto* WarpComp = Char->FindComponentByClass<UMotionWarpingComponent>())
+		{
+			WarpComp->RemoveAllWarpTargets();
+		}
+		
+		if (auto* MoveComp = Char->GetCharacterMovement())
+		{
+			MoveComp->StopMovementImmediately();
+			MoveComp->Velocity = FVector::ZeroVector;
+		}
 	}
 }
 

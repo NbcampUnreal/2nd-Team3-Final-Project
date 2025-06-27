@@ -105,6 +105,8 @@ protected:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Base", Meta = (AllowPrivateAccess = "true"))
 	FGameplayTagContainer ForceGameplayTags;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Base", Meta = (AllowPrivateAccess = "true"))
+	FGameplayTag  SetDesiredGaitTag;
 	
 	/**
 	 * 특정 몽타주 재생 후 VelocityYawAngle 쪽이 틀어져서 반대방향을 바라보게 됨
@@ -147,6 +149,7 @@ private:
 	 */
 	void SetUpdateWarping() const;
 
+	void ClearWarping() const;
 	/**
 	 * 블록 히트
 	 */
