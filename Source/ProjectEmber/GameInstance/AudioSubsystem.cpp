@@ -176,6 +176,11 @@ void UAudioSubsystem::SetEffectsVolume(float VolumeValue)
 	EffectsVolume = FMath::Clamp(VolumeValue, 0.0f, 1.0f);
 }
 
+void UAudioSubsystem::SetUIVolume(float VolumeValue)
+{
+	UIVolume = FMath::Clamp(VolumeValue, 0.0f, 1.0f);
+}
+
 bool UAudioSubsystem::CheckValidOfBgmSource(EAreaSoundType SoundType)
 {
 	if (BgmSoundMap.Contains(SoundType))
@@ -236,13 +241,20 @@ float UAudioSubsystem::GetBgmVolume() const
 {
 	return BgmVolume;
 }
+
 float UAudioSubsystem::GetMasterVolume() const
 {
 	return MasterVolume;
 }
+
 float UAudioSubsystem::GetEffectsVolume() const
 {
 	return EffectsVolume;
+}
+
+float UAudioSubsystem::GetUIVolume() const
+{
+	return UIVolume;
 }
 
 bool UAudioSubsystem::CheckValidOfCharacterAudio()
