@@ -27,4 +27,10 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Build")
 	TArray<UBoxComponent*> ReturnBoxes();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Build")
+	float GetHealth() const;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Build")
+	void SetHealth(float NewHealth);
 };
