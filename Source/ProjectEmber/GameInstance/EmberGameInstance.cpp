@@ -229,7 +229,6 @@ FEmberAudioSettings UEmberGameInstance::LoadAudioSettingsWithEMS()
 
     return FEmberAudioSettings();
 }
-}
 
 UDungeonSubsystem* UEmberGameInstance::GetDungeonSubSystem()
 {

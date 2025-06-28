@@ -26,6 +26,11 @@ ABasePickupActor::ABasePickupActor()
 #endif
 }
 
+void ABasePickupActor::TryInteract_Implementation(AActor* Caller)
+{
+	Destroy();
+}
+
 void ABasePickupActor::BeginPlay()
 {
 	Super::BeginPlay();

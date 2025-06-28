@@ -1,7 +1,6 @@
+#include "GameInstance/DungeonSubsystem.h"
 #include "DungeonGenerator.h"
 #include "Door.h"
-
-#include "GameInstance/DungeonSubsystem.h"
 
 void UDungeonSubsystem::SetTempDungeonGenerator(ADungeonGenerator* DungeonGenerator)
 {
