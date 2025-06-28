@@ -76,6 +76,8 @@ public: /* TargetSystem */
 	void DelayToSendHitActors();
 	
 	void ReceiveHitActorDeath(AActor* InstigatorActor);
+
+	void SwitchOnAimTarget(bool bPressed);
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<AActor*> HitActors;
@@ -85,6 +87,9 @@ protected:
 	FTimerHandle HitTimerInputHandle;
 	int32 HitActorsIndex{0};
 	bool bIsHitActorsInputReset{false};
+
+	TWeakObjectPtr<AActor> CachedTargetActor;
+	
 protected: /* Mesh */
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> VisualCharacterMesh;
@@ -271,7 +276,7 @@ public:
 protected:
 	bool bShowQuickActionWidget{false};
 	FTimerHandle QuickActionTimerHandle;
-	
+
 public: /* Inventory */
 	UFUNCTION(BlueprintCallable, Category = "Item")
 	UUserItemManger* GetItemManager();
@@ -289,4 +294,8 @@ public:
 
 	// 대화 시작 시 DialogueComponent 저장
 	void SetActiveDialogueComponent(UDialogueComponent* InDialogue);
+
+	TWeakObjectPtr<UUserWidget> QuickSlotWidget;
+
+	int32 HoveredSlotIndex;
 };

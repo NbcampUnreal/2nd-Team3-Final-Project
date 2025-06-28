@@ -115,6 +115,37 @@ bool UEmberCharacterAttributeSet::PreGameplayEffectExecute(struct FGameplayEffec
 	
 			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetOwningActor(),	AlsCharacterStateTags::Hit,Payload);
 		}
+		else if (AbilitySystemComponent->HasMatchingGameplayTag(AlsCharacterStateTags::PerfectDodge))
+		{
+			EMBER_LOG(LogEmber, Warning, TEXT("PerfectDodge!"));
+			// 1. 시간을 느리게 
+			UCombatFunctionLibrary::ApplyGlobalTimeDilation(GetWorld(), 0.4f,0.17f);
+			// 2. 데미지 무효화
+			Data.EvaluatedData.Magnitude = 0.f;
+			// 3. 패링 카운터 어빌리티 발동 (상대에게)
+			const FGameplayEffectContextHandle& Context = Data.EffectSpec.GetContext();
+			if (AActor* InstigatorActor = Context.GetInstigator())
+			{
+				// 속도를 절반으로 낮춰 더 느리게
+				InstigatorActor->CustomTimeDilation = 0.2f;
+
+				// 1.5초 후 원상 복구
+				FTimerHandle RestoreHandle;
+				GetWorld()->GetTimerManager().SetTimer(
+					RestoreHandle,
+					FTimerDelegate::CreateWeakLambda(InstigatorActor, [WeakActor = TWeakObjectPtr<AActor>(InstigatorActor)](){
+						if (AActor* Actor = WeakActor.Get())
+						{
+							Actor->CustomTimeDilation = 1.0f;
+						}
+					}),
+					2.5f,
+					false
+				);
+			}
+			// 4. 패링 카운터 어빌리티 발동 (나에게)
+			//AbilitySystemComponent->TryActivateAbilityByClass(EffectHelperInstance->ParryAbilityClass);
+		}
 		else // 이쪽은 무조건 Hit 어빌리티 발동시켜야됨
 		{
 			DirectionalHitAbility(Data);

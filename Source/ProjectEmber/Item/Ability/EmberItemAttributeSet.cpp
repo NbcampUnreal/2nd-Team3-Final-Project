@@ -2,6 +2,3 @@
 
 
 #include "EmberItemAttributeSet.h"
-
-#include "GameplayEffectExtension.h"
-

@@ -16,6 +16,7 @@ class PROJECTEMBER_API UEmberEquipmentSlotWidget : public UEmberBaseDragAbleSlot
 	GENERATED_BODY()
 
 public:
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SlotWidget")
 	FGameplayTag EquipmentTypeTag;
 };

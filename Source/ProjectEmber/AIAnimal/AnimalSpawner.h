@@ -77,6 +77,8 @@ struct FAnimalQueueInfo
 	FString SavedId;
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRaidClearDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnChasingClearDelegate);
 
 UCLASS()
 class PROJECTEMBER_API AAnimalSpawner : public AWorldInteractableActor, public IEMSActorSaveInterface
@@ -87,7 +89,13 @@ public:
 	AAnimalSpawner();
 
 	//MiniGame
+	UFUNCTION(BlueprintCallable)
 	void OnMiniGameEvent();
+	
+	//MiniGame
+	UFUNCTION(BlueprintCallable)
+	void EndMiniGameEvent();
+	
 	//Release
 	UFUNCTION(BlueprintCallable) // 전체 메모리해제 , 미니게임 체이싱-> 잡지 못하고 종료됐을 때 호출할 함수
 	void TryReleaseEntire();
@@ -112,6 +120,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = AI)
 	FGameplayTag GetIdentityTag() const;
 	
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnRaidClearDelegate OnRaidClear;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnChasingClearDelegate OnChasingClear;
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
@@ -244,4 +257,5 @@ protected:
 	int32 Weather =0;
 	bool bIsShouldSleep = true;
 	bool bIsLoading = false;
+	bool bIsMiniGameActive = false;
 };

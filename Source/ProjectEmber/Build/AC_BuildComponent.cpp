@@ -5,8 +5,11 @@
 #include "BuildInterface.h"
 #include "Character/EmberCharacter.h"
 #include "ALSCamera/Public/AlsCameraComponent.h"
-
+#include "Blueprint/UserWidget.h"
 #include "Components/BoxComponent.h"
+#include "Components/Image.h"
+#include "Components/TextBlock.h"
+#include "Components/ProgressBar.h"
 #include "EmberLog/EmberLog.h"
 
 // Sets default values for this component's properties
@@ -21,7 +24,22 @@ UAC_BuildComponent::UAC_BuildComponent()
 		BuildData = DataTableRef.Object;
 
 	}
-
+	static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder(TEXT("/Game/_Data/BuildingSystem/BuildUI/UI_BuildPreview.UI_BuildPreview_C")); // 확장자 _C 붙이기 필수
+	if (WidgetClassFinder.Succeeded())
+	{
+		BuildPreviewWidgetClass = WidgetClassFinder.Class;
+	}
+	else {
+		UE_LOG(LogTemp, Warning, TEXT("BuildPreviewWidgetClass not found!"));
+	}
+	static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder1(TEXT("/Game/_Data/BuildingSystem/BuildUI/UI_BuildHealth.UI_BuildHealth_C"));
+	if (WidgetClassFinder1.Succeeded())
+	{
+		BuildHealthWidgetClass = WidgetClassFinder1.Class;
+	}
+	else {
+		UE_LOG(LogTemp, Warning, TEXT("BuildHealthWidgetClass not found!"));
+	}
 }
 
 
@@ -49,6 +67,25 @@ void UAC_BuildComponent::BeginPlay()
 		if (Row)
 		{
 			Buildables.Add(*Row);
+		}
+	}
+
+	if (BuildPreviewWidgetClass)
+	{
+		BuildPreviewWidget = CreateWidget<UUserWidget>(GetWorld(), BuildPreviewWidgetClass);
+		if (BuildPreviewWidget)
+		{
+			BuildPreviewWidget->AddToViewport();
+			BuildPreviewWidget->SetVisibility(ESlateVisibility::Hidden); // 기본은 숨김
+		}
+	}
+	if (BuildHealthWidgetClass)
+	{
+		BuildHealthWidget = CreateWidget<UUserWidget>(GetWorld(), BuildHealthWidgetClass);
+		if (BuildHealthWidget)
+		{
+			BuildHealthWidget->AddToViewport();
+			BuildHealthWidget->SetVisibility(ESlateVisibility::Hidden); // 기본은 숨김
 		}
 	}
 }
@@ -100,6 +137,7 @@ void UAC_BuildComponent::LaunchBuildMode()
 	}
 
 	bIsBuildModeOn = true;
+
 	BuildCycle();
 }
 
@@ -199,7 +237,7 @@ void UAC_BuildComponent::BuildCycle()
 		}
 	}
 
-
+	UpdateBuildPreviewUI();
 
 	BuildDelay();
 }
@@ -214,6 +252,12 @@ void UAC_BuildComponent::StopBuildMode()
 		BuildGhost->DestroyComponent();
 		BuildGhost = nullptr;
 	}
+
+	if (BuildPreviewWidget)
+	{
+		BuildPreviewWidget->SetVisibility(ESlateVisibility::Hidden);
+	}
+
 }
 
 void UAC_BuildComponent::GiveBuildColor(bool bIsGreen)
@@ -296,6 +340,8 @@ void UAC_BuildComponent::SpwanBuild()
 	if (SpawnedActor->GetClass()->ImplementsInterface(UBuildInterface::StaticClass()))
 	{
 		IBuildInterface::Execute_SetMesh(SpawnedActor, Data.Mesh);
+		IBuildInterface::Execute_SetHealth(SpawnedActor, Data.Health);
+		
 	}
 	else
 	{
@@ -325,6 +371,7 @@ void UAC_BuildComponent::ChangeMesh()
 	if (Data.Mesh)
 	{
 		BuildGhost->SetStaticMesh(Data.Mesh);
+		UpdateBuildPreviewUI();
 	}
 	else
 	{
@@ -411,5 +458,192 @@ void UAC_BuildComponent::LoadBuilds()
 				}
 			}
 		}
+	}
+}
+
+void UAC_BuildComponent::RepairBuilding()
+{
+	FoundBuild();
+	if (!bIsBuildModeOn || !HitActor)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Build Mode OFF or No HitActor"));
+		return;
+	}
+
+	// BuildInterface 확인
+	if (!HitActor->GetClass()->ImplementsInterface(UBuildInterface::StaticClass()))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("HitActor does not implement BuildInterface"));
+		return;
+	}
+	// 현재 Actor의 Class Path로 DataTable에서 BuildData 찾기
+	FString ClassPath = HitActor->GetClass()->GetPathName();
+	FBuildableData* FoundData = nullptr;
+
+	for (FBuildableData& Data : Buildables)
+	{
+		if (Data.Actor && Data.Actor->GetPathName() == ClassPath)
+		{
+			FoundData = &Data;
+			break;
+		}
+	}
+
+	if (!FoundData)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Matching BuildableData not found"));
+		return;
+	}
+
+	// 현재 체력 가져오기 (인터페이스로 체력 가져오기 필요)
+	float CurrentHealth = IBuildInterface::Execute_GetHealth(HitActor);
+	float MaxHealth = FoundData->Health;
+
+	if (CurrentHealth >= MaxHealth)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Already at full health"));
+		UpdateHealth(CurrentHealth, MaxHealth);
+		return;
+	}
+
+	// 자원 확인 (플레이어 인벤토리 시스템이 필요. 임시로 bool로 가정)
+	bool bHasResources = true; // 여기에 인벤토리 체크 로직 삽입
+	if (!bHasResources)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Not enough resources to repair"));
+		return;
+	}
+
+	// 자원 소비 (리소스 시스템과 연동 필요)
+	// 예: ConsumeResource(FoundData->RequiredResources, FoundData->RequiredResourceAmounts);
+
+	// 수리량 결정 (간단히 고정값이나 %로 가능)
+	float RepairAmount = 20.0f; // 예: 고정 수리량
+
+	float NewHealth = FMath::Clamp(CurrentHealth + RepairAmount, 0.0f, MaxHealth);
+	IBuildInterface::Execute_SetHealth(HitActor, NewHealth);
+
+	UE_LOG(LogTemp, Log, TEXT("Repaired %s to %.1f / %.1f"), *HitActor->GetName(), NewHealth, MaxHealth);
+
+	UpdateHealth(NewHealth, MaxHealth);
+}
+
+void UAC_BuildComponent::UpdateBuildPreviewUI()
+{
+	if (!BuildPreviewWidget || !Buildables.IsValidIndex(BuildID))
+	{
+		return;
+	}
+
+	BuildPreviewWidget->SetVisibility(ESlateVisibility::Visible);
+
+	const FBuildableData& Data = Buildables[BuildID];
+
+	UImage* ThumbnailImage = Cast<UImage>(BuildPreviewWidget->GetWidgetFromName(TEXT("BuildThumbnail")));
+	UTextBlock* DescText = Cast<UTextBlock>(BuildPreviewWidget->GetWidgetFromName(TEXT("BuildDescriptionText")));
+
+	if (ThumbnailImage && Data.Thumbnail)
+	{
+		ThumbnailImage->SetBrushFromTexture(Data.Thumbnail);
+	}
+	if (DescText)
+	{
+		DescText->SetText(Data.BuildableDescription);
+	}
+}
+
+void UAC_BuildComponent::UpdateHealth(float CurrentHealth, float MaxHealth)
+{
+	if (!BuildHealthWidget)
+	{
+		return;
+	}
+
+	BuildHealthWidget->SetVisibility(ESlateVisibility::Visible);
+
+	const FBuildableData& Data = Buildables[BuildID];
+
+	UProgressBar* HealthBar = Cast<UProgressBar>(BuildHealthWidget->GetWidgetFromName(TEXT("HealthBar")));
+	UTextBlock* HealthText = Cast<UTextBlock>(BuildHealthWidget->GetWidgetFromName(TEXT("HealthText")));
+
+	if (HealthBar)
+	{
+		HealthBar->SetPercent(CurrentHealth / MaxHealth);
+	}
+
+	if (HealthText)
+	{
+		FString Text = FString::Printf(TEXT("%.0f / %.0f"), CurrentHealth, MaxHealth);
+		HealthText->SetText(FText::FromString(Text));
+	}
+	// 🔽 2초 후 숨기기
+	if (BuildHealthWidget)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(HealthWidgetHideTimerHandle); // 이전 타이머 제거
+		GetWorld()->GetTimerManager().SetTimer(HealthWidgetHideTimerHandle, [this]()
+			{
+				if (BuildHealthWidget)
+				{
+					BuildHealthWidget->SetVisibility(ESlateVisibility::Hidden);
+				}
+			}, 1.0f, false);
+	}
+	UE_LOG(LogTemp, Warning, TEXT("Complete UI"));
+}
+
+void UAC_BuildComponent::FoundBuild()
+{
+
+	FVector WorldLocation;
+	FVector WorldDirection;
+	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	{
+		int32 ViewportSizeX, ViewportSizeY;
+		PC->GetViewportSize(ViewportSizeX, ViewportSizeY);
+
+		FVector2D ScreenCenter(ViewportSizeX * 0.5f, ViewportSizeY * 0.5f);
+
+		PC->DeprojectScreenPositionToWorld(
+			ScreenCenter.X,
+			ScreenCenter.Y,
+			WorldLocation,
+			WorldDirection
+		);
+	}
+	FVector Start = WorldLocation + WorldDirection * 350.f;
+	FVector End = WorldLocation + WorldDirection * 1000.f;
+
+	FHitResult HitResult;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(PlayerReference);
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		HitResult,
+		Start,
+		End,
+		ECollisionChannel::ECC_Visibility, // 건물 전용 트레이스 채널 사용 추천
+		Params
+	);
+
+	if (bHit)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Hit: %s"), *HitResult.GetActor()->GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("LineTrace failed"));
+	}
+
+	if (bHit && HitResult.GetActor())
+	{
+		AActor* HitTarget = HitResult.GetActor();
+		if (HitTarget->GetClass()->ImplementsInterface(UBuildInterface::StaticClass()))
+		{
+			HitActor = HitTarget; // ✅ 수리 대상 설정
+		}
+	}
+	else
+	{
+		HitActor = nullptr;
 	}
 }

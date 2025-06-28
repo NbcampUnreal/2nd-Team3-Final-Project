@@ -7,7 +7,41 @@
 #include "LevelSequencePlayer.h"
 #include "MovieSceneSequencePlaybackSettings.h"
 #include "Kismet/GameplayStatics.h"
+#include "WorldPartition/WorldPartitionSubsystem.h"
 
+class SequenceStreamingSourceProvider : public IWorldPartitionStreamingSourceProvider
+{
+public:
+	FVector PlayerLocation;
+	FVector SequenceLocation;
+	
+	virtual bool GetStreamingSources(TArray<FWorldPartitionStreamingSource>& OutSources) const override
+	{
+		// Player 위치 소스
+		OutSources.Emplace(
+			TEXT("SequencePlayerStreamingSource"),
+			PlayerLocation,
+			FRotator::ZeroRotator,
+			EStreamingSourceTargetState::Activated,
+			false,
+			EStreamingSourcePriority::Default,
+			false
+		);
+
+		// Sequence 위치 소스
+		OutSources.Emplace(
+			TEXT("SequenceAreaStreamingSource"),
+			SequenceLocation,
+			FRotator::ZeroRotator,
+			EStreamingSourceTargetState::Activated,
+			false,
+			EStreamingSourcePriority::Default,
+			false
+		);
+
+		return true;
+	}
+};
 
 UInteractionFragment_PlayLS::UInteractionFragment_PlayLS()
 {
@@ -18,45 +52,77 @@ void UInteractionFragment_PlayLS::ExecuteInteraction_Implementation(AActor* Inte
 {
 	Super::ExecuteInteraction_Implementation(Interactor);
 
-	if (!LevelSequence || IsValid(SequencePlayer) && SequencePlayer->IsPlaying())
+	if (!LevelSequenceActor || !LevelSequenceActor->GetSequencePlayer())
 	{
 		return;
 	}
 
-	AActor* Target = SequenceTargetActor.Get() != nullptr ? SequenceTargetActor.Get() : GetOwner();
-
-	if (!Target) return;
-
-	FMovieSceneSequencePlaybackSettings Settings;
-	Settings.bAutoPlay = false;
-	Settings.bDisableCameraCuts = false;
-
-	ALevelSequenceActor* RawActor = nullptr;
-	
-	SequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(
-		GetWorld(),
-		LevelSequence,
-		Settings,
-		RawActor
-		);
-	
-	SequenceActor = RawActor;
-	
-
-	if (SequencePlayer && SequenceActor)
+	// 시퀀스 플레이어 가져오기
+	ULevelSequencePlayer* Player = LevelSequenceActor->GetSequencePlayer();
+	if (Player->IsPlaying())
 	{
-		APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-		if (PC)
-		{
-			PC->bAutoManageActiveCameraTarget = false;
-		}
-		
-		SequenceActor->SetActorTransform(Target->GetActorTransform());
-		SequencePlayer->Play();
-
-		// 완료 이벤트 바인딩
-		SequencePlayer->OnFinished.AddDynamic(this, &UInteractionFragment_PlayLS::OnSequenceFinished);
+		return;
 	}
+	
+	UWorldPartitionSubsystem* Subsystem = GetWorld()->GetSubsystem<UWorldPartitionSubsystem>();
+
+	SequenceStreamingProvider = MakeShared<SequenceStreamingSourceProvider>();
+	
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	APawn* PlayerPawn = PC ? PC->GetPawn() : nullptr;
+	
+	if (!PlayerPawn)
+	{
+		return;
+	}
+
+	SequenceStreamingProvider->PlayerLocation = PlayerPawn->GetActorLocation();
+	SequenceStreamingProvider->SequenceLocation = LevelSequenceActor->GetActorLocation();
+
+	// 등록
+	Subsystem->RegisterStreamingSourceProvider(SequenceStreamingProvider.Get());
+
+	// 로딩 완료 후 시퀀스 재생
+	WaitForStreamingAndPlaySequence(Subsystem);
+}
+
+void UInteractionFragment_PlayLS::WaitForStreamingAndPlaySequence(UWorldPartitionSubsystem* Subsystem)
+{
+	FTimerDelegate TimerDel;
+	TimerDel.BindLambda([this, Subsystem]()
+	{
+		if (Subsystem->IsStreamingCompleted(SequenceStreamingProvider.Get()))
+		{
+			StartSequencePlayback();
+		}
+		else
+		{
+			WaitForStreamingAndPlaySequence(Subsystem);
+		}
+	});
+
+	// 한 프레임 후 체크
+	GetWorld()->GetTimerManager().SetTimerForNextTick(TimerDel);
+}
+
+void UInteractionFragment_PlayLS::StartSequencePlayback()
+{
+	ULevelSequencePlayer* Player = LevelSequenceActor->GetSequencePlayer();
+	if (!Player)
+	{
+		return;
+	}
+
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (PC)
+	{
+		PC->bAutoManageActiveCameraTarget = false;
+	}
+
+	Player->Play();
+
+	// 완료 이벤트
+	Player->OnFinished.AddDynamic(this, &UInteractionFragment_PlayLS::OnSequenceFinished);
 }
 
 void UInteractionFragment_PlayLS::OnSequenceFinished()
@@ -64,11 +130,19 @@ void UInteractionFragment_PlayLS::OnSequenceFinished()
 	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (PC)
 	{
-		PC->bAutoManageActiveCameraTarget = true; // 복구
-		PC->SetViewTargetWithBlend(PC->GetPawn(), 0.3f); // 플레이어로 복귀
+		PC->bAutoManageActiveCameraTarget = true;
+		PC->SetViewTargetWithBlend(PC->GetPawn(), 0.3f);
 	}
-	
-	SequencePlayer = nullptr;
-	SequenceActor = nullptr;
+
+	// 해제
+	if (SequenceStreamingProvider.IsValid())
+	{
+		if (UWorldPartitionSubsystem* Subsystem = GetWorld()->GetSubsystem<UWorldPartitionSubsystem>())
+		{
+			Subsystem->UnregisterStreamingSourceProvider(SequenceStreamingProvider.Get());
+		}
+		SequenceStreamingProvider.Reset();
+	}
+
 	OnSequenceFinishedEvent.Broadcast();
 }

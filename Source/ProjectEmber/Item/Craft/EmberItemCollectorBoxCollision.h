@@ -33,17 +33,23 @@ protected:
 	void SetResourceProvider(TScriptInterface<UEmberResourceProvider> Provider);
 
 	UFUNCTION(BlueprintCallable)
+	void ResetResourceProvider();
+
+	UFUNCTION(BlueprintCallable)
 	int32 DEBUG_GetResourceProviderNum();
 
 	// --- IEmberResourceProvider ---
 	virtual TMap<FName, int32> GetAllItemInfos_Implementation() override;
 	
-	virtual void TryConsumeResource_Implementation(const TArray<FItemPair>& InRequireItems) override;
+	virtual void TryConsumeResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems) override;
 
-	virtual bool bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems) override;
+	virtual bool bConsumeAbleResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems) override;
 
-	virtual TArray<FItemPair> RemoveResourceUntilAble_Implementation(const TArray<FItemPair>& InRequireItems) override;
-
+	virtual void GetItemInfo_Implementation(FEmberItemEntry& InItemEntry, FInstancedStruct& OutItemInfo) override;
+	
+	virtual void GetItemInfos_Implementation(TArray<FEmberItemEntry>& InItemEntries, TMap<FEmberItemKey, FInstancedStruct>& OutItemInfos) override;
+	
+	virtual void RemoveResourceUntilAble_Implementation(TArray<FEmberItemEntry>& InRequireItems) override;
 public:
 	
 	UPROPERTY(Transient)
