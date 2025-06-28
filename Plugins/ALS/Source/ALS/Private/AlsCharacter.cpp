@@ -1038,6 +1038,31 @@ void AAlsCharacter::SetDesiredGait(const FGameplayTag& NewDesiredGait)
 	SetDesiredGait(NewDesiredGait, true);
 }
 
+void AAlsCharacter::SetForceDesiredGait(const FGameplayTag& NewDesiredGait, bool bSendRpc)
+{
+	if (DesiredGait == NewDesiredGait || GetLocalRole() < ROLE_AutonomousProxy)
+	{
+		return;
+	}
+	
+	DesiredGait = NewDesiredGait;
+	UE_LOG(LogTemp, Warning, TEXT("Force change gait to %s"), *NewDesiredGait.ToString());
+	
+	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, DesiredGait, this)
+
+	if (bSendRpc)
+	{
+		if (GetLocalRole() >= ROLE_Authority)
+		{
+			ClientSetDesiredGait(DesiredGait);
+		}
+		else
+		{
+			ServerSetDesiredGait(DesiredGait);
+		}
+	}
+}
+
 void AAlsCharacter::SetDesiredGait(const FGameplayTag& NewDesiredGait, const bool bSendRpc)
 {
 	if (DesiredGait == NewDesiredGait || GetLocalRole() < ROLE_AutonomousProxy)

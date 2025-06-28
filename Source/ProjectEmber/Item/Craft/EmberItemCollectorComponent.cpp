@@ -7,6 +7,7 @@
 #include "Components/BoxComponent.h"
 #include "EmberLog/EmberLog.h"
 #include "GameFramework/Character.h"
+#include "Item/Core/EmberTmpStruct.h"
 
 
 // Sets default values for this component's properties
@@ -118,9 +119,9 @@ TMap<FName, int32> UEmberItemCollectorComponent::GetAllItemInfos_Implementation(
 	return AllItemInfos;
 }
 
-void UEmberItemCollectorComponent::TryConsumeResource_Implementation(const TArray<FItemPair>& InRequireItems)
+void UEmberItemCollectorComponent::TryConsumeResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems)
 {
-	TArray<FItemPair> RequireItems = InRequireItems;
+	TArray<FEmberItemEntry> RequireItems = InRequireItems;
 
 	if (bConsumeAbleResource_Implementation(RequireItems))
 	{
@@ -128,18 +129,17 @@ void UEmberItemCollectorComponent::TryConsumeResource_Implementation(const TArra
 		{
 			if (ResourceProvider.Get())
 			{
-				RequireItems = IEmberResourceProvider::Execute_RemoveResourceUntilAble(ResourceProvider.Get(), RequireItems);
-
+				IEmberResourceProvider::Execute_RemoveResourceUntilAble(ResourceProvider.Get(), RequireItems);
 			}
 
 		}
 	}
 }
 
-bool UEmberItemCollectorComponent::bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems)
+bool UEmberItemCollectorComponent::bConsumeAbleResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems)
 {
 	TMap<FName, int32> AllItemInfos = GetAllItemInfos_Implementation();
-	for (FItemPair RequireItem : InRequireItems)
+	for (const FEmberItemEntry& RequireItem : InRequireItems)
 	{
 		int32* Quantity = AllItemInfos.Find(RequireItem.ItemID);
 		if (!Quantity || *Quantity < RequireItem.Quantity)
@@ -150,19 +150,16 @@ bool UEmberItemCollectorComponent::bConsumeAbleResource_Implementation(const TAr
 	return true;
 }
 
-TArray<FItemPair> UEmberItemCollectorComponent::RemoveResourceUntilAble_Implementation(
-   const TArray<FItemPair>& InRequireItems)
+void UEmberItemCollectorComponent::RemoveResourceUntilAble_Implementation(
+   TArray<FEmberItemEntry>& InRequireItems)
 {
-	TArray<FItemPair> RequireItems = InRequireItems;
 	for (TWeakObjectPtr<UObject>& ResourceProvider : ResourceProviders)
 	{
 		if (UObject* Object = ResourceProvider.Get())
 		{
-			RequireItems = IEmberResourceProvider::Execute_RemoveResourceUntilAble(Object, RequireItems);
-			
+			IEmberResourceProvider::Execute_RemoveResourceUntilAble(Object, InRequireItems);
 		}
 	}
-	return RequireItems;
 }
 int32 UEmberItemCollectorComponent::DEBUG_GetResourceProviderNum()
 {

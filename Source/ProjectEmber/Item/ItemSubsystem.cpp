@@ -5,9 +5,14 @@
 
 #include "AbilitySystemComponent.h"
 #include "Ability/EmberItemAttributeSet.h"
+#include "Blueprint/UserWidget.h"
 #include "Core/EmberDropStruct.h"
+#include "Core/EmberItemDeveloperSetting.h"
 #include "Core/ItemTypes.h"
 #include "EmberLog/EmberLog.h"
+#include "Kismet/GameplayStatics.h"
+#include "UI/SlotWidget/ItemDetailWidget.h"
+#include "UI/SlotWidget/SlotsPanel/Implements/EmberBasePanel/EmberQuickSlotPanel.h"
 
 void UItemSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -162,6 +167,49 @@ TArray<FItemPair> UItemSubsystem::GetDroppedItem(FName MonsterID, const UAbility
     }
 
     return FinalDroppedItems;
+}
+
+TObjectPtr<UItemDetailWidget> UItemSubsystem::GetItemDetailWidget()
+{
+    if (!DetailWidget)
+    {
+        if (const UEmberItemDeveloperSetting* Setting = UEmberItemDeveloperSetting::Get())
+        {
+            if (UClass* InDetailWidgetClass = Setting->ItemDetailWidgetClass)
+            {
+                DetailWidget = CreateWidget<UItemDetailWidget>(UGameplayStatics::GetPlayerController(GetWorld(), 0), InDetailWidgetClass, TEXT("DetailWidget"));
+            }
+        }
+    }
+    if (DetailWidget)
+    {
+        DetailWidget->AddToViewport(100);
+        DetailWidget->SetVisibility(ESlateVisibility::Hidden);
+    }
+
+    return DetailWidget;
+}
+
+UEmberQuickSlotPanel* UItemSubsystem::BP_GetQuickSlotPanel()
+{
+    return GetQuickSlotWidget();
+}
+
+TObjectPtr<UEmberQuickSlotPanel> UItemSubsystem::GetQuickSlotWidget()
+{
+    if (!QuickSlotWidget)
+    {
+        if (const UEmberItemDeveloperSetting* ItemSetting = UEmberItemDeveloperSetting::Get())
+        {
+            QuickSlotWidget = CreateWidget<UEmberQuickSlotPanel>(UGameplayStatics::GetPlayerController(GetWorld(), 0), ItemSetting->QuickSlotWidgetClass);
+
+        }
+    }
+    if (QuickSlotWidget)
+    {
+        QuickSlotWidget->AddToViewport(99);
+    }
+    return QuickSlotWidget;
 }
 
 

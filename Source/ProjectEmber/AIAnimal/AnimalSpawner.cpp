@@ -56,31 +56,34 @@ void AAnimalSpawner::MessageMoveToDead(UObject* Payload)
 	//파밍대기 끝나고 죽으면 대기열 이동만 시키기 -> 리스폰을 위한 처리
 	if (ABaseAIAnimal* Animal = Cast<ABaseAIAnimal>(Payload))
 	{
-		int count =0;
-		for (FAnimalSpawnInfo& Info : AnimalsInfoByToken)
+		if(AnimalsInfoByToken.Num() != 0)
 		{
-			if (Info.SpawnAnimals.Contains(Animal))
+			int count =0;
+			for (FAnimalSpawnInfo& Info : AnimalsInfoByToken)
 			{
-				Info.SpawnAnimals.Remove(Animal);
-				Info.DeadAnimals.Add(Animal);
+				if (Info.SpawnAnimals.Contains(Animal))
+				{
+					Info.SpawnAnimals.Remove(Animal);
+					Info.DeadAnimals.Add(Animal);
+				}
+				if (Info.SpawnAnimals.Num() ==0)
+				{
+					count++;
+				}
 			}
-			if (Info.SpawnAnimals.Num() ==0)
+			if (count == AnimalsInfoByToken.Num())
 			{
-				count++;
+				if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
+				{
+					FGameplayTag EventTag = FGameplayTag::RequestGameplayTag("Quest.Animal.RaidClear");
+					FGameplayEventData Data;
+					Data.EventTag = EventTag;
+					QuestSubsystem->OnGameEvent(EventTag, Data);
+				}
+				TryReleaseToken();
 			}
 		}
-		if (count == AnimalsInfoByToken.Num())
-		{
-			if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
-			{
-				FGameplayTag EventTag = FGameplayTag::RequestGameplayTag("Quest.Animal.RaidClear");
-				FGameplayEventData Data;
-				Data.EventTag = EventTag;
-				QuestSubsystem->OnGameEvent(EventTag, Data);
-			}
-			TryReleaseToken();
-		}
-
+		
 		if (IdentityTag == FGameplayTag::RequestGameplayTag("Quest.MiniGame.Chasing"))
 		{
 			if (UGameplayEventSubsystem* EventSubsystem = GetGameInstance()->GetSubsystem<UGameplayEventSubsystem>())
@@ -336,7 +339,10 @@ TArray<TSoftObjectPtr<AAnimalSpawnPoint>> AAnimalSpawner::SelectNearPoints(TArra
 	TArray<TSoftObjectPtr<AAnimalSpawnPoint>> OutSpawnPoints;
 	for (int32 i = 0; i < BestSpawnPointsAmount; i++)
 	{
-		OutSpawnPoints.Add(InSpawnPoints[i]);
+		if (InSpawnPoints[i].IsValid())
+		{
+			OutSpawnPoints.Add(InSpawnPoints[i]);
+		}
 	}
 	return OutSpawnPoints;
 }
@@ -482,7 +488,10 @@ void AAnimalSpawner::SortFarthestAnimal(TArray<FAnimalSpawnInfo>& InfoArray)
 	//create 여부 bool 변수 리셋 : 디스폰 나갔다 돌아오면 초기화
 	for (auto& Point: SpawnPoints)
 	{
-		Point->SetIsCreated(false);
+		if (Point.IsValid())
+		{
+			Point->SetIsCreated(false);
+		}
 	}
 }
 

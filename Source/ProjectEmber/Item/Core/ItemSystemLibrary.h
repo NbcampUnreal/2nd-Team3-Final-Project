@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ActiveGameplayEffectHandle.h"
 #include "ItemTypes.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Engine/DataTable.h"
@@ -24,7 +25,7 @@ public:
 	static UItemSubsystem* GetItemSubsystem();
 
 	UFUNCTION(BlueprintCallable, Category = "Item System|GAS", meta=(DisplayName="Apply Item Effect Infos"))
-	static void ApplyEffectInfoList(UAbilitySystemComponent* TargetASC, const TArray<FItemEffectApplicationInfo>& EffectInfos, UObject* SourceObject, float SourceLevel = 1.0f);
+	static TArray<FActiveGameplayEffectHandle> ApplyEffectInfoList(UAbilitySystemComponent* TargetASC, const TArray<FItemEffectApplicationInfo>& EffectInfos, UObject* SourceObject, float SourceLevel = 1.0f);
 
 	template <typename TRowType>
 	static const TRowType* FindComponentDataRowInHandles(const TArray<FDataTableRowHandle>& ComponentHandles, const FString& ContextString = TEXT(""));

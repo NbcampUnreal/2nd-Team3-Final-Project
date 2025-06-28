@@ -34,10 +34,15 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "Warping")
 	float WarpDistance{100.0f};
+
+	FTimerHandle PerfectDodgeTimerHandle;
 	
 	UFUNCTION()
 	void OnMontageFinished();
 
+	UFUNCTION()
+	void OnPerfectDodgeEnded() const;
+	
 	void SetUpdateWarpingToTarget() const;
 
 	void SetUpdateWarping(bool bIsForceRotation) const;

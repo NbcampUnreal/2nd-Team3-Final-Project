@@ -36,6 +36,9 @@ public:
 	void SetEffectsVolume(float VolumeValue);
 
 	UFUNCTION(BlueprintCallable, Category = "Audio")
+	void SetUIVolume(float VolumeValue);
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
 	float GetMasterVolume() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Audio")
@@ -43,6 +46,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Audio")
 	float GetEffectsVolume() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+	float GetUIVolume() const;
 
 	void PlayBGMSoundByArea(EAreaType Type);
 	void PlayBGMSound(EAreaSoundType Type);
@@ -70,8 +76,8 @@ public:
 					if (Location.IsZero())
 					{
 						// UI
-						UGameplayStatics::PlaySound2D(WorldContext, Sound, MasterVolume);
-						EMBER_LOG(LogTemp, Warning, TEXT("Play 2D Sound"));
+						UGameplayStatics::PlaySound2D(WorldContext, Sound, MasterVolume * UIVolume);
+						EMBER_LOG(LogTemp, Warning, TEXT("Play 2D Sound"), MasterVolume * UIVolume);
 					}
 					else
 					{
@@ -129,5 +135,8 @@ private:
 
 	UPROPERTY()
 	float EffectsVolume = 1.0f;
+
+	UPROPERTY()
+	float UIVolume = 1.0f;
 
 };

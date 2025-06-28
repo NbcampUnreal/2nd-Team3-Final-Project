@@ -3,17 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "InventoryManager.h"
 #include "Components/ActorComponent.h"
+#include "ItemContainer/Implements/EmberBaseResourceSlotContainer/EmberQuickSlotContainer.h"
 #include "QuickSlotManager.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnQuickSlotChangedDelegate, int32, SlotIndex,	const FEmberSlotData&, SlotData);
 
 UCLASS(ClassGroup=(Custom))
-class PROJECTEMBER_API UQuickSlotManager : public UEmberDataContainer
+class PROJECTEMBER_API UQuickSlotManager : public UEmberQuickSlotContainer
 {
 	GENERATED_BODY()
 	
+/*
 public:
 	FName SelectQuickSlot(int32 InIndex);
 
@@ -22,5 +23,5 @@ public:
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="QuickSlot")
-	int32 CurrentQuickSlotIndex = -1;
+	int32 CurrentQuickSlotIndex = -1;*/
 };
