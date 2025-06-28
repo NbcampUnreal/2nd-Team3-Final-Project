@@ -174,7 +174,7 @@ void UInteractionComponent::SetCurrentInteractable(UObject* NewInteractable)
 
 void UInteractionComponent::Interact()
 {
-	/*
+	
 	if (!CurrentInteractable)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Interact called with no interactable."));
@@ -208,7 +208,7 @@ void UInteractionComponent::Interact()
 	{
 		StartGather();
 	}
-	*/
+	
 }
 
 void UInteractionComponent::StartGather()
