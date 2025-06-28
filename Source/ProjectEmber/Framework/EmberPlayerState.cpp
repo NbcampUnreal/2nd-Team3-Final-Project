@@ -6,6 +6,7 @@
 #include "Attribute/Player/EmberPlayerAttributeSet.h"
 #include "Character/EmberCharacter.h"
 #include "Item/UserItemManger.h"
+#include "EmberLog/EmberLog.h"
 #include "Item/Ability/EmberItemAttributeSet.h"
 #include "Kismet/GameplayStatics.h"
 #include "Quest/QuestSubsystem.h"
@@ -33,6 +34,7 @@ void AEmberPlayerState::BeginPlay()
 		PlayerAttributeSet->Initialize(AbilitySystemComponent);
 	}
 
+	AbilitySystemComponent->AbilityFailedCallbacks.AddUObject(this, &AEmberPlayerState::HandleAbilityFailed);
 	/*auto* Proxy = UEMSAsyncLoad::LoadGameActors(GetWorld(), true, true);
 	if (Proxy)
 	{
@@ -76,6 +78,25 @@ void AEmberPlayerState::ActorLoaded_Implementation()
 		}
 	}
 }
+
+void AEmberPlayerState::HandleAbilityFailed(const UGameplayAbility* FailedAbility,
+	const FGameplayTagContainer& FailureTags)
+{
+	if (FailedAbility)
+	{
+		UE_LOG(LogEmber, Warning,
+			TEXT("[Ability Failed] %s 실패 이유: %s"),
+			*FailedAbility->GetName(),
+			*FailureTags.ToStringSimple());
+	}
+	else
+	{
+		UE_LOG(LogEmber, Warning,
+			TEXT("[Ability Failed] 알 수 없는 어빌리티 실패. 이유: %s"),
+			*FailureTags.ToStringSimple());
+	}
+}
+
 
 void AEmberPlayerState::GameMenuWidgetLoaded()
 {

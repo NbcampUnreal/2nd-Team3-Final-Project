@@ -5,6 +5,7 @@
 #include "State/AlsLocomotionState.h"
 #include "BaseOverlayAbility.generated.h"
 
+class UAbilityTask_PlayMontageAndWait;
 /**
  * 기존 몽타주 대신 ALS state에 따라 다른 몽타주를 재생시키기 위한 구조체
  */
@@ -104,6 +105,8 @@ protected:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Base", Meta = (AllowPrivateAccess = "true"))
 	FGameplayTagContainer ForceGameplayTags;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ability|Base", Meta = (AllowPrivateAccess = "true"))
+	FGameplayTag  SetDesiredGaitTag;
 	
 	/**
 	 * 특정 몽타주 재생 후 VelocityYawAngle 쪽이 틀어져서 반대방향을 바라보게 됨
@@ -134,10 +137,26 @@ protected:
 	UFUNCTION()
 	void OnBlendOut();
 	UFUNCTION()
-	void OnParryEnded();
+	void OnParryEnded() const;
+	UFUNCTION()
+	void OnBlockHit(const FGameplayEventData Payload);
 	
+	UFUNCTION()
+	void OnBlockHitSectionTimerFinished();
 private:
-	void SetUpdateWarping();
+	/**
+	 * 모션 워핑
+	 */
+	void SetUpdateWarping() const;
+
+	void ClearWarping() const;
+	/**
+	 * 블록 히트
+	 */
+	bool bEndAfterBlockHit = false;
+	FTimerHandle BlockHitTimerHandle;
+	UPROPERTY()
+	UAbilityTask_PlayMontageAndWait* BlockHitMontageTask = nullptr;
 	
 	UAnimMontage*					ChooseMontageByState();
 	TSubclassOf<UGameplayAbility>	ChooseAbilityByState();

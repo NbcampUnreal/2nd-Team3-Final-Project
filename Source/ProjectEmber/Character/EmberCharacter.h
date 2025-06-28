@@ -76,6 +76,8 @@ public: /* TargetSystem */
 	void DelayToSendHitActors();
 	
 	void ReceiveHitActorDeath(AActor* InstigatorActor);
+
+	void SwitchOnAimTarget(bool bPressed);
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<AActor*> HitActors;
@@ -85,6 +87,9 @@ protected:
 	FTimerHandle HitTimerInputHandle;
 	int32 HitActorsIndex{0};
 	bool bIsHitActorsInputReset{false};
+
+	TWeakObjectPtr<AActor> CachedTargetActor;
+	
 protected: /* Mesh */
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, meta=(AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> VisualCharacterMesh;

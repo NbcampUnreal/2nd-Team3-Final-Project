@@ -25,7 +25,7 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	const FGameplayEventData* TriggerEventData)
 {
-	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	//Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 	
 	/* 모든 행동에대한 코스트, 쿨타임 등을 한번에 처리하고 bool 리턴해줌 */
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
@@ -53,6 +53,11 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
 	{
 		Character->SetForceGameplayTags(ForceGameplayTags);
+		if (SetDesiredGaitTag.IsValid())
+		{
+			Character->SetForceDesiredGait(SetDesiredGaitTag, true);	
+		}
+		
 		//Character->ForceLastInputDirectionBlocked(true);
 		//PreLocomotionState = Character->GetLocomotionState();
 		if (!bIsBlockAbility)
@@ -91,10 +96,9 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	PlayMontageTask->OnCompleted.AddDynamic(this, &UBaseOverlayAbility::OnMontageCompleted);
 	PlayMontageTask->OnInterrupted.AddDynamic(this, &UBaseOverlayAbility::OnMontageInterrupted);
 	PlayMontageTask->OnCancelled.AddDynamic(this, &UBaseOverlayAbility::OnMontageInterrupted);
-	//PlayMontageTask->OnBlendOut.AddDynamic(this, &UBaseOverlayAbility::OnMontageCompleted);
+	/* Throw 가 쓰고 있음 주석 ㄴㄴ */
+	PlayMontageTask->OnBlendOut.AddDynamic(this, &UBaseOverlayAbility::OnMontageCompleted);
 	
-	//PlayMontageTask->OnBlendOut.AddDynamic(this, &UBaseOverlayAbility::OnMontageCompleted);
-	//PlayMontageTask->OnBlendOut
 	PlayMontageTask->ReadyForActivation();
 	
 	if (!bLoopingMontage && bCanCombo)
@@ -106,6 +110,15 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 		ComboTask->EventReceived.AddDynamic(this, &UBaseOverlayAbility::OnComboNotify);
 		ComboTask->ReadyForActivation();
 	}
+
+	if (bIsBlockAbility)
+	{
+		UAbilityTask_WaitGameplayEvent* BlockTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
+	this, AlsCharacterStateTags::Hit, nullptr, false);
+		
+		BlockTask->EventReceived.AddDynamic(this, &UBaseOverlayAbility::OnBlockHit);
+		BlockTask->ReadyForActivation();
+	}
 }
 
 void UBaseOverlayAbility::CancelAbility(const FGameplayAbilitySpecHandle Handle,
@@ -113,14 +126,38 @@ void UBaseOverlayAbility::CancelAbility(const FGameplayAbilitySpecHandle Handle,
 	bool bReplicateCancelAbility)
 {
 	Super::CancelAbility(Handle, ActorInfo, ActivationInfo, bReplicateCancelAbility);
+	/** 혹시모를 잔무빙 제거 */
+	ClearWarping();
 }
 
 void UBaseOverlayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
 	bool bReplicateEndAbility, bool bWasCancelled)
 {
+	if (BlockHitMontageTask)
+	{
+		BlockHitMontageTask->EndTask();
+		BlockHitMontageTask = nullptr;
+
+		if (AActor* Avatar = GetAvatarActorFromActorInfo())
+		{
+			if (auto* Character = Cast<ACharacter>(Avatar))
+			{
+				if (auto* AnimInst = Character->GetMesh()->GetAnimInstance())
+				{
+					AnimInst->Montage_Stop(0.25f, nullptr);
+				}
+			}
+		}
+	}
+	
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 
+	if (auto AbilityClass = ChooseAbilityByState())
+	{
+		AbilitySystemComponent->TryActivateAbilityByClass(AbilityClass,false);
+	}
+	
 	bComboInputReceived = false;
 	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
 	{
@@ -136,14 +173,10 @@ void UBaseOverlayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle,
 		}
 	}
 
-	if (auto AbilityClass = ChooseAbilityByState())
-	{
-		AbilitySystemComponent->TryActivateAbilityByClass(AbilityClass,false);
-	}
-
+	/** Timer 보다 빠르게 끊어버릴 수 있으니 한번 더 제거 */
 	AbilitySystemComponent->RemoveLooseGameplayTag(AlsCharacterStateTags::Parrying);
-	//AbilitySystemComponent->RemoveLooseGameplayTag(AlsCharacterStateTags::Blocking);
-	
+
+	/** 어빌리티 종료 메세지버스 브로드캐스트 */
 	UMessageBus::GetInstance()->BroadcastMessage(TEXT("OverlayAbilityEnded"), GetAvatarActorFromActorInfo());
 }
 
@@ -158,7 +191,14 @@ void UBaseOverlayAbility::InputReleased(const FGameplayAbilitySpecHandle Handle,
 {
 	bComboInputReceived = false;
 	
-	EndAbility(Handle, ActorInfo, ActivationInfo,true, true);
+	if (GetAvatarActorFromActorInfo()->GetWorld()->GetTimerManager().IsTimerActive(BlockHitTimerHandle))
+	{
+		bEndAfterBlockHit = true;
+	}
+	else
+	{
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+	}
 }
 
 UAnimMontage* UBaseOverlayAbility::GetDefaultMontage() const
@@ -169,14 +209,9 @@ UAnimMontage* UBaseOverlayAbility::GetDefaultMontage() const
 
 void UBaseOverlayAbility::OnMontageCompleted()
 {
-	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
+	if (const AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
 	{
 		Character->GetWorld()->GetTimerManager().ClearTimer(MontageTickHandle);
-
-		/*EMBER_LOG(LogEmber, Warning, TEXT("Changed VelocityYawAngle : %f"), Character->GetLocomotionState().VelocityYawAngle);
-		EMBER_LOG(LogEmber, Warning, TEXT("Changed TargetYawAngle : %f"), Character->GetLocomotionState().TargetYawAngle);
-		EMBER_LOG(LogEmber, Warning, TEXT("Changed InputYawAngle : %f"), Character->GetLocomotionState().InputYawAngle);*/
-		//Character->SetRotationInstant(StartMontageActorYaw, ETeleportType::None);
 		
 		auto* MoveComp = Cast<UAlsCharacterMovementComponent>(Character->GetCharacterMovement());
 		MoveComp->SetIsActiveOverlayAbility(false);
@@ -189,15 +224,18 @@ void UBaseOverlayAbility::OnMontageCompleted()
 
 void UBaseOverlayAbility::OnMontageInterrupted()
 {
-	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
+	if (!GetAvatarActorFromActorInfo()->GetWorld()->GetTimerManager().IsTimerActive(BlockHitTimerHandle))
 	{
-		auto* MoveComp = Cast<UAlsCharacterMovementComponent>(Character->GetCharacterMovement());
-		MoveComp->SetIsActiveOverlayAbility(false);
-	}
+		if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
+		{
+			auto* MoveComp = Cast<UAlsCharacterMovementComponent>(Character->GetCharacterMovement());
+			MoveComp->SetIsActiveOverlayAbility(false);
+		}
 	
-	bool bReplicatedEndAbility = true;
-	bool bWasCancelled = true;
-	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);
+		bool bReplicatedEndAbility = true;
+		bool bWasCancelled = true;
+		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, bReplicatedEndAbility, bWasCancelled);	
+	}
 }
 
 void UBaseOverlayAbility::OnComboNotify(const FGameplayEventData Payload)
@@ -245,7 +283,7 @@ void UBaseOverlayAbility::OnBlendOut()
 {
 }
 
-void UBaseOverlayAbility::OnParryEnded()
+void UBaseOverlayAbility::OnParryEnded() const
 {
 	if (UAbilitySystemComponent* Asc = GetAbilitySystemComponentFromActorInfo_Ensured())
 	{
@@ -253,7 +291,75 @@ void UBaseOverlayAbility::OnParryEnded()
 	}
 }
 
-void UBaseOverlayAbility::SetUpdateWarping()
+void UBaseOverlayAbility::OnBlockHit(const FGameplayEventData Payload)
+{
+	if (!DefaultMontage)
+		return;
+	
+	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
+	{
+		if (UAnimInstance* AnimInst = Character->GetMesh()->GetAnimInstance())
+		{
+			AnimInst->Montage_SetNextSection(TEXT("Default"),TEXT("BlockHit"),
+				DefaultMontage);
+
+			AnimInst->Montage_SetNextSection(TEXT("BlockHit"),	TEXT("Default"),
+				DefaultMontage);
+		}
+	}
+
+	if (GetAvatarActorFromActorInfo()->GetWorld()->GetTimerManager().IsTimerActive(BlockHitTimerHandle))
+	{
+		GetAvatarActorFromActorInfo()->GetWorld()->GetTimerManager().ClearTimer(BlockHitTimerHandle);
+	}
+	
+	float SectionLength = 0.f;
+	const int32 SectionIndex = DefaultMontage->GetSectionIndex(TEXT("BlockHit"));
+	if (SectionIndex != INDEX_NONE)
+	{
+		SectionLength = DefaultMontage->GetSectionLength(SectionIndex);
+	}
+
+	AbilitySystemComponent->AddLooseGameplayTag(AlsInputActionTags::LockMoveInput);
+	
+	BlockHitMontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
+		this, NAME_None, DefaultMontage,1.f,TEXT("BlockHit"));
+	BlockHitMontageTask->ReadyForActivation();
+
+	// 5) 섹션 길이만큼 타이머 예약
+	if (SectionLength > KINDA_SMALL_NUMBER)
+	{
+		GetAvatarActorFromActorInfo()->GetWorld()->GetTimerManager().SetTimer(
+			BlockHitTimerHandle,
+			this,
+			&UBaseOverlayAbility::OnBlockHitSectionTimerFinished,
+			SectionLength,
+			false
+		);
+	}
+}
+
+void UBaseOverlayAbility::OnBlockHitSectionTimerFinished()
+{
+	if (GetAvatarActorFromActorInfo()->GetWorld()->GetTimerManager().IsTimerActive(BlockHitTimerHandle))
+	{
+		GetAvatarActorFromActorInfo()->GetWorld()->GetTimerManager().ClearTimer(BlockHitTimerHandle);
+	}
+
+	AbilitySystemComponent->RemoveLooseGameplayTag(AlsInputActionTags::LockMoveInput);
+	// 원래 블록히트 끝날 때 하던 로직
+	// (여기서 기본 Default 섹션으로 이미 돌아가 있습니다)
+	//bComboInputReceived = false;  // 혹 필요하면
+
+	// InputReleased 중에 End 요청이 있었다면 여기서 끝내기
+	if (bEndAfterBlockHit)
+	{
+		bEndAfterBlockHit = false;
+		EndAbility(CurrentSpecHandle,CurrentActorInfo,CurrentActivationInfo,true,true);
+	}
+}
+
+void UBaseOverlayAbility::SetUpdateWarping() const
 {
 	if (AAlsCharacter* Character = Cast<AAlsCharacter>(GetAvatarActorFromActorInfo()))
 	{
@@ -310,6 +416,23 @@ void UBaseOverlayAbility::SetUpdateWarping()
 
 		auto* MoveComp = Cast<UAlsCharacterMovementComponent>(Character->GetCharacterMovement());
 		MoveComp->SetIsActiveOverlayAbility(true);
+	}
+}
+
+void UBaseOverlayAbility::ClearWarping() const
+{
+	if (ACharacter* Char = Cast<ACharacter>(GetAvatarActorFromActorInfo()))
+	{
+		if (auto* WarpComp = Char->FindComponentByClass<UMotionWarpingComponent>())
+		{
+			WarpComp->RemoveAllWarpTargets();
+		}
+		
+		if (auto* MoveComp = Char->GetCharacterMovement())
+		{
+			MoveComp->StopMovementImmediately();
+			MoveComp->Velocity = FVector::ZeroVector;
+		}
 	}
 }
 

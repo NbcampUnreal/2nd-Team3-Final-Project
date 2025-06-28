@@ -245,7 +245,17 @@ void AEmberCharacter::Tick(float DeltaSeconds)
 		FRotator NewRot(0.0f, NewYaw, 0.0f);
 
 		SetActorRotation(NewRot);
+
+		const FRotator ControlRot = GetActorRotation();//GetControlRotation();
+		const FVector ForwardDir = FRotationMatrix(ControlRot).GetScaledAxis(EAxis::X);
+
+		FVector NewVelocity = ForwardDir.GetSafeNormal() * GlideForwardSpeed;
+
+		NewVelocity.Z = -FMath::Abs(GlideDescendSpeed);
+
+		AlsCharacterMovement->Velocity = NewVelocity;
 	}
+	
 	if (!TargetSystemComponent->IsLocked() && HitActors.Num() > 0)
 	{
 		if (!GetWorld()->GetTimerManager().IsTimerActive(HitTimerHandle))
@@ -375,10 +385,14 @@ void AEmberCharacter::AbilityInputPressed(int32 InputID)
 			}
 		}
 	}
-
-	if (GetOverlayMode() == AlsOverlayModeTags::Hammer)
+  
+	if (InputID == 1 && GetOverlayMode() == AlsOverlayModeTags::Hammer)
 	{
 		BuildComponent->SpwanBuild();
+	}
+	if (InputID == 0 && GetOverlayMode() == AlsOverlayModeTags::Hammer)
+	{
+		BuildComponent->RepairBuilding();
 	}
 }
 
@@ -739,16 +753,34 @@ void AEmberCharacter::Input_OnJump(const FInputActionValue& ActionValue)
 
 void AEmberCharacter::Input_OnAim(const FInputActionValue& ActionValue)
 {
-	
-	
-	/*if (OverlayMode == AlsOverlayModeTags::Default)
-	{
-	}
-	else */if (OverlayMode == AlsOverlayModeTags::Bow ||
+	if (OverlayMode == AlsOverlayModeTags::Bow ||
 		OverlayMode == AlsOverlayModeTags::Throw)
 	{
+		SwitchOnAimTarget(ActionValue.Get<bool>());
+		
 		TryAbilityFromOnAim(ActionValue.Get<bool>());
 		SetDesiredAiming(ActionValue.Get<bool>());
+	}
+}
+
+void AEmberCharacter::SwitchOnAimTarget(const bool bPressed)
+{
+	if (bPressed)
+	{
+		if (TargetSystemComponent->IsLocked())
+		{
+			CachedTargetActor = TargetSystemComponent->GetLockedOnTargetActor();
+			TargetSystemComponent->TargetLockOff();
+		}
+	}
+	else
+	{
+		if (CachedTargetActor.IsValid())
+		{
+			TargetSystemComponent->TargetActor({CachedTargetActor.Get()});
+		}
+		
+		CachedTargetActor.Reset();
 	}
 }
 
@@ -807,7 +839,8 @@ void AEmberCharacter::Input_OnRoll()
 		return;
 	}
 
-	if (AbilitySystemComponent->HasMatchingGameplayTag(AlsOverlayModeTags::Sword))
+	if (AbilitySystemComponent->HasMatchingGameplayTag(AlsOverlayModeTags::Sword) ||
+		GetOverlayMode() == AlsOverlayModeTags::Sword)
 	{
 		AbilitySystemComponent->TryActivateAbilityByClass(DodgeAbilityClass);
 		return;
@@ -815,7 +848,7 @@ void AEmberCharacter::Input_OnRoll()
 
 	const FGameplayTagContainer CancelTags(AlsInputActionTags::OverlayAction);
 	AbilitySystemComponent->CancelAbilities(&CancelTags);
-
+	
 	StartRolling(1.3f);
 }
 
