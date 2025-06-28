@@ -385,11 +385,11 @@ void AEmberCharacter::AbilityInputPressed(int32 InputID)
 			}
 		}
 	}
-
+	
 	if (GetOverlayMode() == AlsOverlayModeTags::Hammer)
 	{
 		BuildComponent->SpwanBuild();
-	}
+	}	
 }
 
 FGameplayAbilitySpec* AEmberCharacter::GetSpecFromOverlayMode(const bool IsRightInput) const
