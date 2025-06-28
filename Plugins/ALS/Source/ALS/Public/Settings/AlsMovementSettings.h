@@ -79,7 +79,8 @@ public:
 	{
 		{AlsRotationModeTags::VelocityDirection, {}},
 		{AlsRotationModeTags::ViewDirection, {}},
-		{AlsRotationModeTags::Aiming, {}}
+		{AlsRotationModeTags::Aiming, {}},
+		{AlsRotationModeTags::Targeting, {}}
 	};
 
 public:

@@ -90,4 +90,6 @@ namespace AlsCharacterStateTags
 	UE_DEFINE_GAMEPLAY_TAG(Blocking, FName{TEXTVIEW("Character.State.Blocking")})
 	UE_DEFINE_GAMEPLAY_TAG(Parrying, FName{TEXTVIEW("Character.State.Parrying")})
 	UE_DEFINE_GAMEPLAY_TAG(Invincibility, FName{TEXTVIEW("Character.State.Invincibility")})
+	UE_DEFINE_GAMEPLAY_TAG(Hit, FName{TEXTVIEW("Character.State.Hit")})
+	UE_DEFINE_GAMEPLAY_TAG(PerfectDodge, FName{TEXTVIEW("Character.State.PerfectDodge")})
 }

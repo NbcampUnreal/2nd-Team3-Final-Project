@@ -28,6 +28,8 @@
 #include "Item/Craft/EmberCraftComponent.h"
 #include "MeleeTrace/Public/MeleeTraceComponent.h"
 #include "Quest/QuestSubsystem.h"
+#include "OnlineSubsystem.h"
+#include "Interfaces/OnlineSessionInterface.h"
 #include "Utility/AlsVector.h"
 #include "MotionWarpingComponent.h"
 #include "Components/WidgetComponent.h"
@@ -94,6 +96,17 @@ AEmberCharacter::AEmberCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 
 	ActiveDialogueComponent = nullptr;
+
+	/*IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
+	if (OnlineSubsystem)
+	{
+		OnlineSessionInterface = OnlineSubsystem->GetSessionInterface();
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Green,
+				FString::Printf(TEXT("OnlineSubsystem: %s"), *OnlineSubsystem->GetSubsystemName().ToString()));
+		}
+	}*/
 }
 
 void AEmberCharacter::BeginPlay()
@@ -232,7 +245,17 @@ void AEmberCharacter::Tick(float DeltaSeconds)
 		FRotator NewRot(0.0f, NewYaw, 0.0f);
 
 		SetActorRotation(NewRot);
+
+		const FRotator ControlRot = GetActorRotation();//GetControlRotation();
+		const FVector ForwardDir = FRotationMatrix(ControlRot).GetScaledAxis(EAxis::X);
+
+		FVector NewVelocity = ForwardDir.GetSafeNormal() * GlideForwardSpeed;
+
+		NewVelocity.Z = -FMath::Abs(GlideDescendSpeed);
+
+		AlsCharacterMovement->Velocity = NewVelocity;
 	}
+	
 	if (!TargetSystemComponent->IsLocked() && HitActors.Num() > 0)
 	{
 		if (!GetWorld()->GetTimerManager().IsTimerActive(HitTimerHandle))
@@ -275,6 +298,10 @@ void AEmberCharacter::OnOutOfHealth()
 void AEmberCharacter::AbilityInputPressed(int32 InputID)
 {
 	if (UUIFunctionLibrary::GetIsAbilityInputLock(Cast<APlayerController>(GetController())))
+	{
+		return;
+	}
+	if (AbilitySystemComponent->HasMatchingGameplayTag(AlsLocomotionModeTags::Gliding))
 	{
 		return;
 	}
@@ -358,10 +385,14 @@ void AEmberCharacter::AbilityInputPressed(int32 InputID)
 			}
 		}
 	}
-
-	if (GetOverlayMode() == AlsOverlayModeTags::Hammer)
+  
+	if (InputID == 1 && GetOverlayMode() == AlsOverlayModeTags::Hammer)
 	{
 		BuildComponent->SpwanBuild();
+	}
+	if (InputID == 0 && GetOverlayMode() == AlsOverlayModeTags::Hammer)
+	{
+		BuildComponent->RepairBuilding();
 	}
 }
 
@@ -650,6 +681,12 @@ void AEmberCharacter::Input_OnMove(const FInputActionValue& ActionValue)
 		return;
 	}
 
+	if (GetCancelAbilityInput() && !AbilitySystemComponent->HasMatchingGameplayTag(AlsCharacterStateTags::Blocking))
+	{
+		const FGameplayTagContainer CancelTags(AlsInputActionTags::OverlayAction);
+		AbilitySystemComponent->CancelAbilities(&CancelTags);
+	}
+	
 	const auto Value = UAlsVector::ClampMagnitude012D(ActionValue.Get<FVector2D>());
 	const auto ForwardDir = UAlsVector::AngleToDirectionXY(UE_REAL_TO_FLOAT(GetViewState().Rotation.Yaw));
 	const auto RightDir = UAlsVector::PerpendicularCounterClockwiseXY(ForwardDir);
@@ -716,16 +753,34 @@ void AEmberCharacter::Input_OnJump(const FInputActionValue& ActionValue)
 
 void AEmberCharacter::Input_OnAim(const FInputActionValue& ActionValue)
 {
-	
-	
-	/*if (OverlayMode == AlsOverlayModeTags::Default)
-	{
-	}
-	else */if (OverlayMode == AlsOverlayModeTags::Bow ||
+	if (OverlayMode == AlsOverlayModeTags::Bow ||
 		OverlayMode == AlsOverlayModeTags::Throw)
 	{
+		SwitchOnAimTarget(ActionValue.Get<bool>());
+		
 		TryAbilityFromOnAim(ActionValue.Get<bool>());
 		SetDesiredAiming(ActionValue.Get<bool>());
+	}
+}
+
+void AEmberCharacter::SwitchOnAimTarget(const bool bPressed)
+{
+	if (bPressed)
+	{
+		if (TargetSystemComponent->IsLocked())
+		{
+			CachedTargetActor = TargetSystemComponent->GetLockedOnTargetActor();
+			TargetSystemComponent->TargetLockOff();
+		}
+	}
+	else
+	{
+		if (CachedTargetActor.IsValid())
+		{
+			TargetSystemComponent->TargetActor({CachedTargetActor.Get()});
+		}
+		
+		CachedTargetActor.Reset();
 	}
 }
 
@@ -784,9 +839,16 @@ void AEmberCharacter::Input_OnRoll()
 		return;
 	}
 
+	if (AbilitySystemComponent->HasMatchingGameplayTag(AlsOverlayModeTags::Sword) ||
+		GetOverlayMode() == AlsOverlayModeTags::Sword)
+	{
+		AbilitySystemComponent->TryActivateAbilityByClass(DodgeAbilityClass);
+		return;
+	}
+
 	const FGameplayTagContainer CancelTags(AlsInputActionTags::OverlayAction);
 	AbilitySystemComponent->CancelAbilities(&CancelTags);
-
+	
 	StartRolling(1.3f);
 }
 

@@ -9,8 +9,9 @@
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "EmberLog/EmberLog.h"
+#include "Item/ItemSubsystem.h"
 #include "Item/Core/ItemSystemLibrary.h"
-#include "Item/UI/DragDropOperation/EmberItemSlotDragDropOperation.h"
+#include "Item/UI/EmberSlotProviderInterface.h"
 #include "Item/UI/SlotWidget/ItemDetailWidget.h"
 
 void UEmberBaseSlotWidget::NativeOnInitialized()
@@ -21,41 +22,53 @@ void UEmberBaseSlotWidget::NativeOnInitialized()
 	{
 		if (TObjectPtr<UTexture2D> SlotDefaultTexture2D = Cast<UTexture2D> (SlotImage->GetBrush().GetResourceObject()))
 		{
-			
-			DefaultSlotTexture = SlotDefaultTexture2D;
+			if (!DefaultSlotTexture)
+			{
+				DefaultSlotTexture = SlotDefaultTexture2D;
+			}
 		}
 	}
 }
 
-void UEmberBaseSlotWidget::InitSlot(int32 InSlotIndex, TScriptInterface<IEmberSlotDataProviderInterface> InDataProvider)
+void UEmberBaseSlotWidget::InitSlot(int32 InSlotIndex, TScriptInterface<IEmberSlotProviderInterface> InDataProvider)
 {
 	SlotIndex = InSlotIndex;
 	DataProvider = InDataProvider;
-	if (DataProvider)
-	{
-		SlotType = IEmberSlotDataProviderInterface::Execute_GetSlotType(DataProvider.GetObject());
-	}
+	InitDetailWidget();
 }
 
 void UEmberBaseSlotWidget::SetSlotData(const FInstancedStruct& InSlotData)
 {
-	SlotData = FEmberWidgetSlotData(InSlotData);
-
+	SlotData = FEmberWidgetSlot(InSlotData);
+	
 	UpdateSlot();
+}
+
+void UEmberBaseSlotWidget::InitDetailWidget()
+{
+	if (UItemSubsystem* ItemSubsystem = UItemSystemLibrary::GetItemSubsystem())
+	{
+		ItemDetailWidget = ItemSubsystem->GetItemDetailWidget();
+	}
 }
 
 void UEmberBaseSlotWidget::UpdateSlot()
 {
 	TObjectPtr<UTexture2D> LoadTexture = nullptr;
-	if (SlotData.ItemID.IsNone())
+
+	if (bCanVisible())
 	{
-		LoadTexture = DefaultSlotTexture.LoadSynchronous();
+		LoadTexture = SlotData.SlotInfo.ItemIcon.LoadSynchronous();
+		SlotImage->SetColorAndOpacity((FLinearColor(1.f,1.f,1.f, 1.f)));
 	}
 	else
 	{
-		LoadTexture = SlotData.ItemIcon.LoadSynchronous();
+		LoadTexture = DefaultSlotTexture.LoadSynchronous();
+		SlotImage->SetColorAndOpacity((FLinearColor(1.f,1.f,1.f, 0.5f)));
 	}
+
 	SlotImage->SetBrushFromTexture(LoadTexture);
+
 
 	if (SlotData.Quantity > 1)
 	{
@@ -67,24 +80,55 @@ void UEmberBaseSlotWidget::UpdateSlot()
 	}
 }
 
+bool UEmberBaseSlotWidget::bCanVisible()
+{
+	if (SlotData.ItemID.IsNone())
+	{
+		return false;
+	}
+	return true;
+}
+
 void UEmberBaseSlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent,
-	UDragDropOperation*& OutOperation)
+                                                UDragDropOperation*& OutOperation)
 {
 	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
-
-	IEmberSlotDragAbleSlotInterface::Execute_CreateDragDropOperation(this, InGeometry, InMouseEvent, OutOperation);
+	if (Cast<IEmberSlotDragAbleSlotInterface>(this))
+	{
+		IEmberSlotDragAbleSlotInterface::Execute_CreateDragDropOperation(this, InGeometry, InMouseEvent, OutOperation);
+	}
 }
 
 FReply UEmberBaseSlotWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
 	
 	FReply Reply = Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
-	Reply = IEmberSlotDragAbleSlotInterface::Execute_StartDragDrop(this, InGeometry, InMouseEvent).NativeReply;
+
+	if (Cast<IEmberSlotDragAbleSlotInterface>(this))
+	{
+		Reply = IEmberSlotDragAbleSlotInterface::Execute_StartDragDrop(this, InGeometry, InMouseEvent).NativeReply;
+
+	}
+	return Reply;
+}
+
+FReply UEmberBaseSlotWidget::NativeOnMouseButtonDoubleClick(const FGeometry& InGeometry,
+	const FPointerEvent& InMouseEvent)
+{
+	FReply Reply = Super::NativeOnMouseButtonDoubleClick(InGeometry, InMouseEvent);
+	if (!SlotData.ItemID.IsNone() && DataProvider && DataProvider.GetObject())
+	{
+		if (Cast<IEmberSlotDragAbleSlotInterface>(this))
+		{
+			IEmberSlotProviderInterface::Execute_UseItemInSlot(DataProvider.GetObject(), SlotIndex);
+		}
+		return UWidgetBlueprintLibrary::Handled().NativeReply;
+	}
 	return Reply;
 }
 
 bool UEmberBaseSlotWidget::NativeOnDrop(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent,
-	UDragDropOperation* InOperation)
+                                        UDragDropOperation* InOperation)
 {
 	return IEmberSlotDragAbleSlotInterface::Execute_DropAction(this, InGeometry, InDragDropEvent, InOperation) ||
 		Super::NativeOnDrop(InGeometry, InDragDropEvent, InOperation);
@@ -94,15 +138,10 @@ void UEmberBaseSlotWidget::NativeOnMouseEnter(const FGeometry& InGeometry, const
 {
 	Super::NativeOnMouseEnter(InGeometry, InMouseEvent);
 
-	if (ItemDetailWidgetClass && !SlotData.IsEmpty())
+	if (ItemDetailWidget && !SlotData.ItemID.IsNone())
 	{
-		ItemDetailWidget = CreateWidget<UItemDetailWidget>(this->GetOwningPlayer(), ItemDetailWidgetClass, TEXT("DetailWidget"));
-		
-		if (ItemDetailWidget)
-		{
-			ItemDetailWidget->AddToViewport();
-			ItemDetailWidget->EmberWidgetSlotData = SlotData;
-		}
+		ItemDetailWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+		ItemDetailWidget->EmberWidgetSlotData = SlotData;
 	}
 }
 
@@ -111,7 +150,7 @@ void UEmberBaseSlotWidget::NativeOnMouseLeave(const FPointerEvent& InMouseEvent)
 	Super::NativeOnMouseLeave(InMouseEvent);
 	if (ItemDetailWidget)
 	{
-		ItemDetailWidget->RemoveFromParent();
+		ItemDetailWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 

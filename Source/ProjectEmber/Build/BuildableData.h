@@ -21,4 +21,22 @@ struct FBuildableData : public FTableRowBase
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TSubclassOf<AActor> Actor;
+
+    // 자원과 자원 종류, 건물 체력  추가
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Health;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) 
+	FName RequiredResources;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 RequiredResourceAmounts;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FText BuildableDescription;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UTexture2D* Thumbnail;
+
 };

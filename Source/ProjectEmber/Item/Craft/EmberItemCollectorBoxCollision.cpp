@@ -6,6 +6,7 @@
 #include "EmberCraftComponent.h"
 #include "EmberResourceProvider.h"
 #include "EmberLog/EmberLog.h"
+#include "Item/Core/EmberTmpStruct.h"
 
 
 // Sets default values for this component's properties
@@ -78,6 +79,11 @@ void UEmberItemCollectorBoxCollision::SetResourceProvider(TScriptInterface<UEmbe
 
 }
 
+void UEmberItemCollectorBoxCollision::ResetResourceProvider()
+{
+	ResourceProviders.Reset();
+}
+
 TMap<FName, int32> UEmberItemCollectorBoxCollision::GetAllItemInfos_Implementation()
 {
 	TMap<FName, int32> AllItemInfos;
@@ -104,52 +110,95 @@ TMap<FName, int32> UEmberItemCollectorBoxCollision::GetAllItemInfos_Implementati
 	return AllItemInfos;
 }
 
-void UEmberItemCollectorBoxCollision::TryConsumeResource_Implementation(const TArray<FItemPair>& InRequireItems)
+void UEmberItemCollectorBoxCollision::TryConsumeResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems)
 {
-	TArray<FItemPair> RequireItems = InRequireItems;
-
+	TArray<FEmberItemEntry> RequireItems = InRequireItems;
 	if (bConsumeAbleResource_Implementation(RequireItems))
 	{
 		for (TWeakObjectPtr<UObject>& ResourceProvider : ResourceProviders)
 		{
 			if (ResourceProvider.Get())
-			{
-				RequireItems = IEmberResourceProvider::Execute_RemoveResourceUntilAble(ResourceProvider.Get(), RequireItems);
-
+			{	
+				IEmberResourceProvider::Execute_RemoveResourceUntilAble(ResourceProvider.Get(), RequireItems);
 			}
 
 		}
 	}
 }
 
-bool UEmberItemCollectorBoxCollision::bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems)
+bool UEmberItemCollectorBoxCollision::bConsumeAbleResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems)
 {
-	TMap<FName, int32> AllItemInfos = GetAllItemInfos_Implementation();
-	for (FItemPair RequireItem : InRequireItems)
+	TArray<FEmberItemEntry> RequiresEntries;
+	TMap<FEmberItemKey, FInstancedStruct> OutItemInfos;
+	for (FEmberItemEntry RequireItem : InRequireItems)
 	{
-		int32* Quantity = AllItemInfos.Find(RequireItem.ItemID);
-		if (!Quantity || *Quantity < RequireItem.Quantity)
+		RequiresEntries.Add(FEmberItemEntry(RequireItem.ItemID, RequireItem.Quantity, RequireItem.Enchants));
+	}
+	
+	for (auto& ResourceProviderPtr : ResourceProviders)
+	{
+		if (UObject* ResourceProvider = ResourceProviderPtr.Get())
 		{
-			return false;
+			IEmberResourceProvider::Execute_GetItemInfos(ResourceProvider, RequiresEntries, OutItemInfos);
 		}
 	}
+	
+	for (auto& RequiresEntry : RequiresEntries)
+	{
+		if (FInstancedStruct* OutItemInstanced = OutItemInfos.Find(RequiresEntry.CreateItemKey()))
+		{
+
+			if (const FEmberItemEntry* Data = OutItemInstanced->GetPtr<FEmberItemEntry>())
+			{
+				if (Data->Quantity >= RequiresEntry.Quantity)
+				{
+					continue;
+				}
+			}
+		}
+
+		return false;
+	}
+
 	return true;
 }
 
-TArray<FItemPair> UEmberItemCollectorBoxCollision::RemoveResourceUntilAble_Implementation(
-   const TArray<FItemPair>& InRequireItems)
+void UEmberItemCollectorBoxCollision::GetItemInfo_Implementation(FEmberItemEntry& InItemEntry,
+	FInstancedStruct& OutItemInfo)
 {
-	TArray<FItemPair> RequireItems = InRequireItems;
+	for (TWeakObjectPtr<UObject>& ResourceProviderPtr : ResourceProviders)
+	{
+		if (UObject* ResourceProvider = ResourceProviderPtr.Get())
+		{
+			IEmberResourceProvider::Execute_GetItemInfo(ResourceProvider, InItemEntry, OutItemInfo);
+		}
+	}
+}
+
+void UEmberItemCollectorBoxCollision::GetItemInfos_Implementation(TArray<FEmberItemEntry>& InItemEntries,
+	TMap<FEmberItemKey, FInstancedStruct>& OutItemInfos)
+{
+	for (TWeakObjectPtr<UObject>& ResourceProviderPtr : ResourceProviders)
+	{
+		if (UObject* ResourceProvider = ResourceProviderPtr.Get())
+		{
+			IEmberResourceProvider::Execute_GetItemInfos(ResourceProvider, InItemEntries, OutItemInfos);
+		}
+	}
+}
+
+void UEmberItemCollectorBoxCollision::RemoveResourceUntilAble_Implementation(
+   TArray<FEmberItemEntry>& InRequireItems)
+{
 	for (TWeakObjectPtr<UObject>& ResourceProvider : ResourceProviders)
 	{
 		if (UObject* Object = ResourceProvider.Get())
 		{
-			RequireItems = IEmberResourceProvider::Execute_RemoveResourceUntilAble(Object, RequireItems);
-			
+			IEmberResourceProvider::Execute_RemoveResourceUntilAble(Object, InRequireItems);
 		}
 	}
-	return RequireItems;
 }
+
 int32 UEmberItemCollectorBoxCollision::DEBUG_GetResourceProviderNum()
 {
 	return ResourceProviders.Num();

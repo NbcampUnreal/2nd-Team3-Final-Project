@@ -11,12 +11,27 @@ class EMBERABILITYSYSTEM_API UEmberEffectHelper : public UObject
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect", Meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect|Parry", Meta = (AllowPrivateAccess = true))
 	TSubclassOf<UGameplayEffect> ParryEffectClass;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect", Meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect|Parry", Meta = (AllowPrivateAccess = true))
 	TSubclassOf<UGameplayAbility> EnemyParryAbilityClass;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect", Meta = (AllowPrivateAccess = true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect|Parry", Meta = (AllowPrivateAccess = true))
 	TSubclassOf<UGameplayAbility> ParryAbilityClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect|BlockHit", Meta = (AllowPrivateAccess = true))
+	TSubclassOf<UGameplayEffect> BlockHitEffectClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect|Hit", Meta = (AllowPrivateAccess = true))
+	TSubclassOf<UGameplayAbility> ForwardHitAbilityClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect|Hit", Meta = (AllowPrivateAccess = true))
+	TSubclassOf<UGameplayAbility> BackHitAbilityClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect|Hit", Meta = (AllowPrivateAccess = true))
+	TSubclassOf<UGameplayAbility> LeftHitAbilityClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effect|Hit", Meta = (AllowPrivateAccess = true))
+	TSubclassOf<UGameplayAbility> RightHitAbilityClass;
 };

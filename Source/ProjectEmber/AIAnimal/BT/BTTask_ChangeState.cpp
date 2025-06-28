@@ -42,7 +42,7 @@ EBTNodeResult::Type UBTTask_ChangeState::ExecuteTask(UBehaviorTreeComponent& Own
 	}
 	
 	BlackboardComp->SetValueAsName("NStateTag", "Animal.State.Idle");
-	BlackboardComp->SetValueAsObject("TargetObject", nullptr);
+	BlackboardComp->SetValueAsObject("TargetActor", nullptr);
 	
 	return Super::ExecuteTask(OwnerComp, NodeMemory);
 }

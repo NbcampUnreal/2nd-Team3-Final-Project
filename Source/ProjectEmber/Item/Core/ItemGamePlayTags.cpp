@@ -24,6 +24,7 @@ namespace EmberEquipmentGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Belt, "Item.Equipment.Belt");
 	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Ring, "Item.Equipment.Ring");
 	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Shield, "Item.Equipment.Shield");
+	UE_DEFINE_GAMEPLAY_TAG(Item_Equipment_Tool, "Item.Equipment.Tool");
 }
 
 namespace EmberItemEffectGameplayTags

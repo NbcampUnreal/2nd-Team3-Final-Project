@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Blueprint/DragDropOperation.h"
-#include "Item/UI/SlotWidget/EmberSlotDataProviderInterface.h"
+#include "Item/UI/EmberSlotProviderInterface.h"
 
 #include "EmberItemSlotDragDropOperation.generated.h"
 
@@ -24,7 +24,7 @@ public:
 	int32 DraggedQuantity;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite,  Category="Payload", meta=(ExposeOnSpawn=true))
-	TScriptInterface<IEmberSlotDataProviderInterface> Provider;
+	TScriptInterface<IEmberSlotProviderInterface> Provider;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite,  Category="Payload", meta=(ExposeOnSpawn=true))
 	FGameplayTag SlotType; 

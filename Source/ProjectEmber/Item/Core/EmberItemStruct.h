@@ -10,7 +10,7 @@
 /**
  * 
  */
-
+#define ITEM_SYSTEM_MAX_STACK 9999999
 USTRUCT(BlueprintType)
 struct FEmberSlotData
 {
@@ -54,6 +54,8 @@ struct FEmberSlotData
         OutInstancedStruct.InitializeAs<FEmberSlotData>(*this);
     }
     
+    virtual void AddQuantity(int32& InQuantity);
+    virtual void RemoveQuantity(int32& InQuantity);
     virtual bool bIsEmpty() const { return ItemID.IsNone() || Quantity <= 0; }
     
     virtual bool bIsFull() const { return Quantity >= MaxStackSize; }
@@ -144,6 +146,31 @@ struct FItemPair
     FItemPair(const FName& InItemID, const int32 InQuantity, const TArray<FItemEffectApplicationInfo>& InEnchants = TArray<FItemEffectApplicationInfo>()) : ItemID(InItemID), Quantity(InQuantity), Enchants(InEnchants) {} ;
 };
 
+// 아이템의 분류 키
+USTRUCT(BlueprintType)
+struct FEmberItemKey
+{
+    GENERATED_BODY()
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item struct")
+    FName ItemID = NAME_None;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item struct")
+    TSet<FName> EnchantIDs = TSet<FName>();
 
+    FEmberItemKey() = default;
+    FEmberItemKey(const FName& InItemID, const TArray<FItemEffectApplicationInfo>& InEnchants = TArray<FItemEffectApplicationInfo>());
 
+    bool operator==(const FEmberItemKey& Other) const;
+};
+
+inline uint32 GetTypeHash(const FEmberItemKey& ItemKey)
+{
+    uint32 CombineHash = GetTypeHash(ItemKey.ItemID);
+
+    for (const FName& EnchantID : ItemKey.EnchantIDs)
+    {
+        CombineHash = HashCombine(CombineHash, GetTypeHash(EnchantID));
+    }
+    return CombineHash;
+}
