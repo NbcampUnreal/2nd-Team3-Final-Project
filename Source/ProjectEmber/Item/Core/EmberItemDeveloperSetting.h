@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "EmberItemDeveloperSetting.generated.h"
 
-class UEmberQuickSlotWidget;
 /**
  * 
  */
