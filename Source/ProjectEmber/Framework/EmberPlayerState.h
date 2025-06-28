@@ -6,6 +6,7 @@
 #include "GameplayAbilitySpec.h"
 #include "GameplayTagContainer.h"
 #include "GameFramework/PlayerState.h"
+#include "Item/Core/ItemStruct/EmberItemEntry.h"
 #include "EmberPlayerState.generated.h"
 
 UCLASS()
@@ -40,4 +41,13 @@ private:
 	
 	UPROPERTY(SaveGame)
 	TMap<FName, int32> QuestProgress;
+	
+	UPROPERTY(SaveGame)
+	TArray<FEmberItemEntry> InventoryProgress;
+	
+	UPROPERTY(SaveGame)
+	TArray<FEmberItemEntry> EquipmentProgress;
+	
+	UPROPERTY(SaveGame)
+	TArray<FEmberItemEntry> QuickSlotProgress;
 };

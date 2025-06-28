@@ -9,6 +9,7 @@
 #include "Components/SizeBox.h"
 #include "EmberLog/EmberLog.h"
 #include "Item/EmberDataContainer.h"
+#include "Item/ItemContainer/EmberBaseSlotContainer.h"
 #include "Item/UI/SlotWidget/Slot/EmberBaseSlotWidget.h"
 
 void UEmberBaseSlotsPanel::NativeOnInitialized()
@@ -33,7 +34,7 @@ void UEmberBaseSlotsPanel::InitializePanel()
 }
 
 void UEmberBaseSlotsPanel::SlotChanged(int32 InIndex, const FInstancedStruct& InSlotData)
-{	
+{
 	if (Slots.IsValidIndex(InIndex))
 	{
 		Slots[InIndex]->SetSlotData(InSlotData);
@@ -44,11 +45,16 @@ void UEmberBaseSlotsPanel::UpdateSlots()
 {
 	if (DataProvider)
 	{
-		if (TObjectPtr<UEmberDataContainer> ProviderManager = Cast<UEmberDataContainer>(DataProvider.GetObject()))
+		if (Cast<IEmberSlotProviderInterface>(DataProvider.GetObject()))
 		{
 			for (int32 Index = 0; Index < Slots.Num(); Index++)
 			{
-				Slots[Index]->SetSlotData(ProviderManager->GetSlotDataByIndex(Index));
+				if (Slots[Index])
+				{
+					FInstancedStruct InstancedStruct = IEmberSlotProviderInterface::Execute_GetSlotItemInfo(DataProvider.GetObject(), Index);
+					Slots[Index]->SetSlotData(InstancedStruct);
+
+				}
 			}
 		}
 	}
@@ -60,8 +66,8 @@ void UEmberBaseSlotsPanel::BP_SetProvider_Implementation()
 
 void UEmberBaseSlotsPanel::BP_CreateSlots_Implementation()
 {
-	int32 MaxSlots = IEmberSlotDataProviderInterface::Execute_GetSlotCount(DataProvider.GetObject());
-	int32 MaxRow = IEmberSlotDataProviderInterface::Execute_GetSlotMaxRow(DataProvider.GetObject());
+	int32 MaxSlots = IEmberSlotProviderInterface::Execute_GetSlotCount(DataProvider.GetObject());
+	int32 MaxRow = IEmberSlotProviderInterface::Execute_GetSlotMaxRow(DataProvider.GetObject());
 
 	Slots.SetNum(MaxSlots);
 	for (int32 Index = 0; Index < MaxSlots; Index++)
@@ -82,12 +88,12 @@ void UEmberBaseSlotsPanel::BP_CreateSlots_Implementation()
 
 void UEmberBaseSlotsPanel::BindToManagerDelegates_Implementation()
 {
-	
-	if (DataProvider)
-	{
-		if (TObjectPtr<UEmberDataContainer> ProviderManager = Cast<UEmberDataContainer>(DataProvider.GetObject()))
-		{
-			ProviderManager->OnDataChangedDelegate.AddDynamic(this, &UEmberBaseSlotsPanel::SlotChanged);
-		}
-	}
+		if (DataProvider && DataProvider.GetObject())
+    	{
+    		if (TObjectPtr<UEmberBaseSlotContainer> ProviderManager = Cast<UEmberBaseSlotContainer>(DataProvider.GetObject()))
+    		{
+    			ProviderManager->OnItemChangedDelegate.AddDynamic(this, &UEmberBaseSlotsPanel::SlotChanged);
+    		}
+    	}
+
 }

@@ -25,6 +25,7 @@ void UEmberDropItemManager::SetDropItem(const FName& MonsterID, const UAbilitySy
 
     for (auto& Item : DropItemMap)
     {
-        AddItem_Implementation(Item);
+        FEmberItemEntry Entry = FEmberItemEntry(Item.ItemID, Item.Quantity, Item.Enchants);
+        AddSlotItemReturnApplied(Entry,0);
     }
 }

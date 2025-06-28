@@ -3,11 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "EmberTmpStruct.h"
+#include "ItemCraftType.h"
+#include "ItemStruct/EmberSlot.h"
 #include "EmberCraftStruct.generated.h"
 /**
  * 
  */
 
+struct FCraftPair;
 class IEmberResourceProvider;
 
 USTRUCT(BlueprintType)
@@ -25,4 +29,19 @@ struct FTotalItemInfo
 	int32 RemoveItemQuantity(const int32 InQuantity);
 	void RemoveItemIndexes(const int32 InIndex);
 	bool bIsEmpty() const { return TotalQuantity == 0 || ItemIndexes.IsEmpty(); };
+};
+
+
+USTRUCT(BlueprintType)
+struct FCraftSelectInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FEmberSlot ResultItemData;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FCraftPair> RequiredItemDataHandles;
+
+	FCraftSelectInfo() = default;
+	FCraftSelectInfo(const FCraftInfoRow& InCraftInfoRow);
 };

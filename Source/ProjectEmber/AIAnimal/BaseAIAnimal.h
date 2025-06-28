@@ -12,6 +12,7 @@
 #include "MessageBus/MessageBus.h"
 #include "BaseAIAnimal.generated.h"
 
+class UEmberDropComponent;
 class UWidgetComponent;
 class UMeleeTraceComponent;
 class UBoxComponent;
@@ -264,4 +265,8 @@ protected:
 	int32 HitCount = 0;
 	bool bHasToken = false;
 	bool IsAbility = false;
+
+	// ItemManager
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+	TObjectPtr<UEmberDropComponent> DropComponent;
 };

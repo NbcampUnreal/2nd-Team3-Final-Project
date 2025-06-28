@@ -5,9 +5,11 @@
 #include "CoreMinimal.h"
 
 #include "Core/EmberItemStruct.h"
+#include "Core/ItemStruct/Implements/EmberItemEntry/EmberSaveEntry.h"
 #include "Craft/EmberResourceProvider.h"
 #include "UserItemManger.generated.h"
 
+class UEmberAddItemMessage;
 class UEmberCraftComponent;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -29,13 +31,13 @@ public:
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 	
 	UFUNCTION(BlueprintCallable)
-	FEmberItemInfo GetQuickSlotInfo(int32 InIndex);
+	FEmberQuickSlot GetQuickSlotInfo(int32 InIndex);
 	
 	UFUNCTION(BlueprintCallable)
-	void UseQuickSlotInfo(int32 InIndex);
+	void UseQuickSlot(int32 InIndex);
 	
 	UFUNCTION(BlueprintCallable)
-	FEmberItemInfo GetInventorySlotInfo(int32 InIndex);
+	FEmberInventorySlot GetInventorySlotInfo(int32 InIndex);
 	
 	UFUNCTION(BlueprintCallable)
 	void UseInventorySlotInfo(int32 InIndex);
@@ -45,6 +47,16 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void ClearDropProvider();
+	
+	UFUNCTION(BlueprintCallable)
+	FEmberMasterItemData DebugGetItemInfo(const FName& InSlotName);
+	
+	void SaveInventoryItem(TArray<FEmberItemEntry>& InOutItem);
+	void LoadInventoryItem(TArray<FEmberItemEntry>& InItem);
+	void SaveEquipmentItem(TArray<FEmberItemEntry>& InOutItem);
+	void LoadEquipmentItem(TArray<FEmberItemEntry>& InItem);
+	void SaveQuickSlotItem(TArray<FEmberItemEntry>& InOutItem);
+	void LoadQuickSlotItem(TArray<FEmberItemEntry>& InItem);
 	/**
 	 * 
 	 * @param ItemID 넣을 아이템의 ID
@@ -53,6 +65,11 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable)
 	void AddItem(FName ItemID, int32 Quantity, int32 InSlotIndex = -1);
+	void AddItem(const FInstancedStruct& InInstancedStruct, int32 InSlotIndex = -1);
+	
+	UFUNCTION(BlueprintCallable)
+	void AddItemAndAlarm(FName ItemID, int32 Quantity, int32 InSlotIndex = -1);
+	void AddItemAndAlarm(const FInstancedStruct& InInstancedStruct, int32 InSlotIndex = -1);
 	
 	const class UInventoryManager* GetInventoryManager() const;
 	
@@ -69,15 +86,21 @@ public:
 	const UEmberDropItemManager* GetEmberDropItemManager() const;
 
 	UEmberDropItemManager* GetEmberDropItemManager();
+	
+	UEmberAddItemMessage* GetItemMessageManager();
 
 	// --- IEmberResourceProvider ---
 	virtual TMap<FName, int32> GetAllItemInfos_Implementation() override;
 	
-	virtual void TryConsumeResource_Implementation(const TArray<FItemPair>& InRequireItems) override;
+	virtual void GetItemInfo_Implementation(FEmberItemEntry& InItemEntry, FInstancedStruct& OutItemInfo) override;
+	
+	virtual void GetItemInfos_Implementation(TArray<FEmberItemEntry>& InItemEntries, TMap<FEmberItemKey, FInstancedStruct>& OutItemInfos) override;
 
-	virtual TArray<FItemPair> RemoveResourceUntilAble_Implementation(const TArray<FItemPair>& InRequireItems) override;
+	virtual void TryConsumeResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems) override;
 
-	virtual bool bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems) override;
+	virtual void RemoveResourceUntilAble_Implementation(TArray<FEmberItemEntry>& InRequireItems) override;
+	
+	virtual bool bConsumeAbleResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems) override;
 
 
 	void InitAbilitySystem();
@@ -104,9 +127,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
 	TObjectPtr<UInventoryManager> InventoryManager;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
 	TObjectPtr<UQuickSlotManager> QuickSlotManager;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
 	TObjectPtr<UEmberEquipmentManager> EquipmentManager;
 	TObjectPtr<UEmberDropItemManager> DropItemManager;
+	TObjectPtr<UEmberAddItemMessage> ItemMessageManager;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
 	TObjectPtr<UEmberCraftComponent> CraftComponent;

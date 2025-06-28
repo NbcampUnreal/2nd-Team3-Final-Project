@@ -24,6 +24,7 @@ class PROJECTEMBER_API UEmberItemAttributeSet : public UAttributeSet
 public:
 	ATTRIBUTE_ACCESSORS(UEmberItemAttributeSet, ItemDropRate)
 	ATTRIBUTE_ACCESSORS(UEmberItemAttributeSet, ItemDropBonus)
+	ATTRIBUTE_ACCESSORS(UEmberItemAttributeSet, ItemMiningLevel)
 
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Item", Meta = (AllowPrivateAccess=true), SaveGame)
@@ -31,5 +32,8 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Item", Meta = (AllowPrivateAccess=true), SaveGame)
 	FGameplayAttributeData ItemDropBonus;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Item", Meta = (AllowPrivateAccess=true), SaveGame)
+	FGameplayAttributeData ItemMiningLevel;
 	
 };
