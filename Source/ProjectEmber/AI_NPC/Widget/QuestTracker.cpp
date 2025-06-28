@@ -5,13 +5,14 @@
 #include "Quest/Condition/Dialogue/DialogueQuestCondition.h"
 #include "Quest/Condition/Kill/QuestConditionKillAnimal.h"
 #include "Quest/Condition/Gathering/QuestConditiongathering.h"
+#include "Quest/Condition/MiniGame/MiniGameQuestCondition.h"
 #include "Kismet/GameplayStatics.h"
 
 void UQuestTracker::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    //  À§Á¬ »ý¼ºµÇ¸é ¹«Á¶°Ç ¼û±è »óÅÂ·Î ½ÃÀÛ!
+    //  ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ç¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â·ï¿½ ï¿½ï¿½ï¿½ï¿½!
     SetVisibility(ESlateVisibility::Hidden);
   
 }
@@ -22,14 +23,14 @@ void UQuestTracker::ShowTracker(FText NewStepType, FText NewStepName, UQuestCond
     UTextBlock* StepTypeText = Cast<UTextBlock>(GetWidgetFromName(TEXT("Step_Type")));
     UTextBlock* StepNameText = Cast<UTextBlock>(GetWidgetFromName(TEXT("Step_Name")));
 
-    //  CompleteText´Â ¹«Á¶°Ç ÃÊ±â ¼û±è
+    //  CompleteTextï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½ï¿½
     if (CompleteText)
     {
         CompleteText->SetVisibility(ESlateVisibility::Hidden);
         CompleteText->SetText(FText::GetEmpty());
     }
 
-    //  StepType, StepName Ç¥½Ã
+    //  StepType, StepName Ç¥ï¿½ï¿½
     if (StepTypeText)
     {
         StepTypeText->SetVisibility(ESlateVisibility::Visible);
@@ -42,22 +43,21 @@ void UQuestTracker::ShowTracker(FText NewStepType, FText NewStepName, UQuestCond
         StepNameText->SetText(NewStepName);
     }
 
-    //  Condition µû¶ó ¾ÆÀÌÄÜ Ç¥½Ã
+    //  Condition ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½
     UImage* DialogueImg = Cast<UImage>(GetWidgetFromName(TEXT("DialogueImage")));
     UImage* HuntingImg = Cast<UImage>(GetWidgetFromName(TEXT("HuntingImage")));
     UImage* CollectingImg = Cast<UImage>(GetWidgetFromName(TEXT("CollectingImage")));
     UImage* FightingImg = Cast<UImage>(GetWidgetFromName(TEXT("Fighting_Image")));
-    UImage* CoinImg = Cast<UImage>(GetWidgetFromName(TEXT("Coin_Image")));
-    UImage* CircleImg = Cast<UImage>(GetWidgetFromName(TEXT("Circle_Image")));
-    UImage* AllowImg = Cast<UImage>(GetWidgetFromName(TEXT("Allow_Image")));
+    UImage* MiniGameImg = Cast<UImage>(GetWidgetFromName(TEXT("MiniGame_Image")));
+  
+
 
     if (DialogueImg) DialogueImg->SetVisibility(ESlateVisibility::Hidden);
     if (HuntingImg) HuntingImg->SetVisibility(ESlateVisibility::Hidden);
     if (CollectingImg) CollectingImg->SetVisibility(ESlateVisibility::Hidden);
     if (FightingImg) FightingImg->SetVisibility(ESlateVisibility::Hidden);
-    if (CoinImg) CoinImg->SetVisibility(ESlateVisibility::Hidden);
-    if (CircleImg) CircleImg->SetVisibility(ESlateVisibility::Hidden);
-    if (AllowImg) AllowImg->SetVisibility(ESlateVisibility::Hidden);
+    if (MiniGameImg) MiniGameImg->SetVisibility(ESlateVisibility::Hidden);
+
 
     if (Condition)
     {
@@ -73,16 +73,20 @@ void UQuestTracker::ShowTracker(FText NewStepType, FText NewStepName, UQuestCond
         {
             if (CollectingImg) CollectingImg->SetVisibility(ESlateVisibility::Visible);
         }
+        else if (Condition->IsA(UMiniGameQuestCondition::StaticClass()))
+        {
+            if (CollectingImg) MiniGameImg->SetVisibility(ESlateVisibility::Visible);
+        }
     }
 
-    //  Complete¶ó¸é CompleteText Ç¥½Ã
+    //  Completeï¿½ï¿½ï¿½ CompleteText Ç¥ï¿½ï¿½
     if (bIsComplete && CompleteText)
     {
         CompleteText->SetVisibility(ESlateVisibility::Visible);
         CompleteText->SetText(FText::FromString(TEXT("Complete")));
     }
 
-    //  AcceptSound ¹«Á¶°Ç ¸ÕÀú Àç»ý
+    //  AcceptSound ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
     float AcceptDuration = 0.0f;
     if (AcceptSound)
     {
@@ -90,7 +94,7 @@ void UQuestTracker::ShowTracker(FText NewStepType, FText NewStepName, UQuestCond
         AcceptDuration = AcceptSound->GetDuration();
     }
 
-    //  CompleteSound´Â AcceptSound ³¡³ª°í +1.5ÃÊ µÚ¿¡ Àç»ý
+    //  CompleteSoundï¿½ï¿½ AcceptSound ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ +1.5ï¿½ï¿½ ï¿½Ú¿ï¿½ ï¿½ï¿½ï¿½
     if (bIsComplete && CompleteSound)
     {
         float Delay = 1.6f; //
@@ -102,10 +106,10 @@ void UQuestTracker::ShowTracker(FText NewStepType, FText NewStepName, UQuestCond
             }, Delay, false);
     }
 
-    //  Tracker º¸ÀÌ±â
+    //  Tracker ï¿½ï¿½ï¿½Ì±ï¿½
     SetVisibility(ESlateVisibility::Visible);
 
-    //  3ÃÊ ÈÄ ÀÚµ¿ ¼û±è
+    //  3ï¿½ï¿½ ï¿½ï¿½ ï¿½Úµï¿½ ï¿½ï¿½ï¿½ï¿½
     FTimerHandle TimerHandle;
     GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]()
         {

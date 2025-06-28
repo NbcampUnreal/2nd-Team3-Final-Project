@@ -13,7 +13,6 @@ ASmallWidgetTriggerBox::ASmallWidgetTriggerBox()
 void ASmallWidgetTriggerBox::BeginPlay()
 {
 	Super::BeginPlay();
-
 	if (TutorialSmallWidgetClass)
 	{
 		APlayerController* PC = GetWorld()->GetFirstPlayerController();
@@ -42,6 +41,5 @@ void ASmallWidgetTriggerBox::OnOverlapEnd(AActor* OverlappedActor, AActor* Other
 	if (TutorialSmallWidget && TutorialSmallWidget->IsInViewport())
 	{
 		TutorialSmallWidget->RemoveFromParent();
-		bHasTriggered = false;
 	}
 }

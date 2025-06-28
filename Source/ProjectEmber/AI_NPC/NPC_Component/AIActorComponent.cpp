@@ -28,17 +28,18 @@ void UAIActorComponent::BeginPlay()
 
 void UAIActorComponent::CheckPlayerDistance()
 {
+    if (!bHasInteractedWithPlayer) return;  // 대화를 하지 않았다면 아무것도 하지 않음
+
     APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
     if (!PlayerPawn || !GetOwner()) return;
 
     AActor* Owner = GetOwner();
     float Distance = FVector::Dist(PlayerPawn->GetActorLocation(), Owner->GetActorLocation());
 
-    const float TeleportMinThreshold = 2000.f;       // 최소 텔레포트 거리
-    const float TeleportMaxThreshold = 3000.f;      // 최대 텔레포트 거리
+    const float TeleportMinThreshold = 2000.f;
+    const float TeleportMaxThreshold = 3000.f;
     const float FollowThreshold = 10.f;
 
-    // 텔레포트: 너무 멀지도 너무 가깝지도 않을 때만
     if (Distance > TeleportMinThreshold && Distance < TeleportMaxThreshold)
     {
         FVector TeleportLocation = PlayerPawn->GetActorLocation() + PlayerPawn->GetActorForwardVector() * -100.f;

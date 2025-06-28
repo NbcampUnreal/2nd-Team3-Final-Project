@@ -28,12 +28,15 @@ public:
     void ShowTutorial(bool bShow);
 
     UFUNCTION(BlueprintCallable)
-    void SetTutorialData(const FTutorialData& InData);
+	void SetTutorialData(const FTutorialData& Data, int32 CurrentIndex, int32 TotalCount);
 
     UFUNCTION()
     void OnCloseButtonClicked();
-	
-    UPROPERTY(meta = (BindWidget))
+
+	UFUNCTION()
+	void OnNextButtonClicked();
+
+	UPROPERTY(meta = (BindWidget))
     class UImage* KeylImage;
 
 	UPROPERTY(meta = (BindWidget))
@@ -50,4 +53,7 @@ public:
 
     UPROPERTY(meta = (BindWidget))
     class UButton* TutorialButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UButton* NextButton;
 };

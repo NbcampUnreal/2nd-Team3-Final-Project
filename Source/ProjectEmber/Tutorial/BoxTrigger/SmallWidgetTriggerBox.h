@@ -3,11 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "EMSActorSaveInterface.h"
 #include "Engine/TriggerBox.h"
 #include "SmallWidgetTriggerBox.generated.h"
 
 UCLASS()
-class PROJECTEMBER_API ASmallWidgetTriggerBox : public ATriggerBox
+class PROJECTEMBER_API ASmallWidgetTriggerBox : public ATriggerBox, public IEMSActorSaveInterface
 {
 	GENERATED_BODY()
 
@@ -30,5 +31,6 @@ private:
 	UPROPERTY()
 	UUserWidget* TutorialSmallWidget;
 
+	UPROPERTY(SaveGame)
 	bool bHasTriggered = false;
 };

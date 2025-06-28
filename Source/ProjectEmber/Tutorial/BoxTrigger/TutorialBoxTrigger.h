@@ -3,8 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/TriggerBox.h"
-#include "Tutorial/Widget/TutorialWidget.h"
+#include "EMSActorSaveInterface.h"
 #include "Engine/TriggerBox.h"
 #include "Tutorial/DataAssest/TutorialDataAsset.h"
 #include "TutorialBoxTrigger.generated.h"
@@ -12,7 +11,7 @@
 class UBoxComponent;
 
 UCLASS()
-class PROJECTEMBER_API ATutorialBoxTrigger : public ATriggerBox
+class PROJECTEMBER_API ATutorialBoxTrigger : public ATriggerBox, public IEMSActorSaveInterface
 {
 	GENERATED_BODY()
 	
@@ -22,6 +21,8 @@ public:
 
 protected:
 
+    // 게임 시작 시 호출
+    virtual void BeginPlay() override;
     UPROPERTY(VisibleAnywhere)
     UBoxComponent* BoxComponent;
 
@@ -30,11 +31,12 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Tutorial")
     UTutorialDataAsset* TutorialDataAsset;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Tutorial")
-    int32 TutorialIndex = 0;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<int32> TutorialIndexs; 
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tutorial")
+    UPROPERTY(SaveGame)
     bool bTriggered = false;
+
 private:
     UFUNCTION()
     void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent,
@@ -43,10 +45,4 @@ private:
         int32 OtherBodyIndex,
         bool bFromSweep,
         const FHitResult& SweepResult);
-
-    UFUNCTION()
-    void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent,
-                      AActor* OtherActor,
-                      UPrimitiveComponent* OtherComp,
-                      int32 OtherBodyIndex);
 };
