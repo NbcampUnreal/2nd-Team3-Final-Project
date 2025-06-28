@@ -65,7 +65,7 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State", Transient)
 	FGameplayTag LocomotionMode{AlsLocomotionModeTags::Grounded};
-
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State", Transient)
 	FGameplayTag RotationMode{AlsRotationModeTags::ViewDirection};
 

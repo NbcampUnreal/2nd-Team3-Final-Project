@@ -16,15 +16,15 @@ AAIAnimalController::AAIAnimalController()
     SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
     HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("HearingConfig"));
 
-    SightConfig->SightRadius = 1500.0f;
-    SightConfig->LoseSightRadius = 1800.0f;
-    SightConfig->PeripheralVisionAngleDegrees = 120.0f;
-    SightConfig->SetMaxAge(2.0f);
+    SightConfig->SightRadius = 200.0f;
+    SightConfig->LoseSightRadius = 1000.0f;
+    SightConfig->PeripheralVisionAngleDegrees = 210.0f;
+    SightConfig->SetMaxAge(5.0f);
     SightConfig->DetectionByAffiliation.bDetectEnemies = true;
     SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
     SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
     
-    HearingConfig->HearingRange = 800.0f;
+    HearingConfig->HearingRange = 300.0f;
     HearingConfig->SetMaxAge(2.0f);
     HearingConfig->DetectionByAffiliation.bDetectEnemies = true;
     HearingConfig->DetectionByAffiliation.bDetectFriendlies = true;
@@ -61,6 +61,15 @@ void AAIAnimalController::BeginPlay()
 
 void AAIAnimalController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
+    if (!IsValid(Actor) ||!IsValid(GetPawn()) )
+    {
+        return;
+    }
+    
+    if (!IsValid(Cast<ABaseAIAnimal>(GetPawn())))
+    {
+        return;
+    }
     bool IsSleep = Cast<ABaseAIAnimal>(GetPawn())->GetIsShouldSleep();
     bool IsDead = Cast<ABaseAIAnimal>(GetPawn())->GetIsDead();
     if (IsSleep || IsDead)
@@ -91,7 +100,12 @@ void AAIAnimalController::FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus)
         {
             return;
         }
-        
+        if (Cast<ABaseAIAnimal>(GetPawn())->GetPersonality() == EAnimalAIPersonality::Cowardly) // 성격이 ‘겁쟁이’이라면 확정 도망
+        {
+            BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Warning");
+            BlackboardComponent->SetValueAsObject("TargetActor", Actor);
+            return;
+        }
         //--- 공격 확률 설정 --------------------------------------------------
         float HitCount = Cast<ABaseAIAnimal>(GetPawn())->GetHitCount();
         float AttackProb = 0.05;          // 기본 0 %
@@ -105,6 +119,7 @@ void AAIAnimalController::FindTargetPlayer(AActor* Actor, FAIStimulus Stimulus)
         }
         HitCount *= 0.01f; 
         AttackProb -= HitCount;
+        
         //--------------------------------------------------------------------
 
         // 난수 뽑아서 결정
@@ -138,6 +153,13 @@ void AAIAnimalController::FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus)
             {
                 return;
             }
+            if (Cast<ABaseAIAnimal>(GetPawn())->GetPersonality() == EAnimalAIPersonality::Cowardly) // 성격이 ‘겁쟁이’이라면 확정 도망
+            {
+                BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Warning");
+                BlackboardComponent->SetValueAsObject("TargetActor", Actor);
+                return;
+            }
+            
             const UAbilitySystemComponent* TargetAsc = TargetAnimal->GetAbilitySystemComponent();
             const UAbilitySystemComponent* SourceAsc = Cast<ABaseAIAnimal>(GetPawn())->GetAbilitySystemComponent();
             const UEmberAnimalAttributeSet* TargetAttribute = TargetAsc->GetSet<UEmberAnimalAttributeSet>();
@@ -172,7 +194,7 @@ void AAIAnimalController::FindTargetAnimal(AActor* Actor, FAIStimulus Stimulus)
             else //this가 우선순위가 더 크다면(낮다면) -> 도망
             {
                 //여기서 인식되면 타겟, 거리 등록
-                BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
+                BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Warning");
                 BlackboardComponent->SetValueAsObject("TargetActor", Actor);
             }
         }
@@ -206,7 +228,10 @@ void AAIAnimalController::SwitchToBehaviorTree(int32 NewIndex)
     {
         BehaviorTreeComponent->StopTree(EBTStopMode::Safe);
     }
-    PerceptionComp->DestroyComponent();
+    if (NewIndex == 1)
+    {
+        PerceptionComp->DestroyComponent();
+    }
     
     // 새 BTComponent 실행
     UseBlackboard(BehaviorTrees[NewIndex]->BlackboardAsset, BlackboardComponent);

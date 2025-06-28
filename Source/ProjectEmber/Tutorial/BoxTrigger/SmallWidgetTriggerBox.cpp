@@ -42,5 +42,6 @@ void ASmallWidgetTriggerBox::OnOverlapEnd(AActor* OverlappedActor, AActor* Other
 	if (TutorialSmallWidget && TutorialSmallWidget->IsInViewport())
 	{
 		TutorialSmallWidget->RemoveFromParent();
+		bHasTriggered = false;
 	}
 }

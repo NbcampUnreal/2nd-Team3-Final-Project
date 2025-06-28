@@ -66,14 +66,12 @@ EBTNodeResult::Type UBTTask_AttackTarget::ExecuteTask(UBehaviorTreeComponent& Ow
 		{
 			return EBTNodeResult::Failed;
 		}
-
-		//공격이 시작될 때 BB 변경, 스페셜 공격은 OnAttackSpecial 에서 처리중
-		Cast<AAIController>(AIAnimal->GetController())->GetBlackboardComponent()->SetValueAsBool("IsAbility", true);
-		
 		FGameplayEventData Payload;
 		Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.Attack");
 		Payload.Instigator = AICharacter;
 		Payload.OptionalObject = AICharacter->GetMontage(FGameplayTag::RequestGameplayTag("Animal.Montage.Attack"));
+		float PlayTime = AICharacter->GetMontage(FGameplayTag::RequestGameplayTag("Animal.Montage.Attack"))->GetPlayLength();
+		BlackboardComp->SetValueAsFloat("AnimPlayTime",PlayTime);
 		AICharacter->GetAbilitySystemComponent()->HandleGameplayEvent(Payload.EventTag, &Payload);
 		return Super::ExecuteTask(OwnerComp, NodeMemory);
 	}

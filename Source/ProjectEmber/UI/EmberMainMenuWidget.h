@@ -16,9 +16,6 @@ protected:
 	virtual void NativeConstruct() override;
 
 	UFUNCTION()
-	void OnNewGameClicked();
-
-	UFUNCTION()
 	void OnContinueClicked();
 
 	UFUNCTION()

@@ -86,14 +86,20 @@ class PROJECTEMBER_API AAnimalSpawner : public AWorldInteractableActor, public I
 public:
 	AAnimalSpawner();
 
+	//MiniGame
+	void OnMiniGameEvent();
+	//Release
+	UFUNCTION(BlueprintCallable) // 전체 메모리해제 , 미니게임 체이싱-> 잡지 못하고 종료됐을 때 호출할 함수
+	void TryReleaseEntire();
 	
 	//Token
 	UFUNCTION(BlueprintCallable)
 	void OnTokenRaidEvent(FTokenRaidInfo InRow);
 	void AddCreateQueueByLocation(TArray<FAnimalSpawnInfo>& InfoByTokenArray);
 	void TickCreateQueueByToken(TQueue<FAnimalQueueInfo>& InQueue);
+	FVector GetRandomXY(FVector SpawnLocation, FVector Extent);
+	FVector SpawnLineTrace(FVector SpawnLocation, float Start, float End);
 	UFUNCTION(BlueprintCallable) //파밍 끝나고 죽은 애들만 스폰
-	//Spawn 1웨이브 끝나고 TrySpawnEntire(AnimalsInfoByToken); 로 호출
 	//DespawnQueue 공용으로 사용
 	FAnimalInitInfo GetRandomLocationByToken(FVector PlayerLocation);
 	UFUNCTION(BlueprintCallable)
@@ -110,6 +116,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
 
 
 	//EMS
@@ -187,9 +194,7 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void TickDespawnQueue();
 	
-	//Release
-	UFUNCTION(BlueprintCallable)
-	void TryReleaseEntire();
+	
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawning") //일반적인 애들 

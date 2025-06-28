@@ -20,8 +20,18 @@ USkillManagerSubsystem* USkillManagerSubsystem::GetSkillManagerSubsystem(UObject
 void USkillManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-	// 기본 경로에서 DataAsset 로드 (프로젝트에 맞게 경로 수정)
-	SkillTreeData = LoadObject<USkillTreeDataAsset>(nullptr, TEXT("/Script/SkillSystem.SkillTreeDataAsset'/Game/_Blueprints/UI/GameMenu/Skill/DA_SkillTree.DA_SkillTree'"));
+	//SkillTreeData = LoadObject<USkillTreeDataAsset>(nullptr, TEXT("/Script/SkillSystem.SkillTreeDataAsset'/Game/_Blueprints/UI/GameMenu/Skill/DA_SkillTree.DA_SkillTree'"));
+
+	SkillTreeDataHelperInstance = NewObject<USkillDataHelper>(GetTransientPackage(), SkillTreeDataHelperClass);
+	if (IsValid(SkillTreeDataHelperInstance))
+	{
+		SkillTreeData = SkillTreeDataHelperInstance->SkillTreeData;
+		UE_LOG(LogTemp, Display, TEXT("SkillTreeDataHelper initialized"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to create SkillDataHelperInstance. Check SkillTreeDataHelperClass in config."));
+	}
 }
 
 void USkillManagerSubsystem::OnAllActorsLoaded()

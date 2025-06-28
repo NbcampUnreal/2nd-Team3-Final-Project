@@ -52,12 +52,16 @@ public:/* My Custom Function & Variable */
 	void SetTargetMode(const FGameplayTag& InTargetMode);
 	const FGameplayTag& GetTargetMode() const;
 	FEnhancedInputActionValueBinding* MoveInputBinding{nullptr};
-	
+
+	void SetCancelAbilityInput(const bool bCancel);
+	bool GetCancelAbilityInput() const;
 private:
 	TObjectPtr<UAbilitySystemComponent> AscInstance;
 	FGameplayTagContainer ForceGameplayTags;
 	
 	FGameplayTag TargetMode{FGameplayTag()};
+
+	bool bCanceleAbilityInput{false};
 
 protected: /* AlsCharacter */
 	UPROPERTY(BlueprintReadOnly, Category = "Als Character")
@@ -324,6 +328,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ALS|Character", Meta = (AutoCreateRefTerm = "NewDesiredGait"))
 	void SetDesiredGait(const FGameplayTag& NewDesiredGait);
 
+	UFUNCTION(BlueprintCallable, Category = "ALS|Character", Meta = (AutoCreateRefTerm = "NewDesiredGait"))
+	void SetForceDesiredGait(const FGameplayTag& NewDesiredGait, bool bSendRpc);
 private:
 	void SetDesiredGait(const FGameplayTag& NewDesiredGait, bool bSendRpc);
 

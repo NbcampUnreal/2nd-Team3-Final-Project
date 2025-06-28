@@ -37,4 +37,15 @@ void ATutorialBoxTrigger::OnOverlapBegin(UPrimitiveComponent* OverlappedComponen
             }
         }
     }
+    
+}
+void ATutorialBoxTrigger::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent,
+    AActor* OtherActor,
+    UPrimitiveComponent* OtherComp,
+    int32 OtherBodyIndex)
+{
+    if (bTriggered)
+    {
+        bTriggered = false;
+    }
 }

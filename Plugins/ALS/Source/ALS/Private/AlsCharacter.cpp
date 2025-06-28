@@ -96,12 +96,37 @@ FVector2D AAlsCharacter::GetMoveInput() const
 
 void AAlsCharacter::SetTargetMode(const FGameplayTag& InTargetMode)
 {
+	if (InTargetMode == TargetMode)
+	{
+		return;
+	}
+	
+	if (AscInstance && TargetMode.IsValid())
+	{
+		AscInstance->RemoveLooseGameplayTag(TargetMode);
+	}
+	
 	TargetMode = InTargetMode;
+	
+	if (AscInstance && TargetMode.IsValid())
+	{
+		AscInstance->AddLooseGameplayTag(TargetMode);
+	}
 }
 
 const FGameplayTag& AAlsCharacter::GetTargetMode() const
 {
 	return TargetMode;
+}
+
+void AAlsCharacter::SetCancelAbilityInput(const bool bCancel)
+{
+	bCanceleAbilityInput = bCancel;
+}
+
+bool AAlsCharacter::GetCancelAbilityInput() const
+{
+	return bCanceleAbilityInput;
 }
 
 void AAlsCharacter::ForceLastInputDirectionBlocked(bool bBlocked)
@@ -1011,6 +1036,31 @@ void AAlsCharacter::OnStanceChanged_Implementation(const FGameplayTag& PreviousS
 void AAlsCharacter::SetDesiredGait(const FGameplayTag& NewDesiredGait)
 {
 	SetDesiredGait(NewDesiredGait, true);
+}
+
+void AAlsCharacter::SetForceDesiredGait(const FGameplayTag& NewDesiredGait, bool bSendRpc)
+{
+	if (DesiredGait == NewDesiredGait || GetLocalRole() < ROLE_AutonomousProxy)
+	{
+		return;
+	}
+	
+	DesiredGait = NewDesiredGait;
+	UE_LOG(LogTemp, Warning, TEXT("Force change gait to %s"), *NewDesiredGait.ToString());
+	
+	MARK_PROPERTY_DIRTY_FROM_NAME(ThisClass, DesiredGait, this)
+
+	if (bSendRpc)
+	{
+		if (GetLocalRole() >= ROLE_Authority)
+		{
+			ClientSetDesiredGait(DesiredGait);
+		}
+		else
+		{
+			ServerSetDesiredGait(DesiredGait);
+		}
+	}
 }
 
 void AAlsCharacter::SetDesiredGait(const FGameplayTag& NewDesiredGait, const bool bSendRpc)
