@@ -18,6 +18,7 @@ class PROJECTEMBER_API UEmberEquipmentContainer : public UEmberBaseResourceSlotC
 	
 public:
 	UEmberEquipmentContainer();
+	
 	UFUNCTION(BlueprintCallable)
 	void SetOwnerAbilitySystemComponent(UAbilitySystemComponent* InOwnerAbilitySystemComponent);
 

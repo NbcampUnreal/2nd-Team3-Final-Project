@@ -49,11 +49,16 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Item")
 	void InitOwner(AActor* InOwner);
+
+	TMap<FEmberItemKey, FInstancedStruct> GetItems();
+	void SetItems(TMap<FEmberItemKey, FInstancedStruct>& InItems);
 protected:
 	
 	virtual void CreateItem(const FEmberItemEntry& InItemEntry);
 	virtual void DeleteItem(const FEmberItemEntry& InItemEntry);
 
+	UFUNCTION(BlueprintCallable, Category = "Item")
+	virtual void Clear();
 
 	// --- 헬퍼 함수 ---
 	virtual FInstancedStruct* GetInstancedItemInfo(const FName& InItemID,  const TArray<FItemEffectApplicationInfo>& InEnchants = TArray<FItemEffectApplicationInfo>());

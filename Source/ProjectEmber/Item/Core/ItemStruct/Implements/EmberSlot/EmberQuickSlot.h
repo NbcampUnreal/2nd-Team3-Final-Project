@@ -12,8 +12,14 @@ USTRUCT(BlueprintType)
 struct FEmberQuickSlot : public FEmberInventorySlot
 {
 	GENERATED_BODY()
-    
+
 	FEmberQuickSlot() = default;
-	FEmberQuickSlot(const FName& InItemID, const int32 InQuantity = 0, const TArray<FItemEffectApplicationInfo>& InEnchantEffects = TArray<FItemEffectApplicationInfo>()) : FEmberInventorySlot(InItemID, InQuantity){};
-	FEmberQuickSlot(const FInstancedStruct& InInstancedStruct) : FEmberInventorySlot(InInstancedStruct) {};
+	FEmberQuickSlot(const FName& InItemID, const int32 InQuantity = 0, const TArray<FItemEffectApplicationInfo>& InEnchantEffects = TArray<FItemEffectApplicationInfo>()) : FEmberInventorySlot(InItemID, InQuantity)
+	{
+		MaxQuantity = ITEM_SYSTEM_MAX_STACK;
+	};
+	FEmberQuickSlot(const FInstancedStruct& InInstancedStruct) : FEmberInventorySlot(InInstancedStruct)
+	{
+		MaxQuantity = ITEM_SYSTEM_MAX_STACK;
+	};
 };

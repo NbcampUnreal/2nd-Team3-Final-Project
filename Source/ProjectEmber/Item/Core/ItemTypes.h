@@ -86,7 +86,7 @@ struct FConsumableInfoRow : public FTableRowBase
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Consumable Component", meta = (ClampMin = "0"))
-    int32 ConsumeAmount = 1;
+    int32 ConsumeAmount = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Consumable Component")
     TSubclassOf<UGameplayEffect> CooldownGameplayEffect = nullptr;

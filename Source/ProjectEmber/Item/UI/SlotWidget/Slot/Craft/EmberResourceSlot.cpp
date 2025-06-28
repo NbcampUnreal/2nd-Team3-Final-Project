@@ -10,9 +10,10 @@
 float UEmberResourceSlot::GetPercentage()
 {
 	float Percentage = 0.0f;
+	
 	if (SlotData.Quantity > 0)
 	{
-		Percentage = FMath::Min((CurrentQuantity / SlotData.Quantity) * 100.f, 100.f);
+		Percentage = FMath::Min((static_cast<float>(CurrentQuantity) / static_cast<float>(SlotData.Quantity)) * 100.f, 100.f);
 	}
 	 
 	return Percentage;

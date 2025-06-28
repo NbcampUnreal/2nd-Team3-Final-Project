@@ -4,7 +4,10 @@
 #include "EmberDropComponent.h"
 
 #include "EmberDropItemManager.h"
+#include "Character/EmberCharacter.h"
 #include "EmberLog/EmberLog.h"
+#include "Item/UserItemManger.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values for this component's properties
@@ -23,12 +26,37 @@ UEmberDropComponent::UEmberDropComponent()
 	// ...
 }
 
+void UEmberDropComponent::AddRandomItemToPlayer()
+{
+	if (AEmberCharacter* EmberCharacter = Cast<AEmberCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
+	{
+		if (UUserItemManger* ItemManger = EmberCharacter->GetItemManager())
+		{
+			SetRandomItems(EmberCharacter->GetAbilitySystemComponent());
+			for (FEmberSlot Slots : *DropManager->GetItemSlotsPtr())
+			{
+				FInstancedStruct InStruct= Slots.CreateInstancedStruct();
+				ItemManger->AddItemAndAlarm(InStruct);
+			}
+		}
+	}
+}
+
 
 void UEmberDropComponent::SetRandomItems(const UAbilitySystemComponent* AbilitySystemComponent)
 {
 	if (DropManager)
 	{
+		DropManager->Clear();
 		DropManager->SetDropItem(DropID, AbilitySystemComponent);
+	}
+}
+
+void UEmberDropComponent::ResetItems()
+{
+	if (DropManager)
+	{
+		DropManager->Clear();
 	}
 }
 

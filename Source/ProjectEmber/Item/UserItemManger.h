@@ -5,9 +5,11 @@
 #include "CoreMinimal.h"
 
 #include "Core/EmberItemStruct.h"
+#include "Core/ItemStruct/Implements/EmberItemEntry/EmberSaveEntry.h"
 #include "Craft/EmberResourceProvider.h"
 #include "UserItemManger.generated.h"
 
+class UEmberAddItemMessage;
 class UEmberCraftComponent;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -48,6 +50,13 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	FEmberMasterItemData DebugGetItemInfo(const FName& InSlotName);
+	
+	void SaveInventoryItem(TArray<FEmberItemEntry>& InOutItem);
+	void LoadInventoryItem(TArray<FEmberItemEntry>& InItem);
+	void SaveEquipmentItem(TArray<FEmberItemEntry>& InOutItem);
+	void LoadEquipmentItem(TArray<FEmberItemEntry>& InItem);
+	void SaveQuickSlotItem(TArray<FEmberItemEntry>& InOutItem);
+	void LoadQuickSlotItem(TArray<FEmberItemEntry>& InItem);
 	/**
 	 * 
 	 * @param ItemID 넣을 아이템의 ID
@@ -56,6 +65,11 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable)
 	void AddItem(FName ItemID, int32 Quantity, int32 InSlotIndex = -1);
+	void AddItem(const FInstancedStruct& InInstancedStruct, int32 InSlotIndex = -1);
+	
+	UFUNCTION(BlueprintCallable)
+	void AddItemAndAlarm(FName ItemID, int32 Quantity, int32 InSlotIndex = -1);
+	void AddItemAndAlarm(const FInstancedStruct& InInstancedStruct, int32 InSlotIndex = -1);
 	
 	const class UInventoryManager* GetInventoryManager() const;
 	
@@ -72,6 +86,8 @@ public:
 	const UEmberDropItemManager* GetEmberDropItemManager() const;
 
 	UEmberDropItemManager* GetEmberDropItemManager();
+	
+	UEmberAddItemMessage* GetItemMessageManager();
 
 	// --- IEmberResourceProvider ---
 	virtual TMap<FName, int32> GetAllItemInfos_Implementation() override;
@@ -116,6 +132,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
 	TObjectPtr<UEmberEquipmentManager> EquipmentManager;
 	TObjectPtr<UEmberDropItemManager> DropItemManager;
+	TObjectPtr<UEmberAddItemMessage> ItemMessageManager;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
 	TObjectPtr<UEmberCraftComponent> CraftComponent;

@@ -4,9 +4,14 @@
 #include "EmberQuickSlotWidget.h"
 
 #include "Blueprint/WidgetBlueprintLibrary.h"
+#include "Character/EmberCharacter.h"
 #include "Components/Image.h"
 #include "EmberLog/EmberLog.h"
+#include "Item/QuickSlotManager.h"
+#include "Item/UserItemManger.h"
+#include "Item/ItemContainer/Implements/EmberBaseResourceSlotContainer/EmberQuickSlotContainer.h"
 #include "Item/UI/DragDropOperation/EmberItemSlotDragDropOperation.h"
+#include "Kismet/GameplayStatics.h"
 
 FEventReply UEmberQuickSlotWidget::StartDragDrop_Implementation(const FGeometry& InGeometry,
                                                                 const FPointerEvent& InMouseEvent)
@@ -46,10 +51,24 @@ void UEmberQuickSlotWidget::AddQuickSlotItem() const
 void UEmberQuickSlotWidget::SetSlotOperation(UEmberItemSlotDragDropOperation* InSlotOperation)
 {
 	StartSlotDropOperation = InSlotOperation;
+
+	if (AEmberCharacter* EmberCharacter = Cast<AEmberCharacter>( UGameplayStatics::GetPlayerCharacter(GetWorld(),0)))
+	{
+		EmberCharacter->GetItemManager()->QuickSlotManager->OnItemChangedDelegate.AddDynamic(this, &UEmberQuickSlotWidget::UpdateQuickSlotItem);
+	}
 }
 
 void UEmberQuickSlotWidget::UpdateSlot()
 {
 	Super::UpdateSlot();
 	BP_UpdateUI();
+}
+
+void UEmberQuickSlotWidget::UpdateQuickSlotItem(int32 InIndex, const FInstancedStruct& InSlotData)
+{
+
+	if (SlotIndex == InIndex)
+	{
+		SetSlotData(InSlotData);
+	}
 }

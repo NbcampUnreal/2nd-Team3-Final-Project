@@ -29,6 +29,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void BP_UpdateUI();
 
+	UFUNCTION()
+	void UpdateQuickSlotItem(int32 InIndex, const FInstancedStruct& InSlotData);
+
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UEmberItemSlotDragDropOperation> StartSlotDropOperation;

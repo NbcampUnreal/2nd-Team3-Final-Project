@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "EmberBaseItemContainer.h"
 #include "Item/Core/ItemStruct/EmberItemEntry.h"
+#include "Item/Core/ItemStruct/Implements/EmberItemEntry/EmberSaveEntry.h"
 #include "Item/UI/EmberSlotProviderInterface.h"
 #include "EmberBaseSlotContainer.generated.h"
 
@@ -62,6 +63,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Item")
 	virtual FInstancedStruct GetInstancedItemSlotInfo(const int32 ItemIndex) const;
 
+	TArray<FInstancedStruct> GetSlotItems();
+	void SetSlotItems(const TArray<FInstancedStruct>& InItems);
+
+	void EmberSave(TArray<FEmberItemEntry>& InOutSave);
+	void EmberLoad(TArray<FEmberItemEntry>& InSave);
+
+	virtual void Clear() override;
 protected:
 
 	virtual void CreateItemSlot(const FEmberItemEntry& InItemEntry, const int32 InItemIndex);
@@ -90,9 +98,8 @@ public:
 	
 	UPROPERTY(BlueprintAssignable, Category = "Inventory")
 	FOnItemChangedDelegate OnItemChangedDelegate;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item", SaveGame) // SaveGame 필요시 추가
-	TArray<FInstancedStruct> ItemSlots;
 
+	TArray<FInstancedStruct>* GetItemSlotsPtr();
 protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item") // SaveGame 필요시 추가
@@ -101,6 +108,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item") // SaveGame 필요시 추가
 	int32 SlotMaxRow = 0;
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item", SaveGame) // SaveGame 필요시 추가
+	TArray<FInstancedStruct> ItemSlots;
 };
 
 template <typename T>

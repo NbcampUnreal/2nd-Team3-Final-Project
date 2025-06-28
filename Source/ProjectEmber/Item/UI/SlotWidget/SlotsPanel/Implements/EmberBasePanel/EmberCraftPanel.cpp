@@ -37,19 +37,12 @@ void UEmberCraftPanel::BindToManagerDelegates_Implementation()
 {
 	UnBindToManagerDelegates();
 
-	EMBER_LOG(LogTemp, Warning, TEXT("ABCD"));
 	if (DataProvider && DataProvider.GetObject())
 	{
-		EMBER_LOG(LogTemp, Warning, TEXT("ABCD1"));
-
 		if (TObjectPtr<UEmberCraftComponent> EmberCraftComponent = Cast<UEmberCraftComponent>(DataProvider.GetObject()))
 		{
-			EMBER_LOG(LogTemp, Warning, TEXT("ABCD2"));
-
 			if (TObjectPtr<UEmberCraftContainer> EmberCraftContainer = EmberCraftComponent->GetSlotContainer())
 			{
-				EMBER_LOG(LogTemp, Warning, TEXT("ABCD3"));
-
 				EmberCraftContainer->OnItemChangedDelegate.AddDynamic(this, &UEmberCraftPanel::SlotChanged);
 			}
 		}

@@ -12,6 +12,7 @@
 #include "MessageBus/MessageBus.h"
 #include "BaseAIAnimal.generated.h"
 
+class UEmberDropComponent;
 class UWidgetComponent;
 class UMeleeTraceComponent;
 class UBoxComponent;
@@ -253,8 +254,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Swim")
 	float WaterSurfaceZ = 0.0f; // 기준 물 표면 높이
-
+	
 	int32 HitCount = 0;
 	bool bHasToken = false;
 	bool IsAbility = false;
+
+	// ItemManager
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+	TObjectPtr<UEmberDropComponent> DropComponent;
 };

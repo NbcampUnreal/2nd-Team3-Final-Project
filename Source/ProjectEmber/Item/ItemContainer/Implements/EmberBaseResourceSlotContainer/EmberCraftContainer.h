@@ -16,4 +16,6 @@ class PROJECTEMBER_API UEmberCraftContainer : public UEmberBaseResourceSlotConta
 {
 	GENERATED_BODY()
 public:
+
+	virtual int32 RemoveSlotItemReturnApplied(const int32 InOutQuantity, int32 InSlotIndex = -1) override;
 };

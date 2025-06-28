@@ -6,11 +6,14 @@
 #include "EmberLog/EmberLog.h"
 #include "Item/Craft/EmberCraftComponent.h"
 #include "Item/ItemContainer/Implements/EmberBaseResourceSlotContainer/EmberCraftContainer.h"
+#include "Item/UI/SlotWidget/SlotsPanel/EmberBasePanel.h"
 
 
 void UEmberCraftSlotWidget::InitCraftComponent(TScriptInterface<IEmberSlotProviderInterface> InDataProvider,
-	int32 InSlotIndex)
+                                               int32 InSlotIndex)
 {
+	UnBindToManagerDelegates();
+	
 	DataProvider = InDataProvider;
 	SlotIndex = InSlotIndex;
 	
@@ -18,13 +21,41 @@ void UEmberCraftSlotWidget::InitCraftComponent(TScriptInterface<IEmberSlotProvid
 	{
 		if (UEmberCraftComponent* CraftComponent = Cast<UEmberCraftComponent>(DataProvider.GetObject()))
 		{
-			SetSlotData(CraftComponent->ResultItemInfo(SlotIndex));
+			if (UEmberCraftContainer* CraftContainer = CraftComponent->GetSlotContainer())
+			{
+				CraftContainer->OnItemChangedDelegate.AddDynamic(this, &UEmberCraftSlotWidget::SlotChanged);
+				SetSlotData(CraftComponent->ResultItemInfo(SlotIndex));
+			}
 		}
 	}
 }
 
+void UEmberCraftSlotWidget::UnBindToManagerDelegates()
+{
+	if (DataProvider)
+	{
+		if (UEmberCraftComponent* CraftComponent = Cast<UEmberCraftComponent>(DataProvider.GetObject()))
+		{
+			if (UEmberCraftContainer* CraftContainer = CraftComponent->GetSlotContainer())
+			{
+				CraftContainer->OnItemChangedDelegate.RemoveDynamic(this, &UEmberCraftSlotWidget::SlotChanged);
+			}
+		}
+	}
+}
+
+void UEmberCraftSlotWidget::SlotChanged(int32 InIndex, const FInstancedStruct& InSlotData)
+{
+	if (SlotIndex == InIndex)
+	{
+		SetSlotData(InSlotData);
+	}
+}
+
+
 void UEmberCraftSlotWidget::UpdateSlot()
 {
+
 	if (DataProvider)
 	{
 		if (UEmberCraftComponent* CraftComponent = Cast<UEmberCraftComponent>(DataProvider.GetObject()))

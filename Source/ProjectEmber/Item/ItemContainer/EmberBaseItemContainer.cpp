@@ -140,7 +140,7 @@ int32 UEmberBaseItemContainer::RemoveItemReturnApplied(const FInstancedStruct& I
 			EMBER_LOG(LogEmberItem, Display, TEXT("Remove : %s(%d / %d)"),*InEmberItemEntry->ItemID.ToString(), RemovedQuantity, EmberItemEntry->Quantity);
 #endif
 		
-			if (EmberItemEntry->bIsEmpty())
+			if (EmberItemEntry->Quantity <= 0)
 			{
 				EmberItemEntry->Clear();
 				DeleteItem(*EmberItemEntry);
@@ -156,6 +156,15 @@ void UEmberBaseItemContainer::InitOwner(AActor* InOwner)
 	Owner = InOwner;
 }
 
+TMap<FEmberItemKey, FInstancedStruct> UEmberBaseItemContainer::GetItems()
+{
+	return Items;
+}
+
+void UEmberBaseItemContainer::SetItems(TMap<FEmberItemKey, FInstancedStruct>& InItems)
+{
+	Items = InItems;
+}
 
 FInstancedStruct* UEmberBaseItemContainer::GetInstancedItemInfo(const FName& InItemID,
                                                                const TArray<FItemEffectApplicationInfo>& InEnchants)
@@ -181,5 +190,10 @@ void UEmberBaseItemContainer::CreateItem(const FEmberItemEntry& InItemEntry)
 void UEmberBaseItemContainer::DeleteItem(const FEmberItemEntry& InItemEntry)
 {
 	Items.Remove(InItemEntry.CreateItemKey());
+}
+
+void UEmberBaseItemContainer::Clear()
+{
+	Items.Empty();
 }
 

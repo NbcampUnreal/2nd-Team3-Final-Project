@@ -22,4 +22,8 @@ public:
 	
 	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Item", meta = (DisplayName = "Item QuickSlot"))
 	TSubclassOf<UUserWidget> QuickSlotWidgetClass;
+	
+	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Item", meta = (DisplayName = "Item QuickSlot"))
+	TSubclassOf<UUserWidget> ItemDetailWidgetClass;
+	
 };

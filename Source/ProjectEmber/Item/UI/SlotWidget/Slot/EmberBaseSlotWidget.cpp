@@ -56,15 +56,15 @@ void UEmberBaseSlotWidget::UpdateSlot()
 {
 	TObjectPtr<UTexture2D> LoadTexture = nullptr;
 
-	if (SlotData.ItemID.IsNone())
-	{
-		LoadTexture = DefaultSlotTexture.LoadSynchronous();
-		SlotImage->SetColorAndOpacity((FLinearColor(1.f,1.f,1.f, 0.5f)));
-	}
-	else
+	if (bCanVisible())
 	{
 		LoadTexture = SlotData.SlotInfo.ItemIcon.LoadSynchronous();
 		SlotImage->SetColorAndOpacity((FLinearColor(1.f,1.f,1.f, 1.f)));
+	}
+	else
+	{
+		LoadTexture = DefaultSlotTexture.LoadSynchronous();
+		SlotImage->SetColorAndOpacity((FLinearColor(1.f,1.f,1.f, 0.5f)));
 	}
 
 	SlotImage->SetBrushFromTexture(LoadTexture);
@@ -80,8 +80,17 @@ void UEmberBaseSlotWidget::UpdateSlot()
 	}
 }
 
+bool UEmberBaseSlotWidget::bCanVisible()
+{
+	if (SlotData.ItemID.IsNone())
+	{
+		return false;
+	}
+	return true;
+}
+
 void UEmberBaseSlotWidget::NativeOnDragDetected(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent,
-	UDragDropOperation*& OutOperation)
+                                                UDragDropOperation*& OutOperation)
 {
 	Super::NativeOnDragDetected(InGeometry, InMouseEvent, OutOperation);
 	if (Cast<IEmberSlotDragAbleSlotInterface>(this))

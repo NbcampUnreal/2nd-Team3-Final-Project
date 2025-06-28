@@ -4,7 +4,10 @@
 #include "SkillManagerSubsystem.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
 #include "Attribute/Player/EmberPlayerAttributeSet.h"
+#include "Character/EmberCharacter.h"
+#include "Item/UserItemManger.h"
 #include "Item/Ability/EmberItemAttributeSet.h"
+#include "Kismet/GameplayStatics.h"
 #include "Quest/QuestSubsystem.h"
 
 AEmberPlayerState::AEmberPlayerState()
@@ -42,7 +45,17 @@ void AEmberPlayerState::ActorPreSave_Implementation()
 {
 	if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
 	{
-		QuestProgress = QuestSubsystem->GetQuestProgress();	
+		QuestProgress = QuestSubsystem->GetQuestProgress();
+	}
+
+	if (AEmberCharacter* EmberCharacter = Cast<AEmberCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
+	{
+		if (EmberCharacter->GetItemManager())
+		{
+			EmberCharacter->GetItemManager()->SaveInventoryItem(InventoryProgress);
+			EmberCharacter->GetItemManager()->SaveQuickSlotItem(QuickSlotProgress);
+			EmberCharacter->GetItemManager()->SaveEquipmentItem(EquipmentProgress);
+		}
 	}
 }
 
@@ -51,6 +64,16 @@ void AEmberPlayerState::ActorLoaded_Implementation()
 	if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
 	{
 		QuestSubsystem->LoadQuest(GetPlayerController(), QuestProgress);
+	}
+	
+	if (AEmberCharacter* EmberCharacter = Cast<AEmberCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
+	{
+		if (EmberCharacter->GetItemManager())
+		{
+			EmberCharacter->GetItemManager()->LoadInventoryItem(InventoryProgress);
+			EmberCharacter->GetItemManager()->LoadQuickSlotItem(QuickSlotProgress);
+			EmberCharacter->GetItemManager()->LoadEquipmentItem(EquipmentProgress);
+		}
 	}
 }
 

@@ -31,6 +31,9 @@ public:
 	TArray<FItemPair> GetDroppedItem(FName MonsterID, const UAbilitySystemComponent* AbilitySystemComponent = nullptr);
 	
 	TObjectPtr<UItemDetailWidget> GetItemDetailWidget();
+
+	UFUNCTION(BlueprintCallable)
+	UEmberQuickSlotPanel* BP_GetQuickSlotPanel();
 	
 	TObjectPtr<UEmberQuickSlotPanel> GetQuickSlotWidget();
 

@@ -20,7 +20,13 @@ public:
 	UEmberDropComponent();
 
 	UFUNCTION(BlueprintCallable)
+	void AddRandomItemToPlayer();
+	
+	UFUNCTION(BlueprintCallable)
 	void SetRandomItems(const UAbilitySystemComponent* AbilitySystemComponent = nullptr);
+
+	UFUNCTION(BlueprintCallable)
+	void ResetItems();
 
 	// -- IEmberResourceProvider --
 	virtual TMap<FName, int32> GetAllItemInfos_Implementation() override;

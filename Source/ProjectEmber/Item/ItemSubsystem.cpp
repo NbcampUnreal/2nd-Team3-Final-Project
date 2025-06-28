@@ -173,14 +173,26 @@ TObjectPtr<UItemDetailWidget> UItemSubsystem::GetItemDetailWidget()
 {
     if (!DetailWidget)
     {
-        if (UClass* InDetailWidgetClass = DetailWidgetClassPtr.LoadSynchronous())
+        if (const UEmberItemDeveloperSetting* Setting = UEmberItemDeveloperSetting::Get())
         {
-            DetailWidget = CreateWidget<UItemDetailWidget>(UGameplayStatics::GetPlayerController(GetWorld(), 0), InDetailWidgetClass, TEXT("DetailWidget"));
-            DetailWidget->AddToViewport(100);
-            DetailWidget->SetVisibility(ESlateVisibility::Hidden);
+            if (UClass* InDetailWidgetClass = Setting->ItemDetailWidgetClass)
+            {
+                DetailWidget = CreateWidget<UItemDetailWidget>(UGameplayStatics::GetPlayerController(GetWorld(), 0), InDetailWidgetClass, TEXT("DetailWidget"));
+            }
         }
     }
+    if (DetailWidget)
+    {
+        DetailWidget->AddToViewport(100);
+        DetailWidget->SetVisibility(ESlateVisibility::Hidden);
+    }
+
     return DetailWidget;
+}
+
+UEmberQuickSlotPanel* UItemSubsystem::BP_GetQuickSlotPanel()
+{
+    return GetQuickSlotWidget();
 }
 
 TObjectPtr<UEmberQuickSlotPanel> UItemSubsystem::GetQuickSlotWidget()
@@ -190,10 +202,13 @@ TObjectPtr<UEmberQuickSlotPanel> UItemSubsystem::GetQuickSlotWidget()
         if (const UEmberItemDeveloperSetting* ItemSetting = UEmberItemDeveloperSetting::Get())
         {
             QuickSlotWidget = CreateWidget<UEmberQuickSlotPanel>(UGameplayStatics::GetPlayerController(GetWorld(), 0), ItemSetting->QuickSlotWidgetClass);
-            QuickSlotWidget->AddToViewport();
+
         }
     }
-
+    if (QuickSlotWidget)
+    {
+        QuickSlotWidget->AddToViewport(99);
+    }
     return QuickSlotWidget;
 }
 

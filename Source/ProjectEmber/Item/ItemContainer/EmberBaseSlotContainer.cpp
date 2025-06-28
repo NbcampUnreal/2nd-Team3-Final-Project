@@ -8,6 +8,9 @@
 
 UEmberBaseSlotContainer::UEmberBaseSlotContainer()
 {
+	ItemSlots.Reset();
+	Items.Reset();
+	
 	ItemSlots.SetNum(SlotCount);
 	for (FInstancedStruct& InstancedStruct : ItemSlots)
 	{
@@ -50,7 +53,6 @@ void UEmberBaseSlotContainer::AddSlotItem(FInstancedStruct& InOutInstancedStruct
 	if (FEmberItemEntry* EmberItemEntry = InOutInstancedStruct.GetMutablePtr<FEmberItemEntry>())
 	{
 		EmberItemEntry->Quantity -= QuantityToAdd;
-		AddSlotItem(*EmberItemEntry, InSlotIndex);
 	}
 }
 
@@ -84,6 +86,7 @@ int32 UEmberBaseSlotContainer::AddSlotItemReturnApplied(const FInstancedStruct& 
 			{
 				CreateItemSlot(*InEmberItemEntry, InSlotIndex);
 				EmberItemEntry = ItemSlots[InSlotIndex].GetMutablePtr<FEmberItemEntry>();
+				if (EmberItemEntry)
 				QuantityToAdd = EmberItemEntry->Quantity;
 			}
 			else
@@ -99,7 +102,6 @@ int32 UEmberBaseSlotContainer::AddSlotItemReturnApplied(const FInstancedStruct& 
 				TempEmberItemEntry.Quantity = QuantityToAdd;
 				int32 TotalQuantityAdded = AddItemReturnApplied(TempEmberItemEntry);
 
-			
 				if (TotalQuantityAdded != QuantityToAdd)
 				{
 					TempEmberItemEntry.Quantity = TotalQuantityAdded - QuantityToAdd;
@@ -191,6 +193,49 @@ FInstancedStruct UEmberBaseSlotContainer::GetInstancedItemSlotInfo(const int32 I
 		return ItemSlots[ItemIndex];
 	}
 	return FInstancedStruct();
+}
+
+TArray<FInstancedStruct> UEmberBaseSlotContainer::GetSlotItems()
+{
+	return ItemSlots;
+}
+
+void UEmberBaseSlotContainer::SetSlotItems(const TArray<FInstancedStruct>& InItems)
+{
+	ItemSlots = InItems;
+}
+
+void UEmberBaseSlotContainer::EmberSave(TArray<FEmberItemEntry>& InOutSave)
+{
+	InOutSave.SetNum(ItemSlots.Num());
+	for (int32 Index = 0; Index < ItemSlots.Num(); ++Index)
+	{
+		if (const FEmberItemEntry* ItemEntry = ItemSlots[Index].GetPtr<FEmberItemEntry>())
+		{
+			InOutSave[Index] = *ItemEntry;
+		}
+	}
+}
+
+void UEmberBaseSlotContainer::EmberLoad(TArray<FEmberItemEntry>& InSave)
+{
+	ItemSlots.Empty();
+	ItemSlots.SetNum(SlotCount);
+	Items.Reset();
+	for (int32 Index = 0; Index < ItemSlots.Num(); ++Index)
+	{
+		AddSlotItemReturnApplied(InSave[Index], Index);
+	}
+}
+
+void UEmberBaseSlotContainer::Clear()
+{
+	Super::Clear();
+	for (FInstancedStruct& InstancedStruct : ItemSlots)
+	{
+		FEmberSlot NewSlot = FEmberSlot();
+		NewSlot.InitializeInstancedStruct(InstancedStruct);
+	}
 }
 
 void UEmberBaseSlotContainer::CreateItemSlot(const FEmberItemEntry& InItemEntry, const int32 InItemIndex)
@@ -321,4 +366,10 @@ int32 UEmberBaseSlotContainer::GetSlotMaxRow_Implementation() const
 
 void UEmberBaseSlotContainer::UseItemInSlot_Implementation(int32 SlotIndex)
 {
+	
+}
+
+TArray<FInstancedStruct>* UEmberBaseSlotContainer::GetItemSlotsPtr()
+{
+	return &ItemSlots;
 }

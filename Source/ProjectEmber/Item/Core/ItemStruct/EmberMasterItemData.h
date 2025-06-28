@@ -84,4 +84,8 @@ struct FEmberMasterItemData : public FEmberItemEntry
 		DataInstancedStructs.Reset();
 	}
 
+	bool operator==(const FEmberMasterItemData& InOther) const
+	{
+		return this->CreateItemKey() == InOther.CreateItemKey();
+	};
 };

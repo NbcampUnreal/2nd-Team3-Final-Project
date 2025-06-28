@@ -3,20 +3,20 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Item/ItemContainer/EmberBaseResourceSlotContainer.h"
 #include "Item/ItemContainer/EmberBaseSlotContainer.h"
-#include "EmberInventorySlotContainer.generated.h"
+#include "EmberAddItemMessage.generated.h"
 
-class UAbilitySystemComponent;
 /**
  * 
  */
 UCLASS()
-class PROJECTEMBER_API UEmberInventorySlotContainer : public UEmberBaseResourceSlotContainer
+class PROJECTEMBER_API UEmberAddItemMessage : public UEmberBaseSlotContainer
 {
 	GENERATED_BODY()
-
 public:
+	UEmberAddItemMessage();
+
+	void StartMessage();
 	virtual int32 AddSlotItemReturnApplied(const FInstancedStruct& InInstancedStruct, int32 InSlotIndex) override;
 	virtual int32 AddSlotItemReturnApplied(const FName& InItemID, const int32 InQuantity, int32 InSlotIndex, const TArray<FItemEffectApplicationInfo>& InEnchants = TArray<FItemEffectApplicationInfo>()) override;
 	virtual int32 AddSlotItemReturnApplied(const FEmberItemEntry& InItemEntry, int32 InSlotIndex) override;
@@ -26,14 +26,12 @@ public:
 	int32 FindAddSlotIndex(const FEmberItemEntry& InItemEntry);
 	virtual void CreateItemSlot(const FEmberItemEntry& InItemEntry, int32 InItemIndex) override;
 
-	UFUNCTION(BlueprintCallable, Category = "Item")
-	virtual void UseSlotItem(int32 InIndex);
+	void UpdateItem();
 
-	virtual void UseItemInSlot_Implementation(int32 SlotIndex) override;
+	int32 RemoveOldMessage();
+	
 protected:
-	void HandleItemConsumption(const FConsumableInfoRow* ConsumeData);
+	FTimerHandle TimerHandle;
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Ability")
-	TObjectPtr<UAbilitySystemComponent> OwnerAbilitySystemComponent;
-
+	float MessageLifeTime = 5.f;
 };

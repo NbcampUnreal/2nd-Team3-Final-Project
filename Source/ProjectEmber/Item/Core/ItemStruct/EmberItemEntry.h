@@ -17,16 +17,16 @@ struct FEmberItemEntry
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item", SaveGame)
 	FName ItemID = NAME_None;
     
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item", SaveGame)
 	int32 Quantity = 0;
     
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item", SaveGame)
 	int32 MaxQuantity = ITEM_SYSTEM_MAX_STACK;
     
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item", SaveGame)
 	TArray<FItemEffectApplicationInfo> Enchants = TArray<FItemEffectApplicationInfo>();
 
 	FEmberItemEntry() = default;
@@ -81,5 +81,13 @@ struct FEmberItemEntry
 	virtual bool bAbleAddQuantity(const int32 InQuantity) const;
     
 	virtual bool bAbleRemoveQuantity(const int32 InQuantity) const;
-    
+
+	bool operator==(const FEmberItemEntry& InOther) const
+	{
+		return this->CreateItemKey() == InOther.CreateItemKey();
+	};
+	bool operator==(const FEmberItemKey& InOther) const
+	{
+		return this->CreateItemKey() == InOther;
+	};
 };

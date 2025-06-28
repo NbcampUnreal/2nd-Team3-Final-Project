@@ -31,4 +31,9 @@ struct FEmberSlot : public FEmberMasterItemData
 	{
 		OutInstancedStruct.InitializeAs<FEmberSlot>(*this);
 	}
+
+	bool operator==(const FEmberSlot& InOther) const
+	{
+		return this->CreateItemKey() == InOther.CreateItemKey();
+	};
 };

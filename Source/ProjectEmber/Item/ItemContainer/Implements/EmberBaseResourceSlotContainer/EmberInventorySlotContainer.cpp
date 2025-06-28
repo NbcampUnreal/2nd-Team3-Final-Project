@@ -4,6 +4,7 @@
 #include "EmberInventorySlotContainer.h"
 
 #include "EmberLog/EmberLog.h"
+#include "Item/Core/ItemSystemLibrary.h"
 #include "Item/Core/ItemStruct/Implements/EmberSlot/EmberInventorySlot.h"
 
 
@@ -19,6 +20,8 @@ int32 UEmberInventorySlotContainer::AddSlotItemReturnApplied(const FInstancedStr
 		while (InItemEntry->Quantity > QuantityToAdd && InSlotIndex < ItemSlots.Num())
 		{
 			QuantityToAdd += Super::AddSlotItemReturnApplied(InInstancedStruct, InSlotIndex);
+			InSlotIndex = FindAddSlotIndex(*InItemEntry);
+
 		}
 	}
 	return QuantityToAdd;
@@ -81,6 +84,52 @@ void UEmberInventorySlotContainer::CreateItemSlot(const FEmberItemEntry& InItemE
 		FEmberInventorySlot NewSlot = FEmberInventorySlot(InItemEntry.ItemID, InItemEntry.Quantity, InItemEntry.Enchants);
 		NewSlot.InitializeInstancedStruct(ItemSlots[InItemIndex]);
 	}
+}
+
+void UEmberInventorySlotContainer::UseSlotItem(int32 InIndex)
+{
+	if (!ItemSlots.IsValidIndex(InIndex))
+	{
+		EMBER_LOG(LogEmberItem, Warning, TEXT("UseItemInSlot: non Invalid slot index %d"), InIndex);
+		return;
+	}
+
+	int32 UseQuantity = 0;
+	FInstancedStruct& SlotInstance = ItemSlots[InIndex];
+
+	if (FEmberInventorySlot* QuickSlot = SlotInstance.GetMutablePtr<FEmberInventorySlot>())
+	{
+		if (!QuickSlot->bIsEmpty())
+		{
+
+			HandleItemConsumption(&QuickSlot->ConsumableInfo);
+			UseQuantity = RemoveSlotItemReturnApplied(QuickSlot->ConsumableInfo.ConsumeAmount, InIndex);
+
+			   
+#if UE_BUILD_DEVELOPMENT
+			EMBER_LOG(LogEmberItem, Display, TEXT("UseAmount :%s[%d]: %d"), *QuickSlot->ItemID.ToString(), InIndex,UseQuantity);
+#endif
+		}
+	}
+        
+#if UE_BUILD_DEVELOPMENT
+	EMBER_LOG(LogEmberItem, Display, TEXT("UseAmount : %d, %d"), UseQuantity, InIndex);
+#endif
+   
+}
+
+void UEmberInventorySlotContainer::UseItemInSlot_Implementation(int32 SlotIndex)
+{
+	Super::UseItemInSlot_Implementation(SlotIndex);
+	UseSlotItem(SlotIndex);
+}
+
+void UEmberInventorySlotContainer::HandleItemConsumption(const FConsumableInfoRow* ConsumeData)
+{
+	if (!ConsumeData || !OwnerAbilitySystemComponent) return;
+
+	UItemSystemLibrary::ApplyEffectInfoList(OwnerAbilitySystemComponent, ConsumeData->EffectsToApplyOnConsume, Owner); 
+
 }
 
 
