@@ -373,3 +373,8 @@ TArray<FInstancedStruct>* UEmberBaseSlotContainer::GetItemSlotsPtr()
 {
 	return &ItemSlots;
 }
+
+TArray<FInstancedStruct> UEmberBaseSlotContainer::GetItemSlots()
+{
+	return ItemSlots;
+}

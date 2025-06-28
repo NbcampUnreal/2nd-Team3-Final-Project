@@ -230,15 +230,14 @@ void UUserItemManger::AddItemAndAlarm(FName ItemID, int32 Quantity, int32 InSlot
 {
 
 	FEmberItemEntry Entry = FEmberItemEntry(ItemID, Quantity);
-	AddItemAndAlarm(Entry.CreateInstancedStruct());
-	//AddItem(ItemID, Quantity, InSlotIndex);
-
+	AddItemAndAlarm(Entry.CreateInstancedStruct(), InSlotIndex);
 }
 
 void UUserItemManger::AddItemAndAlarm(const FInstancedStruct& InInstancedStruct, int32 InSlotIndex)
 {
-	//AddItem(InInstancedStruct, InSlotIndex);
-	if (ItemMessageManager)
+	AddItem(InInstancedStruct, InSlotIndex);
+
+	if (IsValid(ItemMessageManager))
 	{
 		ItemMessageManager->AddSlotItemReturnApplied(InInstancedStruct, InSlotIndex);
 	}

@@ -100,6 +100,7 @@ public:
 	FOnItemChangedDelegate OnItemChangedDelegate;
 
 	TArray<FInstancedStruct>* GetItemSlotsPtr();
+	TArray<FInstancedStruct> GetItemSlots();
 protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item") // SaveGame 필요시 추가
