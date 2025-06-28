@@ -26,4 +26,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UEmberItemSlotDragDropOperation> SlotOperation;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 FocusIndex;
 };
