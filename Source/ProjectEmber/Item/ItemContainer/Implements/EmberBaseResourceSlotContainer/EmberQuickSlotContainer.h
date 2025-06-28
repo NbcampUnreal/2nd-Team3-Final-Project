@@ -33,6 +33,7 @@ public:
 	UFUNCTION()
 	void InventoryChanged(int32 InIndex, const FInstancedStruct& InSlotData);
 
+	void UpdateRemoveItem();
 protected:
 	virtual void CreateItemSlot(const FEmberItemEntry& InItemEntry, const int32 InItemIndex) override;
 	virtual int32 MoveItemByIndex(int32 IndexTo, int32 IndexForm, int32 InQuantity) override;
@@ -45,7 +46,4 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Inventory")
 	TObjectPtr<UEmberInventorySlotContainer> InventorySlotContainer;
 	
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Ability")
-	TObjectPtr<UAbilitySystemComponent> OwnerAbilitySystemComponent;
-
 };

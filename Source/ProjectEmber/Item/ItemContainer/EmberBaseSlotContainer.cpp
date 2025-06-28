@@ -310,7 +310,7 @@ int32 UEmberBaseSlotContainer::MergeSameItemSlot(int32 SlotIndexTo, int32 SlotIn
 			}
 			
 #if UE_BUILD_DEVELOPMENT
-			EMBER_LOG(LogEmberItem, Display, TEXT("Merge : %d(%d[%d] -> %d[%d])"), MovedAmount, SlotFrom->Quantity, SlotIndexFrom, SlotTo->Quantity, SlotIndexTo);
+			EMBER_LOG(LogEmberItem, Display, TEXT("Merge : %s %d(%d[%d] -> %d[%d])"),*SlotFrom->ItemID.ToString(), MovedAmount, SlotFrom->Quantity, SlotIndexFrom, SlotTo->Quantity, SlotIndexTo);
 
 #endif
 			OnItemChangedDelegate.Broadcast(SlotIndexFrom, ItemSlots[SlotIndexFrom]);
