@@ -17,21 +17,26 @@ class PROJECTEMBER_API UAIActorComponent : public UActorComponent
 public:
     UAIActorComponent();
 
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "AI")
+    bool bHasInteractedWithPlayer = false;
+
 protected:
     virtual void BeginPlay() override;
 
-    // °Å¸® Ã¼Å© ¹× Å¸°Ù ÁöÁ¤
+    // ï¿½Å¸ï¿½ Ã¼Å© ï¿½ï¿½ Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     UFUNCTION()
     void CheckPlayerDistance();
 
-    // Å¸ÀÌ¸Ó ÇÚµé
+    // Å¸ï¿½Ì¸ï¿½ ï¿½Úµï¿½
     FTimerHandle DistanceCheckTimerHandle;
-    // ÄÄÆ÷³ÍÆ®µé
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®ï¿½ï¿½
     UPROPERTY(VisibleAnywhere)
     USceneComponent* RootScene;
 
     UPROPERTY(VisibleAnywhere)
     UStaticMeshComponent* BodyMesh;
+
+ 
 
   
 };

@@ -21,7 +21,8 @@
 #include "Quest/Condition/Dialogue/DialogueQuestCondition.h"
 #include "AI_NPC/Widget/QuestWidget.h"
 #include "AI_NPC/Widget/QuestTracker.h"
-#include "Character/EmberCharacter.h"
+#include "Character/EmberCharacter.h"   
+#include "AI_NPC/NPC_Component/AIActorComponent.h"  
 
 UDialogueComponent::UDialogueComponent()
 {
@@ -333,7 +334,10 @@ void UDialogueComponent::Interact()
         {
             TalkPromptWidget->SetVisibility(false);
         }
-
+        if (UAIActorComponent* AIComponent = GetOwner()->FindComponentByClass<UAIActorComponent>())
+        {
+            AIComponent->bHasInteractedWithPlayer = true;
+        }
         UE_LOG(LogTemp, Warning, TEXT("[Interact] DialogueWidget created and shown (ZOrder %d)."), HighZOrder);
         AdvanceDialogue();
     }

@@ -16,6 +16,10 @@ void UTutorialWidget::NativeConstruct()
     {
         TutorialButton->OnClicked.AddDynamic(this, &UTutorialWidget::OnCloseButtonClicked);
     }
+    if (NextButton)
+    {
+        NextButton->OnClicked.AddDynamic(this, &UTutorialWidget::OnNextButtonClicked);
+    }
 }
 
 void UTutorialWidget::SetImageTexture(UTexture2D* NewImage)
@@ -26,6 +30,10 @@ void UTutorialWidget::SetImageTexture(UTexture2D* NewImage)
         Brush.SetResourceObject(NewImage);
         Brush.ImageSize = FVector2D(NewImage->GetSizeX(), NewImage->GetSizeY());
         KeylImage->SetBrush(Brush);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("KeyImage or NewImage is invalid in SetImageTexture"));
     }
 }
 
@@ -38,6 +46,10 @@ void UTutorialWidget::SetMediaImageTexture(UTexture* NewImage)
         Brush.ImageSize = FVector2D(100, 100); // 적절한 크기로 설정
         MediaImage->SetBrush(Brush);
     }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("KeyImage or NewImage is invalid in SetMediaImageTexture"));
+    }
 }
 
 void UTutorialWidget::ShowTutorial(bool bShow)
@@ -45,26 +57,40 @@ void UTutorialWidget::ShowTutorial(bool bShow)
     SetVisibility(bShow ? ESlateVisibility::Visible : ESlateVisibility::Hidden);
 }
 
-void UTutorialWidget::SetTutorialData(const FTutorialData& InData)
+void UTutorialWidget::SetTutorialData(const FTutorialData& Data, int32 CurrentIndex, int32 TotalCount)
 {
-    SetImageTexture(InData.KeyImage);
-    SetMediaImageTexture(InData.VideoTexture);
+    SetImageTexture(Data.KeyImage);
+    SetMediaImageTexture(Data.VideoTexture);
+
     if (TutorialNameText)
     {
-        TutorialNameText->SetText(InData.Name);
+        TutorialNameText->SetText(Data.Name);
     }
 
     if (TutorialDescriptionText)
     {
-        TutorialDescriptionText->SetText(InData.Description);
+        TutorialDescriptionText->SetText(Data.Description);
+    }
+
+    // Next 버튼 보이기 제어
+    if (NextButton)
+    {
+        const bool bHasNext = CurrentIndex < TotalCount - 1;
+        NextButton->SetVisibility(bHasNext ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     }
 }
 
 void UTutorialWidget::OnCloseButtonClicked()
 {
-    //  Subsystem ã�Ƽ� HideTutorial ȣ��!
     if (UTutorialManagerSubsystem* TutorialSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UTutorialManagerSubsystem>())
     {
         TutorialSubsystem->HideTutorial();
+    }
+}
+void UTutorialWidget::OnNextButtonClicked()
+{
+    if (UTutorialManagerSubsystem* TutorialSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UTutorialManagerSubsystem>())
+    {
+        TutorialSubsystem->OnNextTutorialRequested();
     }
 }

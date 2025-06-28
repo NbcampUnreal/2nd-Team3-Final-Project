@@ -9,6 +9,7 @@
 #include "GameInstance/GameplayEventSubsystem.h"
 #include "Item/UserItemManger.h"
 #include "UI/HUD/EmberMainHUD.h"
+#include "Tutorial/Subsystem/TutorialManagerSubsystem.h"
 
 void UQuestSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -77,8 +78,13 @@ bool UQuestSubsystem::TryStartQuest(FName QuestID, bool bPlayerAccepted)
                     }
                 }
             }
+            FTimerHandle TimerHandle;
+            FTimerDelegate TimerDel;
+            TimerDel.BindUFunction(this, FName("DelayedShowStepTutorialByID"), QuestID);
+            GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDel, 3.0f, false);
         }
     }
+  
 
     LastAcceptedQuestID = QuestID;
 
@@ -339,6 +345,7 @@ bool UQuestSubsystem::IsStepCompleted(FName QuestID, int32 StepIndex) const
 
     return bCompleted;
 }
+
 void UQuestSubsystem::AcceptStep(FName QuestID)
 {
     if (QuestProgress.Contains(QuestID))
@@ -347,3 +354,43 @@ void UQuestSubsystem::AcceptStep(FName QuestID)
         UE_LOG(LogTemp, Warning, TEXT("[AcceptStep] Quest %s: 현재 스텝 수락됨"), *QuestID.ToString());
     }
 }
+
+void UQuestSubsystem::DelayedShowStepTutorialByID(FName QuestID)
+{
+    if (UQuestDataAsset* QuestAsset = LoadedQuests.FindRef(QuestID))
+    {
+        int32 StepIndex = GetCurrentStepIndexForQuest(QuestID, false);
+        if (QuestAsset->Steps.IsValidIndex(StepIndex))
+        {
+            const FQuestStep& Step = QuestAsset->Steps[StepIndex];
+            ShowStepTutorialIfNeeded(Step);
+        }
+    }
+}
+
+void UQuestSubsystem::ShowStepTutorialIfNeeded(const FQuestStep& Step)
+{
+    if (!Step.bShowTutorial || !Step.TutorialDataAsset)
+        return;
+    
+    TArray<FTutorialData> TutorialsToShow;
+
+    for (int32 Index : Step.TutorialIndexes)
+    {
+        if (Step.TutorialDataAsset->Tutorials.IsValidIndex(Index))
+        {
+            const FTutorialData& TutorialData = Step.TutorialDataAsset->Tutorials[Index];
+            TutorialsToShow.Add(TutorialData);
+        }
+    }
+
+    if (TutorialsToShow.Num() > 0)
+    {
+        if (UTutorialManagerSubsystem* TutorialSubsystem = GetGameInstance()->GetSubsystem<UTutorialManagerSubsystem>())
+        {
+            TutorialSubsystem->ShowTutorialSequence(TutorialsToShow);
+            UE_LOG(LogTemp, Log, TEXT("[Tutorial] 튜토리얼 %d개 표시"), TutorialsToShow.Num());
+        }
+    }
+}
+

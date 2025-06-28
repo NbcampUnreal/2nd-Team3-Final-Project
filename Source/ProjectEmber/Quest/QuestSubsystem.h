@@ -26,8 +26,9 @@ public:
 	void LoadQuest(const APlayerController* PlayerController, const TMap<FName, int32>& InQuestProgress);
 	
 	TMap<FName, int32>& GetQuestProgress();
-
-public:
+	
+	UFUNCTION()
+	void ShowStepTutorialIfNeeded(const FQuestStep& Step);
 	// NPC에게 F눌러서 통과 받을때 호출될 함수
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	bool TryStartQuest(FName QuestID, bool bPlayerAccepted = false);
@@ -72,6 +73,9 @@ public:
 	bool IsStepCompleted(FName QuestID, int32 StepIndex) const;
 
 	TMap<FName, bool> StepAcceptance;
+	
+	UFUNCTION()
+	void DelayedShowStepTutorialByID(FName QuestID);
 
 private:
 	// 로드된 퀘스트 목록
