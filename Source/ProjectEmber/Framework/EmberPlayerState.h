@@ -3,7 +3,10 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
 #include "EMSActorSaveInterface.h"
+#include "GameplayAbilitySpec.h"
+#include "GameplayTagContainer.h"
 #include "GameFramework/PlayerState.h"
+#include "Item/Core/ItemStruct/EmberItemEntry.h"
 #include "EmberPlayerState.generated.h"
 
 UCLASS()
@@ -21,6 +24,8 @@ public:
 	virtual void ActorPreSave_Implementation() override;
 	UFUNCTION()
 	virtual void ActorLoaded_Implementation() override;
+	void HandleAbilityFailed(const UGameplayAbility* FailedAbility, const FGameplayTagContainer& FailureTags);
+	
 	void GameMenuWidgetLoaded();
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AbilitySystem", meta=(AllowPrivateAccess="true"))
@@ -36,4 +41,13 @@ private:
 	
 	UPROPERTY(SaveGame)
 	TMap<FName, int32> QuestProgress;
+	
+	UPROPERTY(SaveGame)
+	TArray<FEmberItemEntry> InventoryProgress;
+	
+	UPROPERTY(SaveGame)
+	TArray<FEmberItemEntry> EquipmentProgress;
+	
+	UPROPERTY(SaveGame)
+	TArray<FEmberItemEntry> QuickSlotProgress;
 };

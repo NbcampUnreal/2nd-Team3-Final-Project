@@ -12,6 +12,8 @@
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PhysicsVolume.h"
+#include "Item/Drop/EmberDropComponent.h"
+#include "UI/EmberHpBarUserWidget.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/AnimalHpBarUserWidget.h"
 #include "UI/EmberWidgetComponent.h"
@@ -30,6 +32,9 @@ ABaseAIAnimal::ABaseAIAnimal()
 	CharacterAttributeSet = CreateDefaultSubobject<UEmberCharacterAttributeSet>(TEXT("CharacterAttributeSet"));
 	AnimalAttributeSet = CreateDefaultSubobject<UEmberAnimalAttributeSet>(TEXT("AnimalAttributeSet"));
 	MeleeTraceComponent = CreateDefaultSubobject<UMeleeTraceComponent>(TEXT("MeleeTraceComponent"));
+
+	DropComponent = CreateDefaultSubobject<UEmberDropComponent>(TEXT("DropItemComponent"));
+	DropComponent->DropID = "animal";
 	
 	HpBarWidget = CreateDefaultSubobject<UEmberWidgetComponent>(TEXT("HpBarWidget"));
 	HpBarWidget->SetupAttachment(GetMesh());
@@ -207,6 +212,10 @@ void ABaseAIAnimal::OnBeginDeath()
 	Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.Death");
 	Payload.Instigator = this;
 	AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
+	if (DropComponent)
+	{
+		DropComponent->AddRandomItemToPlayer();
+	}
 }
 
 void ABaseAIAnimal::ReceiveMessage(const FName MessageType, UObject* Payload)
@@ -436,9 +445,9 @@ void ABaseAIAnimal::DecreaseFullness()
 }
 
 void ABaseAIAnimal::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
- {
+{
  	TagContainer;
- }
+}
 
 bool ABaseAIAnimal::IsTargetable_Implementation() const
 {

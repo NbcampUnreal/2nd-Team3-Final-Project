@@ -3,6 +3,7 @@
 
 #include "QuickSlotManager.h"
 
+/*
 FName UQuickSlotManager::SelectQuickSlot(const int32 InIndex)
 {
 	if (CurrentQuickSlotIndex == InIndex)
@@ -16,3 +17,4 @@ FName UQuickSlotManager::SelectQuickSlot(const int32 InIndex)
 		return GetSlotItemID_Implementation(CurrentQuickSlotIndex);
 	}
 }
+*/

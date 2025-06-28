@@ -24,13 +24,7 @@ void UItemDetailWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTim
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
-	if (TObjectPtr<APlayerController> PlayerController = GetOwningPlayer())
-	{
-		FVector2D MousePosition;
-		UWidgetLayoutLibrary::GetMousePositionScaledByDPI(PlayerController, MousePosition.X, MousePosition.Y);
-		this->SetPositionInViewport(MousePosition, false);
-	
-	}
+	SetWidgetMousePosition();
 }
 
 FString UItemDetailWidget::GetEffectsName() const
@@ -41,4 +35,14 @@ FString UItemDetailWidget::GetEffectsName() const
 		EffectNames += Effect.EffectName.ToString() + '\n';
 	}
 	return EffectNames;
+}
+
+void UItemDetailWidget::SetWidgetMousePosition()
+{
+	if (TObjectPtr<APlayerController> PlayerController = GetOwningPlayer())
+	{
+		FVector2D MousePosition;
+		UWidgetLayoutLibrary::GetMousePositionScaledByDPI(PlayerController, MousePosition.X, MousePosition.Y);
+		this->SetPositionInViewport(MousePosition, false);
+	}
 }

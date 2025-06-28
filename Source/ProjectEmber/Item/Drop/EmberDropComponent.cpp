@@ -4,7 +4,10 @@
 #include "EmberDropComponent.h"
 
 #include "EmberDropItemManager.h"
+#include "Character/EmberCharacter.h"
 #include "EmberLog/EmberLog.h"
+#include "Item/UserItemManger.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values for this component's properties
@@ -17,9 +20,26 @@ UEmberDropComponent::UEmberDropComponent()
 	DropManager = CreateDefaultSubobject<UEmberDropItemManager>(TEXT("EmberDropItemManager"));
 	if (DropManager)
 	{
-		DropManager->InitSlot(30, 10, GetOwner());
+		DropManager->InitOwner(GetOwner());
+		DropManager->InitSlotCount(30, 10);
 	}
 	// ...
+}
+
+void UEmberDropComponent::AddRandomItemToPlayer()
+{
+	if (AEmberCharacter* EmberCharacter = Cast<AEmberCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
+	{
+		if (UUserItemManger* ItemManger = EmberCharacter->GetItemManager())
+		{
+			SetRandomItems(EmberCharacter->GetAbilitySystemComponent());
+			for (FEmberSlot Slots : *DropManager->GetItemSlotsPtr())
+			{
+				FInstancedStruct InStruct= Slots.CreateInstancedStruct();
+				ItemManger->AddItemAndAlarm(InStruct);
+			}
+		}
+	}
 }
 
 
@@ -27,7 +47,16 @@ void UEmberDropComponent::SetRandomItems(const UAbilitySystemComponent* AbilityS
 {
 	if (DropManager)
 	{
+		DropManager->Clear();
 		DropManager->SetDropItem(DropID, AbilitySystemComponent);
+	}
+}
+
+void UEmberDropComponent::ResetItems()
+{
+	if (DropManager)
+	{
+		DropManager->Clear();
 	}
 }
 
@@ -36,17 +65,17 @@ TMap<FName, int32> UEmberDropComponent::GetAllItemInfos_Implementation()
 	return IEmberResourceProvider::Execute_GetAllItemInfos(DropManager);
 }
 
-void UEmberDropComponent::TryConsumeResource_Implementation(const TArray<FItemPair>& InRequireItems)
+void UEmberDropComponent::TryConsumeResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems)
 {
 	IEmberResourceProvider::Execute_TryConsumeResource(DropManager, InRequireItems);
 }
 
-TArray<FItemPair> UEmberDropComponent::RemoveResourceUntilAble_Implementation(const TArray<FItemPair>& InRequireItems)
+void UEmberDropComponent::RemoveResourceUntilAble_Implementation(TArray<FEmberItemEntry>& InRequireItems)
 {
-	return IEmberResourceProvider::Execute_RemoveResourceUntilAble(DropManager, InRequireItems);
+	IEmberResourceProvider::Execute_RemoveResourceUntilAble(DropManager, InRequireItems);
 }
 
-bool UEmberDropComponent::bConsumeAbleResource_Implementation(const TArray<FItemPair>& InRequireItems)
+bool UEmberDropComponent::bConsumeAbleResource_Implementation(const TArray<FEmberItemEntry>& InRequireItems)
 {
 	return IEmberResourceProvider::Execute_bConsumeAbleResource(DropManager, InRequireItems);
 }

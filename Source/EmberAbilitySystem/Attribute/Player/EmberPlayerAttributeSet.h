@@ -29,10 +29,14 @@ public:
 
 public:
 	ATTRIBUTE_ACCESSORS(UEmberPlayerAttributeSet, ParryDuration);
+	ATTRIBUTE_ACCESSORS(UEmberPlayerAttributeSet, PerfectDodgeDuration);
 	
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Attack", Meta = (AllowPrivateAccess=true), SaveGame)
 	FGameplayAttributeData ParryDuration;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Attack", Meta = (AllowPrivateAccess=true), SaveGame)
+	FGameplayAttributeData PerfectDodgeDuration;
 	
 protected: /* State Effects */
 

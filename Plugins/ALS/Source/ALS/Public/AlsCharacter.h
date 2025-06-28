@@ -328,6 +328,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ALS|Character", Meta = (AutoCreateRefTerm = "NewDesiredGait"))
 	void SetDesiredGait(const FGameplayTag& NewDesiredGait);
 
+	UFUNCTION(BlueprintCallable, Category = "ALS|Character", Meta = (AutoCreateRefTerm = "NewDesiredGait"))
+	void SetForceDesiredGait(const FGameplayTag& NewDesiredGait, bool bSendRpc);
 private:
 	void SetDesiredGait(const FGameplayTag& NewDesiredGait, bool bSendRpc);
 

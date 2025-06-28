@@ -6,11 +6,13 @@
 #include "AbilitySystemComponent.h"
 #include "AudioMixerDevice.h"
 #include "Attribute/Character/EmberCharacterAttributeSet.h"
+#include "Core/EmberTmpStruct.h"
 #include "Core/ItemGamePlayTags.h"
 #include "Core/ItemSystemLibrary.h"
 #include "EmberLog/EmberLog.h"
 
 
+/*
 UEmberEquipmentManager::UEmberEquipmentManager()
 {
 	SlotGameplayTags.AddTag(EmberEquipmentGameplayTags::Item_Equipment_Helmet);
@@ -94,9 +96,19 @@ int32 UEmberEquipmentManager::AddDataInIndex(const FInstancedStruct& InItem, int
 					CurrentQuantity = FMath::Max(CurrentQuantity, 0);
 
 					Slot->Quantity += CurrentQuantity;
-                
-					FTotalItemInfo& Total = TotalData.FindOrAdd(Slot->ItemID);
-					Total.AddItem(CurrentQuantity, InSlotIndex);
+                					
+					FEmberItemKey ItemKey = FEmberItemKey(Slot->ItemID, Slot->EnchantEffects);
+					FInstancedStruct& Data = TotalData.FindOrAdd(ItemKey);
+					if (FEmberTotalSlot* ItemData = Data.GetMutablePtr<FEmberTotalSlot>())
+					{
+						ItemData->AddQuantity(CurrentQuantity);
+						ItemData->AddIndex(InSlotIndex);
+					}
+					else
+					{
+						FEmberTotalSlot NewData = FEmberTotalSlot(InSlot->ItemID, InSlot->Quantity, InSlot->EnchantEffects);
+						NewData.InitializeInstancedStruct(Data);
+					}
                 
 					OnDataChangedDelegate.Broadcast(InSlotIndex, DataSlots[InSlotIndex]);
 				}
@@ -160,32 +172,14 @@ void UEmberEquipmentManager::RemoveEffect(int32 InSlotIndex)
 {
 	if (DataSlots.IsValidIndex(InSlotIndex))
 	{
-		if (FEmberSlotData* InSlot = DataSlots[InSlotIndex].GetMutablePtr<FEmberSlotData>())
+		for (FActiveGameplayEffectHandle& Effect : EquipmentEffects[InSlotIndex])
 		{
-			FGameplayEffectQuery Query;
-			if (OwnerAbilitySystemComponent)
+			if (Effect.IsValid())
 			{
-				for (FItemEffectApplicationInfo& Info : InSlot->EnchantEffects)
-				{
-					Query.EffectDefinition = Info.GameplayEffectClass;
-						
-					for (auto& Effect : OwnerAbilitySystemComponent->GetActiveEffects(Query))
-					{
-						if (Effect.IsValid())
-						{
-							if (const FActiveGameplayEffect* ActiveGameplayEffect = OwnerAbilitySystemComponent->GetActiveGameplayEffect(Effect))
-							{
-								float FoundValue = ActiveGameplayEffect->Spec.GetSetByCallerMagnitude(FGameplayTag::RequestGameplayTag(Info.MagnitudeSetByCallerTag.GetTagName()));
-								if (FMath::IsNearlyEqual(FoundValue, Info.Magnitude))
-								{
-									OwnerAbilitySystemComponent->RemoveActiveGameplayEffect(Effect, 1);
-								}
-							}
-						}
-					}
-				}
+				OwnerAbilitySystemComponent->RemoveActiveGameplayEffect(Effect);
 			}
 		}
+		EquipmentEffects[InSlotIndex].Reset();
 	}
 }
 
@@ -193,12 +187,12 @@ void UEmberEquipmentManager::ActiveEffect(int32 InSlotIndex)
 {
 	if (DataSlots.IsValidIndex(InSlotIndex) && OwnerAbilitySystemComponent)
 	{
-
 		if (FEquipmentSlotData* InSlot = DataSlots[InSlotIndex].GetMutablePtr<FEquipmentSlotData>())
 		{
-			UItemSystemLibrary::ApplyEffectInfoList(OwnerAbilitySystemComponent, InSlot->MainEffect, Owner);
-			UItemSystemLibrary::ApplyEffectInfoList(OwnerAbilitySystemComponent, InSlot->EnchantEffects, Owner);
-
+			TArray<FActiveGameplayEffectHandle> EffectHandles;
+			EffectHandles.Append(UItemSystemLibrary::ApplyEffectInfoList(OwnerAbilitySystemComponent, InSlot->MainEffect, Owner));
+			EffectHandles.Append(UItemSystemLibrary::ApplyEffectInfoList(OwnerAbilitySystemComponent, InSlot->EnchantEffects, Owner));
+			EquipmentEffects.Add(EffectHandles);
 		}
 	}
 }
@@ -207,3 +201,4 @@ bool UEmberEquipmentManager::bIsEquipmentTag(const FGameplayTag& InTag) const
 {
 	return SlotGameplayTags.HasTagExact(InTag);
 }
+*/

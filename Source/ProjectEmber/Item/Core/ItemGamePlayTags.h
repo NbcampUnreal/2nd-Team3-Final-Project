@@ -26,6 +26,7 @@ namespace EmberEquipmentGameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Belt);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Ring);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Shield);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Item_Equipment_Tool);
 }
 
 namespace EmberItemEffectGameplayTags

@@ -6,6 +6,7 @@
 #include "ItemTypes.h"
 #include "EmberLog/EmberLog.h"
 #include "Item/ItemSubsystem.h"
+#include "Containers/Set.h"
 
 FEmberSlotData::FEmberSlotData(const FName& InItemID, const int32 InQuantity, const TArray<FItemEffectApplicationInfo>& InEnchantEffects)
 {
@@ -15,7 +16,7 @@ FEmberSlotData::FEmberSlotData(const FName& InItemID, const int32 InQuantity, co
 		{
 			ItemID = InItemID;
 			Quantity = InQuantity;
-			ItemDisplayName = InItemMasterInfo->ItemDescription;
+			ItemDisplayName = InItemMasterInfo->ItemDisplayName;
 			ItemDescription = InItemMasterInfo->ItemDescription;
 			
 			for (const FDataTableRowHandle& Handle : InItemMasterInfo->ItemData)
@@ -47,6 +48,25 @@ FEmberSlotData::FEmberSlotData(const FName& InItemID, const int32 InQuantity, co
 		}
 	}
 	EnchantEffects = InEnchantEffects;
+}
+
+void FEmberSlotData::AddQuantity(int32& InQuantity)
+{
+	int32 AbleAddedQuantity = FMath::Min(MaxStackSize - Quantity, InQuantity);
+	AbleAddedQuantity = FMath::Max(AbleAddedQuantity, 0);
+	Quantity += AbleAddedQuantity;
+	InQuantity -= AbleAddedQuantity;
+}
+
+void FEmberSlotData::RemoveQuantity(int32& InQuantity)
+{
+	int32 AbleRemoveQuantity = FMath::Max(Quantity, InQuantity);
+	Quantity -= AbleRemoveQuantity;
+	InQuantity -= AbleRemoveQuantity;
+	if (Quantity <= 0)
+	{
+		Clear();
+	}
 }
 
 FEquipmentSlotData::FEquipmentSlotData(const FEmberSlotData& InEmberSlot) : FEmberSlotData(InEmberSlot)
@@ -106,3 +126,34 @@ FEmberItemInfo::FEmberItemInfo(const FEmberSlotData& InItemInventorySlotData)
 	}
 	ActiveEffects = InActiveEffects;
 }
+
+FEmberItemKey::FEmberItemKey(const FName& InItemID, const TArray<FItemEffectApplicationInfo>& InEnchants)
+{
+	ItemID = InItemID;
+	for (auto& EnchantItem : InEnchants)
+	{
+		EnchantIDs.Add(EnchantItem.EffectName);
+	}
+}
+
+bool FEmberItemKey::operator==(const FEmberItemKey& Other) const
+{
+	if (ItemID != Other.ItemID)
+	{
+		return false;
+	}
+
+	if (EnchantIDs.Num() != Other.EnchantIDs.Num())
+	{
+		return false;
+	}
+	for (auto& EnchantItem : Other.EnchantIDs)
+	{
+		if (!EnchantIDs.Contains(EnchantItem))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
