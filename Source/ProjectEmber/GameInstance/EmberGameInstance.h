@@ -16,7 +16,6 @@
 
 class UAudioSubsystem;
 class ULevelSubsystem;
-class UDungeonSubsystem;
 class UUserWidget;
 class UEmberLoadingWidget;
 
@@ -76,9 +75,6 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input")
 	TObjectPtr<UInputAction> MoveAction;
-	
-	UFUNCTION(BlueprintCallable)
-	UDungeonSubsystem* GetDungeonSubSystem();
 
 	// 현재 지역 확인용
 	EAreaType CurrentAreaType = EAreaType::GrasslandArea;
@@ -89,15 +85,6 @@ private:
 
 	UPROPERTY()
 	ULevelSubsystem* LevelSubsystem;
-
-	UPROPERTY()
-	UDungeonSubsystem* DungeonSubsystem;
-
-	UPROPERTY(EditDefaultsOnly, Category = "UI")
-	TSoftClassPtr<UUserWidget> LoadingScreenClass;
-
-	UPROPERTY()
-	UUserWidget* LoadingScreenWidget;
 
 	FStreamableManager AssetLoader;
 };

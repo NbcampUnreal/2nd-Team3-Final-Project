@@ -28,11 +28,11 @@ void AAnimalSpawner::BeginPlay()
 	//스포너 엑티베이트 함수 따로 만들면 들어갈 애들
 	{
 		//GetWorld()->GetTimerManager().UnPauseTimer(DistanceTimerHandle);
-	// 함수 바인딩
-	MessageDelegateHandle = FMessageDelegate::CreateUObject(this, &ThisClass::ReceiveMessage);
+		// 함수 바인딩
+		MessageDelegateHandle = FMessageDelegate::CreateUObject(this, &ThisClass::ReceiveMessage);
 
-	// FName으로 키값(메세지) 지정하고 델리게이트 전달, 구독했으면 EndPlay에서 해제까지 꼭 하기
-	UMessageBus::GetInstance()->Subscribe(TEXT("HideAnimal"), MessageDelegateHandle);
+		// FName으로 키값(메세지) 지정하고 델리게이트 전달, 구독했으면 EndPlay에서 해제까지 꼭 하기
+		UMessageBus::GetInstance()->Subscribe(TEXT("HideAnimal"), MessageDelegateHandle);
 	}
 	
 	//시간 받아오는 델리게이트 구독->저장해뒀다가 생성/스폰 시킬 때 사용
@@ -45,10 +45,12 @@ void AAnimalSpawner::BeginPlay()
 void AAnimalSpawner::ReceiveMessage(const FName MessageType, UObject* Payload)
 {
 	//찐 죽었을 때
+	
 	if (TEXT("HideAnimal") == MessageType)
 	{
 		MessageMoveToDead(Payload);
 	}
+	
 }
 
 void AAnimalSpawner::MessageMoveToDead(UObject* Payload)
@@ -80,21 +82,26 @@ void AAnimalSpawner::MessageMoveToDead(UObject* Payload)
 					Data.EventTag = EventTag;
 					QuestSubsystem->OnGameEvent(EventTag, Data);
 				}
+				OnRaidClear.Broadcast();
 				TryReleaseToken();
 			}
 		}
 		
 		if (IdentityTag == FGameplayTag::RequestGameplayTag("Quest.MiniGame.Chasing"))
 		{
-			if (UGameplayEventSubsystem* EventSubsystem = GetGameInstance()->GetSubsystem<UGameplayEventSubsystem>())
+			if (bIsMiniGameActive)
 			{
-				FGameplayTag EventTag = FGameplayTag::RequestGameplayTag("Quest.MiniGame.Chasing");
-				FGameplayEventData Data;
-				Data.EventTag = EventTag;
-				EventSubsystem->BroadcastGameEvent(EventTag, Data);
+				if (UGameplayEventSubsystem* EventSubsystem = GetGameInstance()->GetSubsystem<UGameplayEventSubsystem>())
+				{
+					FGameplayTag EventTag = FGameplayTag::RequestGameplayTag("Quest.MiniGame.Chasing");
+					FGameplayEventData Data;
+					Data.EventTag = EventTag;
+					EventSubsystem->BroadcastGameEvent(EventTag, Data);
+				}
+				OnChasingClear.Broadcast();
+				TryReleaseEntire();
+				return;
 			}
-			TryReleaseEntire();
-			return;
 		}
 		
 		for (FAnimalSpawnInfo& Info : AnimalsInfo)
@@ -732,9 +739,15 @@ void AAnimalSpawner::OnMiniGameEvent()
 	{
 		return;
 	}
+	bIsMiniGameActive = true;
 	AddCreateQueue(AnimalsInfo[0], SpawnPoints[0], AnimalsInfo[0].TotalCount, "Animal.Role.Alone");
 }
 
+void AAnimalSpawner::EndMiniGameEvent()
+{
+	bIsMiniGameActive = false;
+	
+}
 
 void AAnimalSpawner::OnTokenRaidEvent(FTokenRaidInfo InRow)
 {
