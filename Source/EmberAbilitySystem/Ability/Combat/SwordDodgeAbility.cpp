@@ -8,6 +8,7 @@
 #include "AlsCharacterMovementComponent.h"
 #include "MotionWarpingComponent.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
+#include "Attribute/Player/EmberPlayerAttributeSet.h"
 #include "Components/CapsuleComponent.h"
 
 USwordDodgeAbility::USwordDodgeAbility()
@@ -33,7 +34,19 @@ void USwordDodgeAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle
 			if (Asc->HasMatchingGameplayTag(AlsRotationModeTags::Targeting))
 			{
 				SetUpdateWarping(false);
-				
+
+				/** 퍼펙트 닷지 시도 */
+				Asc->AddLooseGameplayTag(AlsCharacterStateTags::PerfectDodge);
+				if (const UEmberPlayerAttributeSet* PlayerAttributesSet = Asc->GetSet<UEmberPlayerAttributeSet>())
+				{
+					GetAvatarActorFromActorInfo()->GetWorld()->GetTimerManager().SetTimer(PerfectDodgeTimerHandle,
+					FTimerDelegate::CreateUObject(this, &USwordDodgeAbility::OnPerfectDodgeEnded),
+					PlayerAttributesSet->GetPerfectDodgeDuration(), 
+					false
+					);		
+				}
+
+				/** 히트 방향에 따른 몽타주 세팅 */
 				const FVector2D MoveInput = Character->GetMoveInput();
 				if (FMath::Abs(MoveInput.Y) > KINDA_SMALL_NUMBER)
 				{
@@ -80,6 +93,14 @@ void USwordDodgeAbility::OnMontageFinished()
 	}
 	
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, false, false);
+}
+
+void USwordDodgeAbility::OnPerfectDodgeEnded() const
+{
+	if (UAbilitySystemComponent* Asc = GetAbilitySystemComponentFromActorInfo_Ensured())
+	{
+		Asc->RemoveLooseGameplayTag(AlsCharacterStateTags::PerfectDodge);
+	}
 }
 
 void USwordDodgeAbility::SetUpdateWarpingToTarget() const

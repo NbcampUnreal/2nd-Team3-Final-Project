@@ -6,6 +6,7 @@
 UEmberPlayerAttributeSet::UEmberPlayerAttributeSet()
 {
 	InitParryDuration(0.3f);
+	InitPerfectDodgeDuration(0.1f);
 }
 
 void UEmberPlayerAttributeSet::Initialize(UAbilitySystemComponent* InAsc)
