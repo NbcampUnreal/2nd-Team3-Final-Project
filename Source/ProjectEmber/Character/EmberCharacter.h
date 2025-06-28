@@ -294,4 +294,8 @@ public:
 
 	// 대화 시작 시 DialogueComponent 저장
 	void SetActiveDialogueComponent(UDialogueComponent* InDialogue);
+
+	TWeakObjectPtr<UUserWidget> QuickSlotWidget;
+
+	int32 HoveredSlotIndex;
 };
