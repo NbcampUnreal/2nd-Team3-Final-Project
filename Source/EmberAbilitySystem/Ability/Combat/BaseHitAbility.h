@@ -18,10 +18,14 @@ public:
 	UBaseHitAbility();
 	
 	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
+	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 	
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "ParryCounter")
+	UPROPERTY(EditDefaultsOnly, Category = "Hit")
 	UAnimMontage* HitMontage;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Block")
+	bool bIsBlockHit{false};
 	
 	UFUNCTION()
 	void OnMontageFinished();

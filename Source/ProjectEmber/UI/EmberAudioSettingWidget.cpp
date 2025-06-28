@@ -10,7 +10,7 @@ void UEmberAudioSettingWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    float Master = 1.f, Bgm = 1.f, Effects = 1.f;
+    float Master = 1.f, Bgm = 1.f, Effects = 1.f, UI = 1.f;
 
     if (UEmberGameInstance* GI = Cast<UEmberGameInstance>(GetGameInstance()))
     {
@@ -18,20 +18,24 @@ void UEmberAudioSettingWidget::NativeConstruct()
         Master = Loaded.MasterVolume;
         Bgm = Loaded.BgmVolume;
         Effects = Loaded.EffectsVolume;
+        UI = Loaded.UIVolume;
     }
 
     MasterSlider->SetValue(Master);
     BgmSlider->SetValue(Bgm);
     EffectsSlider->SetValue(Effects);
+    UISlider->SetValue(UI);
 
     OnSliderChanged(Master, MasterValueText);
     OnSliderChanged(Bgm, BgmValueText);
     OnSliderChanged(Effects, EffectsValueText);
+    OnSliderChanged(UI, UIValueText);
 
     MasterSlider->OnValueChanged.AddDynamic(this, &UEmberAudioSettingWidget::OnMasterSliderChanged);
     BgmSlider->OnValueChanged.AddDynamic(this, &UEmberAudioSettingWidget::OnBgmSliderChanged);
     EffectsSlider->OnValueChanged.AddDynamic(this, &UEmberAudioSettingWidget::OnEffectsSliderChanged);
     ApplyButton->OnClicked.AddDynamic(this, &UEmberAudioSettingWidget::OnApplyClicked);
+    UISlider->OnValueChanged.AddDynamic(this, &UEmberAudioSettingWidget::OnUISliderChanged);
 }
 
 void UEmberAudioSettingWidget::OnSliderChanged(float Value, UTextBlock* TargetText)
@@ -52,9 +56,15 @@ void UEmberAudioSettingWidget::OnBgmSliderChanged(float Value)
 {
     OnSliderChanged(Value, BgmValueText);
 }
+
 void UEmberAudioSettingWidget::OnEffectsSliderChanged(float Value)
 {
     OnSliderChanged(Value, EffectsValueText);
+}
+
+void UEmberAudioSettingWidget::OnUISliderChanged(float Value)
+{
+    OnSliderChanged(Value, UIValueText);
 }
 
 
@@ -65,10 +75,12 @@ void UEmberAudioSettingWidget::OnApplyClicked()
         float Master = MasterSlider->GetValue();
         float Bgm = BgmSlider->GetValue();
         float Effects = EffectsSlider->GetValue();
+        float UI = UISlider->GetValue();
 
         Audio->SetAndApplyMasterVolume(Master);
         Audio->SetBgmVolume(Bgm);
         Audio->SetEffectsVolume(Effects);
+        Audio->SetUIVolume(UI);
 
         if (UEmberGameInstance* GI = Cast<UEmberGameInstance>(GetGameInstance()))
         {
@@ -76,6 +88,7 @@ void UEmberAudioSettingWidget::OnApplyClicked()
             AudioSettings.MasterVolume = Master;
             AudioSettings.BgmVolume = Bgm;
             AudioSettings.EffectsVolume = Effects;
+            AudioSettings.UIVolume = UI;
 
             GI->SaveAudioSettingsWithEMS(AudioSettings);
         }

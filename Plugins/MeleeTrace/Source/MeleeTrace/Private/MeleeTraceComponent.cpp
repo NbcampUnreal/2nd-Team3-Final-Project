@@ -9,6 +9,7 @@
 #include "MeleeTraceCommon.h"
 #include "MeleeTraceSettings.h"
 #include "MeleeTraceShape.h"
+#include "Components/BoxComponent.h"
 
 #ifdef ENABLE_DRAW_DEBUG
 #include "MeleeTraceDebug.h"
@@ -89,6 +90,14 @@ void UMeleeTraceComponent::TickComponent(float DeltaTime,
 
 			for (const FHitResult& HitResult : HitResults)
 			{
+				if (const UPrimitiveComponent* HitComp = HitResult.GetComponent())
+				{
+					if (HitComp->IsA<UBoxComponent>())
+					{
+						continue;
+					}
+				}
+				
 				if (!ActiveMeleeTrace.HitActors.Contains(HitResult.GetActor()))
 				{
 					ActiveMeleeTrace.HitActors.Add(HitResult.GetActor());

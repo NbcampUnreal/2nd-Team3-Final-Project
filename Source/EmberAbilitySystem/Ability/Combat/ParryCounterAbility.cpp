@@ -29,7 +29,8 @@ void UParryCounterAbility::ActivateAbility(
 		PlayMontageTask->OnCompleted.AddDynamic(this, &UParryCounterAbility::OnMontageFinished);
 		PlayMontageTask->OnInterrupted.AddDynamic(this, &UParryCounterAbility::OnMontageFinished);
 		PlayMontageTask->OnCancelled.AddDynamic(this, &UParryCounterAbility::OnMontageFinished);
-
+		PlayMontageTask->OnBlendOut.AddDynamic(this, &UParryCounterAbility::OnMontageFinished);
+		
 		PlayMontageTask->ReadyForActivation();
 	}
 	else
