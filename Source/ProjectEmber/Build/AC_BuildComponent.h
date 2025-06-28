@@ -72,6 +72,10 @@ public:
 
     void UpdateBuildPreviewUI();
 
+    void UpdateHealth(float CurrentHealth, float MaxHealth);
+
+    void FoundBuild();
+
 public:
     // Components
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
@@ -129,4 +133,11 @@ public:
 
     UPROPERTY()
     UUserWidget* BuildPreviewWidget;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Build/UI")
+    TSubclassOf<UUserWidget> BuildHealthWidgetClass;
+
+    UUserWidget* BuildHealthWidget;
+
+    FTimerHandle HealthWidgetHideTimerHandle;
 };

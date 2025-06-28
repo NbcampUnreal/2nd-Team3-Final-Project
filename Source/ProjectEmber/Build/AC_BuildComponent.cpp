@@ -9,6 +9,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
+#include "Components/ProgressBar.h"
 #include "EmberLog/EmberLog.h"
 
 // Sets default values for this component's properties
@@ -30,6 +31,14 @@ UAC_BuildComponent::UAC_BuildComponent()
 	}
 	else {
 		UE_LOG(LogTemp, Warning, TEXT("BuildPreviewWidgetClass not found!"));
+	}
+	static ConstructorHelpers::FClassFinder<UUserWidget> WidgetClassFinder1(TEXT("/Game/_Data/BuildingSystem/BuildUI/UI_BuildHealth.UI_BuildHealth_C"));
+	if (WidgetClassFinder1.Succeeded())
+	{
+		BuildHealthWidgetClass = WidgetClassFinder1.Class;
+	}
+	else {
+		UE_LOG(LogTemp, Warning, TEXT("BuildHealthWidgetClass not found!"));
 	}
 }
 
@@ -68,6 +77,15 @@ void UAC_BuildComponent::BeginPlay()
 		{
 			BuildPreviewWidget->AddToViewport();
 			BuildPreviewWidget->SetVisibility(ESlateVisibility::Hidden); // 기본은 숨김
+		}
+	}
+	if (BuildHealthWidgetClass)
+	{
+		BuildHealthWidget = CreateWidget<UUserWidget>(GetWorld(), BuildHealthWidgetClass);
+		if (BuildHealthWidget)
+		{
+			BuildHealthWidget->AddToViewport();
+			BuildHealthWidget->SetVisibility(ESlateVisibility::Hidden); // 기본은 숨김
 		}
 	}
 }
@@ -445,6 +463,7 @@ void UAC_BuildComponent::LoadBuilds()
 
 void UAC_BuildComponent::RepairBuilding()
 {
+	FoundBuild();
 	if (!bIsBuildModeOn || !HitActor)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Build Mode OFF or No HitActor"));
@@ -483,6 +502,7 @@ void UAC_BuildComponent::RepairBuilding()
 	if (CurrentHealth >= MaxHealth)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Already at full health"));
+		UpdateHealth(CurrentHealth, MaxHealth);
 		return;
 	}
 
@@ -504,6 +524,8 @@ void UAC_BuildComponent::RepairBuilding()
 	IBuildInterface::Execute_SetHealth(HitActor, NewHealth);
 
 	UE_LOG(LogTemp, Log, TEXT("Repaired %s to %.1f / %.1f"), *HitActor->GetName(), NewHealth, MaxHealth);
+
+	UpdateHealth(NewHealth, MaxHealth);
 }
 
 void UAC_BuildComponent::UpdateBuildPreviewUI()
@@ -527,5 +549,101 @@ void UAC_BuildComponent::UpdateBuildPreviewUI()
 	if (DescText)
 	{
 		DescText->SetText(Data.BuildableDescription);
+	}
+}
+
+void UAC_BuildComponent::UpdateHealth(float CurrentHealth, float MaxHealth)
+{
+	if (!BuildHealthWidget)
+	{
+		return;
+	}
+
+	BuildHealthWidget->SetVisibility(ESlateVisibility::Visible);
+
+	const FBuildableData& Data = Buildables[BuildID];
+
+	UProgressBar* HealthBar = Cast<UProgressBar>(BuildHealthWidget->GetWidgetFromName(TEXT("HealthBar")));
+	UTextBlock* HealthText = Cast<UTextBlock>(BuildHealthWidget->GetWidgetFromName(TEXT("HealthText")));
+
+	if (HealthBar)
+	{
+		HealthBar->SetPercent(CurrentHealth / MaxHealth);
+	}
+
+	if (HealthText)
+	{
+		FString Text = FString::Printf(TEXT("%.0f / %.0f"), CurrentHealth, MaxHealth);
+		HealthText->SetText(FText::FromString(Text));
+	}
+	// 🔽 2초 후 숨기기
+	if (BuildHealthWidget)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(HealthWidgetHideTimerHandle); // 이전 타이머 제거
+		GetWorld()->GetTimerManager().SetTimer(HealthWidgetHideTimerHandle, [this]()
+			{
+				if (BuildHealthWidget)
+				{
+					BuildHealthWidget->SetVisibility(ESlateVisibility::Hidden);
+				}
+			}, 1.0f, false);
+	}
+	UE_LOG(LogTemp, Warning, TEXT("Complete UI"));
+}
+
+void UAC_BuildComponent::FoundBuild()
+{
+
+	FVector WorldLocation;
+	FVector WorldDirection;
+	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	{
+		int32 ViewportSizeX, ViewportSizeY;
+		PC->GetViewportSize(ViewportSizeX, ViewportSizeY);
+
+		FVector2D ScreenCenter(ViewportSizeX * 0.5f, ViewportSizeY * 0.5f);
+
+		PC->DeprojectScreenPositionToWorld(
+			ScreenCenter.X,
+			ScreenCenter.Y,
+			WorldLocation,
+			WorldDirection
+		);
+	}
+	FVector Start = WorldLocation + WorldDirection * 350.f;
+	FVector End = WorldLocation + WorldDirection * 1000.f;
+
+	FHitResult HitResult;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(PlayerReference);
+
+	bool bHit = GetWorld()->LineTraceSingleByChannel(
+		HitResult,
+		Start,
+		End,
+		ECollisionChannel::ECC_Visibility, // 건물 전용 트레이스 채널 사용 추천
+		Params
+	);
+
+	if (bHit)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Hit: %s"), *HitResult.GetActor()->GetName());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("LineTrace failed"));
+	}
+
+	if (bHit && HitResult.GetActor())
+	{
+		AActor* HitTarget = HitResult.GetActor();
+		if (HitTarget->GetClass()->ImplementsInterface(UBuildInterface::StaticClass()))
+		{
+			HitActor = HitTarget; // ✅ 수리 대상 설정
+		}
+	}
+	else
+	{
+		HitActor = nullptr;
 	}
 }

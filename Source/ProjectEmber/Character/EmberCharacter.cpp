@@ -358,10 +358,13 @@ void AEmberCharacter::AbilityInputPressed(int32 InputID)
 			}
 		}
 	}
-
-	if (GetOverlayMode() == AlsOverlayModeTags::Hammer)
+	if (InputID == 1 && GetOverlayMode() == AlsOverlayModeTags::Hammer)
 	{
 		BuildComponent->SpwanBuild();
+	}
+	if (InputID == 0 && GetOverlayMode() == AlsOverlayModeTags::Hammer)
+	{
+		BuildComponent->RepairBuilding();
 	}
 }
 
