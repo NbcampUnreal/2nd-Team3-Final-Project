@@ -9,8 +9,9 @@
 class ALevelSequenceActor;
 class ULevelSequencePlayer;
 class ULevelSequence;
-
+class SequenceStreamingSourceProvider;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLevelSequenceFinished);
+
 
 UCLASS(Blueprintable, EditInlineNew, meta=(BlueprintSpawnableComponent))
 class PROJECTEMBER_API UInteractionFragment_PlayLS : public UInteractionFragment
@@ -24,20 +25,18 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction")
-	TObjectPtr<ULevelSequence> LevelSequence;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction")
-	TObjectPtr<AActor> SequenceTargetActor = nullptr;
+	TObjectPtr<ALevelSequenceActor> LevelSequenceActor;
 
 	UPROPERTY(BlueprintAssignable, Category="Interaction")
 	FOnLevelSequenceFinished OnSequenceFinishedEvent;
 private:
-	UPROPERTY(Transient)
-	TObjectPtr<ULevelSequencePlayer> SequencePlayer;
 
-	UPROPERTY(Transient)
-	TObjectPtr<ALevelSequenceActor> SequenceActor;
+	TSharedPtr<SequenceStreamingSourceProvider> SequenceStreamingProvider;
 
+	void WaitForStreamingAndPlaySequence(UWorldPartitionSubsystem* Subsystem);
+	
+	void StartSequencePlayback();
+	
 	UFUNCTION()
 	void OnSequenceFinished();
 };

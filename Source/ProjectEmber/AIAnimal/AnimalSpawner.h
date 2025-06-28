@@ -91,6 +91,11 @@ public:
 	//MiniGame
 	UFUNCTION(BlueprintCallable)
 	void OnMiniGameEvent();
+	
+	//MiniGame
+	UFUNCTION(BlueprintCallable)
+	void EndMiniGameEvent();
+	
 	//Release
 	UFUNCTION(BlueprintCallable) // 전체 메모리해제 , 미니게임 체이싱-> 잡지 못하고 종료됐을 때 호출할 함수
 	void TryReleaseEntire();
@@ -252,4 +257,5 @@ protected:
 	int32 Weather =0;
 	bool bIsShouldSleep = true;
 	bool bIsLoading = false;
+	bool bIsMiniGameActive = false;
 };
