@@ -276,7 +276,7 @@ public:
 protected:
 	bool bShowQuickActionWidget{false};
 	FTimerHandle QuickActionTimerHandle;
-	
+
 public: /* Inventory */
 	UFUNCTION(BlueprintCallable, Category = "Item")
 	UUserItemManger* GetItemManager();

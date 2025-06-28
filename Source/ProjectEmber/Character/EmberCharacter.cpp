@@ -1,5 +1,8 @@
 ﻿// ReSharper disable CppMemberFunctionMayBeConst
 #include "EmberCharacter.h"
+
+#include <Item/Core/EmberItemDeveloperSetting.h>
+
 #include "EmberAbilitySystem/Attribute/Character/EmberCharacterAttributeSet.h"
 #include "InputHandler/EmberInputHandlerComponent.h"
 #include "EmberComponents/InteractionComponent.h"
@@ -35,6 +38,8 @@
 #include "Components/WidgetComponent.h"
 #include "UI/Death/DeathScreenWidget.h"
 #include "AI_NPC/NPC_Component/DialogueComponent.h"
+#include "Item/ItemSubsystem.h"
+#include "Item/Core/ItemSystemLibrary.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(EmberCharacter)
 
@@ -1184,11 +1189,16 @@ void AEmberCharacter::Input_OnSwitchThrowOverlay(const FInputActionValue& Action
 void AEmberCharacter::ShowQuickActionWidget()
 {
 	//퀵슬롯 위젯 보이게 하기
-
 	EMBER_LOG(LogEmber, Warning, TEXT("QuickActionTimerHandle ShowQuickActionWidget!"));
 	bShowQuickActionWidget = true;
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
 	TimerManager.ClearTimer(QuickActionTimerHandle);
+	
+	const UEmberItemDeveloperSetting* ItemSetting = UEmberItemDeveloperSetting::Get();
+	
+	UUIFunctionLibrary::PushContentToLayer(Cast<APlayerController>(GetController()),
+	                                       FGameplayTag::RequestGameplayTag("UI.Layer.Modal"),
+	                                       ItemSetting->QuickSlotWidgetClass);
 }
 
 void AEmberCharacter::Input_OnStartItemQuick(const FInputActionValue& ActionValue)
