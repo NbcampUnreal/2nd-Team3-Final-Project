@@ -203,7 +203,12 @@ void UAC_BuildComponent::BuildCycle()
 	if (bHit)
 	{
 		BuildTransform.SetLocation(HitResult.ImpactPoint);
-		BuildTransform.SetRotation(HitResult.ImpactNormal.ToOrientationQuat());
+		// ✅ 수정된 회전 처리 (카메라가 바라보는 방향의 Yaw만 유지)
+		FRotator LookRotation = WorldDirection.Rotation();
+		LookRotation.Pitch = 0.f;
+		LookRotation.Roll = 0.f;
+		BuildTransform.SetRotation(FQuat(LookRotation));
+
 		HitActor = HitResult.GetActor();
 		HitComponent = HitResult.GetComponent();
 		if (IsValid(BuildGhost))
