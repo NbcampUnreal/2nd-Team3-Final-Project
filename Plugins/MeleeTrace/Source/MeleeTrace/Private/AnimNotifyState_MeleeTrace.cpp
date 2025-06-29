@@ -39,6 +39,7 @@ void UAnimNotifyState_MeleeTrace::NotifyBegin(USkeletalMeshComponent* MeshComp,
 			}
 
 			MeleeTraceComponent->StartTraceWithContext(MeleeTraceInfo, this);
+			MeleeTraceComponent->SetAttackLevel(AttackLevel);
 		}
 #if WITH_EDITOR
 		else if (bShouldDrawDebugInEditor)

@@ -731,9 +731,9 @@ void ABaseAIAnimal::SwitchBehaviorTree(int32 Index)
 
 void ABaseAIAnimal::SetFlash(const float InFlashTime)
 {
-	if (InFlashTime <= 0.0f)
+	if (InFlashTime <= 0.0f || bIsDead)
 	{
-		ensureMsgf(false, TEXT("Invalid InFlashTime: %f (must be > 0). Check caller."),	InFlashTime);
+		//ensureMsgf(false, TEXT("Invalid InFlashTime: %f (must be > 0). Check caller."),	InFlashTime);
 		return;	
 	}
 	
@@ -755,7 +755,9 @@ void ABaseAIAnimal::SetOffFlash()
 {
 	FlashStrength = 0.0f;
 	bIsFlashing   = false;
-
+	FlashDuration = 0.0f;
+	FlashTime     = 0.0f;
+	
 	for (UMaterialInstanceDynamic* Mid : FlashMaterialInstances)
 	{
 		if (Mid)
@@ -767,7 +769,7 @@ void ABaseAIAnimal::SetOffFlash()
 
 void ABaseAIAnimal::TickFlash(float DeltaTime)
 {
-	if (!bIsFlashing || FlashDuration <= 0.f)
+	if (!bIsFlashing || FlashDuration <= 0.f || bIsDead)
 	{
 		return;
 	}

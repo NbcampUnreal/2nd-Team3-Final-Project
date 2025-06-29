@@ -38,6 +38,9 @@ public:
 	UPROPERTY(EditInstanceOnly, Category = "Setup")
 	FMeleeTraceInfo MeleeTraceInfo;
 
+	UPROPERTY(EditInstanceOnly, Category = "Setup")
+	float AttackLevel{1};
+	
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditInstanceOnly, Category = "Debug")
 	bool bShouldDrawDebugInEditor = false;
