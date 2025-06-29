@@ -132,7 +132,7 @@ public:
 	void SetVisibleInGame();
 
 	UFUNCTION()
-	void OnBeginDeath();
+	void OnBeginDeath(AActor* InstigatorActor);
 
  /* AbilitySystem */
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;

@@ -160,7 +160,7 @@ void ABaseAIAnimal::OnAbilityEnd(const FAbilityEndedData& AbilityEndedData)
 	}
 }
 
-void ABaseAIAnimal::OnBeginDeath()
+void ABaseAIAnimal::OnBeginDeath(AActor* InstigatorActor)
 {
 	bIsDead = true;
 	bIsShouldSleep = false;
@@ -216,9 +216,13 @@ void ABaseAIAnimal::OnBeginDeath()
 	Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.Death");
 	Payload.Instigator = this;
 	AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
-	if (DropComponent)
+
+	if (!InstigatorActor->IsA(ABaseAIAnimal::StaticClass()))
 	{
-		DropComponent->AddRandomItemToPlayer();
+		if (DropComponent)
+		{
+			DropComponent->AddRandomItemToPlayer();
+		}	
 	}
 }
 

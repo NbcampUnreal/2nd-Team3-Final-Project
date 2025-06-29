@@ -14,7 +14,7 @@ GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName)			   \
 GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)\
 
 struct FEmberCharacterAttributeSetSaveData;
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOutOfHealthDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOutOfHealthDelegate, AActor*, Instigator);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHitMulticastDelegate, AActor*, Instigator);
 
 

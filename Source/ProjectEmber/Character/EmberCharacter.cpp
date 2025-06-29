@@ -287,7 +287,7 @@ UAbilitySystemComponent* AEmberCharacter::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
-void AEmberCharacter::OnOutOfHealth()
+void AEmberCharacter::OnOutOfHealth(AActor* InstigatorActor)
 {
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{

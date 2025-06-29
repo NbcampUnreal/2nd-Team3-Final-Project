@@ -201,7 +201,8 @@ void UEmberCharacterAttributeSet::PostGameplayEffectExecute(const struct FGamepl
 	if (GetHealth() <= MinimumHealth && !bOutOfHealth)
 	{
 		//Data.Target.AddLooseGameplayTag(ABGameplayTag::Character_State_IsDead);
-		OnOutOfHealth.Broadcast();
+		const FGameplayEffectContextHandle& Context = Data.EffectSpec.GetContext();
+		OnOutOfHealth.Broadcast(Context.GetInstigator());
 	}
 	bOutOfHealth = (GetHealth() <= MinimumHealth);
 	
