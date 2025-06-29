@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "../Condition/QuestCondition.h" 
 #include "Abilities/GameplayAbilityTypes.h"
+#include "Tutorial/Subsystem/TutorialManagerSubsystem.h"
 #include "QuestDataAsset.generated.h"
 
 
@@ -28,6 +29,9 @@ struct FQuestRewardData
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest|Reward")
     FGameplayTag RewardTag;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest|Reward")
+    FName ItemID;
+    
     // 보상 수량
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest|Reward")
     int32 RewardCount{1};
@@ -94,7 +98,15 @@ struct FQuestStep
     // 해금 조건들
     UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category = "Quest|Step")
     TArray<UQuestCondition*> UnlockConditions;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Tutorial")
+    bool bShowTutorial;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Tutorial")
+    UTutorialDataAsset* TutorialDataAsset;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TArray<int32> TutorialIndexes; 
 
 };
 

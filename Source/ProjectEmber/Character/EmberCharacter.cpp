@@ -36,6 +36,7 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "Utility/AlsVector.h"
 #include "MotionWarpingComponent.h"
+#include "AIAnimal/BaseAIAnimal.h"
 #include "Components/WidgetComponent.h"
 #include "UI/Death/DeathScreenWidget.h"
 #include "AI_NPC/NPC_Component/DialogueComponent.h"
@@ -286,7 +287,7 @@ UAbilitySystemComponent* AEmberCharacter::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
-void AEmberCharacter::OnOutOfHealth()
+void AEmberCharacter::OnOutOfHealth(AActor* InstigatorActor)
 {
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
@@ -395,11 +396,11 @@ void AEmberCharacter::AbilityInputPressed(int32 InputID)
   
 	if (InputID == 1 && GetOverlayMode() == AlsOverlayModeTags::Hammer)
 	{
-		BuildComponent->SpwanBuild();
+		BuildComponent->RepairBuilding();
 	}
 	if (InputID == 0 && GetOverlayMode() == AlsOverlayModeTags::Hammer)
 	{
-		BuildComponent->RepairBuilding();
+		BuildComponent->SpwanBuild();
 	}
 }
 
@@ -974,6 +975,11 @@ void AEmberCharacter::HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, A
 			AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetAsc);
 			PlayHitEffectAtLocation(HitLocation);
 		}
+	}
+
+	if (ABaseAIAnimal* BaseAIAnimal = Cast<ABaseAIAnimal>(HitActor))
+	{
+		BaseAIAnimal->SetFlash(0.5f);
 	}
 }
 

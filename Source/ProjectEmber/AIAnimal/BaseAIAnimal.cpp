@@ -49,10 +49,11 @@ void ABaseAIAnimal::PossessedBy(AController* NewController)
 	AbilitySystemComponent->InitStats(UEmberAnimalAttributeSet::StaticClass(), nullptr);
 }
 
-
 void ABaseAIAnimal::BeginPlay()
 {
 	Super::BeginPlay();
+
+	InitFlashMaterialInstances();
 	
 	GetCharacterMovement()->bUseRVOAvoidance = true;
 	GetCharacterMovement()->AvoidanceConsiderationRadius = 800.0f; // AI가 다른 AI 감지할 반경
@@ -159,10 +160,13 @@ void ABaseAIAnimal::OnAbilityEnd(const FAbilityEndedData& AbilityEndedData)
 	}
 }
 
-void ABaseAIAnimal::OnBeginDeath()
+void ABaseAIAnimal::OnBeginDeath(AActor* InstigatorActor)
 {
 	bIsDead = true;
 	bIsShouldSleep = false;
+	
+	SetOffFlash();
+	
 	for (UActorComponent* Component : GetComponents())
 	{
 		if (UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(Component))
@@ -212,9 +216,13 @@ void ABaseAIAnimal::OnBeginDeath()
 	Payload.EventTag = FGameplayTag::RequestGameplayTag("Trigger.Animal.Death");
 	Payload.Instigator = this;
 	AbilitySystemComponent->HandleGameplayEvent(Payload.EventTag, &Payload);
-	if (DropComponent)
+
+	if (!InstigatorActor->IsA(ABaseAIAnimal::StaticClass()))
 	{
-		DropComponent->AddRandomItemToPlayer();
+		if (DropComponent)
+		{
+			DropComponent->AddRandomItemToPlayer();
+		}	
 	}
 }
 
@@ -286,6 +294,8 @@ void ABaseAIAnimal::SetVisibleInGame()
 void ABaseAIAnimal::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	TickFlash(DeltaTime);
 	
 	if (HpBarWidget && HpBarWidget->GetUserWidgetObject())
 	{
@@ -719,3 +729,83 @@ void ABaseAIAnimal::SwitchBehaviorTree(int32 Index)
 	BlackboardComponent->SetValueAsName("NStateTag", "Animal.State.Idle");
 }
 
+void ABaseAIAnimal::SetFlash(const float InFlashTime)
+{
+	if (InFlashTime <= 0.0f)
+	{
+		ensureMsgf(false, TEXT("Invalid InFlashTime: %f (must be > 0). Check caller."),	InFlashTime);
+		return;	
+	}
+	
+	FlashDuration = InFlashTime;
+	FlashTime     = InFlashTime;
+	FlashStrength = 1.f;
+	bIsFlashing   = true;
+
+	for (UMaterialInstanceDynamic* Mid : FlashMaterialInstances)
+	{
+		if (Mid)
+		{
+			Mid->SetScalarParameterValue(TEXT("FlashStrength"), FlashStrength);
+		}
+	}
+}
+
+void ABaseAIAnimal::SetOffFlash()
+{
+	FlashStrength = 0.0f;
+	bIsFlashing   = false;
+
+	for (UMaterialInstanceDynamic* Mid : FlashMaterialInstances)
+	{
+		if (Mid)
+		{
+			Mid->SetScalarParameterValue(TEXT("FlashStrength"), FlashStrength);
+		}
+	}
+}
+
+void ABaseAIAnimal::TickFlash(float DeltaTime)
+{
+	if (!bIsFlashing || FlashDuration <= 0.f)
+	{
+		return;
+	}
+		
+	FlashTime -= DeltaTime;
+	if (FlashTime <= 0.f)
+	{
+		FlashTime     = 0.f;
+		FlashStrength = 0.f;
+		bIsFlashing   = false;
+	}
+	else
+	{
+		FlashStrength = FlashTime / FlashDuration;
+	}
+
+	for (UMaterialInstanceDynamic* Mid : FlashMaterialInstances)
+	{
+		if (Mid)
+		{
+			Mid->SetScalarParameterValue(TEXT("FlashStrength"), FlashStrength);
+		}
+	}
+}
+
+void ABaseAIAnimal::InitFlashMaterialInstances()
+{
+	if (USkeletalMeshComponent* SkeletalMesh = GetMesh())
+	{
+		const int32 NumMats = SkeletalMesh->GetNumMaterials();
+		FlashMaterialInstances.Reserve(NumMats);
+
+		for (int32 i = 0; i < NumMats; i++)
+		{
+			if (UMaterialInstanceDynamic* Mid = SkeletalMesh->CreateDynamicMaterialInstance(i))
+			{
+				FlashMaterialInstances.Add(Mid);
+			}
+		}
+	}
+}

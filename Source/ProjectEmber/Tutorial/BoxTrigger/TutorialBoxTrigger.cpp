@@ -2,15 +2,19 @@
 #include "Components/BoxComponent.h"
 #include "Tutorial/Subsystem/TutorialManagerSubsystem.h"
 #include "GameFramework/PlayerController.h"
-
+ 
 
 ATutorialBoxTrigger::ATutorialBoxTrigger()
 {
     BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComponent"));
     RootComponent = BoxComponent;
-
     BoxComponent->SetCollisionProfileName(TEXT("Trigger"));
     BoxComponent->OnComponentBeginOverlap.AddDynamic(this, &ATutorialBoxTrigger::OnOverlapBegin);
+}
+
+void ATutorialBoxTrigger::BeginPlay()
+{
+    Super::BeginPlay();
 }
 
 void ATutorialBoxTrigger::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent,
@@ -20,32 +24,35 @@ void ATutorialBoxTrigger::OnOverlapBegin(UPrimitiveComponent* OverlappedComponen
     bool bFromSweep,
     const FHitResult& SweepResult)
 {
-    if (!Cast<APawn>(OtherActor) || bTriggered)
-    {
+    if (!Cast<APawn>(OtherActor))
         return;
-    }
-    if (Cast<APawn>(OtherActor) && TutorialDataAsset)
-    {
-        if (TutorialDataAsset->Tutorials.IsValidIndex(TutorialIndex))
-        {
-            if (UTutorialManagerSubsystem* TutorialSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UTutorialManagerSubsystem>())
-            {
-                TutorialSubsystem->OnTutorialTriggered.Broadcast(
-                    TutorialDataAsset->Tutorials[TutorialIndex]
-                );
-                bTriggered = true;
-            }
-        }
-    }
-    
-}
-void ATutorialBoxTrigger::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent,
-    AActor* OtherActor,
-    UPrimitiveComponent* OtherComp,
-    int32 OtherBodyIndex)
-{
+
     if (bTriggered)
     {
-        bTriggered = false;
+        UE_LOG(LogTemp, Warning, TEXT("▶ 튜토리얼 트리거가 이미 실행되었습니다: %s"), *GetName());
+        return;
+    }
+
+    UTutorialManagerSubsystem* TutorialSubsystem = GetGameInstance()->GetSubsystem<UTutorialManagerSubsystem>();
+    if (!TutorialSubsystem || !TutorialDataAsset)
+        return;
+
+    TArray<FTutorialData> TutorialSequence;
+
+    for (int32 Index : TutorialIndexs)
+    {
+        if (TutorialDataAsset->Tutorials.IsValidIndex(Index))
+        {
+            TutorialSequence.Add(TutorialDataAsset->Tutorials[Index]);
+        }
+    }
+
+    if (TutorialSequence.Num() > 0)
+    {
+        TutorialSubsystem->ShowTutorialSequence(TutorialSequence);
+        bTriggered = true;
     }
 }
+
+
+

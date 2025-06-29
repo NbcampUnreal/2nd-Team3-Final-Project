@@ -5,6 +5,7 @@
 #include "EMSActorSaveInterface.h"
 #include "GameplayAbilitySpec.h"
 #include "GameplayTagContainer.h"
+#include "Attribute/SaveData/AttributeSaveData.h"
 #include "GameFramework/PlayerState.h"
 #include "Item/Core/ItemStruct/EmberItemEntry.h"
 #include "EmberPlayerState.generated.h"
@@ -38,6 +39,8 @@ private:
 	UPROPERTY()
 	TObjectPtr<class UEmberItemAttributeSet> ItemAttributeSet;
 
+	UPROPERTY(SaveGame)
+	FEmberCharacterAttributeSetSaveData CharacterAttributeSaveData;
 	
 	UPROPERTY(SaveGame)
 	TMap<FName, int32> QuestProgress;

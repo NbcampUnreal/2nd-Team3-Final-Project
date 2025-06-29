@@ -19,15 +19,13 @@ class PROJECTEMBER_API UEmberEquipmentContainer : public UEmberBaseResourceSlotC
 public:
 	UEmberEquipmentContainer();
 	
-	UFUNCTION(BlueprintCallable)
-	void SetOwnerAbilitySystemComponent(UAbilitySystemComponent* InOwnerAbilitySystemComponent);
-
 	virtual bool bAbleAddItemSlot(const FInstancedStruct& InItemEntry, int32 InSlotIndex) override;
 
 	bool bIsEquipmentTag(const FGameplayTag& InTag) const;
 	virtual void CreateItemSlot(const FEmberItemEntry& InItemEntry, int32 InItemIndex) override;
 	int32 GetSlotIndex(const FGameplayTag& InTag) const;
 
+	virtual int32 AddSlotItemReturnApplied(const FInstancedStruct& InInstancedStruct, int32 InSlotIndex) override;
 	virtual int32 RemoveSlotItemReturnApplied(const int32 InOutQuantity, int32 InSlotIndex = -1) override;
 
 protected:
@@ -37,8 +35,5 @@ protected:
 protected:
 	FGameplayTagContainer SlotGameplayTags;
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Equipment")
-	TObjectPtr<UAbilitySystemComponent> OwnerAbilitySystemComponent;
-	
 	TArray<TArray<FActiveGameplayEffectHandle>> EquipmentEffects = TArray<TArray<FActiveGameplayEffectHandle>>();
 };

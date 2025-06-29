@@ -166,8 +166,15 @@ void UEmberBaseItemContainer::SetItems(TMap<FEmberItemKey, FInstancedStruct>& In
 	Items = InItems;
 }
 
+void UEmberBaseItemContainer::SetOwnerAbilitySystemComponent(UAbilitySystemComponent* InOwnerAbilitySystemComponent)
+{
+	
+	OwnerAbilitySystemComponent = InOwnerAbilitySystemComponent;
+
+}
+
 FInstancedStruct* UEmberBaseItemContainer::GetInstancedItemInfo(const FName& InItemID,
-                                                               const TArray<FItemEffectApplicationInfo>& InEnchants)
+                                                                const TArray<FItemEffectApplicationInfo>& InEnchants)
 {
 	return GetInstancedItemInfo(FEmberItemKey(InItemID, InEnchants));
 }
