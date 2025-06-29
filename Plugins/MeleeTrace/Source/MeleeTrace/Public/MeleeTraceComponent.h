@@ -43,11 +43,14 @@ class MELEETRACE_API UMeleeTraceComponent : public UActorComponent
 
 public:
 	UMeleeTraceComponent();
+
+public:	/* Custom Logic */
+	void SetAttackLevel(const float InLevel);
 	
-public:
 	UPROPERTY(EditAnywhere, Category = "AbilitySystem")
 	TSubclassOf<class UGameplayEffect> AttackDamageEffectClass;
-	
+
+	float AttackLevel{1};
 public:	
 	virtual void TickComponent(float DeltaTime,
 		ELevelTick TickType,

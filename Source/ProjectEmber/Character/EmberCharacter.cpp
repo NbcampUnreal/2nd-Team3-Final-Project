@@ -305,11 +305,8 @@ void AEmberCharacter::OnOutOfHealth(AActor* InstigatorActor)
 
 void AEmberCharacter::AbilityInputPressed(int32 InputID)
 {
-	if (UUIFunctionLibrary::GetIsAbilityInputLock(Cast<APlayerController>(GetController())))
-	{
-		return;
-	}
-	if (AbilitySystemComponent->HasMatchingGameplayTag(AlsLocomotionModeTags::Gliding))
+	if (UUIFunctionLibrary::GetIsAbilityInputLock(Cast<APlayerController>(GetController())) ||
+		AbilitySystemComponent->HasMatchingGameplayTag(AlsLocomotionModeTags::Gliding))
 	{
 		return;
 	}
@@ -949,7 +946,7 @@ void AEmberCharacter::HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, A
 	if (DamageGameplayEffectClass)
 	{
 		if (const FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(
-			DamageGameplayEffectClass, 1.0f, EffectContext); SpecHandle.IsValid())
+			DamageGameplayEffectClass, MeleeTraceComponent->AttackLevel, EffectContext); SpecHandle.IsValid())
 		{
 			/* 여기서 타겟시스템 연동처리 0.5초안에 추가로 들어온 HitActor가 있는지
 			 * 혼자면 그 HitActor에 대해서만 적용 만약 여러개가 있다면 가장 가까운 HitActor에 대해서만 적용

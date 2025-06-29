@@ -246,7 +246,7 @@ protected:
 protected:
 	/** 글라이드 시 전방(Forward) 속도 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Glide")
-	float GlideForwardSpeed = 800.0f;
+	float GlideForwardSpeed = 500.0f;
 
 	/** 글라이드 시 하강 속도(z축) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Glide")
