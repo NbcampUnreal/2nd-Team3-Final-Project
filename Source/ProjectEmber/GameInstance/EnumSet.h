@@ -44,3 +44,9 @@ enum class EUISfxSoundType : uint8
 {
 	Click = 0
 };
+
+UENUM(BlueprintType)
+enum class EDungeonList : uint8
+{
+	FirstDungeon = 0
+};
