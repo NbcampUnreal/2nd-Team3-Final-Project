@@ -9,6 +9,7 @@
 #include "MessageBus/MessageBus.h"
 #include "LootActorBase.generated.h"
 
+class UGeometryCollection;
 class UEmberInteractableItemDropComponent;
 
 UENUM(BlueprintType)
@@ -92,7 +93,13 @@ private: /* MessageBus */
 	
 	FMessageDelegate MessageDelegateHandle;
 
+public:
+	UFUNCTION(BlueprintCallable)
+	void DestroyedGeometryCollectionComponent();
 protected:
 	UPROPERTY(EditAnywhere, Blueprintable, Category = "Item")
 	TObjectPtr<UEmberInteractableItemDropComponent> ItemDropComponent;
+	UPROPERTY(EditAnywhere, Blueprintable, Category = "Geometry")
+	TObjectPtr<UGeometryCollection> GeometryCollectionAsset;	UPROPERTY(EditAnywhere, Blueprintable, Category = "Geometry")
+	TObjectPtr<UGeometryCollectionComponent> GeometryCollectionComponent;
 };

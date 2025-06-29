@@ -4,7 +4,10 @@
 #include "Ability/Base/BaseOverlayAbility.h"
 #include "Character/EmberCharacter.h"
 #include "EmberLog/EmberLog.h"
+#include "Field/FieldSystemComponent.h"
+#include "Field/FieldSystemObjects.h"
 #include "GameInstance/GameplayEventSubsystem.h"
+#include "GeometryCollection/GeometryCollectionComponent.h"
 #include "Item/ItemSubsystem.h"
 #include "Item/Core/ItemSystemLibrary.h"
 #include "Item/Drop/EmberInteractableItemDropComponent.h"
@@ -16,6 +19,7 @@ ALootActorBase::ALootActorBase()
 
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComponent"));
 	ItemDropComponent = CreateDefaultSubobject<UEmberInteractableItemDropComponent>(TEXT("ItemDropComponent"));
+	
 	SetRootComponent(MeshComponent);
 }
 
@@ -94,6 +98,65 @@ void ALootActorBase::CompleteInteractAbility()
 {
 	bIsAbilityEnded = true;
 
+	if (GeometryCollectionAsset)
+	{
+		if (UActorComponent* Component = AddComponentByClass(UGeometryCollectionComponent::StaticClass(),false, FTransform::Identity, false))
+		{
+			if (UGeometryCollectionComponent* NewGeometryCollectionComponent = Cast<UGeometryCollectionComponent>(Component))
+			{
+				NewGeometryCollectionComponent->SetRestCollection(GeometryCollectionAsset);
+				NewGeometryCollectionComponent->AttachToComponent(GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+
+				NewGeometryCollectionComponent->SetCollisionProfileName(TEXT("PhysicsActor"));
+
+				NewGeometryCollectionComponent->SetCollisionObjectType(ECC_PhysicsBody);
+				NewGeometryCollectionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+				NewGeometryCollectionComponent->SetCollisionResponseToAllChannels(ECR_Block);
+				NewGeometryCollectionComponent->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+				NewGeometryCollectionComponent->SetSimulatePhysics(true);
+
+				NewGeometryCollectionComponent->RegisterComponent();
+
+				GeometryCollectionComponent = NewGeometryCollectionComponent;
+				
+				FVector ComponentLocation = GeometryCollectionComponent->GetComponentLocation();
+				GeometryCollectionComponent->ObjectType = EObjectStateTypeEnum::Chaos_Object_Dynamic;
+
+				// 2. 물리 상태를 다시 생성하여 변경사항을 물리 엔진에 적용합니다.
+				// 이 함수 호출이 가장 중요합니다.
+				GeometryCollectionComponent->RecreatePhysicsState();
+				
+				TObjectPtr<URadialFalloff> RadialFalloff = NewObject<URadialFalloff>();
+				RadialFalloff->SetRadialFalloff(
+					5000.f,
+					0.f,
+					500.f,
+					0.f,
+					500.f,
+					ComponentLocation,
+					EFieldFalloffType::Field_Falloff_Linear);
+
+				GeometryCollectionComponent->ApplyPhysicsField(
+				true,
+				EGeometryCollectionPhysicsTypeEnum::Chaos_ExternalClusterStrain,
+				nullptr,
+				RadialFalloff
+				);
+
+				GeometryCollectionComponent->GetBodyInstance();
+				TObjectPtr<URadialVector> ForceField = NewObject<URadialVector>();
+				ForceField->Magnitude = 5000000.f;
+				ForceField->Position = GetActorLocation();
+				GeometryCollectionComponent->ApplyPhysicsField(
+					true,
+					EGeometryCollectionPhysicsTypeEnum::Chaos_LinearForce,
+					nullptr,
+					ForceField
+				);
+			}
+		}
+	}
+	
 	FGameplayEventData EventData;
 	EventData.EventTag = FGameplayTag::RequestGameplayTag(FName("Quest.Gathering"));
 	EventData.Instigator = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
@@ -111,7 +174,6 @@ void ALootActorBase::CompleteInteractAbility()
 		UE_LOG(LogTemp, Warning, TEXT(" [LootActor] Gathering 이벤트 발생: %s / 아이템 태그: %s"),
 			*EventData.EventTag.ToString(), *TargetItemTag.ToString());
 	}
-
 
 	ItemDropComponent->DropItem(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	// 3. 아이템 획득 등의 후속 처리 (선택)
@@ -178,5 +240,14 @@ void ALootActorBase::ReceiveMessage(const FName MessageType, UObject* Payload)
 		MessageBusUnsubscribe();
 		bIsAbilityEnded = false;
 	}
+}
+
+void ALootActorBase::DestroyedGeometryCollectionComponent()
+{
+	if (GeometryCollectionComponent)
+	{
+		GeometryCollectionComponent->DestroyComponent();
+	}
+	GeometryCollectionComponent = nullptr;
 }
 
