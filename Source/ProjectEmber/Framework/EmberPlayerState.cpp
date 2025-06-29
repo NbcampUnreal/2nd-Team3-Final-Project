@@ -10,6 +10,8 @@
 #include "Item/Ability/EmberItemAttributeSet.h"
 #include "Kismet/GameplayStatics.h"
 #include "Quest/QuestSubsystem.h"
+#include "Attribute/SaveData/AttributeSaveData.h"
+
 
 AEmberPlayerState::AEmberPlayerState()
 {
@@ -35,16 +37,15 @@ void AEmberPlayerState::BeginPlay()
 	}
 
 	AbilitySystemComponent->AbilityFailedCallbacks.AddUObject(this, &AEmberPlayerState::HandleAbilityFailed);
-	/*auto* Proxy = UEMSAsyncLoad::LoadGameActors(GetWorld(), true, true);
-	if (Proxy)
-	{
-		// 완료 시 호출될 함수 바인딩
-		Proxy->Completed.AddUObject(this, &USkillManagerSubsystem::OnAllActorsLoaded);
-	}*/
 }
 
 void AEmberPlayerState::ActorPreSave_Implementation()
 {
+	if (AttributeSet)
+	{
+		AttributeSet->FillSaveData(CharacterAttributeSaveData);		
+	}
+	
 	if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
 	{
 		QuestProgress = QuestSubsystem->GetQuestProgress();
@@ -63,6 +64,11 @@ void AEmberPlayerState::ActorPreSave_Implementation()
 
 void AEmberPlayerState::ActorLoaded_Implementation()
 {
+	if (AttributeSet)
+	{
+		AttributeSet->LoadSaveData(CharacterAttributeSaveData);		
+	}
+	
 	if (UQuestSubsystem* QuestSubsystem = GetGameInstance()->GetSubsystem<UQuestSubsystem>())
 	{
 		QuestSubsystem->LoadQuest(GetPlayerController(), QuestProgress);

@@ -269,4 +269,20 @@ protected:
 	// ItemManager
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	TObjectPtr<UEmberDropComponent> DropComponent;
+
+public:	/* KTW : Flash */
+	void SetFlash(float InFlashTime);
+	void SetOffFlash();
+protected:
+	void TickFlash(float DeltaTime);
+	void InitFlashMaterialInstances();
+	
+	UPROPERTY()
+	TArray<UMaterialInstanceDynamic*> FlashMaterialInstances;
+
+	float FlashTime{0.0f};
+	float FlashStrength{0.0f};
+	float FlashDuration{0.f};
+	
+	bool bIsFlashing{false};
 };

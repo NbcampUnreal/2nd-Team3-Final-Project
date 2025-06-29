@@ -36,6 +36,7 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "Utility/AlsVector.h"
 #include "MotionWarpingComponent.h"
+#include "AIAnimal/BaseAIAnimal.h"
 #include "Components/WidgetComponent.h"
 #include "UI/Death/DeathScreenWidget.h"
 #include "AI_NPC/NPC_Component/DialogueComponent.h"
@@ -974,6 +975,11 @@ void AEmberCharacter::HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, A
 			AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetAsc);
 			PlayHitEffectAtLocation(HitLocation);
 		}
+	}
+
+	if (ABaseAIAnimal* BaseAIAnimal = Cast<ABaseAIAnimal>(HitActor))
+	{
+		BaseAIAnimal->SetFlash(0.5f);
 	}
 }
 
