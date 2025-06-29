@@ -31,11 +31,6 @@ UEmberEquipmentContainer::UEmberEquipmentContainer()
 	}
 }
 
-void UEmberEquipmentContainer::SetOwnerAbilitySystemComponent(
-	UAbilitySystemComponent* InOwnerAbilitySystemComponent)
-{
-	OwnerAbilitySystemComponent = InOwnerAbilitySystemComponent;
-}
 
 bool UEmberEquipmentContainer::bAbleAddItemSlot(const FInstancedStruct& InItemEntry, int32 InSlotIndex)
 {
@@ -79,6 +74,16 @@ int32 UEmberEquipmentContainer::GetSlotIndex(const FGameplayTag& InTag) const
 	return -1;
 }
 
+int32 UEmberEquipmentContainer::AddSlotItemReturnApplied(const FInstancedStruct& InInstancedStruct, int32 InSlotIndex)
+{
+	int32 QuantityToAdd = Super::AddSlotItemReturnApplied(InInstancedStruct, InSlotIndex);
+	if (QuantityToAdd > 0)
+	{
+		ActiveEffect(InSlotIndex);
+	}
+	return QuantityToAdd;
+}
+
 
 int32 UEmberEquipmentContainer::RemoveSlotItemReturnApplied(const int32 InOutQuantity, int32 InSlotIndex)
 {
@@ -106,15 +111,16 @@ void UEmberEquipmentContainer::RemoveEffect(int32 InSlotIndex)
 
 void UEmberEquipmentContainer::ActiveEffect(int32 InSlotIndex)
 {
-	
 	if (EquipmentEffects.IsValidIndex(InSlotIndex) && OwnerAbilitySystemComponent)
 	{
 		if (FEmberEquipmentSlot* InSlot = ItemSlots[InSlotIndex].GetMutablePtr<FEmberEquipmentSlot>())
 		{
+
 			TArray<FActiveGameplayEffectHandle> EffectHandles;
 			EffectHandles.Append(UItemSystemLibrary::ApplyEffectInfoList(OwnerAbilitySystemComponent, InSlot->MainEffectInfos, Owner));
 			EffectHandles.Append(UItemSystemLibrary::ApplyEffectInfoList(OwnerAbilitySystemComponent, InSlot->Enchants, Owner));
-			EquipmentEffects.Add(EffectHandles);
+
+			EquipmentEffects[InSlotIndex] = EffectHandles;
 		}
 	}
 }

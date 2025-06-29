@@ -33,7 +33,6 @@ public:
 protected:
 	void HandleItemConsumption(const FConsumableInfoRow* ConsumeData);
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Ability")
 	TObjectPtr<UAbilitySystemComponent> OwnerAbilitySystemComponent;
 
 };

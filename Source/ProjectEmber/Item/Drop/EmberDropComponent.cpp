@@ -36,7 +36,10 @@ void UEmberDropComponent::AddRandomItemToPlayer()
 			for (FEmberSlot Slots : *DropManager->GetItemSlotsPtr())
 			{
 				FInstancedStruct InStruct= Slots.CreateInstancedStruct();
-				ItemManger->AddItemAndAlarm(InStruct);
+				if (ItemManger)
+				{
+					ItemManger->AddItemAndAlarm(InStruct);
+				}
 			}
 		}
 	}

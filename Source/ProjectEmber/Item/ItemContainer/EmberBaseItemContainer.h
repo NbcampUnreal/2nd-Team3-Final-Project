@@ -52,6 +52,10 @@ public:
 
 	TMap<FEmberItemKey, FInstancedStruct> GetItems();
 	void SetItems(TMap<FEmberItemKey, FInstancedStruct>& InItems);
+	
+	UFUNCTION(BlueprintCallable)
+	void SetOwnerAbilitySystemComponent(UAbilitySystemComponent* InOwnerAbilitySystemComponent);
+
 protected:
 	
 	virtual void CreateItem(const FEmberItemEntry& InItemEntry);
@@ -76,6 +80,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item") // SaveGame 필요시 추가
 	TObjectPtr<AActor> Owner;
 
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category="Equipment")
+	TObjectPtr<UAbilitySystemComponent> OwnerAbilitySystemComponent;
 	// --- 헬퍼 함수 ---
 	
 public:
