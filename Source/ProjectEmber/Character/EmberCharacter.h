@@ -147,7 +147,7 @@ public: /* AbilitySystem */
 
 protected:
 	UFUNCTION()
-	virtual void OnOutOfHealth();
+	virtual void OnOutOfHealth(AActor* InstigatorActor);
 
 	void AbilityInputPressed(int32 InputID);
 	FGameplayAbilitySpec* GetSpecFromOverlayMode(const bool IsRightInput = false) const;

@@ -287,7 +287,7 @@ UAbilitySystemComponent* AEmberCharacter::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
-void AEmberCharacter::OnOutOfHealth()
+void AEmberCharacter::OnOutOfHealth(AActor* InstigatorActor)
 {
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
@@ -396,11 +396,11 @@ void AEmberCharacter::AbilityInputPressed(int32 InputID)
   
 	if (InputID == 1 && GetOverlayMode() == AlsOverlayModeTags::Hammer)
 	{
-		BuildComponent->SpwanBuild();
+		BuildComponent->RepairBuilding();
 	}
 	if (InputID == 0 && GetOverlayMode() == AlsOverlayModeTags::Hammer)
 	{
-		BuildComponent->RepairBuilding();
+		BuildComponent->SpwanBuild();
 	}
 }
 
