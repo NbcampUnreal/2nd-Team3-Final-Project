@@ -29,6 +29,9 @@ struct FQuestRewardData
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest|Reward")
     FGameplayTag RewardTag;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest|Reward")
+    FName ItemID;
+    
     // 보상 수량
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Quest|Reward")
     int32 RewardCount{1};

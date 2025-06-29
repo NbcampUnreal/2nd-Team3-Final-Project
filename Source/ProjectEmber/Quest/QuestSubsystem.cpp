@@ -6,8 +6,10 @@
 #include "Character/EmberCharacter.h"
 #include "Data/QuestDataAsset.h"
 #include "EmberLog/EmberLog.h"
+#include "GameFramework/GameSession.h"
 #include "GameInstance/GameplayEventSubsystem.h"
 #include "Item/UserItemManger.h"
+#include "Kismet/GameplayStatics.h"
 #include "UI/HUD/EmberMainHUD.h"
 #include "Tutorial/Subsystem/TutorialManagerSubsystem.h"
 
@@ -183,6 +185,10 @@ bool UQuestSubsystem::AdvanceQuestStep(FName QuestID)
              * 각 리워드 보상타입에 맞춰서 함수 호출해주면 될듯
              * AddItem이라던가 경험치면 GameplayEffect를 호출한다던가
              */
+            if (AEmberCharacter* Character = Cast<AEmberCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
+            {
+                Character->GetItemManager()->AddItemAndAlarm(Reward.ItemID, Reward.RewardCount);
+            }
         }
     }
     
