@@ -27,4 +27,6 @@ protected:
 	virtual int32 RemoveItemAutomatic(const FEmberItemEntry& InItem);
 
 	virtual int32 FindRemoveItemIndex(const FEmberItemEntry& InItemEntry);
+	
+	
 };

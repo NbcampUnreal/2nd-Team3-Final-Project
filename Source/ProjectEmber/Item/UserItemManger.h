@@ -131,7 +131,9 @@ public:
 	TObjectPtr<UQuickSlotManager> QuickSlotManager;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")
 	TObjectPtr<UEmberEquipmentManager> EquipmentManager;
+	UPROPERTY(Instanced)
 	TObjectPtr<UEmberDropItemManager> DropItemManager;
+	UPROPERTY(Instanced)
 	TObjectPtr<UEmberAddItemMessage> ItemMessageManager;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Manager")

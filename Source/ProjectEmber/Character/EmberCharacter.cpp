@@ -1,5 +1,9 @@
-﻿// ReSharper disable CppMemberFunctionMayBeConst
+﻿
 #include "EmberCharacter.h"
+#include <Item/Core/EmberItemDeveloperSetting.h>
+#include <Item/UI/SlotWidget/SlotsPanel/Implements/EmberBasePanel/EmberQuickSlotPanel.h>
+
+#include "Item/UI/SlotWidget/Slot/EmberQuickSlotWidget.h"
 #include "EmberAbilitySystem/Attribute/Character/EmberCharacterAttributeSet.h"
 #include "InputHandler/EmberInputHandlerComponent.h"
 #include "EmberComponents/InteractionComponent.h"
@@ -32,9 +36,13 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "Utility/AlsVector.h"
 #include "MotionWarpingComponent.h"
+#include "AIAnimal/BaseAIAnimal.h"
 #include "Components/WidgetComponent.h"
 #include "UI/Death/DeathScreenWidget.h"
 #include "AI_NPC/NPC_Component/DialogueComponent.h"
+#include "Item/ItemSubsystem.h"
+#include "Item/Core/ItemSystemLibrary.h"
+#include "Kismet/GameplayStatics.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(EmberCharacter)
 
@@ -279,7 +287,7 @@ UAbilitySystemComponent* AEmberCharacter::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
-void AEmberCharacter::OnOutOfHealth()
+void AEmberCharacter::OnOutOfHealth(AActor* InstigatorActor)
 {
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
@@ -297,11 +305,8 @@ void AEmberCharacter::OnOutOfHealth()
 
 void AEmberCharacter::AbilityInputPressed(int32 InputID)
 {
-	if (UUIFunctionLibrary::GetIsAbilityInputLock(Cast<APlayerController>(GetController())))
-	{
-		return;
-	}
-	if (AbilitySystemComponent->HasMatchingGameplayTag(AlsLocomotionModeTags::Gliding))
+	if (UUIFunctionLibrary::GetIsAbilityInputLock(Cast<APlayerController>(GetController())) ||
+		AbilitySystemComponent->HasMatchingGameplayTag(AlsLocomotionModeTags::Gliding))
 	{
 		return;
 	}
@@ -388,11 +393,11 @@ void AEmberCharacter::AbilityInputPressed(int32 InputID)
   
 	if (InputID == 1 && GetOverlayMode() == AlsOverlayModeTags::Hammer)
 	{
-		BuildComponent->SpwanBuild();
+		BuildComponent->RepairBuilding();
 	}
 	if (InputID == 0 && GetOverlayMode() == AlsOverlayModeTags::Hammer)
 	{
-		BuildComponent->RepairBuilding();
+		BuildComponent->SpwanBuild();
 	}
 }
 
@@ -941,7 +946,7 @@ void AEmberCharacter::HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, A
 	if (DamageGameplayEffectClass)
 	{
 		if (const FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(
-			DamageGameplayEffectClass, 1.0f, EffectContext); SpecHandle.IsValid())
+			DamageGameplayEffectClass, MeleeTraceComponent->AttackLevel, EffectContext); SpecHandle.IsValid())
 		{
 			/* 여기서 타겟시스템 연동처리 0.5초안에 추가로 들어온 HitActor가 있는지
 			 * 혼자면 그 HitActor에 대해서만 적용 만약 여러개가 있다면 가장 가까운 HitActor에 대해서만 적용
@@ -967,6 +972,11 @@ void AEmberCharacter::HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, A
 			AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetAsc);
 			PlayHitEffectAtLocation(HitLocation);
 		}
+	}
+
+	if (ABaseAIAnimal* BaseAIAnimal = Cast<ABaseAIAnimal>(HitActor))
+	{
+		BaseAIAnimal->SetFlash(0.5f);
 	}
 }
 
@@ -1184,11 +1194,23 @@ void AEmberCharacter::Input_OnSwitchThrowOverlay(const FInputActionValue& Action
 void AEmberCharacter::ShowQuickActionWidget()
 {
 	//퀵슬롯 위젯 보이게 하기
-
 	EMBER_LOG(LogEmber, Warning, TEXT("QuickActionTimerHandle ShowQuickActionWidget!"));
 	bShowQuickActionWidget = true;
 	FTimerManager& TimerManager = GetWorld()->GetTimerManager();
 	TimerManager.ClearTimer(QuickActionTimerHandle);
+	
+	const UEmberItemDeveloperSetting* ItemSetting = UEmberItemDeveloperSetting::Get();
+
+	if (!QuickSlotWidget.IsValid())
+	{
+		QuickSlotWidget = UItemSystemLibrary::GetItemSubsystem()->GetQuickSlotWidget();
+			/*UUIFunctionLibrary::PushContentToLayer(Cast<APlayerController>(GetController()),
+											   FGameplayTag::RequestGameplayTag("UI.Layer.Modal"),
+											   ItemSetting->QuickSlotWidgetClass);*/
+	}
+
+	QuickSlotWidget->SetVisibility(ESlateVisibility::Visible);
+	UUIFunctionLibrary::FocusUI(Cast<APlayerController>(GetController()),Cast<UUserWidget>(QuickSlotWidget),true, true, true);
 }
 
 void AEmberCharacter::Input_OnStartItemQuick(const FInputActionValue& ActionValue)
@@ -1203,16 +1225,40 @@ void AEmberCharacter::Input_OnCancelItemQuick(const FInputActionValue& ActionVal
 	// 타이머가 발동중이면 (1초가 안지났다는 뜻)
 	if (TimerManager.IsTimerActive(QuickActionTimerHandle))
 	{
-		// 포커스 중인 아이템 사용
-		EMBER_LOG(LogEmber, Warning, TEXT("QuickActionTimerHandle is active, using focused item."));
 		TimerManager.ClearTimer(QuickActionTimerHandle);
+
+		if (QuickSlotWidget.IsValid())
+		{
+			
+			Cast<UEmberQuickSlotWidget>(Cast<UEmberQuickSlotPanel>(QuickSlotWidget)->Slots[HoveredSlotIndex])->UseQuickSlotItem(HoveredSlotIndex);
+			
+			EMBER_LOG(LogEmber, Warning, TEXT("QuickActionTimerHandle is active, using focused item."));
+		}
 	}
 	// 퀵슬롯 위젯이 노출 중이면
 	else if (bShowQuickActionWidget)
 	{
 		// 포커스 중인 슬롯으로 세팅 후 Widget 닫기
-		EMBER_LOG(LogEmber, Warning, TEXT("QuickActionWidget is showing, setting focused slot and closing widget."));
 		bShowQuickActionWidget = false;
+		if (QuickSlotWidget.IsValid())
+		{
+			if (UEmberQuickSlotPanel* SlotPanelWidget = Cast<UEmberQuickSlotPanel>(QuickSlotWidget))
+			{
+				for (TObjectPtr<UEmberBaseSlotWidget> Slot :SlotPanelWidget->Slots)
+				{
+					if (Cast<UEmberQuickSlotWidget>(Slot)->bIsHovered)
+					{
+						HoveredSlotIndex = Cast<UEmberQuickSlotWidget>(Slot)->SlotIndex;
+						EMBER_LOG(LogEmber, Warning, TEXT("QuickActionWidget is showing, setting focused slot and closing widget."));
+						
+				 		break;
+					}
+				}
+			}
+		}
+		
+		UUIFunctionLibrary::FocusGame(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+		QuickSlotWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 

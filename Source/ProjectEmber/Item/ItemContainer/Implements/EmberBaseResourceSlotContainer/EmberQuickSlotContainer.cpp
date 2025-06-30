@@ -130,6 +130,34 @@ void UEmberQuickSlotContainer::InventoryChanged(int32 InIndex, const FInstancedS
 				}
 			}
 		}
+		else
+		{
+			UpdateRemoveItem();
+
+		}
+	}
+	
+}
+
+void UEmberQuickSlotContainer::UpdateRemoveItem()
+{
+	for (int32 Index = 0; Index < ItemSlots.Num(); ++Index)
+	{
+		FInstancedStruct& InstancedStruct = ItemSlots[Index];
+		if (FEmberItemEntry* InItemEntry = InstancedStruct.GetMutablePtr<FEmberItemEntry>())
+		{
+			
+			FInstancedStruct OutInstancedStruct = FInstancedStruct();
+			IEmberResourceProvider::Execute_GetItemInfo(InventorySlotContainer, *InItemEntry, OutInstancedStruct);
+			if (const FEmberItemEntry* ItemEntry = OutInstancedStruct.GetPtr<FEmberItemEntry>())
+			{
+				if (ItemEntry->bIsEmpty())
+				{
+					CreateItemSlot(FEmberItemEntry(), Index);
+					OnItemChangedDelegate.Broadcast(Index, ItemSlots[Index]);
+				}
+			}
+		}
 	}
 }
 

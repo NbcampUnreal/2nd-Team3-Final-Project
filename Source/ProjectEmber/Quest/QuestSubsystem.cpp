@@ -6,9 +6,12 @@
 #include "Character/EmberCharacter.h"
 #include "Data/QuestDataAsset.h"
 #include "EmberLog/EmberLog.h"
+#include "GameFramework/GameSession.h"
 #include "GameInstance/GameplayEventSubsystem.h"
 #include "Item/UserItemManger.h"
+#include "Kismet/GameplayStatics.h"
 #include "UI/HUD/EmberMainHUD.h"
+#include "Tutorial/Subsystem/TutorialManagerSubsystem.h"
 
 void UQuestSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -77,8 +80,13 @@ bool UQuestSubsystem::TryStartQuest(FName QuestID, bool bPlayerAccepted)
                     }
                 }
             }
+            FTimerHandle TimerHandle;
+            FTimerDelegate TimerDel;
+            TimerDel.BindUFunction(this, FName("DelayedShowStepTutorialByID"), QuestID);
+            GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDel, 3.0f, false);
         }
     }
+  
 
     LastAcceptedQuestID = QuestID;
 
@@ -177,6 +185,10 @@ bool UQuestSubsystem::AdvanceQuestStep(FName QuestID)
              * 각 리워드 보상타입에 맞춰서 함수 호출해주면 될듯
              * AddItem이라던가 경험치면 GameplayEffect를 호출한다던가
              */
+            if (AEmberCharacter* Character = Cast<AEmberCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
+            {
+                Character->GetItemManager()->AddItemAndAlarm(Reward.ItemID, Reward.RewardCount);
+            }
         }
     }
     
@@ -339,6 +351,7 @@ bool UQuestSubsystem::IsStepCompleted(FName QuestID, int32 StepIndex) const
 
     return bCompleted;
 }
+
 void UQuestSubsystem::AcceptStep(FName QuestID)
 {
     if (QuestProgress.Contains(QuestID))
@@ -347,3 +360,43 @@ void UQuestSubsystem::AcceptStep(FName QuestID)
         UE_LOG(LogTemp, Warning, TEXT("[AcceptStep] Quest %s: 현재 스텝 수락됨"), *QuestID.ToString());
     }
 }
+
+void UQuestSubsystem::DelayedShowStepTutorialByID(FName QuestID)
+{
+    if (UQuestDataAsset* QuestAsset = LoadedQuests.FindRef(QuestID))
+    {
+        int32 StepIndex = GetCurrentStepIndexForQuest(QuestID, false);
+        if (QuestAsset->Steps.IsValidIndex(StepIndex))
+        {
+            const FQuestStep& Step = QuestAsset->Steps[StepIndex];
+            ShowStepTutorialIfNeeded(Step);
+        }
+    }
+}
+
+void UQuestSubsystem::ShowStepTutorialIfNeeded(const FQuestStep& Step)
+{
+    if (!Step.bShowTutorial || !Step.TutorialDataAsset)
+        return;
+    
+    TArray<FTutorialData> TutorialsToShow;
+
+    for (int32 Index : Step.TutorialIndexes)
+    {
+        if (Step.TutorialDataAsset->Tutorials.IsValidIndex(Index))
+        {
+            const FTutorialData& TutorialData = Step.TutorialDataAsset->Tutorials[Index];
+            TutorialsToShow.Add(TutorialData);
+        }
+    }
+
+    if (TutorialsToShow.Num() > 0)
+    {
+        if (UTutorialManagerSubsystem* TutorialSubsystem = GetGameInstance()->GetSubsystem<UTutorialManagerSubsystem>())
+        {
+            TutorialSubsystem->ShowTutorialSequence(TutorialsToShow);
+            UE_LOG(LogTemp, Log, TEXT("[Tutorial] 튜토리얼 %d개 표시"), TutorialsToShow.Num());
+        }
+    }
+}
+

@@ -39,7 +39,8 @@ public class ProjectEmber : ModuleRules
             "LevelSequence",
             "MovieScene",
             "MovieSceneTracks",
-            "MediaAssets"
+            "MediaAssets",
+            "ProceduralDungeon"
         });
 
         //───────────────────────────────────────────────────────────────────────────────

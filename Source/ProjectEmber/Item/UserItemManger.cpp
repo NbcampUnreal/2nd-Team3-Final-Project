@@ -7,12 +7,14 @@
 #include "QuickSlotManager.h"
 #include "Item/Drop/EmberDropItemManager.h"
 #include "EmberEquipmentManager.h"
+#include "Character/EmberCharacter.h"
 #include "Core/EmberTmpStruct.h"
 #include "Core/ItemStruct/Implements/EmberSlot/EmberInventorySlot.h"
 #include "Core/ItemStruct/Implements/EmberSlot/EmberQuickSlot.h"
 #include "Craft/EmberCraftComponent.h"
 #include "EmberLog/EmberLog.h"
 #include "ItemContainer/Implements/EmberBaseSlotContainer/EmberAddItemMessage.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values for this component's properties
@@ -73,11 +75,8 @@ void UUserItemManger::BeginPlay()
 {
 	Super::BeginPlay();
 
+	
 	// ...
-
-#if UE_BUILD_DEVELOPMENT
-	AddItem("mat_sugarcane", 1, 0);
-#endif
 
 	if (ItemMessageManager)
 	{
@@ -87,7 +86,24 @@ void UUserItemManger::BeginPlay()
 
 void UUserItemManger::InitAbilitySystem()
 {
-	
+	if (AEmberCharacter* EmberCharacter = Cast<AEmberCharacter>(GetOwner()))
+	{
+		if (UAbilitySystemComponent* AbilitySystemComponent = EmberCharacter->GetAbilitySystemComponent())
+		{
+			if (EquipmentManager)
+			{
+				EquipmentManager->SetOwnerAbilitySystemComponent(AbilitySystemComponent);
+			}
+			if (InventoryManager)
+			{
+				InventoryManager->SetOwnerAbilitySystemComponent(AbilitySystemComponent);
+			}
+			if (QuickSlotManager)
+			{
+				QuickSlotManager->SetOwnerAbilitySystemComponent(AbilitySystemComponent);
+			}
+		}
+	}
 	if (InventoryManager)
 	{
 		InventoryManager->InitOwner(GetOwner());
@@ -230,18 +246,17 @@ void UUserItemManger::AddItemAndAlarm(FName ItemID, int32 Quantity, int32 InSlot
 {
 
 	FEmberItemEntry Entry = FEmberItemEntry(ItemID, Quantity);
-	AddItemAndAlarm(Entry.CreateInstancedStruct());
-	//AddItem(ItemID, Quantity, InSlotIndex);
-
+	AddItemAndAlarm(Entry.CreateInstancedStruct(), InSlotIndex);
 }
 
 void UUserItemManger::AddItemAndAlarm(const FInstancedStruct& InInstancedStruct, int32 InSlotIndex)
 {
-	//AddItem(InInstancedStruct, InSlotIndex);
-	//if (ItemMessageManager)
-	//{
-	//	ItemMessageManager->AddSlotItemReturnApplied(InInstancedStruct, InSlotIndex);
-	//}
+	AddItem(InInstancedStruct, InSlotIndex);
+
+	if (IsValid(ItemMessageManager))
+	{
+		ItemMessageManager->AddSlotItemReturnApplied(InInstancedStruct, InSlotIndex);
+	}
 }
 
 const UInventoryManager* UUserItemManger::GetInventoryManager() const

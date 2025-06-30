@@ -40,15 +40,14 @@ TArray<FActiveGameplayEffectHandle> UItemSystemLibrary::ApplyEffectInfoList(UAbi
 	}
 	for (const FItemEffectApplicationInfo& EffectInfo : EffectInfos)
 	{
-
 		if (!EffectInfo.GameplayEffectClass) continue;
-
+		
 		FGameplayEffectContextHandle ContextHandle = TargetASC->MakeEffectContext();
 		if (SourceObject)
 		{
 			ContextHandle.AddSourceObject(SourceObject);
 		}
-
+		
 		FGameplayEffectSpecHandle SpecHandle = TargetASC->MakeOutgoingSpec(EffectInfo.GameplayEffectClass, SourceLevel, ContextHandle);
 		if (SpecHandle.IsValid())
 		{

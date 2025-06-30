@@ -13,7 +13,8 @@ GAMEPLAYATTRIBUTE_VALUE_GETTER(PropertyName)			   \
 GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName)			   \
 GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)\
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOutOfHealthDelegate);
+struct FEmberCharacterAttributeSetSaveData;
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOutOfHealthDelegate, AActor*, Instigator);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHitMulticastDelegate, AActor*, Instigator);
 
 
@@ -87,5 +88,9 @@ protected: /* State Effects */
 
 	UPROPERTY()
 	UEmberEffectHelper* EffectHelperInstance;
+
+public: /* Save Data */
+	void FillSaveData(FEmberCharacterAttributeSetSaveData& OutData) const;
+	void LoadSaveData(const FEmberCharacterAttributeSetSaveData& InData);
 };
 

@@ -7,6 +7,7 @@
 #include "GameplayTag/EmberGameplayTag.h"
 #include "EmberLog/EmberLog.h"
 #include "FunctionLibrary/CombatFunctionLibrary.h"
+#include "Attribute/SaveData/AttributeSaveData.h"
 #include "Utility/AlsGameplayTags.h"
 
 UEmberCharacterAttributeSet::UEmberCharacterAttributeSet()
@@ -200,7 +201,8 @@ void UEmberCharacterAttributeSet::PostGameplayEffectExecute(const struct FGamepl
 	if (GetHealth() <= MinimumHealth && !bOutOfHealth)
 	{
 		//Data.Target.AddLooseGameplayTag(ABGameplayTag::Character_State_IsDead);
-		OnOutOfHealth.Broadcast();
+		const FGameplayEffectContextHandle& Context = Data.EffectSpec.GetContext();
+		OnOutOfHealth.Broadcast(Context.GetInstigator());
 	}
 	bOutOfHealth = (GetHealth() <= MinimumHealth);
 	
@@ -272,5 +274,46 @@ void UEmberCharacterAttributeSet::DirectionalHitAbility(const FGameplayEffectMod
 	if (AbilityToActivate)
 	{
 		Asc->TryActivateAbilityByClass(AbilityToActivate);
+	}
+}
+
+void UEmberCharacterAttributeSet::FillSaveData(FEmberCharacterAttributeSetSaveData& OutData) const
+{
+	OutData.AttackRate     = AttackRate.GetCurrentValue();
+	OutData.MaxAttackRate  = MaxAttackRate.GetCurrentValue();
+	OutData.Health         = Health.GetCurrentValue();
+	OutData.MaxHealth      = MaxHealth.GetCurrentValue();
+	OutData.Damage         = Damage.GetCurrentValue();
+	OutData.Mana           = Mana.GetCurrentValue();
+	OutData.MaxMana        = MaxMana.GetCurrentValue();
+	OutData.Shield         = Shield.GetCurrentValue();
+	OutData.MaxShield      = MaxShield.GetCurrentValue();
+}
+
+void UEmberCharacterAttributeSet::LoadSaveData(const FEmberCharacterAttributeSetSaveData& InData)
+{
+	if (UAbilitySystemComponent* AbilitySystemComponent = GetOwningAbilitySystemComponentChecked())
+	{
+		AbilitySystemComponent->SetNumericAttributeBase(GetAttackRateAttribute(),    InData.AttackRate);
+		AbilitySystemComponent->SetNumericAttributeBase(GetMaxAttackRateAttribute(), InData.MaxAttackRate);
+		AbilitySystemComponent->SetNumericAttributeBase(GetHealthAttribute(),        InData.Health);
+		AbilitySystemComponent->SetNumericAttributeBase(GetMaxHealthAttribute(),     InData.MaxHealth);
+		AbilitySystemComponent->SetNumericAttributeBase(GetDamageAttribute(),        InData.Damage);
+		AbilitySystemComponent->SetNumericAttributeBase(GetManaAttribute(),          InData.Mana);
+		AbilitySystemComponent->SetNumericAttributeBase(GetMaxManaAttribute(),       InData.MaxMana);
+		AbilitySystemComponent->SetNumericAttributeBase(GetShieldAttribute(),        InData.Shield);
+		AbilitySystemComponent->SetNumericAttributeBase(GetMaxShieldAttribute(),     InData.MaxShield);
+	}
+	else
+	{
+		AttackRate.SetCurrentValue(InData.AttackRate);
+		MaxAttackRate.SetCurrentValue(InData.MaxAttackRate);
+		Health.SetCurrentValue(InData.Health);
+		MaxHealth.SetCurrentValue(InData.MaxHealth);
+		Damage.SetCurrentValue(InData.Damage);
+		Mana.SetCurrentValue(InData.Mana);
+		MaxMana.SetCurrentValue(InData.MaxMana);
+		Shield.SetCurrentValue(InData.Shield);
+		MaxShield.SetCurrentValue(InData.MaxShield);
 	}
 }

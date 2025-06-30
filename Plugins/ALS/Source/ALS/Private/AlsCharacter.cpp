@@ -643,7 +643,10 @@ void AAlsCharacter::NotifyLocomotionModeChanged(const FGameplayTag& PreviousLoco
 		if (Settings->Ragdolling.bStartRagdollingOnLand &&
 		    LocomotionState.Velocity.Z <= -Settings->Ragdolling.RagdollingOnLandSpeedThreshold)
 		{
-			StartRagdolling();
+			//StartRagdolling();
+			StartRolling(1.3f, LocomotionState.bHasVelocity
+						   ? LocomotionState.VelocityYawAngle
+						   : UE_REAL_TO_FLOAT(FMath::UnwindDegrees(GetActorRotation().Yaw)));
 		}
 		else if (Settings->Rolling.bStartRollingOnLand &&
 		         LocomotionState.Velocity.Z <= -Settings->Rolling.RollingOnLandSpeedThreshold)

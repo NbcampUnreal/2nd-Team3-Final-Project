@@ -147,7 +147,7 @@ public: /* AbilitySystem */
 
 protected:
 	UFUNCTION()
-	virtual void OnOutOfHealth();
+	virtual void OnOutOfHealth(AActor* InstigatorActor);
 
 	void AbilityInputPressed(int32 InputID);
 	FGameplayAbilitySpec* GetSpecFromOverlayMode(const bool IsRightInput = false) const;
@@ -246,7 +246,7 @@ protected:
 protected:
 	/** 글라이드 시 전방(Forward) 속도 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Glide")
-	float GlideForwardSpeed = 800.0f;
+	float GlideForwardSpeed = 500.0f;
 
 	/** 글라이드 시 하강 속도(z축) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Glide")
@@ -276,7 +276,7 @@ public:
 protected:
 	bool bShowQuickActionWidget{false};
 	FTimerHandle QuickActionTimerHandle;
-	
+
 public: /* Inventory */
 	UFUNCTION(BlueprintCallable, Category = "Item")
 	UUserItemManger* GetItemManager();
@@ -294,4 +294,8 @@ public:
 
 	// 대화 시작 시 DialogueComponent 저장
 	void SetActiveDialogueComponent(UDialogueComponent* InDialogue);
+
+	TWeakObjectPtr<UUserWidget> QuickSlotWidget;
+
+	int32 HoveredSlotIndex;
 };

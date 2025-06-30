@@ -35,5 +35,8 @@ public:
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UEmberItemSlotDragDropOperation> StartSlotDropOperation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsHovered{false};
 };
 
