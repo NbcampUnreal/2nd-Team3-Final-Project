@@ -238,10 +238,10 @@ void UUserItemManger::AddItemAndAlarm(FName ItemID, int32 Quantity, int32 InSlot
 void UUserItemManger::AddItemAndAlarm(const FInstancedStruct& InInstancedStruct, int32 InSlotIndex)
 {
 	//AddItem(InInstancedStruct, InSlotIndex);
-	if (ItemMessageManager)
-	{
-		ItemMessageManager->AddSlotItemReturnApplied(InInstancedStruct, InSlotIndex);
-	}
+	//if (ItemMessageManager)
+	//{
+	//	ItemMessageManager->AddSlotItemReturnApplied(InInstancedStruct, InSlotIndex);
+	//}
 }
 
 const UInventoryManager* UUserItemManger::GetInventoryManager() const

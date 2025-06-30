@@ -81,7 +81,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRaidClearDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnChasingClearDelegate);
 
 UCLASS()
-class PROJECTEMBER_API AAnimalSpawner : public AWorldInteractableActor, public IEMSActorSaveInterface
+class PROJECTEMBER_API AAnimalSpawner : public AWorldInteractableActor
 {
 	GENERATED_BODY()
 
