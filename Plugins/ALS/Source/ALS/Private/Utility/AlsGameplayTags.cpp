@@ -8,10 +8,10 @@ namespace AlsViewModeTags
 
 namespace AlsLocomotionModeTags
 {
-	UE_DEFINE_GAMEPLAY_TAG(Grounded, FName{TEXTVIEW("Als.LocomotionMode.Grounded")})
-	UE_DEFINE_GAMEPLAY_TAG(InAir, FName{TEXTVIEW("Als.LocomotionMode.InAir")})
-	UE_DEFINE_GAMEPLAY_TAG(InWater, FName{TEXTVIEW("Als.LocomotionMode.InWater")})
-	UE_DEFINE_GAMEPLAY_TAG(Gliding,   FName{TEXTVIEW("Als.LocomotionMode.Gliding")})
+	UE_DEFINE_GAMEPLAY_TAG(Grounded,	FName{TEXTVIEW("Als.LocomotionMode.Grounded")})
+	UE_DEFINE_GAMEPLAY_TAG(InAir,		FName{TEXTVIEW("Als.LocomotionMode.InAir")})
+	UE_DEFINE_GAMEPLAY_TAG(InWater,		FName{TEXTVIEW("Als.LocomotionMode.InWater")})
+	UE_DEFINE_GAMEPLAY_TAG(Gliding,		FName{TEXTVIEW("Als.LocomotionMode.Gliding")})
 }
 
 namespace AlsRotationModeTags

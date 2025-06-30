@@ -1172,6 +1172,11 @@ void AEmberCharacter::Input_OnCancelThrowQuick(const FInputActionValue& ActionVa
 
 void AEmberCharacter::Input_OnSwitchThrowOverlay(const FInputActionValue& ActionValue)
 {
+	if (AbilitySystemComponent->HasMatchingGameplayTag(AlsLocomotionModeTags::Gliding))
+	{
+		return;
+	}
+	
 	FGameplayTagContainer RequiredTags;
 	RequiredTags.AddTag(AlsCharacterStateTags::Attack);
 	RequiredTags.AddTag(AlsCharacterStateTags::ComboAttack);
