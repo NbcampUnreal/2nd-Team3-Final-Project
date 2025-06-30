@@ -101,5 +101,5 @@ protected:
 	TObjectPtr<UEmberInteractableItemDropComponent> ItemDropComponent;
 	UPROPERTY(EditAnywhere, Blueprintable, Category = "Geometry")
 	TObjectPtr<UGeometryCollection> GeometryCollectionAsset;	UPROPERTY(EditAnywhere, Blueprintable, Category = "Geometry")
-	TObjectPtr<UGeometryCollectionComponent> GeometryCollectionComponent;
+	UGeometryCollectionComponent* GeometryCollectionComponent;
 };

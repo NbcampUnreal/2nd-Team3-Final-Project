@@ -122,17 +122,13 @@ void ALootActorBase::CompleteInteractAbility()
 				FVector ComponentLocation = GeometryCollectionComponent->GetComponentLocation();
 				GeometryCollectionComponent->ObjectType = EObjectStateTypeEnum::Chaos_Object_Dynamic;
 
-				// 2. 물리 상태를 다시 생성하여 변경사항을 물리 엔진에 적용합니다.
-				// 이 함수 호출이 가장 중요합니다.
-				GeometryCollectionComponent->RecreatePhysicsState();
-				
 				TObjectPtr<URadialFalloff> RadialFalloff = NewObject<URadialFalloff>();
 				RadialFalloff->SetRadialFalloff(
 					5000.f,
 					0.f,
 					500.f,
 					0.f,
-					500.f,
+					100.f,
 					ComponentLocation,
 					EFieldFalloffType::Field_Falloff_Linear);
 
@@ -143,16 +139,10 @@ void ALootActorBase::CompleteInteractAbility()
 				RadialFalloff
 				);
 
-				GeometryCollectionComponent->GetBodyInstance();
-				TObjectPtr<URadialVector> ForceField = NewObject<URadialVector>();
-				ForceField->Magnitude = 5000000.f;
-				ForceField->Position = GetActorLocation();
-				GeometryCollectionComponent->ApplyPhysicsField(
-					true,
-					EGeometryCollectionPhysicsTypeEnum::Chaos_LinearForce,
-					nullptr,
-					ForceField
-				);
+				const FVector ImpulseDirection = FVector(1.0f, 0.0f, 0.0f);
+				const float ImpulseStrength = 150.0f; // 나무의 질량에 따라 조절
+				GeometryCollectionComponent->AddImpulse(ImpulseDirection * ImpulseStrength, NAME_None, true); // true는 속도 변화로 적용
+
 			}
 		}
 	}
@@ -241,7 +231,6 @@ void ALootActorBase::ReceiveMessage(const FName MessageType, UObject* Payload)
 		bIsAbilityEnded = false;
 	}
 }
-
 void ALootActorBase::DestroyedGeometryCollectionComponent()
 {
 	if (GeometryCollectionComponent)
