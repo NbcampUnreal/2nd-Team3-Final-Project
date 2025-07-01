@@ -95,3 +95,8 @@ namespace AlsCharacterStateTags
 	ALS_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(Hit)
 	ALS_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(PerfectDodge)
 }
+
+namespace AlsCombatTags
+{
+	ALS_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(NextComboAttack)
+}

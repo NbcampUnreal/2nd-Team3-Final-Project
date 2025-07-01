@@ -93,3 +93,8 @@ namespace AlsCharacterStateTags
 	UE_DEFINE_GAMEPLAY_TAG(Hit, FName{TEXTVIEW("Character.State.Hit")})
 	UE_DEFINE_GAMEPLAY_TAG(PerfectDodge, FName{TEXTVIEW("Character.State.PerfectDodge")})
 }
+
+namespace AlsCombatTags
+{
+	UE_DEFINE_GAMEPLAY_TAG(NextComboAttack, FName{TEXTVIEW("Combat.Combo.Next")})
+}

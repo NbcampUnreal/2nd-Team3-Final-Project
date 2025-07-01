@@ -89,8 +89,7 @@ protected: /* AlsCharacter */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Als Character|Desired State", Replicated)
 	FGameplayTag ViewMode{AlsViewModeTags::ThirdPerson};
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Als Character|Desired State",
-		ReplicatedUsing = "OnReplicated_OverlayMode")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings|Als Character|Desired State", ReplicatedUsing = "OnReplicated_OverlayMode")
 	FGameplayTag OverlayMode{AlsOverlayModeTags::Default};
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State|Als Character", Transient, Meta = (ShowInnerProperties))

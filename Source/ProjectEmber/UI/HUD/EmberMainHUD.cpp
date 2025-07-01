@@ -69,14 +69,7 @@ UUserWidget* AEmberMainHUD::PushContentToLayer(const FGameplayTag& LayerTag, con
 	if (UEmberLayerBase* FoundLayer = *EmberLayers.Find(LayerTag))
 	{
 		UUserWidget* PushWidget = FoundLayer->PushWidget(WidgetClass);
-
-#if !UE_BUILD_SHIPPING
-		/*if (PrimaryDebugLayer)
-		{
-			PrimaryDebugLayer->SetChangedLayer();
-		}*/
-#endif
-
+		
 		return PushWidget;
 	}
 	return nullptr;
@@ -87,13 +80,6 @@ void AEmberMainHUD::PopContentToLayer(const FGameplayTag& LayerTag)
 	if (UEmberLayerBase* FoundLayer = *EmberLayers.Find(LayerTag))
 	{
 		FoundLayer->PopWidget();
-
-#if !UE_BUILD_SHIPPING
-		/*if (PrimaryDebugLayer)
-		{
-			PrimaryDebugLayer->SetChangedLayer();
-		}*/
-#endif
 	}
 }
 

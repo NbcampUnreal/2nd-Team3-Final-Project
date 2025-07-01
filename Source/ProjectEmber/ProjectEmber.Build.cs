@@ -40,6 +40,10 @@ public class ProjectEmber : ModuleRules
             "MovieScene",
             "MovieSceneTracks",
             "MediaAssets",
+            "GeometryCollectionEngine",
+            "Chaos",
+            "ChaosSolverEngine",
+            "FieldSystemEngine",
             "ProceduralDungeon"
         });
 
