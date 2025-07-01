@@ -964,9 +964,9 @@ void AEmberCharacter::HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, A
 			{
 				if (!GetWorld()->GetTimerManager().IsTimerActive(HitTimerHandle))
 				{
-					GetWorld()->GetTimerManager().SetTimer(HitTimerHandle, this,
+					/*GetWorld()->GetTimerManager().SetTimer(HitTimerHandle, this,
 														   &AEmberCharacter::DelayToSendHitActors,
-														   0.5f, false);
+														   0.5f, false);*/
 				}
 			}
 
