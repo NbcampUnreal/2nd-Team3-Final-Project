@@ -882,7 +882,12 @@ void AEmberCharacter::Input_OnSwitchShoulder()
 
 void AEmberCharacter::Input_OnQuickSlot(int32 PressedIndex)
 {
-	EMBER_LOG(LogEmber, Warning, TEXT("PressedIndex : %d"), PressedIndex);
+	const FGameplayTagContainer CancelTags(AlsInputActionTags::OverlayAction);
+	AbilitySystemComponent->CancelAbilities(&CancelTags);
+	AbilitySystemComponent->CancelAllAbilities();
+	AbilitySystemComponent->RemoveLooseGameplayTag(AlsInputActionTags::LockMoveInput);
+	return;
+	/*EMBER_LOG(LogEmber, Warning, TEXT("PressedIndex : %d"), PressedIndex);
 
 	FName SelectItemName = EmberItemManager->SelectQuickSlot(PressedIndex);
 	if (SelectItemName.IsNone())
@@ -912,7 +917,7 @@ void AEmberCharacter::Input_OnQuickSlot(int32 PressedIndex)
 	else // else는 잡템
 	{
 		SetOverlayMode(AlsOverlayModeTags::Default);
-	}
+	}*/
 }
 
 void AEmberCharacter::HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, AActor* HitActor,
