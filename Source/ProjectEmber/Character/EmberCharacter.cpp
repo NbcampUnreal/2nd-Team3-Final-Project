@@ -289,11 +289,13 @@ UAbilitySystemComponent* AEmberCharacter::GetAbilitySystemComponent() const
 
 void AEmberCharacter::OnOutOfHealth(AActor* InstigatorActor)
 {
-	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
-		UUserWidget* DeathWidgetInstance = UUIFunctionLibrary::PushContentToLayer(PC, FGameplayTag::RequestGameplayTag("UI.Layer.Modal"), DeathWidgetClass);
-		Cast<UDeathScreenWidget>(DeathWidgetInstance)->SetOwner(this);
-		UUIFunctionLibrary::FocusUI(PC,DeathWidgetInstance,true,true,true);
+		UUserWidget* DeathWidget = UUIFunctionLibrary::PushContentToLayer(PlayerController,
+			FGameplayTag::RequestGameplayTag("UI.Layer.Modal"), DeathWidgetClass);
+		
+		Cast<UDeathScreenWidget>(DeathWidget)->SetOwner(this);
+		UUIFunctionLibrary::FocusUI(PlayerController,DeathWidget,true,true,true);
 	}
 	
 	/*GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
@@ -969,6 +971,7 @@ void AEmberCharacter::HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, A
 			}
 
 			EMBER_LOG(LogEmber, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
+			
 			AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetAsc);
 			PlayHitEffectAtLocation(HitLocation);
 		}

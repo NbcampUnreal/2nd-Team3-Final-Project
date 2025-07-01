@@ -70,11 +70,12 @@ void UGA_InteractChestAbility::OnOpenFinished()
         // UI 표시 및 이동 잠금
         if (APlayerController* PC = Cast<APlayerController>(Pawn->GetController()))
         {
-            UUserWidget* ChestWidgetInstance = UUIFunctionLibrary::PushContentToLayer(PC, FGameplayTag::RequestGameplayTag("UI.Layer.Modal"), ChestWidgetClass);
+            UUserWidget* ChestWidget = UUIFunctionLibrary::PushContentToLayer(PC,
+                FGameplayTag::RequestGameplayTag("UI.Layer.Modal"), ChestWidgetClass);
 
             if (const ACharacter* Character = Cast<ACharacter>(Pawn))
             {
-                UUIFunctionLibrary::FocusUI(PC,ChestWidgetInstance,true,true,true);
+                UUIFunctionLibrary::FocusUI(PC,ChestWidget,true,true,true);
                 
                 /*Character->GetCharacterMovement()->DisableMovement(); // 이동막기
                 PC->SetIgnoreLookInput(true); // 카메라 막기
