@@ -5,7 +5,6 @@
 
 #include "LevelSequenceActor.h"
 #include "LevelSequencePlayer.h"
-#include "MovieSceneSequencePlaybackSettings.h"
 #include "Kismet/GameplayStatics.h"
 #include "WorldPartition/WorldPartitionSubsystem.h"
 
@@ -64,8 +63,8 @@ void UInteractionFragment_PlayLS::ExecuteInteraction_Implementation(AActor* Inte
 		return;
 	}
 	
+	//StartSequencePlayback();
 	UWorldPartitionSubsystem* Subsystem = GetWorld()->GetSubsystem<UWorldPartitionSubsystem>();
-
 	SequenceStreamingProvider = MakeShared<SequenceStreamingSourceProvider>();
 	
 	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -75,7 +74,6 @@ void UInteractionFragment_PlayLS::ExecuteInteraction_Implementation(AActor* Inte
 	{
 		return;
 	}
-
 	SequenceStreamingProvider->PlayerLocation = PlayerPawn->GetActorLocation();
 	SequenceStreamingProvider->SequenceLocation = LevelSequenceActor->GetActorLocation();
 
@@ -91,7 +89,11 @@ void UInteractionFragment_PlayLS::WaitForStreamingAndPlaySequence(UWorldPartitio
 	FTimerDelegate TimerDel;
 	TimerDel.BindLambda([this, Subsystem]()
 	{
-		if (Subsystem->IsStreamingCompleted(SequenceStreamingProvider.Get()))
+		const bool bIsCompleted = Subsystem->IsStreamingCompleted(SequenceStreamingProvider.Get());
+
+		OnStreamingStatusUpdated.Broadcast(bIsCompleted);
+
+		if (bIsCompleted)
 		{
 			StartSequencePlayback();
 		}
@@ -134,7 +136,7 @@ void UInteractionFragment_PlayLS::OnSequenceFinished()
 		PC->SetViewTargetWithBlend(PC->GetPawn(), 0.3f);
 	}
 
-	// 해제
+	//// 해제
 	if (SequenceStreamingProvider.IsValid())
 	{
 		if (UWorldPartitionSubsystem* Subsystem = GetWorld()->GetSubsystem<UWorldPartitionSubsystem>())

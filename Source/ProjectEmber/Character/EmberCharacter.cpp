@@ -289,11 +289,13 @@ UAbilitySystemComponent* AEmberCharacter::GetAbilitySystemComponent() const
 
 void AEmberCharacter::OnOutOfHealth(AActor* InstigatorActor)
 {
-	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
 	{
-		UUserWidget* DeathWidgetInstance = UUIFunctionLibrary::PushContentToLayer(PC, FGameplayTag::RequestGameplayTag("UI.Layer.Modal"), DeathWidgetClass);
-		Cast<UDeathScreenWidget>(DeathWidgetInstance)->SetOwner(this);
-		UUIFunctionLibrary::FocusUI(PC,DeathWidgetInstance,true,true,true);
+		UUserWidget* DeathWidget = UUIFunctionLibrary::PushContentToLayer(PlayerController,
+			FGameplayTag::RequestGameplayTag("UI.Layer.Modal"), DeathWidgetClass);
+		
+		Cast<UDeathScreenWidget>(DeathWidget)->SetOwner(this);
+		UUIFunctionLibrary::FocusUI(PlayerController,DeathWidget,true,true,true);
 	}
 	
 	/*GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
@@ -305,11 +307,8 @@ void AEmberCharacter::OnOutOfHealth(AActor* InstigatorActor)
 
 void AEmberCharacter::AbilityInputPressed(int32 InputID)
 {
-	if (UUIFunctionLibrary::GetIsAbilityInputLock(Cast<APlayerController>(GetController())))
-	{
-		return;
-	}
-	if (AbilitySystemComponent->HasMatchingGameplayTag(AlsLocomotionModeTags::Gliding))
+	if (UUIFunctionLibrary::GetIsAbilityInputLock(Cast<APlayerController>(GetController())) ||
+		AbilitySystemComponent->HasMatchingGameplayTag(AlsLocomotionModeTags::Gliding))
 	{
 		return;
 	}
@@ -396,11 +395,11 @@ void AEmberCharacter::AbilityInputPressed(int32 InputID)
   
 	if (InputID == 1 && GetOverlayMode() == AlsOverlayModeTags::Hammer)
 	{
-		BuildComponent->SpwanBuild();
+		BuildComponent->RepairBuilding();
 	}
 	if (InputID == 0 && GetOverlayMode() == AlsOverlayModeTags::Hammer)
 	{
-		BuildComponent->RepairBuilding();
+		BuildComponent->SpwanBuild();
 	}
 }
 
@@ -949,7 +948,7 @@ void AEmberCharacter::HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, A
 	if (DamageGameplayEffectClass)
 	{
 		if (const FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(
-			DamageGameplayEffectClass, 1.0f, EffectContext); SpecHandle.IsValid())
+			DamageGameplayEffectClass, MeleeTraceComponent->AttackLevel, EffectContext); SpecHandle.IsValid())
 		{
 			/* 여기서 타겟시스템 연동처리 0.5초안에 추가로 들어온 HitActor가 있는지
 			 * 혼자면 그 HitActor에 대해서만 적용 만약 여러개가 있다면 가장 가까운 HitActor에 대해서만 적용
@@ -972,6 +971,7 @@ void AEmberCharacter::HandleMeleeTraceHit(UMeleeTraceComponent* ThisComponent, A
 			}
 
 			EMBER_LOG(LogEmber, Warning, TEXT("Hit Actor: %s"), *HitActor->GetName());
+			
 			AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetAsc);
 			PlayHitEffectAtLocation(HitLocation);
 		}
@@ -1175,6 +1175,11 @@ void AEmberCharacter::Input_OnCancelThrowQuick(const FInputActionValue& ActionVa
 
 void AEmberCharacter::Input_OnSwitchThrowOverlay(const FInputActionValue& ActionValue)
 {
+	if (AbilitySystemComponent->HasMatchingGameplayTag(AlsLocomotionModeTags::Gliding))
+	{
+		return;
+	}
+	
 	FGameplayTagContainer RequiredTags;
 	RequiredTags.AddTag(AlsCharacterStateTags::Attack);
 	RequiredTags.AddTag(AlsCharacterStateTags::ComboAttack);

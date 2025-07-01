@@ -103,9 +103,8 @@ void UBaseOverlayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 	
 	if (!bLoopingMontage && bCanCombo)
 	{
-		static const FGameplayTag ComboTag = FGameplayTag::RequestGameplayTag(TEXT("Combat.Combo.Next"));
 		UAbilityTask_WaitGameplayEvent* ComboTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(
-			this, ComboTag, nullptr, false);
+			this, AlsCombatTags::NextComboAttack, nullptr, false);
 		
 		ComboTask->EventReceived.AddDynamic(this, &UBaseOverlayAbility::OnComboNotify);
 		ComboTask->ReadyForActivation();
@@ -126,7 +125,8 @@ void UBaseOverlayAbility::CancelAbility(const FGameplayAbilitySpecHandle Handle,
 	bool bReplicateCancelAbility)
 {
 	Super::CancelAbility(Handle, ActorInfo, ActivationInfo, bReplicateCancelAbility);
-	/** 혹시모를 잔무빙 제거 */
+	
+	/** 캔슬시(Block, Dodge, Hit) 워핑타겟 제거 */
 	ClearWarping();
 }
 
@@ -242,14 +242,13 @@ void UBaseOverlayAbility::OnComboNotify(const FGameplayEventData Payload)
 {
 	if (bCanCombo && bComboInputReceived)
 	{
-		USkillManagerSubsystem* SkillManagerSubsystem = GetAvatarActorFromActorInfo()->GetGameInstance()->GetSubsystem<USkillManagerSubsystem>();
+		const USkillManagerSubsystem* SkillManagerSubsystem = GetAvatarActorFromActorInfo()->GetGameInstance()->GetSubsystem<USkillManagerSubsystem>();
 		auto Abilities = SkillManagerSubsystem->GetNextComboAbilities(ThisClass::GetClass());
-		// 나중에 좌클릭눌렷는지 우클릭눌렷는지 Received에서 판단해서 나누자
 		if (Abilities.Num() > 0)
 		{
 			if (!AbilitySystemComponent->TryActivateAbilityByClass(Abilities[0],false))
 			{
-				EMBER_LOG(LogEmber,Warning, TEXT("Failed to activate next combo ability: %s"), *Abilities[0]->GetName());
+				EMBER_LOG(LogEmber,Warning, TEXT("Failed to activate next combo ability"));
 			}
 		}
 		
@@ -387,7 +386,8 @@ void UBaseOverlayAbility::SetUpdateWarping() const
 		}
 		
 		const FVector DesiredWarp = Character->GetActorLocation() + MoveDir * WarpDistance;
-		
+
+		/* 나중에 순간이동 처럼 적에게 접근해서 쏴버리는 어빌리티가 있을시 기능적으로 제공해줘야 될거 같음
 		FHitResult Hit;
 		FCollisionQueryParams Params(NAME_None, false, Character);
 		const bool bBlocked = Character->GetWorld()->LineTraceSingleByChannel(Hit,Character->GetActorLocation(),
@@ -401,13 +401,13 @@ void UBaseOverlayAbility::SetUpdateWarping() const
 		{
 			const float Radius = Character->GetCapsuleComponent()->GetScaledCapsuleRadius();
 			FinalWarp = Hit.ImpactPoint - Hit.ImpactNormal * Radius;
-		}
+		}*/
 
 		if (UMotionWarpingComponent* WarpComp = Character->FindComponentByClass<UMotionWarpingComponent>())
 		{
 			FMotionWarpingTarget WarpTarget;
 			WarpTarget.Name     = FName("AttackWarp");
-			WarpTarget.Location = FinalWarp;
+			WarpTarget.Location = DesiredWarp;
 			WarpTarget.Rotation = MoveDir.Rotation();
 			WarpComp->AddOrUpdateWarpTarget(WarpTarget);
 		}
@@ -421,14 +421,14 @@ void UBaseOverlayAbility::SetUpdateWarping() const
 
 void UBaseOverlayAbility::ClearWarping() const
 {
-	if (ACharacter* Char = Cast<ACharacter>(GetAvatarActorFromActorInfo()))
+	if (ACharacter* Character = Cast<ACharacter>(GetAvatarActorFromActorInfo()))
 	{
-		if (auto* WarpComp = Char->FindComponentByClass<UMotionWarpingComponent>())
+		if (auto* WarpComp = Character->FindComponentByClass<UMotionWarpingComponent>())
 		{
 			WarpComp->RemoveAllWarpTargets();
 		}
 		
-		if (auto* MoveComp = Char->GetCharacterMovement())
+		if (auto* MoveComp = Character->GetCharacterMovement())
 		{
 			MoveComp->StopMovementImmediately();
 			MoveComp->Velocity = FVector::ZeroVector;

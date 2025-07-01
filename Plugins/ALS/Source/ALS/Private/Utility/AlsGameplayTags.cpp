@@ -8,10 +8,10 @@ namespace AlsViewModeTags
 
 namespace AlsLocomotionModeTags
 {
-	UE_DEFINE_GAMEPLAY_TAG(Grounded, FName{TEXTVIEW("Als.LocomotionMode.Grounded")})
-	UE_DEFINE_GAMEPLAY_TAG(InAir, FName{TEXTVIEW("Als.LocomotionMode.InAir")})
-	UE_DEFINE_GAMEPLAY_TAG(InWater, FName{TEXTVIEW("Als.LocomotionMode.InWater")})
-	UE_DEFINE_GAMEPLAY_TAG(Gliding,   FName{TEXTVIEW("Als.LocomotionMode.Gliding")})
+	UE_DEFINE_GAMEPLAY_TAG(Grounded,	FName{TEXTVIEW("Als.LocomotionMode.Grounded")})
+	UE_DEFINE_GAMEPLAY_TAG(InAir,		FName{TEXTVIEW("Als.LocomotionMode.InAir")})
+	UE_DEFINE_GAMEPLAY_TAG(InWater,		FName{TEXTVIEW("Als.LocomotionMode.InWater")})
+	UE_DEFINE_GAMEPLAY_TAG(Gliding,		FName{TEXTVIEW("Als.LocomotionMode.Gliding")})
 }
 
 namespace AlsRotationModeTags
@@ -92,4 +92,9 @@ namespace AlsCharacterStateTags
 	UE_DEFINE_GAMEPLAY_TAG(Invincibility, FName{TEXTVIEW("Character.State.Invincibility")})
 	UE_DEFINE_GAMEPLAY_TAG(Hit, FName{TEXTVIEW("Character.State.Hit")})
 	UE_DEFINE_GAMEPLAY_TAG(PerfectDodge, FName{TEXTVIEW("Character.State.PerfectDodge")})
+}
+
+namespace AlsCombatTags
+{
+	UE_DEFINE_GAMEPLAY_TAG(NextComboAttack, FName{TEXTVIEW("Combat.Combo.Next")})
 }

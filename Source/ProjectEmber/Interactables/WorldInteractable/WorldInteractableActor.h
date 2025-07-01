@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Condition/IInteractionConditionHandler.h"
 #include "Interactables/BaseInteractableActor.h"
+#include "EMSActorSaveInterface.h"
 #include "WorldInteractableActor.generated.h"
 
 
@@ -16,7 +17,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractionStarted, AActor*, Inte
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnInteractionEnded, AActor*, Interactor, bool, bCanBeTriggeredAgain);
 
 UCLASS()
-class PROJECTEMBER_API AWorldInteractableActor : public ABaseInteractableActor, public IInteractionConditionHandler
+class PROJECTEMBER_API AWorldInteractableActor : public ABaseInteractableActor, public IInteractionConditionHandler, public IEMSActorSaveInterface
 {
 	GENERATED_BODY()
 public:
@@ -48,10 +49,10 @@ public:
 	FOnInteractionEnded OnInteractionEnded;
 	
 protected:
-	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category="Interaction")
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category="Interaction", SaveGame)
 	TArray<TObjectPtr<UInteractionCondition>> InteractConditions;
 
-	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category="Interaction")
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category="Interaction", SaveGame)
 	TArray<TObjectPtr<UInteractionCondition>> DeactivateConditions;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction")

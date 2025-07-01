@@ -59,7 +59,10 @@ void UDeathScreenWidget::OnRespawnClicked()
 		
 		// 까먹지 말고 이펙트 넣자
 		APlayerController* PlayerController = Cast<APlayerController>(OwningCharacter->GetController());
-		UUIFunctionLibrary::PopContentToLayer(PlayerController, FGameplayTag::RequestGameplayTag("UI.Layer.Modal"));
+		
+		UUIFunctionLibrary::PopContentToLayer(PlayerController,
+			FGameplayTag::RequestGameplayTag("UI.Layer.Modal"));
+		
 		UUIFunctionLibrary::FocusGame(PlayerController);
 	}
 }

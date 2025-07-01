@@ -29,6 +29,11 @@ UMeleeTraceComponent::UMeleeTraceComponent()
 	TraceChannel = GetDefault<UMeleeTraceSettings>()->MeleeTraceCollisionChannel;
 }
 
+void UMeleeTraceComponent::SetAttackLevel(const float InLevel)
+{
+	AttackLevel = InLevel;
+}
+
 void UMeleeTraceComponent::TickComponent(float DeltaTime,
 	ELevelTick TickType,
 	FActorComponentTickFunction* ThisTickFunction)
