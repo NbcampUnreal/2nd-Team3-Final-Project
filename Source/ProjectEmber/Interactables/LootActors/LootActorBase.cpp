@@ -113,6 +113,7 @@ void ALootActorBase::CompleteInteractAbility()
 				NewGeometryCollectionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 				NewGeometryCollectionComponent->SetCollisionResponseToAllChannels(ECR_Block);
 				NewGeometryCollectionComponent->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+				NewGeometryCollectionComponent->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 				NewGeometryCollectionComponent->SetSimulatePhysics(true);
 
 				NewGeometryCollectionComponent->RegisterComponent();
