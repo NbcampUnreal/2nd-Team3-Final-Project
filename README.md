@@ -1,5 +1,5 @@
 # 🔥 MEMORIK
-2nd Team 3 Final Project – Unreal Engine 5 Survival Adventure Game  
+2nd Team 3 Final Project – Unreal Engine 5 Healing Adventure Game  
 
 ![Unreal Engine 5](https://img.shields.io/badge/Engine-Unreal%20Engine%205-blue?logo=unrealengine)  
 ![Status](https://img.shields.io/badge/Status-In%20Development-important)  
@@ -9,7 +9,7 @@
 
 **MEMORIK**는 UE5 기반의 3인칭 서바이벌 어드벤처 게임입니다.  
 플레이어는 폐허가 된 세계에서 살아남기 위해 자원을 수집하고, 야생 동물을 상대하며, 잃어버린 '메모리'를 찾아나섭니다.  
-판타지와 SF가 뒤섞인 세계관 속에서 생존, 성장, 전략이 결합된 몰입형 게임 경험을 제공합니다.
+판타지와 SF가 뒤섞인 세계관 속에서 탐험, 성장, 전략이 결합된 몰입형 게임 경험을 제공합니다.
 
 ## 🛠️ 핵심 기능
 
