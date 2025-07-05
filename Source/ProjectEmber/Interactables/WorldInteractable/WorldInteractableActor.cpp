@@ -141,6 +141,8 @@ void AWorldInteractableActor::EndInteract_Implementation()
 		EndData.Instigator = this;
 		UGameplayEventSubsystem::GetGameplayEvent(this)->BroadcastGameEvent(ResultTag, EndData);
 	}
+
+	// rere
 	
 	if (ReceiverComponent)
 	{
