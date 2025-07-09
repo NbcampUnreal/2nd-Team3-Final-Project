@@ -41,7 +41,7 @@ void UAlsLinkedAnimationInstance::NativeInitializeAnimation()
 
 void UAlsLinkedAnimationInstance::NativeBeginPlay()
 {
-	ALS_ENSURE_MESSAGE(Parent.IsValid(),
+	(void)ALS_ENSURE_MESSAGE(Parent.IsValid(),
 	                   TEXT("%s (%s) should only be used as a linked animation instance within the %s animation blueprint!"),
 	                   ALS_GET_TYPE_STRING(UAlsLinkedAnimationInstance).GetData(), *GetClass()->GetName(),
 	                   ALS_GET_TYPE_STRING(UAlsAnimationInstance).GetData());
