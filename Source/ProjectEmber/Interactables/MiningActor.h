@@ -11,7 +11,6 @@ class PROJECTEMBER_API AMiningActor : public ABaseInteractableActor
 
 public:
 	virtual void Interact_Implementation(AActor* Caller) override;
-	virtual float GetGatherTime_Implementation() override;	
 
 private:
 	UPROPERTY(EditDefaultsOnly, Category = "Spawn Actor")

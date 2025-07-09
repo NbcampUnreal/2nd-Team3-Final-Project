@@ -3,8 +3,10 @@
 
 #include "Interactables/WorldInteractable/InteractionFragment_EventSender.h"
 
+#include "GameplayTagPayload.h"
 #include "Condition/InteractionCondition.h"
 #include "GameInstance/GameplayEventSubsystem.h"
+#include "MessageBus/MessageBus.h"
 
 UInteractionFragment_EventSender::UInteractionFragment_EventSender()
 {
@@ -14,20 +16,14 @@ void UInteractionFragment_EventSender::ExecuteInteraction_Implementation(AActor*
 {
 	Super::ExecuteInteraction_Implementation(Interactor);
 
-	if (UGameplayEventSubsystem* Subsystem = UGameplayEventSubsystem::GetGameplayEvent(this))
-	{
-		Subsystem->OnGameEvent.AddDynamic(this, &UInteractionFragment_EventSender::OnGameplayEventReceived);
-	}
+	UMessageBus::GetInstance()->Subscribe("Interaction", MessageDelegate);
 }
 
 void UInteractionFragment_EventSender::EndInteraction_Implementation()
 {
 	Super::EndInteraction_Implementation();
 
-	if (UGameplayEventSubsystem* Subsystem = UGameplayEventSubsystem::GetGameplayEvent(this))
-	{
-		Subsystem->OnGameEvent.RemoveDynamic(this, &UInteractionFragment_EventSender::OnGameplayEventReceived);
-	}
+	UMessageBus::GetInstance()->Unsubscribe("Interaction", MessageDelegate);
 
 	for (const FGameplayTag& Tag : QueuedEvents)
 	{
@@ -52,17 +48,26 @@ void UInteractionFragment_EventSender::TryBroadcastEvent(const FGameplayTag& Eve
 	}
 }
 
-void UInteractionFragment_EventSender::OnGameplayEventReceived(const FGameplayTag& EventTag,
-	const FGameplayEventData& EventData)
+void UInteractionFragment_EventSender::OnMessageReceived(const FName& MessageType, UObject* Payload)
 {
-	for (const FConditionalGameplayEvent& Entry : ConditionalEventsToSend)
+	if (UGameplayTagPayload* TagPayload = Cast<UGameplayTagPayload>(Payload))
 	{
-		if (Entry.Condition->OnEvent(EventTag, EventData))
+		if (TagPayload->GameplayTag.IsValid())
 		{
-			if (Entry.Condition->IsFulfilled() && Entry.EventToSend.IsValid())
+			FGameplayEventData EventData;
+			EventData.Instigator = TagPayload->ContextObject ? TagPayload->ContextObject : GetOwner();
+
+			for (const FConditionalGameplayEvent& Entry : ConditionalEventsToSend)
 			{
-				QueuedEvents.AddUnique(Entry.EventToSend);
+				if (IsValid(Entry.Condition) && Entry.Condition->OnEvent(TagPayload->GameplayTag, EventData))
+				{
+					if (Entry.Condition->IsFulfilled() && Entry.EventToSend.IsValid())
+					{
+						QueuedEvents.AddUnique(Entry.EventToSend);
+					}
+				}
 			}
 		}
 	}
+	
 }

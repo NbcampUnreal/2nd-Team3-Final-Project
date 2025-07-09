@@ -23,7 +23,4 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
 	void EndInteract();
-	
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
-	float GetGatherTime();
 };

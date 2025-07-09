@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Interactables/WorldInteractable/InteractionFragment.h"
+#include "MessageBus/MessageBus.h"
 #include "InteractionFragment_EventSender.generated.h"
 
 class UInteractionCondition;
@@ -39,7 +40,7 @@ public:
 	void TryBroadcastEvent(const FGameplayTag& EventTag);
 
 	UFUNCTION()
-	void OnGameplayEventReceived(const FGameplayTag& EventTag,	const FGameplayEventData& EventData);
+	void OnMessageReceived(const FName& MessageType, UObject* Payload);
 	
 	UPROPERTY(EditAnywhere, Category="Interaction")
 	bool bSendOnlyIfConditionMet = true;
@@ -48,5 +49,7 @@ public:
 	TArray<FConditionalGameplayEvent> ConditionalEventsToSend;
 
 	TArray<FGameplayTag> QueuedEvents;
+
+	FMessageDelegate MessageDelegate;
 };
 

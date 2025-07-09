@@ -716,9 +716,3 @@ void UDialogueComponent::Interact_Implementation(AActor* Caller)
 {
     Interact();
 }
-
-float UDialogueComponent::GetGatherTime_Implementation()
-{
-    return 0.0f;
-}
-

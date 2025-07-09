@@ -12,3 +12,8 @@ namespace EmberQuestEventTag
 	UE_DEFINE_GAMEPLAY_TAG(Ring, "Quest.MiniGame.Ring");
 	UE_DEFINE_GAMEPLAY_TAG(Shooting, "Quest.MiniGame.Shooting");
 }
+
+namespace EmberInteractionEventTag
+{
+	UE_DEFINE_GAMEPLAY_TAG(Clear, "Interaction.Clear");
+}

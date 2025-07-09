@@ -8,6 +8,7 @@
 
 #include "InteractionTriggerComponent.generated.h"
 
+class AWorldInteractableActor;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAllReceiversDeactivated);
 
 UCLASS( Blueprintable,  meta=(BlueprintSpawnableComponent) )
@@ -26,7 +27,7 @@ public:
 	void AddInteractionTarget(FName InstanceName, TEnumAsByte<EInteractionAction::Type> InteractionAction); //월드에 배치된 액터 등록. 인스턴스 이름으로 찾고 실행할 액션은 enum으로 결정
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction")
-	TArray<FInteractionTarget> InteractionTargets; // 자신에게 등록된 액터들
+	TArray<TObjectPtr<AWorldInteractableActor>> InteractionTargets; // 자신에게 등록된 액터들
 
 	UFUNCTION()
 	void OnTargetInteractionCompleted(AActor* CompletedBy, bool bCanBeTriggeredAgain);

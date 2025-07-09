@@ -56,7 +56,7 @@ void AMiniGameInteractableActor::CheckConditionCompletion(const FGameplayTag& Ev
 		}
 	}
 	
-	ReceiverComponent->bCanBeTriggeredAgain = false;
+	//ReceiverComponent->bCanBeTriggeredAgain = false;
 	
 	// 조건 만족 후 클리어
 	if (this->Implements<UInteractable>())

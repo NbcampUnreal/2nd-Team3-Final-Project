@@ -40,8 +40,3 @@ void AMiningActor::Interact_Implementation(AActor* Caller)
 	}
 	Destroy();
 }
-
-float AMiningActor::GetGatherTime_Implementation()
-{
-	return GatherTime;
-}

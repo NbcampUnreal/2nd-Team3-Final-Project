@@ -13,8 +13,3 @@ void AInteractableMover::Interact_Implementation(AActor* Caller)
 {
 	
 }
-
-float AInteractableMover::GetGatherTime_Implementation()
-{
-	return 0.0f;
-}
