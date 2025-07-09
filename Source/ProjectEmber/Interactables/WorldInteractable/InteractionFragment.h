@@ -17,7 +17,7 @@ public:
 	void TryExecuteInteraction(AActor* Interactor);
 
 	/** 실행 조건 검사 (추상적 조건 포함 가능) */
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
+	UFUNCTION(BlueprintNativeEvent, Category="Interaction")
 	bool CanExecuteInteraction(AActor* Interactor) const;
 	
 	UFUNCTION(BlueprintNativeEvent, Category="Interaction")

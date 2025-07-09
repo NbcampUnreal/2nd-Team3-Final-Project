@@ -87,12 +87,12 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
     TObjectPtr<UInputAction> ScanAction;
          */
         
-        UInteractionComponent* Comp = Character->InteractionComponent.Get();
-        if (Comp)
+        //UInteractionComponent* Comp = Character->InteractionComponent.Get();
+        //if (Comp)
         {
-            InputComponent->BindAction(InteractAction, ETriggerEvent::Started, Comp, &UInteractionComponent::Interact);
+            //InputComponent->BindAction(InteractAction, ETriggerEvent::Started, Comp, &UInteractionComponent::Interact);
             //InputComponent->BindAction(InteractAction, ETriggerEvent::Completed, Comp, &UInteractionComponent::StopGather);
-            InputComponent->BindAction(InteractAction, ETriggerEvent::Started, Comp, &UInteractionComponent::TriggerAdvanceDialogue);
+            //InputComponent->BindAction(InteractAction, ETriggerEvent::Started, Comp, &UInteractionComponent::TriggerAdvanceDialogue);
         }
     }
 

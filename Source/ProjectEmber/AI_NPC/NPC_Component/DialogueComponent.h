@@ -28,6 +28,8 @@ public:
     UFUNCTION()
     void PositionDetachedCamera();
     void ShowQuestCompleteWidget(const UQuestDataAsset* InQuestAsset, bool bIsQuestComplete);
+
+    UFUNCTION()
     void AdvanceDialogue();
     void Interact();
     void ShowQuestTracker(bool bIsComplete, int32 StepIndex);
