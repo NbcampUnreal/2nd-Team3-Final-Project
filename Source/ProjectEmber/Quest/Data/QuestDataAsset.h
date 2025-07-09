@@ -99,13 +99,13 @@ struct FQuestStep
     UPROPERTY(EditAnywhere, Instanced, BlueprintReadWrite, Category = "Quest|Step")
     TArray<UQuestCondition*> UnlockConditions;
     
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Tutorial")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest|Step")
     bool bShowTutorial;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Tutorial")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Quest|Step")
     UTutorialDataAsset* TutorialDataAsset;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite,Category="Quest|Step")
     TArray<int32> TutorialIndexes; 
 
 };
