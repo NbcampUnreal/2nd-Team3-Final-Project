@@ -1,54 +1,38 @@
 //Easy Multi Save - Copyright (C) 2025 by Michael Hegemann.  
 
+using System.IO;
 using UnrealBuildTool;
 
 public class EasyMultiSave : ModuleRules
 {
 	public EasyMultiSave(ReadOnlyTargetRules Target) : base(Target)
 	{
-        PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		
-		PublicIncludePaths.AddRange(
-			new string[] {
+		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+        PrecompileForTargets = PrecompileTargetsType.Any;
 
-				// ... add public include paths required here ...
-			}
-			);
+       //Test noPCH
+       //PCHUsage = PCHUsageMode.NoPCHs; 
+       //UndefinedIdentifierWarningLevel = WarningLevel.Error;
+
+        PublicIncludePaths.AddRange(new string[]
+        {
+            Path.Combine(ModuleDirectory, "../EasyMultiSave/System/Public"),
+            Path.Combine(ModuleDirectory, "../EasyMultiSave/Common/Public"),
+            Path.Combine(ModuleDirectory, "../EasyMultiSave/Async/Public"),
+            Path.Combine(ModuleDirectory, "../EasyMultiSave/Data/Public"),
+        });
+
+        PublicDependencyModuleNames.AddRange(new string[]
+		{
+			"Core",
+		});
 				
-		
-		PrivateIncludePaths.AddRange(
-			new string[] {
-				// ... add other private include paths required here ...
-			}
-			);
-			
-		
-		PublicDependencyModuleNames.AddRange(
-			new string[]
-			{
-				"Core",
-				// ... add other public dependencies that you statically link with here ...
-			}
-			);
-			
-		
-		PrivateDependencyModuleNames.AddRange(
-			new string[]
-			{
-				"CoreUObject",
-				"Engine",
-				"Slate",
-				"SlateCore",
-				// ... add private dependencies that you statically link with here ...	
-			}
-			);
-		
-		
-		DynamicallyLoadedModuleNames.AddRange(
-			new string[]
-			{
-				// ... add any modules that your module loads dynamically here ...
-			}
-			);
+		PrivateDependencyModuleNames.AddRange(new string[]
+		{
+			"CoreUObject",
+			"Engine",
+			"Slate",
+			"SlateCore",
+		});	
 	}
 }

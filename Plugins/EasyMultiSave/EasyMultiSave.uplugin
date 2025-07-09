@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
-	"Version": 69,
-	"VersionName": "1.69",
+	"Version": 71,
+	"VersionName": "1.71",
 	"FriendlyName": "Easy Multi Save",
 	"Description": "Easy Multi Save is a all-in-one save and load solution for projects of any kind.",
 	"Category": "Michael Hegemann",
@@ -10,7 +10,7 @@
 	"DocsURL": "https://goo.gl/Y3Bf2x",
 	"MarketplaceURL": "",
 	"SupportURL": "mailto:hegidev@gmail.com",
-	"EngineVersion": "5.5.0",
+	"EngineVersion": "5.6.0",
 	"CanContainContent": false,
 	"Installed": true,
 	"Modules": [
