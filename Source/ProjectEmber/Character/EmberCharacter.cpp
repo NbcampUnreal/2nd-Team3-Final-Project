@@ -220,49 +220,7 @@ void AEmberCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	if (LocomotionMode == AlsLocomotionModeTags::Gliding)
-	{
-		FVector WorldInput = GetLastMovementInputVector();
-
-		const float DeadZoneSqr = 0.1f * 0.1f;
-		if (WorldInput.SizeSquared() <= DeadZoneSqr)
-		{
-			return;
-		}
-
-		WorldInput.Z = 0.0f;
-
-		FVector LocalInput = GetActorRotation().UnrotateVector(WorldInput);
-		LocalInput = LocalInput.GetSafeNormal2D();
-
-		float InputYawOffset = FMath::RadiansToDegrees(FMath::Atan2(LocalInput.Y, LocalInput.X));
-
-		FRotator CurrentRot = GetActorRotation();
-		float CurrentYaw = CurrentRot.Yaw;
-
-		float DesiredYaw = CurrentYaw + InputYawOffset;
-
-		const float RotationSpeed = 1.0f;
-		float NewYaw = FMath::FInterpTo(
-			CurrentYaw,
-			DesiredYaw,
-			DeltaSeconds,
-			RotationSpeed
-		);
-
-		FRotator NewRot(0.0f, NewYaw, 0.0f);
-
-		SetActorRotation(NewRot);
-
-		const FRotator ControlRot = GetActorRotation();//GetControlRotation();
-		const FVector ForwardDir = FRotationMatrix(ControlRot).GetScaledAxis(EAxis::X);
-
-		FVector NewVelocity = ForwardDir.GetSafeNormal() * GlideForwardSpeed;
-
-		NewVelocity.Z = -FMath::Abs(GlideDescendSpeed);
-
-		AlsCharacterMovement->Velocity = NewVelocity;
-	}
+	UpdateGlideMovement(DeltaSeconds);
 	
 	if (!TargetSystemComponent->IsLocked() && HitActors.Num() > 0)
 	{
@@ -1338,5 +1296,62 @@ void AEmberCharacter::Input_OnCloseDialogue()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[Input_OnCloseDialogue] No ActiveDialogueComponent to close!"));
 	}
+}
+
+void AEmberCharacter::UpdateGlideMovement(float DeltaTime)
+{
+	if (LocomotionMode != AlsLocomotionModeTags::Gliding)
+	{
+		return;
+	}
+
+	const float DeadZoneSqr = 0.1f * 0.1f;
+	
+	// 상승기류
+    if (AbilitySystemComponent && AbilitySystemComponent->HasMatchingGameplayTag(AlsCharacterStateTags::Updrafting))
+    {
+        FVector WorldInput = GetLastMovementInputVector();
+        
+        if (WorldInput.SizeSquared() > DeadZoneSqr)
+        {
+            WorldInput.Z = 0.f;
+        	
+            const FVector LocalInput = GetActorRotation().UnrotateVector(WorldInput).GetSafeNormal2D();
+            const float InputYawOffset = FMath::RadiansToDegrees(FMath::Atan2(LocalInput.Y, LocalInput.X));
+            const float NewYaw = FMath::FInterpTo(GetActorRotation().Yaw, GetActorRotation().Yaw + InputYawOffset,
+                DeltaTime,1.f);
+        	
+            SetActorRotation(FRotator(0.f, NewYaw, 0.f));
+        	
+            const FVector ForwardDir = FRotationMatrix(GetActorRotation()).GetScaledAxis(EAxis::X);
+            FVector NewVel = ForwardDir * GlideForwardSpeed;
+            NewVel.Z = AlsCharacterMovement->Velocity.Z;
+            AlsCharacterMovement->Velocity = NewVel;
+        }
+        return;
+    }
+
+	// 일반
+    FVector WorldInput = GetLastMovementInputVector();
+    if (WorldInput.SizeSquared() <= DeadZoneSqr)
+    {
+        return;
+    }
+
+    WorldInput.Z = 0.f;
+    FVector LocalInput = GetActorRotation().UnrotateVector(WorldInput).GetSafeNormal2D();
+    float InputYawOffset = FMath::RadiansToDegrees(FMath::Atan2(LocalInput.Y, LocalInput.X));
+
+    float CurrentYaw = GetActorRotation().Yaw;
+    float DesiredYaw = CurrentYaw + InputYawOffset;
+    float NewYaw = FMath::FInterpTo(CurrentYaw,DesiredYaw,DeltaTime,1.f);
+
+    SetActorRotation(FRotator(0.f, NewYaw, 0.f));
+
+    const FVector ForwardDir = FRotationMatrix(GetActorRotation()).GetScaledAxis(EAxis::X);
+    FVector NewVelocity = ForwardDir * GlideForwardSpeed;
+    NewVelocity.Z = -FMath::Abs(GlideDescendSpeed);
+
+    AlsCharacterMovement->Velocity = NewVelocity;
 }
 
