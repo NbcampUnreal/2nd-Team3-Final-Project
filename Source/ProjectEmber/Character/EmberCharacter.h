@@ -244,6 +244,8 @@ protected:
 
 
 protected:
+	void UpdateGlideMovement(float DeltaTime);
+	
 	/** 글라이드 시 전방(Forward) 속도 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Glide")
 	float GlideForwardSpeed = 500.0f;
