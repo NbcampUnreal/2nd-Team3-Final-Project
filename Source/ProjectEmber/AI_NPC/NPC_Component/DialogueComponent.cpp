@@ -110,72 +110,11 @@ void UDialogueComponent::LoadDialogueFromDataTable(bool bResetDialogueIndex, FNa
 
     if (StepIndex == INDEX_NONE && Steps.Num() > 0)
     {
-        const FQuestStep& FirstStep = Steps[0];
-        if (Owner == FirstStep.QuestGiver.Get())
-        {
-            LinesOfDialogue = FirstStep.GiverDialogueLines;
-            UE_LOG(LogTemp, Warning, TEXT(" 첫 스텝 QuestGiver 일치 → 대사 로딩됨"));
-        }
-        else
-        {
-            UE_LOG(LogTemp, Warning, TEXT(" 퀘스트 미시작 상태지만 QuestGiver 아님 → 대사 없음"));
-        }
+        HandleQuestGiverDialogue(Steps[0], Owner);  // QuestGiver 대사 처리
     }
     else if (Steps.IsValidIndex(StepIndex))
     {
-        const FQuestStep& CurrentStep = Steps[StepIndex];
-
-        // 1) 조건 대사 우선
-        for (const UQuestCondition* Condition : CurrentStep.Conditions)
-        {
-            const UDialogueQuestCondition* DialogueCond = Cast<UDialogueQuestCondition>(Condition);
-            if (DialogueCond && DialogueCond->TargetNPCActor.IsValid())
-            {
-                if (DialogueCond->TargetNPCActor.Get() == Owner)
-                {
-                    LinesOfDialogue = DialogueCond->DialogueLines;
-                    UE_LOG(LogTemp, Warning, TEXT("조건 NPC 일치 → 조건 대사 로딩됨"));
-                    break;
-                }
-            }
-        }
-
-        // 2) 조건 대사가 없을 경우 완료 조건부터 체크
-        if (LinesOfDialogue.Num() == 0)
-        {
-            AActor* Giver = CurrentStep.QuestGiver.Get();
-            AActor* Completer = CurrentStep.CompletionGiver.Get();
-
-            const bool bIsQuestAccepted = QuestSubsystem->IsQuestAccepted(QuestAsset->QuestID);
-            const bool bIsStepCompleted = QuestSubsystem->IsStepCompleted(QuestAsset->QuestID, StepIndex);
-
-            //  완료 조건 Fulfilled + NPC가 Completer → 완료 대사
-            bool bAllConditionsMet = true;
-            for (const UQuestCondition* Condition : CurrentStep.Conditions)
-            {
-                if (Condition && !Condition->IsFulfilled())
-                {
-                    bAllConditionsMet = false;
-                    break;
-                }
-            }
-
-            if (bAllConditionsMet && Owner == Completer)
-            {
-                LinesOfDialogue = CurrentStep.CompleteDialogueLines;
-                UE_LOG(LogTemp, Warning, TEXT(" CompletionGiver + 조건 충족 → 완료 대사 로딩됨"));
-            }
-            // 조건 Fulfilled가 아니고, 아직 Step 완료도 아니며 NPC가 Giver일 경우 → 수락 대사
-            else if (!bIsStepCompleted && !QuestSubsystem->IsQuestCompleted(QuestAsset->QuestID) && Owner == Giver)
-            {
-                LinesOfDialogue = CurrentStep.GiverDialogueLines;
-                UE_LOG(LogTemp, Warning, TEXT(" Giver + 미완료 Step → 수락 대사 로딩됨"));
-            }
-            else
-            {
-                UE_LOG(LogTemp, Warning, TEXT(" 조건 미충족 or NPC 불일치 → 기본 대사 생략"));
-            }
-        }
+        HandleStepDialogue(QuestSubsystem, Steps, StepIndex, Owner);  // Step 대사 처리
     }
 
     UE_LOG(LogTemp, Warning, TEXT(" 최종 LinesOfDialogue.Num(): %d"), LinesOfDialogue.Num());
@@ -184,6 +123,87 @@ void UDialogueComponent::LoadDialogueFromDataTable(bool bResetDialogueIndex, FNa
     {
         CurrentDialogueIndex = 0;
         bDialogueFinished = false;
+    }
+}
+void UDialogueComponent::HandleQuestGiverDialogue(const FQuestStep& FirstStep, AActor* Owner)
+{
+    if (Owner == FirstStep.QuestGiver.Get())
+    {
+        LinesOfDialogue = FirstStep.GiverDialogueLines;
+        UE_LOG(LogTemp, Warning, TEXT(" 첫 스텝 QuestGiver 일치 → 대사 로딩됨"));
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT(" 퀘스트 미시작 상태지만 QuestGiver 아님 → 대사 없음"));
+    }
+}
+
+// Step 대사 처리 함수
+void UDialogueComponent::HandleStepDialogue(UQuestSubsystem* QuestSubsystem, const TArray<FQuestStep>& Steps, int32 StepIndex, AActor* Owner)
+{
+    // 1) 조건 대사 우선 처리
+    if (HandleConditionDialogue(Steps[StepIndex], Owner)) return;
+
+    // 2) 완료 대사 처리
+    if (LinesOfDialogue.Num() == 0)
+    {
+        HandleCompletionDialogue(QuestSubsystem, Steps[StepIndex], Owner, StepIndex);  // StepIndex 전달
+    }
+}
+
+// 조건 대사 처리 함수
+bool UDialogueComponent::HandleConditionDialogue(const FQuestStep& CurrentStep, AActor* Owner)
+{
+    for (const UQuestCondition* Condition : CurrentStep.Conditions)
+    {
+        const UDialogueQuestCondition* DialogueCond = Cast<UDialogueQuestCondition>(Condition);
+        if (DialogueCond && DialogueCond->TargetNPCActor.IsValid())
+        {
+            if (DialogueCond->TargetNPCActor.Get() == Owner)
+            {
+                LinesOfDialogue = DialogueCond->DialogueLines;
+                UE_LOG(LogTemp, Warning, TEXT("조건 NPC 일치 → 조건 대사 로딩됨"));
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+// 완료 대사 처리 함수
+void UDialogueComponent::HandleCompletionDialogue(UQuestSubsystem* QuestSubsystem, const FQuestStep& CurrentStep, AActor* Owner, int32 StepIndex)
+{
+    AActor* Giver = CurrentStep.QuestGiver.Get();
+    AActor* Completer = CurrentStep.CompletionGiver.Get();
+
+    bool bIsQuestAccepted = QuestSubsystem->IsQuestAccepted(QuestAsset->QuestID);  
+    bool bIsStepCompleted = QuestSubsystem->IsStepCompleted(QuestAsset->QuestID, StepIndex);  
+
+    bool bAllConditionsMet = true;
+    for (const UQuestCondition* Condition : CurrentStep.Conditions)
+    {
+        if (Condition && !Condition->IsFulfilled())
+        {
+            bAllConditionsMet = false;
+            break;
+        }
+    }
+
+    // 완료 조건 충족 + NPC가 Completer → 완료 대사
+    if (bAllConditionsMet && Owner == Completer)
+    {
+        LinesOfDialogue = CurrentStep.CompleteDialogueLines;
+        UE_LOG(LogTemp, Warning, TEXT(" CompletionGiver + 조건 충족 → 완료 대사 로딩됨"));
+    }
+    // 완료 조건 미충족, Step 미완료, NPC가 Giver → 수락 대사
+    else if (!bIsStepCompleted && !QuestSubsystem->IsQuestCompleted(QuestAsset->QuestID) && Owner == Giver)
+    {
+        LinesOfDialogue = CurrentStep.GiverDialogueLines;
+        UE_LOG(LogTemp, Warning, TEXT(" Giver + 미완료 Step → 수락 대사 로딩됨"));
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT(" 조건 미충족 or NPC 불일치 → 기본 대사 생략"));
     }
 }
 void UDialogueComponent::SetInputMappingContexts(TArray<UInputMappingContext*> MappingContexts, bool bClearExisting)

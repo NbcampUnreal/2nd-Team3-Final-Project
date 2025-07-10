@@ -13,7 +13,7 @@ class UNPCSphereComponent;
 class UNPCTalkWidgetComponent;
 class ADialogueCameraActor;
 class UInputMappingContext;
-
+class UQuestSubsystem;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTEMBER_API UDialogueComponent : public UActorComponent, public IInteractable
@@ -134,6 +134,15 @@ protected:
 
     UPROPERTY()
     UQuestWidget* QuestWidgetInstance;
+    
+    void HandleStepDialogue(UQuestSubsystem* QuestSubsystem, const TArray<FQuestStep>& Steps, int32 StepIndex, AActor* Owner);  // HandleStepDialogue 함수 선언
 
+    // 조건 대사 처리 함수
+    bool HandleConditionDialogue(const FQuestStep& CurrentStep, AActor* Owner);
 
+    // 완료 대사 처리 함수 (Handle Completion Dialogue)
+    void HandleCompletionDialogue(UQuestSubsystem* QuestSubsystem, const FQuestStep& CurrentStep, AActor* Owner, int32 StepIndex);  // StepIndex를 매개변수로 추가
+
+    // QuestGiver 대사 처리 함수
+    void HandleQuestGiverDialogue(const FQuestStep& FirstStep, AActor* Owner);
 };

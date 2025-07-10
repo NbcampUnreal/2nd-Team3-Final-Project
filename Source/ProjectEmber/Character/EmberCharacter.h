@@ -50,8 +50,8 @@ public: /* Character */
 	UFUNCTION(BlueprintCallable, Category = "Glider")
 	USkeletalMeshComponent* GetGliderMesh() const;
 	
-	//UPROPERTY(EditAnywhere, Category = "InteractionSystem")
-	//TObjectPtr<class UInteractionComponent> InteractionComponent;
+	UPROPERTY(EditAnywhere, Category = "InteractionSystem")
+	TObjectPtr<class UInteractionComponent> InteractionComponent;
 
 	UPROPERTY(EditAnywhere, Category = "DeathWidget")
 	TSubclassOf<class UUserWidget> DeathWidgetClass;
