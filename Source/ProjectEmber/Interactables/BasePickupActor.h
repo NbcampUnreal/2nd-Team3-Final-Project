@@ -1,11 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Interactables/BaseInteractableActor.h"
+#include "WorldInteractableActor.h"
 #include "BasePickupActor.generated.h"
 
 UCLASS()
-class PROJECTEMBER_API ABasePickupActor : public ABaseInteractableActor
+class PROJECTEMBER_API ABasePickupActor : public AWorldInteractableActor
 {
 	GENERATED_BODY()
 

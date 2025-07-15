@@ -1,6 +1,5 @@
 #include "Character/EmberComponents/InteractionComponent.h"
 #include "Character/EmberCharacter.h"
-#include "Interactables/BaseInteractableActor.h"
 #include "Interactables/BasePickupActor.h"
 #include "AI_NPC/NPC_Component/DialogueComponent.h"
 #include "Components/BoxComponent.h"
@@ -71,23 +70,23 @@ void UInteractionComponent::OnUnregister()
 void UInteractionComponent::OnGatherOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
                                                  UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (ABaseInteractableActor* Actor = Cast<ABaseInteractableActor>(OtherActor))
-	{
-		if (!Cast<ABasePickupActor>(Actor))
-		{
-			EMBER_LOG(LogTemp, Warning, TEXT("Gather Event Activate"));
-			SetCurrentInteractable(Actor);
-		}
-	}
+	//if (ABaseInteractableActor* Actor = Cast<ABaseInteractableActor>(OtherActor))
+	//{
+	//	if (!Cast<ABasePickupActor>(Actor))
+	//	{
+	//		EMBER_LOG(LogTemp, Warning, TEXT("Gather Event Activate"));
+	//		SetCurrentInteractable(Actor);
+	//	}
+	//}
 }
 
 void UInteractionComponent::OnGatherOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (ABaseInteractableActor* Actor = Cast<ABaseInteractableActor>(OtherActor))
-	{
-		SetCurrentInteractable(nullptr);
-	}
+	//if (ABaseInteractableActor* Actor = Cast<ABaseInteractableActor>(OtherActor))
+	//{
+	//	SetCurrentInteractable(nullptr);
+	//}
 }
 
 void UInteractionComponent::OnInteractOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
