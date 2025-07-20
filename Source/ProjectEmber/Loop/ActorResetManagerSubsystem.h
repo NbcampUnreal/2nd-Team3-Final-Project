@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "LoopEventListener.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "ActorResetManagerSubsystem.generated.h"
 
@@ -15,8 +16,7 @@ class PROJECTEMBER_API UActorResetManagerSubsystem : public UGameInstanceSubsyst
 	GENERATED_BODY()
 
 public:
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-	
+
 	UFUNCTION(BlueprintCallable, Category = "GameLoop")
 	void RegisterResetRequest(AActor* Actor);
 
@@ -25,14 +25,14 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "GameLoop")
 	void ConsumeResetFlag(AActor* Actor);
-
-private:
-	UFUNCTION()
-	void LoopStarted(int32 LoopIndex);
 	
+	UFUNCTION(BlueprintCallable, Category = "GameLoop")
+	void SetCurrentLoopID(int32 LoopID);
+private:
 	UPROPERTY()
 	TMap<FGuid, int32> PendingResetActors;
 
-	int32 CurrentLoop = 0;
+	UPROPERTY()
+	int32 CurrentLoop;
 };
 

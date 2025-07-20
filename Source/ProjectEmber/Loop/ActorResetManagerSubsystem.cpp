@@ -6,21 +6,12 @@
 #include "GameLoopManagerSubsystem.h"
 #include "LoopResettable.h"
 
-void UActorResetManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
-{
-	Super::Initialize(Collection);
-
-	if (UGameLoopManagerSubsystem* LoopManagerSubsystem = GetGameInstance()->GetSubsystem<UGameLoopManagerSubsystem>())
-	{
-		LoopManagerSubsystem->OnLoopAdvanced.AddDynamic(this, &UActorResetManagerSubsystem::LoopStarted);
-	}
-}
-
 void UActorResetManagerSubsystem::RegisterResetRequest(AActor* Actor)
 {
 	if (Actor->GetClass()->ImplementsInterface(ULoopResettable::StaticClass()))
 	{
 		const FGuid Id = ILoopResettable::Execute_GetID(Actor);
+		
 		if (Id.IsValid())
 		{
 			PendingResetActors.Add(Id, CurrentLoop);
@@ -46,7 +37,8 @@ void UActorResetManagerSubsystem::ConsumeResetFlag(AActor* Actor)
 		PendingResetActors.Remove(Id);
 	}
 }
-void UActorResetManagerSubsystem::LoopStarted(int32 LoopIndex)
+
+void UActorResetManagerSubsystem::SetCurrentLoopID(int32 LoopID)
 {
-	CurrentLoop = LoopIndex;
+	CurrentLoop = LoopID;
 }

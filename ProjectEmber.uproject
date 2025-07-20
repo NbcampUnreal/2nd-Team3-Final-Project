@@ -15,7 +15,8 @@
 				"GameplayAbilities",
 				"EnhancedInput",
 				"EasyMultiSave",
-				"CoreUObject"
+				"CoreUObject",
+				"DeveloperSettings"
 			]
 		},
 		{

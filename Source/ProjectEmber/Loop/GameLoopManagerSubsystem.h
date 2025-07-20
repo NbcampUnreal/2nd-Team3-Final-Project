@@ -5,10 +5,10 @@
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "GameLoopManagerSubsystem.generated.h"
-// 루프 종료 이벤트 (하루 끝날 때 연출 시작)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLoopEndingSignature);
-// 루프 전환 이벤트 (루프 번호 증가 후 알림)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLoopAdvancedSignature, int32, NewLoopID);
+
+class ULoopEventDirector;
+class ILoopEventListener;
+
 /**
  * 
  */
@@ -19,7 +19,6 @@ class PROJECTEMBER_API UGameLoopManagerSubsystem : public UGameInstanceSubsystem
 
 public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-
 	virtual void Deinitialize() override;
 	
 	UFUNCTION(BlueprintCallable, Category = "GameLoop")
@@ -27,17 +26,21 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "GameLoop")
 	void AdvanceLoop();
-
-	UPROPERTY(BlueprintAssignable)
-	FOnLoopEndingSignature OnLoopEnding;
 	
-	UPROPERTY(BlueprintAssignable)
-	FOnLoopAdvancedSignature OnLoopAdvanced;
+	UFUNCTION(BlueprintCallable, Category = "GameLoop")
+	void NotifyLoopEndReady();
 
-	UPROPERTY(BlueprintReadOnly)
-	int32 CurrentLoopID = 0;
+	UFUNCTION(BlueprintCallable, Category = "GameLoop")
+	void NotifyLoopStartReady();
 
 private:
-	void EndLoop();
-	void StartLoop();
+	void OnAllEndLoopReady();
+	void OnAllStartLoopReady();
+
+	UPROPERTY()
+	int32 CurrentLoopID = 0;
+
+	UPROPERTY()
+	TObjectPtr<ULoopEventDirector> LoopDirector;
+
 };
