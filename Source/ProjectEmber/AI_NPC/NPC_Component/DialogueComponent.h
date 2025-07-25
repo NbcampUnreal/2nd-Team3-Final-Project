@@ -15,6 +15,8 @@ class ADialogueCameraActor;
 class UInputMappingContext;
 class UQuestSubsystem;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDialogueEnd);
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class PROJECTEMBER_API UDialogueComponent : public UActorComponent, public IInteractable
 {
@@ -48,6 +50,9 @@ public:
     UPROPERTY()
     bool bDialogueOverriddenByCondition = false;
 
+
+    UPROPERTY(BlueprintAssignable)
+    FDialogueEnd OnDialogueEnd;
 
     UFUNCTION(BlueprintCallable, Category = "Dialogue")
     void CloseAnyOpenUI();

@@ -401,6 +401,7 @@ void UDialogueComponent::AdvanceDialogue()
         }
         return;
     }
+    OnDialogueEnd.Broadcast();
 
     // --- 대사 다 봤을 때 ---
     bDialogueFinished = true;
