@@ -37,4 +37,5 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
 	USoundBase* CompleteSound;
+	//사운드 관련
 };
