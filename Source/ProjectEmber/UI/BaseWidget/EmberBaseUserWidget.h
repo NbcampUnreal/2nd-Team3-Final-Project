@@ -13,7 +13,4 @@ UCLASS()
 class PROJECTEMBER_API UEmberBaseUserWidget : public UUserWidget
 {
 	GENERATED_BODY()
-
-public:
-	
 };

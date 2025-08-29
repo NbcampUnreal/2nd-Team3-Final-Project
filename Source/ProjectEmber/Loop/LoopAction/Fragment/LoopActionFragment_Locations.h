@@ -15,6 +15,6 @@ class PROJECTEMBER_API ULoopActionFragment_Locations : public ULoopActionFragmen
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSoftObjectPtr<ARespawnTarget> RespawnTarget;
 };

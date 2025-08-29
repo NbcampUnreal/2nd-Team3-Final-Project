@@ -7,32 +7,20 @@
 #include "LoopEventSettings.generated.h"
 
 class ULoopEventDataAsset;
-class ULoopActionBase;
-
-USTRUCT(BlueprintType)
-struct FLoopActionEntry
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<ULoopActionBase> ActionClass;
-
-	UPROPERTY(EditAnywhere)
-	ULoopEventDataAsset* ActionDA;
-};
+class ULoopEventRegistryAsset;
 
 /**
  * 
  */
-UCLASS(Config = Game, meta=(DisplayName="Loop Action Settings"))
+UCLASS(Config = Game, DefaultConfig, meta=(DisplayName="Loop Action Settings"))
 class PROJECTEMBER_API ULoopEventSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere)
-	TMap<int32, TObjectPtr<ULoopEventDataAsset>> LoopEventMap;
-
+	UPROPERTY(EditAnywhere, Config, Category="Loop", meta=(AllowedClasses="LoopEventDataAsset"))
+	TMap<int32, TSoftObjectPtr<ULoopEventDataAsset>> LoopDatas;
+	
 	UPROPERTY(EditAnywhere, Config)
 	int32 DefaultLoopID = -1;
 };

@@ -6,10 +6,10 @@
 #include "Interactables/Fragments/InteractionFragment.h"
 #include "InteractionFragment_PlayLS.generated.h"
 
+class UStreamingSourceProvider;
 class ALevelSequenceActor;
 class ULevelSequencePlayer;
 class ULevelSequence;
-class SequenceStreamingSourceProvider;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLevelSequenceFinished);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStreamingStatusUpdated, bool, bIsCompleted);
 
@@ -23,7 +23,7 @@ public:
 	UInteractionFragment_PlayLS();
 	
 	virtual void ExecuteInteraction_Implementation(AActor* Interactor) override;
-	//virtual void OnComponentDestroyed(bool bDestroy) override;
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction")
 	TObjectPtr<ALevelSequenceActor> LevelSequenceActor;
@@ -34,8 +34,8 @@ protected:
 	UPROPERTY(BlueprintAssignable, Category = "Streaming")
 	FOnStreamingStatusUpdated OnStreamingStatusUpdated;
 private:
-
-	TSharedPtr<SequenceStreamingSourceProvider> SequenceStreamingProvider;
+	UPROPERTY()
+	TObjectPtr<UStreamingSourceProvider> StreamingSourceProvider;
 
 	void WaitForStreamingAndPlaySequence(UWorldPartitionSubsystem* Subsystem);
 	

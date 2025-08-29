@@ -8,39 +8,83 @@
 #include "Data/LoopEventSettings.h"
 #include "LoopAction/LoopActionBase.h"
 
+ULoopEventDirector::ULoopEventDirector()
+{
+	LoadAllEvents();
+}
+
+void ULoopEventDirector::LoadAllEvents()
+{
+	const ULoopEventSettings* Setting = GetDefault<ULoopEventSettings>();
+	if (!Setting) return;
+
+	DefaultEventID = Setting->DefaultLoopID;
+	
+	for (const auto& Pair : Setting->LoopDatas)
+	{
+		int32 LoopID = Pair.Key;
+
+		ULoopEventDataAsset* DataAsset = IsValid(Pair.Value.Get())
+			? Pair.Value.Get()
+			: Pair.Value.LoadSynchronous();
+
+		if (!DataAsset)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Failed to load LoopEventDataAsset for LoopID: %d"), LoopID);
+			continue;
+		}
+
+		LoadedEvents.Add(LoopID, DataAsset);
+	}
+}
+
 void ULoopEventDirector::RunStartActions(UGameLoopManagerSubsystem* InManager, int32 LoopID)
 {
 	CachedLoopManager = InManager;
-	bIsStart = true;
+	CurrentPhase = ELoopEventPhase::Start;
+	RunActionsForLoop(LoopID);
+}
+
+void ULoopEventDirector::RunMidActions(UGameLoopManagerSubsystem* InManager, int32 LoopID)
+{
+	CachedLoopManager = InManager;
+	CurrentPhase = ELoopEventPhase::Mid;
 	RunActionsForLoop(LoopID);
 }
 
 void ULoopEventDirector::RunEndActions(UGameLoopManagerSubsystem* InManager, int32 LoopID)
 {
 	CachedLoopManager = InManager;
-	bIsStart = false;
+	CurrentPhase = ELoopEventPhase::End;
 	RunActionsForLoop(LoopID);
 }
 
 void ULoopEventDirector::RunActionsForLoop(int32 LoopID)
 {
-	const ULoopEventSettings* Setting = GetDefault<ULoopEventSettings>();
-	if (!Setting) return;
+	const TObjectPtr<ULoopEventDataAsset>* DataAssetPtr = LoadedEvents.Find(LoopID);
 	
-	const TObjectPtr<ULoopEventDataAsset>* DataAssetPtr = Setting->LoopEventMap.Find(LoopID);
-
-	// 루프 ID가 없으면 기본값으로 대체
 	if (!DataAssetPtr)
 	{
-		DataAssetPtr = Setting->LoopEventMap.Find(Setting->DefaultLoopID);
+		DataAssetPtr = LoadedEvents.Find(DefaultEventID);
 	}
 
 	if (!DataAssetPtr || !*DataAssetPtr) return;
 
-	const TArray<TObjectPtr<ULoopActionDefinition>>& Definitions = bIsStart 
-		? (*DataAssetPtr)->StartActions 
-		: (*DataAssetPtr)->EndActions;
-
+	TArray<TObjectPtr<ULoopActionDefinition>> Definitions;
+	
+	switch (CurrentPhase)
+	{
+	case ELoopEventPhase::Start:
+		Definitions = (*DataAssetPtr)->StartActions;
+		break;
+	case ELoopEventPhase::Mid:
+		Definitions = (*DataAssetPtr)->MidActions;
+		break;
+	case ELoopEventPhase::End:
+		Definitions = (*DataAssetPtr)->EndActions;
+		break;
+	}
+	
 	ExecuteActionDefinitions(Definitions);
 }
 
@@ -52,11 +96,23 @@ void ULoopEventDirector::ExecuteActionDefinitions(const TArray<TObjectPtr<ULoopA
 	{
 		if (CachedLoopManager)
 		{
-			if (bIsStart) CachedLoopManager->NotifyLoopStartReady();
-			else CachedLoopManager->NotifyLoopEndReady();
+			switch (CurrentPhase)
+			{
+			case ELoopEventPhase::Start:
+				CachedLoopManager->NotifyLoopStartReady();
+				break;
+			case ELoopEventPhase::Mid:
+				CachedLoopManager->NotifyLoopMidReady();
+				break;
+			case ELoopEventPhase::End:
+				CachedLoopManager->NotifyLoopEndReady();
+				break;
+			}
 		}
 		return;
 	}
+
+	FinishedCount = 0;
 	
 	for (ULoopActionDefinition* Def : Definitions)
 	{
@@ -69,20 +125,30 @@ void ULoopEventDirector::ExecuteActionDefinitions(const TArray<TObjectPtr<ULoopA
 		PendingActions.Add(NewAction);
 		NewAction->ActivateAction();
 	}
-
 }
 
 
 void ULoopEventDirector::OnActionFinished(ULoopActionBase* FinishedAction)
 {
-	PendingActions.Remove(FinishedAction);
+	FinishedCount++;
 
-	if (PendingActions.Num() == 0)
+	if (PendingActions.Num() == FinishedCount)
 	{
+		PendingActions.Empty();
 		if (CachedLoopManager)
 		{
-			if (bIsStart) CachedLoopManager->NotifyLoopStartReady();
-			else CachedLoopManager->NotifyLoopEndReady();
+			switch (CurrentPhase)
+			{
+				case ELoopEventPhase::Start:
+					CachedLoopManager->NotifyLoopStartReady();
+				break;
+				case ELoopEventPhase::Mid:
+					CachedLoopManager->NotifyLoopMidReady();
+				break;
+				case ELoopEventPhase::End:
+					CachedLoopManager->NotifyLoopEndReady();
+				break;
+			}
 		}
 	}
 }

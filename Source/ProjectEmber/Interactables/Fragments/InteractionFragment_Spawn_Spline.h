@@ -30,9 +30,9 @@ protected:
 	UPROPERTY()
 	TArray<AActor*> SpawnedList; //실제 스폰된 객체들
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Spawn")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Interaction")
 	TArray<TSubclassOf<AActor>> SpawnList; // 스폰할 클래스 타입들(스플라인 포인트가 더 많다면 배열을 순환)
 
-	UPROPERTY(EditAnywhere, Category = "Spawner")
+	UPROPERTY(EditAnywhere, Category = "Interaction")
 	TSubclassOf<AActor> DefaultActorClass; // SpawnList의 요소가 null일 때 대신 스폰될 클래스
 };

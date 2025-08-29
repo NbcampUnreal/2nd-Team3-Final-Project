@@ -40,7 +40,7 @@ public:
 	void TryBroadcastEvent(const FGameplayTag& EventTag);
 
 	UFUNCTION()
-	void OnMessageReceived(const FName& MessageType, UObject* Payload);
+	void OnMessageReceived(const FName MessageType, UObject* Payload);
 	
 	UPROPERTY(EditAnywhere, Category="Interaction")
 	bool bSendOnlyIfConditionMet = true;

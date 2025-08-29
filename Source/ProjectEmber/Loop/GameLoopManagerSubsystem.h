@@ -12,6 +12,15 @@ class ILoopEventListener;
 /**
  * 
  */
+UENUM(BlueprintType)
+enum class ELoopEventPhase : uint8
+{
+	Begin UMETA(DisplayName = "Begin Loop"),
+	Start UMETA(DispayName = "Start Event"),
+	Mid UMETA(DispayName = "Mid"),
+	End  UMETA(DispayName = "End"),
+};
+
 UCLASS()
 class PROJECTEMBER_API UGameLoopManagerSubsystem : public UGameInstanceSubsystem
 {
@@ -25,17 +34,46 @@ public:
 	int32 GetCurrentLoopID() const {return CurrentLoopID;}
 	
 	UFUNCTION(BlueprintCallable, Category = "GameLoop")
-	void AdvanceLoop();
+	void AdvanceLoopEvent();
+
+	UFUNCTION(BlueprintCallable, Category = "GameLoop")
+	void MidLoopEvent();
+	
+	UFUNCTION(BlueprintCallable, Category = "GameLoop")
+	void EndLoopEvent();
+
+	UFUNCTION(BlueprintCallable, Category = "GameLoop")
+	void CheckAllEndConditionReady();
+
+	void OnDayEnd24();
 	
 	UFUNCTION(BlueprintCallable, Category = "GameLoop")
 	void NotifyLoopEndReady();
 
 	UFUNCTION(BlueprintCallable, Category = "GameLoop")
+	void NotifyLoopMidReady();
+	
+	UFUNCTION(BlueprintCallable, Category = "GameLoop")
 	void NotifyLoopStartReady();
-
+	
+	TObjectPtr<ULoopEventDirector> GetEventDirector() {return LoopDirector;}
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameLoop")
+	float FadeDuration = 5.f;
 private:
+	
+	void OnWorldReady(UWorld* World, const UWorld::InitializationValues IVS);
+	
+	UFUNCTION()
 	void OnAllEndLoopReady();
+
+	UFUNCTION()
+	void OnAllMidLoopReady();
+
+	UFUNCTION()
 	void OnAllStartLoopReady();
+	
+	void StartFade(bool bFadeOut, const FLinearColor& Color, float Duration);
 
 	UPROPERTY()
 	int32 CurrentLoopID = 0;
@@ -43,4 +81,10 @@ private:
 	UPROPERTY()
 	TObjectPtr<ULoopEventDirector> LoopDirector;
 
+	FTimerHandle FadeTimerHandle;
+
+	ELoopEventPhase CurrentPhase = ELoopEventPhase::Begin;
+
+	bool bAllEndEventFinished = false;
+	bool bDayTimeEnded = false;
 };

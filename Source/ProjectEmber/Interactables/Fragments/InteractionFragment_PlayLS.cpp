@@ -3,44 +3,14 @@
 
 #include "Interactables/Fragments/InteractionFragment_PlayLS.h"
 
+#include <memory>
+
 #include "LevelSequenceActor.h"
 #include "LevelSequencePlayer.h"
 #include "Kismet/GameplayStatics.h"
+#include "Streaming/StreamingSourceProvider.h"
 #include "WorldPartition/WorldPartitionSubsystem.h"
 
-class SequenceStreamingSourceProvider : public IWorldPartitionStreamingSourceProvider
-{
-public:
-	FVector PlayerLocation;
-	FVector SequenceLocation;
-	
-	virtual bool GetStreamingSources(TArray<FWorldPartitionStreamingSource>& OutSources) const override
-	{
-		// Player 위치 소스
-		OutSources.Emplace(
-			TEXT("SequencePlayerStreamingSource"),
-			PlayerLocation,
-			FRotator::ZeroRotator,
-			EStreamingSourceTargetState::Activated,
-			false,
-			EStreamingSourcePriority::Default,
-			false
-		);
-
-		// Sequence 위치 소스
-		OutSources.Emplace(
-			TEXT("SequenceAreaStreamingSource"),
-			SequenceLocation,
-			FRotator::ZeroRotator,
-			EStreamingSourceTargetState::Activated,
-			false,
-			EStreamingSourcePriority::Default,
-			false
-		);
-
-		return true;
-	}
-};
 
 UInteractionFragment_PlayLS::UInteractionFragment_PlayLS()
 {
@@ -63,10 +33,13 @@ void UInteractionFragment_PlayLS::ExecuteInteraction_Implementation(AActor* Inte
 		return;
 	}
 	
-	//StartSequencePlayback();
 	UWorldPartitionSubsystem* Subsystem = GetWorld()->GetSubsystem<UWorldPartitionSubsystem>();
-	SequenceStreamingProvider = MakeShared<SequenceStreamingSourceProvider>();
-	
+
+	if (!StreamingSourceProvider)
+	{
+		StreamingSourceProvider = NewObject<UStreamingSourceProvider>(this);
+	}
+
 	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	APawn* PlayerPawn = PC ? PC->GetPawn() : nullptr;
 	
@@ -74,14 +47,15 @@ void UInteractionFragment_PlayLS::ExecuteInteraction_Implementation(AActor* Inte
 	{
 		return;
 	}
-	SequenceStreamingProvider->PlayerLocation = PlayerPawn->GetActorLocation();
-	SequenceStreamingProvider->SequenceLocation = LevelSequenceActor->GetActorLocation();
 
+	StreamingSourceProvider->ClearLocations();
+	StreamingSourceProvider->SetLocations({ PlayerPawn->GetActorLocation(), LevelSequenceActor->GetActorLocation() });
 	// 등록
-	Subsystem->RegisterStreamingSourceProvider(SequenceStreamingProvider.Get());
+	Subsystem->RegisterStreamingSourceProvider(StreamingSourceProvider);
 
 	// 로딩 완료 후 시퀀스 재생
 	WaitForStreamingAndPlaySequence(Subsystem);
+	
 }
 
 void UInteractionFragment_PlayLS::WaitForStreamingAndPlaySequence(UWorldPartitionSubsystem* Subsystem)
@@ -89,7 +63,7 @@ void UInteractionFragment_PlayLS::WaitForStreamingAndPlaySequence(UWorldPartitio
 	FTimerDelegate TimerDel;
 	TimerDel.BindLambda([this, Subsystem]()
 	{
-		const bool bIsCompleted = Subsystem->IsStreamingCompleted(SequenceStreamingProvider.Get());
+		const bool bIsCompleted = Subsystem->IsStreamingCompleted(StreamingSourceProvider);
 
 		OnStreamingStatusUpdated.Broadcast(bIsCompleted);
 
@@ -137,13 +111,13 @@ void UInteractionFragment_PlayLS::OnSequenceFinished()
 	}
 
 	//// 해제
-	if (SequenceStreamingProvider.IsValid())
+	if (StreamingSourceProvider)
 	{
 		if (UWorldPartitionSubsystem* Subsystem = GetWorld()->GetSubsystem<UWorldPartitionSubsystem>())
 		{
-			Subsystem->UnregisterStreamingSourceProvider(SequenceStreamingProvider.Get());
+			Subsystem->UnregisterStreamingSourceProvider(StreamingSourceProvider);
 		}
-		SequenceStreamingProvider.Reset();
+		StreamingSourceProvider->ClearLocations();
 	}
 
 	OnSequenceFinishedEvent.Broadcast();

@@ -51,6 +51,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	UPlayerQuestWidget* GetQuestLogWidget() const;
 
+	UFUNCTION(BlueprintCallable)
 	UUserWidget* GetGameMenuWidget() const;
 
 	UUserWidget* GetQuestListWidget() const;

@@ -10,6 +10,7 @@
 
 UInteractionFragment_EventSender::UInteractionFragment_EventSender()
 {
+	MessageDelegate.BindUObject(this, &UInteractionFragment_EventSender::OnMessageReceived);
 }
 
 void UInteractionFragment_EventSender::ExecuteInteraction_Implementation(AActor* Interactor)
@@ -48,7 +49,7 @@ void UInteractionFragment_EventSender::TryBroadcastEvent(const FGameplayTag& Eve
 	}
 }
 
-void UInteractionFragment_EventSender::OnMessageReceived(const FName& MessageType, UObject* Payload)
+void UInteractionFragment_EventSender::OnMessageReceived(const FName MessageType, UObject* Payload)
 {
 	if (UGameplayTagPayload* TagPayload = Cast<UGameplayTagPayload>(Payload))
 	{

@@ -32,7 +32,10 @@ class PROJECTEMBER_API ULoopEventDataAsset : public UDataAsset
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=LoopActions)
 	TArray<TObjectPtr<ULoopActionDefinition>> StartActions;
-
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=LoopActions)
+	TArray<TObjectPtr<ULoopActionDefinition>> MidActions;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=LoopActions)
 	TArray<TObjectPtr<ULoopActionDefinition>> EndActions;
 };
