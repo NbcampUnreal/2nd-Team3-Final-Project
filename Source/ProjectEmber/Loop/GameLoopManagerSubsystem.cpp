@@ -5,7 +5,9 @@
 
 #include "LoopEventDirector.h"
 #include "LoopTimeOfDaySubsystem.h"
+#include "Components/WidgetComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "UI/HUD/EmberMainHUD.h"
 
 void UGameLoopManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
