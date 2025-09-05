@@ -3,25 +3,36 @@
 
 #include "UI/Loop/LoopInfoOverlayWidget.h"
 
+#include "MediaPlayer.h"
+#include "MediaTexture.h"
 #include "Blueprint/WidgetTree.h"
+#include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Kismet/GameplayStatics.h"
 #include "Loop/GameLoopManagerSubsystem.h"
 
-void ULoopInfoOverlayWidget::StartLoopMessage(const TArray<FString>& InMessages)
+void ULoopInfoOverlayWidget::StartLoopMessage(const TArray<FLoopMessageData>& InMessages)
 {
 	Messages.Empty();
 
-	Messages.Add(FString::Printf(TEXT("플레이어의 의식이 끊어졌습니다.\n다시 재가동 합니다.")));
+	FLoopMessageData InitMessage;
+	InitMessage.Message = (FString::Printf(TEXT("플레이어의 의식이 끊어졌습니다.\n다시 재가동 합니다.")));
 
-	Messages.Append(InMessages);
+	Messages.Add(InitMessage);
+
+	if (InMessages.Num() > 0)
+	{
+		Messages.Append(InMessages);
+	}
 	
 	if (UGameLoopManagerSubsystem* LoopManager = GetGameInstance()->GetSubsystem<UGameLoopManagerSubsystem>())
 	{
+		FLoopMessageData LoopMsg;
 		int32 CurrentLoop = LoopManager->GetCurrentLoopID();
-		Messages.Add(FString::Printf(TEXT("%i번째 루프"), CurrentLoop));
+		LoopMsg.Message = (FString::Printf(TEXT("%i번째 루프"), CurrentLoop));
+		Messages.Add(LoopMsg);
 	}
 	
 	CurrentMessageIndex = 0;
@@ -65,12 +76,13 @@ FReply ULoopInfoOverlayWidget::NativeOnKeyDown(const FGeometry& InGeometry, cons
 
 void ULoopInfoOverlayWidget::StartTypingCurrentMessage()
 {
+	FLoopMessageData& CurrentData = Messages[CurrentMessageIndex];
 	MessageBox->ClearChildren();
 	CurrentCharIndex = 0;
 	CurrentLineIndex = 0;
 	Lines.Empty();
 
-	Messages[CurrentMessageIndex].ParseIntoArrayLines(Lines);
+	CurrentData.Message.ParseIntoArrayLines(Lines);
 
 	AddNewLineTextBlock();
 	
@@ -78,6 +90,54 @@ void ULoopInfoOverlayWidget::StartTypingCurrentMessage()
 	bWaitingForInput = false;
 	
 	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &ULoopInfoOverlayWidget::TypeNextChar, TypingInterval, true);
+
+	if (CurrentData.Material)
+	{
+		ApplyMediaMaterial(CurrentData.Material);
+	}
+	if (CurrentData.MediaSource)
+	{
+		PlayMedia(CurrentData.MediaSource);
+	}
+}
+
+void ULoopInfoOverlayWidget::PlayMedia(const TObjectPtr<UMediaSource>& MediaSource)
+{
+	if (!MediaPlayer || !MediaSource) return; // 재생할 소스가 없으면 돌아감
+
+	StopMedia();
+
+	if (!MediaPlayer->OpenSource(MediaSource)) return;
+
+	//MediaSound->SetMediaPlayer(MediaPlayer);
+
+	MediaPlayer->Rewind();
+	MediaPlayer->Play();
+}
+
+void ULoopInfoOverlayWidget::StopMedia()
+{
+	if (MediaPlayer->IsPlaying())
+	{
+		MediaPlayer->Close();
+	}
+
+	//MediaSound->SetMediaPlayer(nullptr);
+}
+
+void ULoopInfoOverlayWidget::ApplyMediaMaterial(const TObjectPtr<UMaterialInterface>& Material)
+{
+	if (!MediaImage || !Material || !MediaTexture) return;
+
+	UMaterialInstanceDynamic* MID = MediaImage->GetDynamicMaterial();
+	if (!MID)
+	{
+		MID = UMaterialInstanceDynamic::Create(Material, this);
+		MediaImage->SetBrushFromMaterial(MID);
+	}
+
+	// 영상 텍스처 연결
+	MID->SetTextureParameterValue(TEXT("VideoTexture"), MediaTexture);
 }
 
 void ULoopInfoOverlayWidget::AddNewLineTextBlock()
@@ -136,7 +196,7 @@ void ULoopInfoOverlayWidget::ProceedToNextMessage()
 			PC->SetInputMode(InputMode);
 			PC->bShowMouseCursor = false;
 		}
-		
+		StopMedia();
 		SetVisibility(ESlateVisibility::Collapsed);
 
 		OnLoopMessagesFinished.Broadcast();
@@ -149,7 +209,7 @@ void ULoopInfoOverlayWidget::OnAnyKeyPressed()
 	{
 		// 스킵하고 전체 문장 출력
 		GetWorld()->GetTimerManager().ClearTimer(TimerHandle);
-		CurrentLineText->SetText(FText::FromString(Messages[CurrentMessageIndex]));
+		CurrentLineText->SetText(FText::FromString(Messages[CurrentMessageIndex].Message));
 		bIsTyping = false;
 		bWaitingForInput = true;
 		return;
