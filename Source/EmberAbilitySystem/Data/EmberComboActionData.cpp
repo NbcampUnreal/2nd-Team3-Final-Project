@@ -6,4 +6,3 @@
 UEmberComboActionData::UEmberComboActionData()
 {
 }
-5
