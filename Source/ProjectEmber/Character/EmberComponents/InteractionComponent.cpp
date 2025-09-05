@@ -1,6 +1,5 @@
 #include "Character/EmberComponents/InteractionComponent.h"
 #include "Character/EmberCharacter.h"
-#include "Interactables/BaseInteractableActor.h"
 #include "Interactables/BasePickupActor.h"
 #include "AI_NPC/NPC_Component/DialogueComponent.h"
 #include "Components/BoxComponent.h"
@@ -66,30 +65,28 @@ void UInteractionComponent::OnUnregister()
 	
 	OnInteractOverTrigger->OnComponentBeginOverlap.RemoveDynamic(this, &UInteractionComponent::OnInteractOverlapBegin);
 	OnInteractOverTrigger->OnComponentEndOverlap.RemoveDynamic(this, &UInteractionComponent::OnInteractOverlapEnd);
-
-
 }
 
 void UInteractionComponent::OnGatherOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
                                                  UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (ABaseInteractableActor* Actor = Cast<ABaseInteractableActor>(OtherActor))
-	{
-		if (!Cast<ABasePickupActor>(Actor))
-		{
-			EMBER_LOG(LogTemp, Warning, TEXT("Gather Event Activate"));
-			SetCurrentInteractable(Actor);
-		}
-	}
+	//if (ABaseInteractableActor* Actor = Cast<ABaseInteractableActor>(OtherActor))
+	//{
+	//	if (!Cast<ABasePickupActor>(Actor))
+	//	{
+	//		EMBER_LOG(LogTemp, Warning, TEXT("Gather Event Activate"));
+	//		SetCurrentInteractable(Actor);
+	//	}
+	//}
 }
 
 void UInteractionComponent::OnGatherOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (ABaseInteractableActor* Actor = Cast<ABaseInteractableActor>(OtherActor))
-	{
-		SetCurrentInteractable(nullptr);
-	}
+	//if (ABaseInteractableActor* Actor = Cast<ABaseInteractableActor>(OtherActor))
+	//{
+	//	SetCurrentInteractable(nullptr);
+	//}
 }
 
 void UInteractionComponent::OnInteractOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
@@ -145,6 +142,7 @@ void UInteractionComponent::TriggerAdvanceDialogue()
 		}
 	}
 }
+
 void UInteractionComponent::SetCurrentInteractable(UObject* NewInteractable)
 {
 	if (bIsLocked)
@@ -197,16 +195,16 @@ void UInteractionComponent::Interact()
 		}
 	}
 
-	GatherTime = IInteractable::Execute_GetGatherTime(RawObj);
+	//GatherTime = IInteractable::Execute_GetGatherTime(RawObj);
 
-	if (GatherTime <= 0.0f)
+	//if (GatherTime <= 0.0f)
 	{
 		IInteractable::Execute_TryInteract(RawObj, GetOwner());
-		OnInteractOverTrigger->UpdateOverlaps();
+		//OnInteractOverTrigger->UpdateOverlaps();
 	}
-	else
+	//else
 	{
-		StartGather();
+		//StartGather();
 	}
 	
 }
@@ -239,29 +237,29 @@ void UInteractionComponent::StartGather()
 void UInteractionComponent::StopGather()
 {
 	// 중단 시, 타이머·게이지 초기화
-	GetWorld()->GetTimerManager().ClearTimer(GatherTimerHandle);
-	if (GatherTime > 0.f)
-	{
-		StopInteractMontage();
-	}
-	else
-	{
-		GatherElapsed = 0.f;
-	}
-	/*if (GatherWidget)
-	{
-		GatherWidget->RemoveFromParent();
-		GatherWidget = nullptr;
-	}*/
-
-	bIsLocked = false;
-	SetCurrentInteractable(nullptr);
-	
-	OnInteractOverTrigger->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	OnInteractOverTrigger->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-
-	GatherTrigger->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	GatherTrigger->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	//GetWorld()->GetTimerManager().ClearTimer(GatherTimerHandle);
+	//if (GatherTime > 0.f)
+	//{
+	//	StopInteractMontage();
+	//}
+	//else
+	//{
+	//	GatherElapsed = 0.f;
+	//}
+	///*if (GatherWidget)
+	//{
+	//	GatherWidget->RemoveFromParent();
+	//	GatherWidget = nullptr;
+	//}*/
+//
+	//bIsLocked = false;
+	//SetCurrentInteractable(nullptr);
+	//
+	//OnInteractOverTrigger->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	//OnInteractOverTrigger->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+//
+	//GatherTrigger->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	//GatherTrigger->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 }
 
 void UInteractionComponent::GatherTick()

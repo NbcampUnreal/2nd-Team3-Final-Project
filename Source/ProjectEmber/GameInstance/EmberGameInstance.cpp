@@ -2,7 +2,7 @@
 #include "GameInstance/AudioSubsystem.h"
 #include "GameInstance/LevelSubsystem.h"
 #include "GameInstance/DungeonSubsystem.h"
-#include "EasyMultiSave.h"
+#include "EasyMultiSaveClasses.h"
 #include "EMSFunctionLibrary.h"
 #include "GameInstance/EmberSaveGame.h"
 #include "GameFramework/GameUserSettings.h" 

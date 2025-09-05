@@ -93,7 +93,6 @@ void UEmberInputHandlerComponent::BindInput(UEnhancedInputComponent* InputCompon
             InputComponent->BindAction(InteractAction, ETriggerEvent::Started, Comp, &UInteractionComponent::Interact);
             InputComponent->BindAction(InteractAction, ETriggerEvent::Completed, Comp, &UInteractionComponent::StopGather);
             InputComponent->BindAction(InteractAction, ETriggerEvent::Started, Comp, &UInteractionComponent::TriggerAdvanceDialogue);
-
         }
     }
 

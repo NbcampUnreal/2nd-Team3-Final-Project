@@ -52,7 +52,7 @@ public:
      * 조건 충족 여부 확인
      */
     UFUNCTION(BlueprintCallable, Category = "Quest|Condition")
-    bool IsFulfilled() const
+    virtual bool IsFulfilled() const
     {
         return CurrentCount >= RequiredCount;
     }

@@ -10,7 +10,7 @@
 	"DocsURL": "https://github.com/mklabs/ue4-targetsystemplugin/wiki",
 	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/6bd21ce58d6e4cb295f71bd370233f53",
 	"SupportURL": "https://github.com/mklabs/ue4-targetsystemplugin/issues",
-	"EngineVersion": "5.5.0",
+	"EngineVersion": "5.6.0",
 	"CanContainContent": true,
 	"Installed": true,
 	"Modules": [

@@ -1,0 +1,10 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "Interactables/Condition/InteractionCondition_NotExceed.h"
+
+
+bool UInteractionCondition_NotExceed::IsFulfilled() const
+{
+	return CurrentCount < RequiredCount;
+}

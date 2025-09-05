@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Character/InputHandler/EmberKeyMappingEntry.h"
-#include "EasyMultiSave/Public/EMSCustomSaveGame.h"
+#include "EMSCustomSaveGame.h"
 #include "GameInstance/EmberVideoSettings.h"
 #include "GameInstance/EmberAudioSettings.h"
 #include "EmberSaveGame.generated.h"

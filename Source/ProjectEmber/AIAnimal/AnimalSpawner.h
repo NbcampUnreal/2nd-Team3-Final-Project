@@ -6,7 +6,7 @@
 #include "EMSActorSaveInterface.h"
 #include "Attribute/Animal/EmberAnimalAttributeSet.h"
 #include "GameFramework/Actor.h"
-#include "Interactables/WorldInteractable/WorldInteractableActor.h"
+#include "Interactables/WorldInteractableActor.h"
 #include "MessageBus/MessageBus.h"
 #include "AnimalSpawner.generated.h"
 

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Quest/Condition/QuestCondition.h"
-#include "Interactables/WorldInteractable/WorldInteractableActor.h"
+#include "Interactables/WorldInteractableActor.h"
 #include "MiniGameQuestCondition.generated.h"
 
 /**
